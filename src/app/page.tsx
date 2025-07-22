@@ -1,11 +1,12 @@
 'use client';
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
-  const [isHover, setIsHover] = useState(false);
   const [isHoverDemo, setIsHoverDemo] = useState(false);
-
+  const Router = useRouter();
   return (
+
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat pt-5"
       style={{
@@ -18,7 +19,9 @@ export default function Home() {
         }}
         className="relative z-10 flex justify-between items-center px-6 py-4 mx-10 rounded-2xl bg-white/5 backdrop-blur-none border border-white/10"
       >
-        <div className="flex items-center space-x-3">
+        <div
+          onClick={() => Router.push("/")}
+          className="flex items-center space-x-3 cursor-pointer">
           <img
             src="logo.png"
             alt="Logo"
@@ -26,15 +29,24 @@ export default function Home() {
           />
         </div>
         <button
-          onMouseEnter={() => setIsHover(true)}
-          onMouseLeave={() => setIsHover(false)}
-          className={`text-white px-10 py-2 rounded-lg font-medium transition-all duration-300 transform cursor-pointer border border-white/25 ${isHover
-              ? "bg-gradient-to-b from-[#1F4293] via-[#276F88] to-[#26F6BA] shadow-[0px_4px_20px_0px_rgba(29,125,255,1.00)] scale-[1.01]"
-              : "bg-gradient-to-b from-[#1F4293] to-[#246AEC]"
-            }`}
+          className="rounded-[12px] border border-white/25 text-white px-10 py-2 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] transition-all duration-300 ease-in-out cursor-pointer"
+          style={{
+            background: 'linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)',
+          }}
+          onMouseEnter={(e) => {
+            const target = e.currentTarget as HTMLElement;
+            target.style.background = 'linear-gradient(180deg, #1F4293 0%, #276F88 49.52%, #26F6BA 100%)';
+            target.style.boxShadow = '0px 4px 15px 0px #1D7DFF';
+          }}
+          onMouseLeave={(e) => {
+            const target = e.currentTarget as HTMLElement;
+            target.style.background = 'linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)';
+            target.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
+          }}
         >
           Get start !
         </button>
+
 
       </header>
 
@@ -66,6 +78,7 @@ export default function Home() {
               } rounded-tl-xl rounded-tr-[60px] rounded-bl-[60px] rounded-br-xl flex justify-center items-center gap-2.5 cursor-pointer transition-all duration-300`}
           >
             <div
+              onClick={() => Router.push("/trade")}
               className={`text-white ${isHoverDemo ? "text-xl font-bold" : "text-xl font-bold"
                 } leading-loose`}
             >
