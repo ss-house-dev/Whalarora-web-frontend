@@ -3,6 +3,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer utilities {
+  .text-stroke-white {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 1);
+  }
+  .text-shadow-border {
+    text-shadow:
+      -1px -1px 0 rgba(255,255,255,1),
+      1px -1px 0 rgba(255,255,255,1),
+      -1px 1px 0 rgba(255,255,255,1),
+      1px 1px 0 rgba(255,255,255,1),
+      0px 4px 4px rgba(0, 0, 0, 0.25);
+  }
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
