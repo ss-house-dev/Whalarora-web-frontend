@@ -43,7 +43,7 @@ export default function Navbar() {
                     onClick={() => Router.push("/")}
                     className="flex items-center space-x-3 cursor-pointer">
                     <img
-                        src="logo.png"
+                        src="/logo.png"
                         alt="Logo"
                         className="w-12 h-12 object-cover rounded-full"
                     />

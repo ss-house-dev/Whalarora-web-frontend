@@ -20,7 +20,7 @@ export const useCryptoPrice = (symbol: string) => {
     const fetchPrice = async () => {
       try {
         setLoading(true)
-        // ลบ "BINANCE:" prefix ถ้ามี
+        
         const cleanSymbol = symbol.replace('BINANCE:', '')
         
         console.log('Fetching data for:', cleanSymbol) // Debug log
