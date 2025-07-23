@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
 
@@ -19,32 +18,36 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const frameworks = [
+const binanceCoins = [
   {
-    value: "next.js",
-    label: "Next.js",
+    value: "BINANCE:BTCUSDT",
+    label: "BTC/USDT",
   },
   {
-    value: "sveltekit",
-    label: "SvelteKit",
+    value: "BINANCE:ETHUSDT",
+    label: "ETH/USDT",
   },
   {
-    value: "nuxt.js",
-    label: "Nuxt.js",
+    value: "BINANCE:BNBUSDT",
+    label: "BNB/USDT",
   },
   {
-    value: "remix",
-    label: "Remix",
+    value: "BINANCE:ADAUSDT",
+    label: "ADA/USDT",
   },
   {
-    value: "astro",
-    label: "Astro",
+    value: "BINANCE:XRPUSDT",
+    label: "XRP/USDT",
   },
 ]
 
-export function ExampleCombobox() {
+interface ExampleComboboxProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,7 +59,7 @@ export function ExampleCombobox() {
           className="w-[200px] justify-between"
         >
           {value
-            ? frameworks.find((framework) => framework.value === value)?.label
+            ? binanceCoins.find((coin) => coin.value === value)?.label
             : "Select Coin"}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -67,22 +70,23 @@ export function ExampleCombobox() {
           <CommandList>
             <CommandEmpty>No coin found.</CommandEmpty>
             <CommandGroup>
-              {frameworks.map((framework) => (
+              {binanceCoins.map((coin) => (
                 <CommandItem
-                  key={framework.value}
-                  value={framework.value}
+                  key={coin.value}
+                  value={coin.value}
                   onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue)
+                    const newValue = currentValue === value ? "" : currentValue
+                    onValueChange(newValue)
                     setOpen(false)
                   }}
                 >
                   <CheckIcon
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === framework.value ? "opacity-100" : "opacity-0"
+                      value === coin.value ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {framework.label}
+                  {coin.label}
                 </CommandItem>
               ))}
             </CommandGroup>
