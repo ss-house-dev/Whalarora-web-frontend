@@ -13,7 +13,7 @@ export default function Navbar() {
     const Router = useRouter();
     return (
         <div
-            className="navbar shadow-sm rounded-b-2xl px-25 py-3"
+            className="navbar shadow-sm rounded-b-2xl px-30 py-3"
             style={{
                 background: 'linear-gradient(90deg, #49B6AE 1.44%, #246AEC 54.81%, #8A38F5 100%)',
                 borderRadius: '0px 0px 16px 16px',

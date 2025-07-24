@@ -56,7 +56,7 @@ export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) 
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="w-[200px] justify-between h-15"
         >
           {value
             ? binanceCoins.find((coin) => coin.value === value)?.label
@@ -74,6 +74,25 @@ export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) 
                 <CommandItem
                   key={coin.value}
                   value={coin.value}
+                  className="cursor-pointer transition-colors duration-200"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1F4293'
+                    e.currentTarget.style.color = 'white'
+                    // เปลี่ยนสี CheckIcon เป็นสีขาว
+                    const checkIcon = e.currentTarget.querySelector('svg')
+                    if (checkIcon) {
+                      checkIcon.style.color = 'white'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = ''
+                    e.currentTarget.style.color = ''
+                    // เปลี่ยนสี CheckIcon กลับเป็นสีเดิม
+                    const checkIcon = e.currentTarget.querySelector('svg')
+                    if (checkIcon) {
+                      checkIcon.style.color = ''
+                    }
+                  }}
                   onSelect={(currentValue) => {
                     const newValue = currentValue === value ? "" : currentValue
                     onValueChange(newValue)

@@ -16,7 +16,7 @@ const AdvancedChart = ({ symbol }: ChartProps) => {
     <div className='w-full h-[600px] pr-[1px]'>
       <AdvancedRealTimeChart
         symbol={symbol || "BINANCE:BTCUSDT"}
-        interval="1"
+
         allow_symbol_change={false}
         save_image={true}
         withdateranges={true}

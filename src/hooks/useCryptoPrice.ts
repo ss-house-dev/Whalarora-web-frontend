@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 
 interface PriceData {
   symbol: string
-  price: string
+  price?: string
+  lastPrice?: string  
   priceChangePercent: string
   priceChange: string
   highPrice: string
@@ -35,6 +36,7 @@ export const useCryptoPrice = (symbol: string) => {
         
         const result = await response.json()
         console.log('API Response:', result) // Debug log
+        console.log('Price fields - price:', result.price, 'lastPrice:', result.lastPrice)
         
         setData(result)
         setError(null)
@@ -48,8 +50,8 @@ export const useCryptoPrice = (symbol: string) => {
 
     if (symbol) {
       fetchPrice()
-      // อัพเดททุก 10 วินาที
-      const interval = setInterval(fetchPrice, 10000)
+      // อัพเดททุก 3 วินาที
+      const interval = setInterval(fetchPrice, 3000)
       return () => clearInterval(interval)
     }
   }, [symbol])
