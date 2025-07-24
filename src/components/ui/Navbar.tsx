@@ -53,21 +53,52 @@ export default function Navbar() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
-                            className="px-4 py-2 text-white rounded-[12px] border border-white/50 transition-transform duration-200 cursor-pointer flex items-center gap-5"
+                            className="px-4 py-2 gap-10 text-white rounded-[12px] border border-white/50 transition-transform duration-200 cursor-pointer flex items-center justify-between"
                             style={{
                                 background: "rgba(31, 66, 147, 1)",
                                 boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25)",
                             }}
                         >
+                            {/* Icon wallet ซ้ายสุด */}
                             <Wallet size={18} />
-                            <span className="whitespace-nowrap">10,000.0000 USD</span>
-                            <ChevronDown size={18} className="ml-2" />
+
+                            {/* จำนวนเงินและ icon ชี้ลง ขวาสุด */}
+                            <div className="flex items-center gap-2">
+                                <span className="whitespace-nowrap">10,000.0000 USD</span>
+                                <ChevronDown size={18} />
+                            </div>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-[#ffffff] border border-white/30 rounded-lg shadow-lg">
-                        <DropdownMenuItem className="px-17 bg-white hover:bg-blue-500">
+                    <DropdownMenuContent className="bg-[#ffffff] border-0 rounded-lg shadow-lg text-left min-w-[150px]">
+                        <DropdownMenuItem
+                            className="px-4 py-2 bg-white cursor-pointer transition-colors duration-200 font-semibold text-left justify-start"
+                            style={{ color: '#1F4293' }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#1F4293'
+                                e.currentTarget.style.color = 'white'
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'white'
+                                e.currentTarget.style.color = '#1F4293'
+                            }}
+                        >
                             My Wallet
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="px-4 py-2 bg-white cursor-pointer transition-colors duration-200 font-semibold text-left justify-start"
+                            style={{ color: '#1F4293' }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#1F4293'
+                                e.currentTarget.style.color = 'white'
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'white'
+                                e.currentTarget.style.color = '#1F4293'
+                            }}
+                        >
+                            Transaction History
+                        </DropdownMenuItem>
+
                     </DropdownMenuContent>
                 </DropdownMenu>
 

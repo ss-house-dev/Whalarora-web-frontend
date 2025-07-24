@@ -1,9 +1,10 @@
-"use client"
-import * as React from "react"
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
+"use client";
+import * as React from "react";
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+
 import {
   Command,
   CommandEmpty,
@@ -11,12 +12,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 const binanceCoins = [
   {
@@ -39,15 +40,18 @@ const binanceCoins = [
     value: "BINANCE:XRPUSDT",
     label: "XRP/USDT",
   },
-]
+];
 
 interface ExampleComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
 }
 
-export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) {
-  const [open, setOpen] = React.useState(false)
+export function ExampleCombobox({
+  value,
+  onValueChange,
+}: ExampleComboboxProps) {
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,12 +60,13 @@ export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) 
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between h-15"
+          className="w-[200px] justify-between h-15 bg-[#3A8AF7] text-white font-semibold text-md border-[#3A8AF7] hover:bg-[rgba(58,138,247,0.9)] hover:text-white cursor-pointer"
+          style={{ borderRadius: "12px 12px 0 12px" }}
         >
           {value
             ? binanceCoins.find((coin) => coin.value === value)?.label
             : "Select Coin"}
-          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDownIcon />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -76,27 +81,27 @@ export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) 
                   value={coin.value}
                   className="cursor-pointer transition-colors duration-200"
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#1F4293'
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.backgroundColor = "#1F4293";
+                    e.currentTarget.style.color = "white";
                     // เปลี่ยนสี CheckIcon เป็นสีขาว
-                    const checkIcon = e.currentTarget.querySelector('svg')
+                    const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
-                      checkIcon.style.color = 'white'
+                      checkIcon.style.color = "white";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = ''
-                    e.currentTarget.style.color = ''
+                    e.currentTarget.style.backgroundColor = "";
+                    e.currentTarget.style.color = "";
                     // เปลี่ยนสี CheckIcon กลับเป็นสีเดิม
-                    const checkIcon = e.currentTarget.querySelector('svg')
+                    const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
-                      checkIcon.style.color = ''
+                      checkIcon.style.color = "";
                     }
                   }}
                   onSelect={(currentValue) => {
-                    const newValue = currentValue === value ? "" : currentValue
-                    onValueChange(newValue)
-                    setOpen(false)
+                    const newValue = currentValue === value ? "" : currentValue;
+                    onValueChange(newValue);
+                    setOpen(false);
                   }}
                 >
                   <CheckIcon
@@ -113,5 +118,5 @@ export function ExampleCombobox({ value, onValueChange }: ExampleComboboxProps) 
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
