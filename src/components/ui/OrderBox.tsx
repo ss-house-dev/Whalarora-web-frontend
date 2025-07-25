@@ -4,6 +4,17 @@ import { useState } from "react";
 import { useBalance } from "@/components/contexts/BalanceContext";
 import { useCryptoPrice } from '@/hooks/useCryptoPrice'
 
+// Type สำหรับประวัติการซื้อขาย
+interface Transaction {
+  id: string;
+  type: 'buy' | 'sell';
+  symbol: string;
+  amount: number;
+  price: number;
+  total: number;
+  timestamp: Date;
+}
+
 export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }) {
   const [tab, setTab] = useState<"limit" | "market" | "stop">("limit");
   const [buyAmount, setBuyAmount] = useState(0);
@@ -13,6 +24,10 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   
   // เพิ่ม state สำหรับเก็บจำนวนเหรียญที่ถือ
   const [coinBalance, setCoinBalance] = useState(0.00);
+  
+  // เพิ่ม state สำหรับเก็บประวัติการซื้อขาย
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { balance, setBalance } = useBalance();
 
@@ -52,12 +67,31 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   const shouldShowBuyRedBorder = (buyAttempted && isBuyAmountError) || (!isBidPriceValid && buyAttempted);
   const shouldShowSellRedBorder = (sellAttempted && isSellAmountError) || (!isAskPriceValid && sellAttempted);
 
+  // ฟังก์ชันสำหรับสร้าง transaction ID
+  const generateTransactionId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  };
+
   // ฟังก์ชันสำหรับจัดการการซื้อ
   const handleBuy = () => {
     setBuyAttempted(true);
     
     if (buyAmount > 0 && (buyAmount * bidPrice) <= balance && bidPrice > 0) {
       const totalCost = buyAmount * bidPrice;
+      
+      // สร้างประวัติการซื้อ
+      const newTransaction: Transaction = {
+        id: generateTransactionId(),
+        type: 'buy',
+        symbol: extractBaseSymbol(mainSymbol),
+        amount: buyAmount,
+        price: bidPrice,
+        total: totalCost,
+        timestamp: new Date()
+      };
+      
+      // เพิ่มประวัติใหม่เข้าไปในรายการ (ใหม่สุดอยู่บนสุด)
+      setTransactions(prev => [newTransaction, ...prev]);
       
       // อัพเดท balance (ลดเงิน USDT)
       setBalance(balance - totalCost);
@@ -79,6 +113,20 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
     
     if (sellAmount > 0 && sellAmount <= coinBalance && askPrice > 0) {
       const totalReceived = sellAmount * askPrice;
+      
+      // สร้างประวัติการขาย
+      const newTransaction: Transaction = {
+        id: generateTransactionId(),
+        type: 'sell',
+        symbol: extractBaseSymbol(mainSymbol),
+        amount: sellAmount,
+        price: askPrice,
+        total: totalReceived,
+        timestamp: new Date()
+      };
+      
+      // เพิ่มประวัติใหม่เข้าไปในรายการ (ใหม่สุดอยู่บนสุด)
+      setTransactions(prev => [newTransaction, ...prev]);
       
       // อัพเดท balance (เพิ่มเงิน USDT)
       setBalance(balance + totalReceived);
@@ -108,6 +156,18 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
     if (loading) return "Loading...";
     if (error) return "Error";
     return bidPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // ฟังก์ชันสำหรับ format วันที่และเวลา
+  const formatDateTime = (date: Date) => {
+    return date.toLocaleString('th-TH', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
   return (
@@ -235,7 +295,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
                 <button
                   key={pct}
                   className="border text-sm text-gray-600 py-1 rounded-md hover:bg-gray-100"
-                  onClick={() => setCoinBalance((pct / 100) * coinBalance)}
+                  onClick={() => setSellAmount((pct / 100) * coinBalance)}
                 >
                   {pct} %
                 </button>
@@ -270,6 +330,91 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
             </button>
           </div>
         </div>
+
+        {/* ปุ่มสำหรับแสดง/ซ่อนประวัติ */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition flex items-center gap-2"
+          >
+            {showHistory ? '🔼' : '🔽'} Transaction History ({transactions.length})
+          </button>
+        </div>
+
+        {/* ส่วนแสดงประวัติการซื้อขาย */}
+        {showHistory && (
+          <div className="mt-6 border rounded-lg overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b">
+              <h3 className="font-semibold text-gray-800">Transaction History</h3>
+            </div>
+            
+            {transactions.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                No transactions yet
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date & Time
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Symbol
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Price
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {transactions.map((transaction) => (
+                      <tr key={transaction.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDateTime(transaction.timestamp)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            transaction.type === 'buy' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {transaction.type.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {transaction.symbol}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {transaction.amount.toFixed(4)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {transaction.price.toLocaleString(undefined, { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })} USDT
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                          {transaction.total.toFixed(4)} USDT
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
