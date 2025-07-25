@@ -1,6 +1,7 @@
 // ตัวอย่าง: dashboard page
 import TradingViewChart from '@/components/ui/TradingViewChart'
 import InteractiveChart from '@/components/ui/Interactivechart'
+import OrderBox from '@/components/ui/OrderBox';
 import React from 'react';
 
 
@@ -19,6 +20,9 @@ export default function DashboardPage() {
 
             <h1 className="text-2xl font-bold text-center mb-4">เลือกเหรียญเพื่อดูกราฟ</h1>
             <InteractiveChart />
+
+            {/* ✅ Order Box Component */}
+            <OrderBox />
         </main>
     )
 }
