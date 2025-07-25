@@ -1,19 +1,14 @@
-import './aurora.css' // 👈 เพิ่ม css custom ด้านล่างไว้ใช้
+import Navbar from "@/components/ui/Navbar"
 
-export default function DashboardLayout({
-    children
+export default function RootLayout({
+    children,
 }: {
     children: React.ReactNode
 }) {
     return (
-        <div className="min-h-screen bg-black relative overflow-hidden text-white">
-            {/* Aurora background */}
-            <div className="aurora z-0" />
-
-            {/* Content overlay */}
-            <div className="relative z-10 p-6">
-                {children}
-            </div>
-        </div>
+        <>
+            <Navbar />
+            <div>{children}</div>
+        </>
     )
 }
