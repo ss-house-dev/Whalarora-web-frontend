@@ -10,8 +10,11 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   const [sellAmount, setSellAmount] = useState(0);
   const [buyAttempted, setBuyAttempted] = useState(false);
   const [sellAttempted, setSellAttempted] = useState(false);
+  
+  // เพิ่ม state สำหรับเก็บจำนวนเหรียญที่ถือ
+  const [coinBalance, setCoinBalance] = useState(0.00);
 
-  const { balance } = useBalance();
+  const { balance, setBalance } = useBalance();
 
   // --- ดึงราคาจาก API ---
   const symbol = mainSymbol.endsWith("USDT") ? mainSymbol : mainSymbol + "USDT";
@@ -27,9 +30,8 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   const buyTotal = (buyAmount * bidPrice).toFixed(4);
   const sellTotal = (sellAmount * askPrice).toFixed(4);
 
-  const btcBalance = 0.002;
   const isBuyAmountValid = buyAmount > 0 && (buyAmount * bidPrice) <= balance;
-  const isSellAmountValid = sellAmount > 0 && sellAmount <= btcBalance;
+  const isSellAmountValid = sellAmount > 0 && sellAmount <= coinBalance;
 
   // Validation สำหรับ Buy
   const isBuyAmountEmpty = buyAmount <= 0;
@@ -38,18 +40,59 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
 
   // Validation สำหรับ Sell
   const isSellAmountEmpty = sellAmount <= 0;
-  const isSellAmountOver = sellAmount > btcBalance;
+  const isSellAmountOver = sellAmount > coinBalance;
   const isSellAmountError = isSellAmountEmpty || isSellAmountOver;
 
   const isBidPriceValid = bidPrice > 0;
   const isAskPriceValid = askPrice > 0;
   const isBuyDisabled = !isBidPriceValid || buyAmount <= 0 || (buyAmount * bidPrice) > balance;
-  const isSellDisabled = !isAskPriceValid || sellAmount <= 0 || sellAmount > btcBalance;
+  const isSellDisabled = !isAskPriceValid || sellAmount <= 0 || sellAmount > coinBalance;
 
   // เพิ่มเงื่อนไขสำหรับแสดงกรอบแดงเมื่อราคาเป็น 0
   const shouldShowBuyRedBorder = (buyAttempted && isBuyAmountError) || (!isBidPriceValid && buyAttempted);
   const shouldShowSellRedBorder = (sellAttempted && isSellAmountError) || (!isAskPriceValid && sellAttempted);
 
+  // ฟังก์ชันสำหรับจัดการการซื้อ
+  const handleBuy = () => {
+    setBuyAttempted(true);
+    
+    if (buyAmount > 0 && (buyAmount * bidPrice) <= balance && bidPrice > 0) {
+      const totalCost = buyAmount * bidPrice;
+      
+      // อัพเดท balance (ลดเงิน USDT)
+      setBalance(balance - totalCost);
+      
+      // อัพเดทจำนวนเหรียญที่ถือ (เพิ่มเหรียญ)
+      setCoinBalance(coinBalance + buyAmount);
+      
+      // รีเซ็ตค่า
+      setBuyAmount(0);
+      setBuyAttempted(false);
+      
+      alert(`Successfully bought ${buyAmount} ${mainSymbol} for ${totalCost.toFixed(4)} USDT`);
+    }
+  };
+
+  // ฟังก์ชันสำหรับจัดการการขาย
+  const handleSell = () => {
+    setSellAttempted(true);
+    
+    if (sellAmount > 0 && sellAmount <= coinBalance && askPrice > 0) {
+      const totalReceived = sellAmount * askPrice;
+      
+      // อัพเดท balance (เพิ่มเงิน USDT)
+      setBalance(balance + totalReceived);
+      
+      // อัพเดทจำนวนเหรียญที่ถือ (ลดเหรียญ)
+      setCoinBalance(coinBalance - sellAmount);
+      
+      // รีเซ็ตค่า
+      setSellAmount(0);
+      setSellAttempted(false);
+      
+      alert(`Successfully sold ${sellAmount} ${mainSymbol} for ${totalReceived.toFixed(4)} USDT`);
+    }
+  };
 
   // ฟังก์ชันช่วยสำหรับแยกชื่อเหรียญ (เช่น BTC, ETH) จากสัญลักษณ์
   // เช่น "BINANCE:BTCUSDT" จะได้ "BTC"
@@ -152,29 +195,18 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
               )}
             </div>
 
-
             <button
               className="w-full py-2 bg-green-600 text-white rounded-md font-semibold transition hover:bg-green-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={() => {
-                setBuyAttempted(true);
-                
-                // เช็คว่า amount > 0 และไม่เกินจำนวนที่สามารถซื้อได้
-                if (buyAmount > 0 && (buyAmount * bidPrice) <= balance && bidPrice > 0) {
-                  alert(`Buy ${buyAmount} ${mainSymbol}`);
-                }
-              }}
-             
+              onClick={handleBuy}
             >
               Buy
             </button>
-            
           </div>
         
-
           <div className="space-y-4 border rounded-md p-4">
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span>My balance</span>
-              <span>{btcBalance.toFixed(4)} {extractBaseSymbol(mainSymbol)}</span>
+              <span>{coinBalance.toFixed(4)} {extractBaseSymbol(mainSymbol)}</span>
             </div>
 
             <div className="flex items-center border px-4 py-2 rounded-md bg-gray-50">
@@ -203,7 +235,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
                 <button
                   key={pct}
                   className="border text-sm text-gray-600 py-1 rounded-md hover:bg-gray-100"
-                  onClick={() => setSellAmount((pct / 100) * btcBalance)}
+                  onClick={() => setCoinBalance((pct / 100) * coinBalance)}
                 >
                   {pct} %
                 </button>
@@ -232,14 +264,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
 
             <button
               className="w-full py-2 bg-red-600 text-white rounded-md font-semibold transition hover:bg-red-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={() => {
-                setSellAttempted(true);
-                
-                // เช็คว่า amount > 0 และไม่เกินจำนวนที่มีอยู่
-                if (sellAmount > 0 && sellAmount <= btcBalance && askPrice > 0) {
-                  alert(`Sell ${sellAmount} ${mainSymbol}`);
-                }
-              }}
+              onClick={handleSell}
             >
               Sell
             </button>
