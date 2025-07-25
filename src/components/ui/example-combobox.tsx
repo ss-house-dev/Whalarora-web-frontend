@@ -79,25 +79,17 @@ export function ExampleCombobox({
                 <CommandItem
                   key={coin.value}
                   value={coin.value}
-                  className="cursor-pointer transition-colors duration-200"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#1F4293";
-                    e.currentTarget.style.color = "white";
-                    // เปลี่ยนสี CheckIcon เป็นสีขาว
-                    const checkIcon = e.currentTarget.querySelector("svg");
-                    if (checkIcon) {
-                      checkIcon.style.color = "white";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "";
-                    e.currentTarget.style.color = "";
-                    // เปลี่ยนสี CheckIcon กลับเป็นสีเดิม
-                    const checkIcon = e.currentTarget.querySelector("svg");
-                    if (checkIcon) {
-                      checkIcon.style.color = "";
-                    }
-                  }}
+                  className={cn(
+                    "cursor-pointer transition-colors duration-200",
+                    value === coin.value 
+                      ? "!bg-[#1F4293] !text-white" 
+                      : "hover:!bg-[#1F4293] hover:!text-white"
+                  )}
+                  style={
+                    value === coin.value 
+                      ? { backgroundColor: '#1F4293', color: 'white' }
+                      : {}
+                  }
                   onSelect={(currentValue) => {
                     const newValue = currentValue === value ? "" : currentValue;
                     onValueChange(newValue);
@@ -109,6 +101,11 @@ export function ExampleCombobox({
                       "mr-2 h-4 w-4",
                       value === coin.value ? "opacity-100" : "opacity-0"
                     )}
+                    style={
+                      value === coin.value 
+                        ? { color: 'white' }
+                        : {}
+                    }
                   />
                   {coin.label}
                 </CommandItem>

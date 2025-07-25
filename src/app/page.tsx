@@ -46,8 +46,6 @@ export default function Home() {
         >
           Get start !
         </button>
-
-
       </header>
 
       <div
@@ -78,7 +76,7 @@ export default function Home() {
               } rounded-tl-xl rounded-tr-[60px] rounded-bl-[60px] rounded-br-xl flex justify-center items-center gap-2.5 cursor-pointer transition-all duration-300`}
           >
             <div
-              onClick={() => Router.push("/main/trading")}
+              onClick={() => Router.push("/trading")}
               className={`text-white ${isHoverDemo ? "text-xl font-bold" : "text-xl font-bold"
                 } leading-loose`}
             >
