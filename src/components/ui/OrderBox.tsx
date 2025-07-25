@@ -6,19 +6,19 @@ import { useCryptoPrice } from '@/hooks/useCryptoPrice'
 
 export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }) {
   const [tab, setTab] = useState<"limit" | "market" | "stop">("limit");
-  const [buyAmount, setBuyAmount] = useState(1);
+  const [buyAmount, setBuyAmount] = useState(0);
   const [sellAmount, setSellAmount] = useState(0);
+  const [buyAttempted, setBuyAttempted] = useState(false);
+  const [sellAttempted, setSellAttempted] = useState(false);
 
   const { balance } = useBalance();
-
-
 
   // --- ดึงราคาจาก API ---
   const symbol = mainSymbol.endsWith("USDT") ? mainSymbol : mainSymbol + "USDT";
   const { data, loading, error } = useCryptoPrice(symbol);
 
   const bidPrice =
-    !data || loading || error
+    !data || error
       ? 0
       : parseFloat(data.price || data.lastPrice || "0");
 
@@ -46,6 +46,10 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   const isBuyDisabled = !isBidPriceValid || buyAmount <= 0 || (buyAmount * bidPrice) > balance;
   const isSellDisabled = !isAskPriceValid || sellAmount <= 0 || sellAmount > btcBalance;
 
+  // เพิ่มเงื่อนไขสำหรับแสดงกรอบแดงเมื่อราคาเป็น 0
+  const shouldShowBuyRedBorder = (buyAttempted && isBuyAmountError) || (!isBidPriceValid && buyAttempted);
+  const shouldShowSellRedBorder = (sellAttempted && isSellAmountError) || (!isAskPriceValid && sellAttempted);
+
 
   // ฟังก์ชันช่วยสำหรับแยกชื่อเหรียญ (เช่น BTC, ETH) จากสัญลักษณ์
   // เช่น "BINANCE:BTCUSDT" จะได้ "BTC"
@@ -60,7 +64,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
   const displayPrice = () => {
     if (loading) return "Loading...";
     if (error) return "Error";
-    return bidPrice.toLocaleString();
+    return bidPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
@@ -92,7 +96,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
             <div className="flex items-center border px-4 py-2 rounded-md bg-gray-50">
               <span className="text-sm text-gray-400 flex-1">Bid price</span>
               <span className="font-semibold text-lg text-gray-800">
-                {loading ? "Loading..." : error ? "Error" : bidPrice.toLocaleString()}
+                {error ? "Error" : bidPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 <span className="ml-1 text-gray-400 text-sm font-normal">USDT</span>
               </span>
             </div>
@@ -131,35 +135,41 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
 
             <div className={
               "flex items-center justify-between border px-4 py-2 rounded-md bg-gray-50 box-border" +
-              (isBuyAmountError ? " border-2 border-red-400" : "")
+              (shouldShowBuyRedBorder ? " border-2 border-red-400" : "")
             }>
               <span className="text-gray-400">{loading ? "-" : parseFloat(buyTotal).toFixed(4)}</span>
               <span className="text-sm text-gray-400">USDT</span>
             </div>
 
-
-            <div className="text-xs min-h-[20px] mt-1">
-              {isBuyAmountEmpty && <span className="text-red-500">กรุณากรอกจำนวน</span>}
-              {isBuyAmountOver && <span className="text-red-500">ยอดเงินไม่พอ</span>}
-              {!isBuyAmountError && <span>&nbsp;</span>}
+            <div className="text-right text-xs text-gray-400 min-h-[20px]">
+              {buyAttempted && (isBuyAmountError || !isBidPriceValid) ? (
+                <span className="text-red-500">
+                  {!isBidPriceValid ? "Price not available" : 
+                   isBuyAmountEmpty ? "Please enter the amount" : "Your balance is insufficient"}
+                </span>
+              ) : (
+                <>≈ {parseFloat(buyTotal).toFixed(4)} USD</>
+              )}
             </div>
 
 
             <button
               className="w-full py-2 bg-green-600 text-white rounded-md font-semibold transition hover:bg-green-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={() => {
-                if (!isBuyAmountValid) {
-                  alert("ยอดเงินไม่พอ!");
-                  return;
+                setBuyAttempted(true);
+                
+                // เช็คว่า amount > 0 และไม่เกินจำนวนที่สามารถซื้อได้
+                if (buyAmount > 0 && (buyAmount * bidPrice) <= balance && bidPrice > 0) {
+                  alert(`Buy ${buyAmount} ${mainSymbol}`);
                 }
-                alert(`Buy ${buyAmount} ${mainSymbol}`);
               }}
-              disabled={isBuyDisabled}
+             
             >
               Buy
             </button>
+            
           </div>
-
+        
 
           <div className="space-y-4 border rounded-md p-4">
             <div className="flex items-center justify-between text-sm text-gray-600">
@@ -170,7 +180,7 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
             <div className="flex items-center border px-4 py-2 rounded-md bg-gray-50">
               <span className="text-sm text-gray-400 flex-1">Ask price</span>
               <span className="font-semibold text-lg text-gray-800">
-                {loading ? "Loading..." : error ? "Error" : askPrice.toLocaleString()}
+                {error ? "Error" : askPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 <span className="ml-1 text-gray-400 text-sm font-normal">USDT</span>
               </span>
             </div>
@@ -203,29 +213,33 @@ export default function OrderBox({ mainSymbol = "BTC" }: { mainSymbol?: string }
             <div className="text-sm text-gray-500">Total</div>
             <div className={
               "flex items-center justify-between border px-4 py-2 rounded-md bg-gray-50 box-border" +
-              (isSellAmountError ? " border-2 border-red-400" : "")
+              (shouldShowSellRedBorder ? " border-2 border-red-400" : "")
             }>
               <span className="text-gray-400">{loading ? "-" : parseFloat(sellTotal).toFixed(4)}</span>
               <span className="text-sm text-gray-400">USDT</span>
             </div>
 
-
-
-
             <div className="text-right text-xs text-gray-400 min-h-[20px]">
-              ≈ {parseFloat(sellTotal).toFixed(4)} USD
+              {sellAttempted && (isSellAmountError || !isAskPriceValid) ? (
+                <span className="text-red-500">
+                  {!isAskPriceValid ? "Price not available" : 
+                   isSellAmountEmpty ? "Please enter the amount" : "Your balance is insufficient"}
+                </span>
+              ) : (
+                <>≈ {parseFloat(sellTotal).toFixed(4)} USD</>
+              )}
             </div>
 
             <button
               className="w-full py-2 bg-red-600 text-white rounded-md font-semibold transition hover:bg-red-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={() => {
-                if (!isSellAmountValid) {
-                  alert("จำนวนเหรียญไม่พอ!");
-                  return;
+                setSellAttempted(true);
+                
+                // เช็คว่า amount > 0 และไม่เกินจำนวนที่มีอยู่
+                if (sellAmount > 0 && sellAmount <= btcBalance && askPrice > 0) {
+                  alert(`Sell ${sellAmount} ${mainSymbol}`);
                 }
-                alert(`Sell ${sellAmount} ${mainSymbol}`);
               }}
-              disabled={isSellDisabled}
             >
               Sell
             </button>

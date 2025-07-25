@@ -32,8 +32,7 @@ export default function TradePage() {
 
             <OrderBox mainSymbol={selectedSymbol} />
 
-            <button className="hover:bg-red-300">test</button>
-
+            {/* <button className="hover:bg-red-300">test</button> */}
 
             <TradeHistoryTable />
 
