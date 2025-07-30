@@ -47,11 +47,6 @@ const TradeHistoryTable = ({ transactions }: Props) => {
     },
   ];
 
-  const isTradeLike = [
-    "Trade History",
-    "Open Orders",
-    "Order History",
-  ].includes(activeTab);
   const isTradeTab = tabs.includes(activeTab);
 
   const formatDateTime = (date: Date) => {
@@ -97,7 +92,9 @@ const TradeHistoryTable = ({ transactions }: Props) => {
         </div>
       </div>
 
-      {isTradeLike && (
+      {["Trade History", "Open Orders", "Order History"].includes(
+        activeTab
+      ) && (
         <div className="flex gap-3 px-6 py-4 bg-white">
           {periods.map((period) => (
             <button
@@ -116,7 +113,9 @@ const TradeHistoryTable = ({ transactions }: Props) => {
       )}
 
       <div className="bg-white">
-        {isTradeLike ? (
+        {["Trade History", "Open Orders", "Order History"].includes(
+          activeTab
+        ) ? (
           <div className="grid grid-cols-8 gap-4 px-6 py-2 text-xs text-gray-500 font-semibold">
             <div>Date</div>
             <div>Time</div>
@@ -125,8 +124,7 @@ const TradeHistoryTable = ({ transactions }: Props) => {
             <div>Price</div>
             <div>Amount</div>
             <div>Fee (USD)</div>
-            <div className="text-right">Total (USD)</div>{" "}
-            {/* เพิ่ม text-right ตรงนี้ */}
+            <div className="text-right">Total (USD)</div>
           </div>
         ) : activeTab === "Unrealized P&L" ? (
           <div className="grid grid-cols-7 gap-4 px-6 py-2 text-xs text-gray-500 font-semibold">
@@ -142,7 +140,8 @@ const TradeHistoryTable = ({ transactions }: Props) => {
       </div>
 
       <div className="bg-white">
-        {isTradeLike &&
+        {/* SHOW TRANSACTIONS ONLY IN "Trade History" TAB */}
+        {activeTab === "Trade History" &&
           transactions.map((tx, idx) => (
             <div
               key={tx.id}
@@ -168,6 +167,7 @@ const TradeHistoryTable = ({ transactions }: Props) => {
             </div>
           ))}
 
+        {/* SHOW UNREALIZED ONLY IN "Unrealized P&L" TAB */}
         {activeTab === "Unrealized P&L" &&
           unrealized.map((row, idx) => (
             <div
@@ -191,6 +191,7 @@ const TradeHistoryTable = ({ transactions }: Props) => {
               </div>
             </div>
           ))}
+        {/* ในอนาคตสามารถแสดงข้อมูลอื่นสำหรับ Open Orders, Order History ได้ที่นี่ */}
       </div>
 
       {activeTab === "Unrealized P&L" && (
