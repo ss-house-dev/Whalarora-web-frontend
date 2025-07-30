@@ -1,14 +1,14 @@
-import Navbar from "@/components/ui/Navbar"
+import Navbar from "@/components/ui/Navbar";
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode
+  children: React.ReactNode;
 }) {
-    return (
-        <>
-            <Navbar />
-            <div>{children}</div>
-        </>
-    )
+  return (
+    <>
+      <Navbar />
+      <div>{children}</div>
+    </>
+  );
 }
