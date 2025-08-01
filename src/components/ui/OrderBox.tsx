@@ -534,7 +534,7 @@ export default function OrderBox({
                   ? "bg-blue-500 text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
-              onClick={() => setTab(type as any)}
+              onClick={() => setTab(type as "limit" | "market" | "stop")}
             >
               {type.charAt(0).toUpperCase() + type.slice(1)} order
             </button>
