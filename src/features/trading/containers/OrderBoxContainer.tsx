@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useBalance } from "../contexts/BalanceContext";
-import { useCryptoPrice } from "@/app/main/trading/hooks/useCryptoPrice";
-import type { Transaction } from "@/app/main/trading/components/TradeHistoryTable";
-import OrderBox from "@/app/main/trading/components/OrderBox";
+import { useCryptoPrice } from "@/features/trading/hooks/useCryptoPrice";
+import type { Transaction } from "@/features/trading/components/TradeHistoryTable";
+import OrderBox from "@/features/trading/components/OrderBox";
 
 // ฟังก์ชันแปลง symbol ยาวเป็นแบบ BTC/USDT
 function getShortSymbol(symbol: string): string {

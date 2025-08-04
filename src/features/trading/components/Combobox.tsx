@@ -83,7 +83,6 @@ export function Combobox({
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "#1F4293";
                     e.currentTarget.style.color = "white";
-                    // เปลี่ยนสี CheckIcon เป็นสีขาว
                     const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
                       checkIcon.style.color = "white";
@@ -92,7 +91,6 @@ export function Combobox({
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "";
                     e.currentTarget.style.color = "";
-                    // เปลี่ยนสี CheckIcon กลับเป็นสีเดิม
                     const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
                       checkIcon.style.color = "";

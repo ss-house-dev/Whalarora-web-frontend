@@ -191,7 +191,6 @@ const TradeHistoryTable = ({ transactions }: Props) => {
               </div>
             </div>
           ))}
-        {/* ในอนาคตสามารถแสดงข้อมูลอื่นสำหรับ Open Orders, Order History ได้ที่นี่ */}
       </div>
 
       {activeTab === "Unrealized P&L" && (

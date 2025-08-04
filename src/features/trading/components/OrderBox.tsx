@@ -43,8 +43,8 @@ interface OrderBoxProps {
   handleSell: () => void;
   extractBaseSymbol: (symbol?: string) => string;
   error: boolean;
-  isBuyAmountEmpty: boolean; // Added
-  isSellAmountEmpty: boolean; // Added
+  isBuyAmountEmpty: boolean; 
+  isSellAmountEmpty: boolean; 
 }
 
 export default function OrderBox({
@@ -87,8 +87,8 @@ export default function OrderBox({
   handleSell,
   extractBaseSymbol,
   error,
-  isBuyAmountEmpty, // Added to destructuring
-  isSellAmountEmpty, // Added to destructuring
+  isBuyAmountEmpty, 
+  isSellAmountEmpty, 
 }: OrderBoxProps) {
   const shouldShowBuyRedBorder =
     (buyAttempted && (isBuyAmountError || isBuyPriceEmpty)) ||
@@ -241,7 +241,7 @@ export default function OrderBox({
                     ? tab === "stop"
                       ? "Please enter stop and limit prices"
                       : "Please enter the price"
-                    : isBuyAmountEmpty // Now properly referenced
+                    : isBuyAmountEmpty 
                     ? "Please enter the amount"
                     : "Your balance is insufficient"}
                 </span>
@@ -319,7 +319,7 @@ export default function OrderBox({
                     ? tab === "stop"
                       ? "Please enter stop and limit prices"
                       : "Please enter the price"
-                    : isSellAmountEmpty // Now properly referenced
+                    : isSellAmountEmpty 
                     ? "Please enter the amount"
                     : "Your balance is insufficient"}
                 </span>

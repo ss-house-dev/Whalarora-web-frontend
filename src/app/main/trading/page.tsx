@@ -1,22 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { Transaction } from "@/app/main/trading/components/TradeHistoryTable";
-import AdvancedChart from "@/app/main/trading/components/Chart";
-import { Combobox } from "@/app/main/trading/components/Combobox";
-import { PriceWidget } from "./components/PriceWidget";
-import OrderBoxContainer from "@/app/main/trading/containers/OrderBoxContainer"; // Changed import
+import type { Transaction } from "@/features/trading/components/TradeHistoryTable";
+import AdvancedChart from "@/features/trading/components/Chart";
+import { Combobox } from "@/features/trading/components/Combobox";
+import { PriceWidget } from "../../../features/trading/components/PriceWidget";
+import OrderBoxContainer from "@/features/trading/containers/OrderBoxContainer"; // Changed import
 import React from "react";
-import AlertBox from "@/app/main/trading/components/AlertBox";
-import TradeHistoryTable from "@/app/main/trading/components/TradeHistoryTable";
+import AlertBox from "@/features/trading/components/AlertBox";
+import TradeHistoryTable from "@/features/trading/components/TradeHistoryTable";
 
 export default function TradePage() {
   const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
-  const [coin, setCoin] = useState("BTC");
-
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // --------- สำหรับ AlertBox ---------
   const [alert, setAlert] = useState<{
     title: string;
     message: React.ReactNode;
@@ -26,7 +23,6 @@ export default function TradePage() {
     setAlert({ title, message });
   };
 
-  // รับธุรกรรมใหม่จาก OrderBoxContainer แล้วเพิ่มเข้า state
   const handleNewTransaction = (tx: Transaction) => {
     setTransactions((prev) => [tx, ...prev]);
   };

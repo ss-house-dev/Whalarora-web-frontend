@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCryptoPrice } from '@/app/main/trading/hooks/useCryptoPrice'
+import { useCryptoPrice } from '@/features/trading/hooks/useCryptoPrice'
 
 interface PriceWidgetProps {
   symbol: string
@@ -22,11 +22,9 @@ export const PriceWidget = ({ symbol }: PriceWidgetProps) => {
   console.log('Raw data from API:', data)
   console.log('Price field:', data.price, 'Type:', typeof data.price)
 
-  // ลองใช้ lastPrice แทน price ถ้า price ไม่มีค่า
   const rawPrice = data.price || data.lastPrice
   console.log('Using price value:', rawPrice)
 
-  // ตรวจสอบและแปลงค่าให้ปลอดภัย
   const price = rawPrice ? parseFloat(rawPrice) : 0
   const change = data.priceChange ? parseFloat(data.priceChange) : 0
   const changePercent = data.priceChangePercent ? parseFloat(data.priceChangePercent) : 0
