@@ -24,6 +24,7 @@ const AdvancedChart = ({ symbol }: ChartProps) => {
         withdateranges={true}
         width="100%"
         height={600}
+        theme="dark"
         // autosize={true}
         key={symbol} // เพิ่ม key เพื่อให้ component re-render เมื่อ symbol เปลี่ยน
       />

@@ -1,7 +1,7 @@
 import { Anuphan } from 'next/font/google'
 import type { Metadata } from 'next'
 import './globals.css'
-import { BalanceProvider } from '@/components/contexts/BalanceContext'
+import { BalanceProvider } from '@/app/main/trading/contexts/BalanceContext'
 
 
 const anuphan = Anuphan({

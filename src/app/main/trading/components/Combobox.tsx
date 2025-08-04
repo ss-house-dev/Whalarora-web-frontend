@@ -42,15 +42,15 @@ const binanceCoins = [
   },
 ];
 
-interface ExampleComboboxProps {
+interface ComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
 }
 
-export function ExampleCombobox({
+export function Combobox({
   value,
   onValueChange,
-}: ExampleComboboxProps) {
+}: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
