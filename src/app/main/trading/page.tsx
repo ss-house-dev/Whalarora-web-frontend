@@ -7,7 +7,7 @@ import { Combobox } from "@/app/main/trading/components/Combobox";
 import { PriceWidget } from "./components/PriceWidget";
 import OrderBoxContainer from "@/app/main/trading/containers/OrderBoxContainer"; // Changed import
 import React from "react";
-import AlertBox from "@/components/ui/AlertBox";
+import AlertBox from "@/app/main/trading/components/AlertBox";
 import TradeHistoryTable from "@/app/main/trading/components/TradeHistoryTable";
 
 export default function TradePage() {

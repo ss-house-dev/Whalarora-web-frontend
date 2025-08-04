@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCryptoPrice } from '@/hooks/useCryptoPrice'
+import { useCryptoPrice } from '@/app/main/trading/hooks/useCryptoPrice'
 
 interface PriceWidgetProps {
   symbol: string

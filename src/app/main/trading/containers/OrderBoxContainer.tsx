@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useBalance } from "../contexts/BalanceContext";
-import { useCryptoPrice } from "@/hooks/useCryptoPrice";
+import { useCryptoPrice } from "@/app/main/trading/hooks/useCryptoPrice";
 import type { Transaction } from "@/app/main/trading/components/TradeHistoryTable";
 import OrderBox from "@/app/main/trading/components/OrderBox";
 
