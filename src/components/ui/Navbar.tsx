@@ -9,7 +9,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useBalance } from "@/components/contexts/BalanceContext";
+import { useBalance } from "@/features/trading/contexts/BalanceContext";
 
 export default function Navbar() {
     const Router = useRouter();
