@@ -1,0 +1,51 @@
+# กำหนดเวอร์ชันไฟล์ compose
+version: "3.8"
+
+# section "services" คือ กลุ่ม container ที่จะรันในโปรเจกต์นี้
+services:
+  # --- ส่วนของ frontend (Next.js) ---
+  frontend:
+    # สร้าง image จาก Dockerfile ในโฟลเดอร์นี้ (.)
+    build: .
+    # ตั้งชื่อ container (ช่วยให้หาเจอและ debug ง่าย)
+    container_name: whalarora-frontend
+    # เปิด port 3000 บนเครื่อง แล้วเชื่อมกับ port 3000 ใน container
+    ports:
+      - "3000:3000"
+    # ถ้ามีการตั้ง environment variable เฉพาะ container ให้ใส่ใน section นี้
+    # environment:
+    #   NEXT_PUBLIC_API_URL: "https://api.example.com"
+    #   NODE_ENV: "production"
+    # กรณีอยาก hot reload ให้ mount โค้ดในเครื่องเข้าไปใน container
+    # volumes:
+    #   - ./:/app
+    # ตั้งให้ container restart ใหม่อัตโนมัติถ้าพัง (เผื่อ production)
+    # restart: unless-stopped
+
+  # --- ตัวอย่าง backend (comment ไว้เผื่อมี backend ภายหลัง) ---
+  # backend:
+  #   build: ./backend
+  #   container_name: whalora-backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     DATABASE_URL: "postgresql://user:pass@db:5432/whalora"
+  #   depends_on:
+  #     - db
+
+  # --- ตัวอย่าง database (Postgres ปล. ยังไม่ได้ sync) สำหรับใช้เก็บข้อมูล ---
+  # db:
+  #   image: postgres:15
+  #   container_name: whalora-db
+  #   environment:
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: pass
+  #     POSTGRES_DB: whalora
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: always
+# --- ส่วน volumes (พื้นที่เก็บข้อมูลของ db จะไม่หายเวลาหยุด container) ---
+# volumes:
+#   postgres_data:
