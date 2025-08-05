@@ -7,7 +7,7 @@ export default function Home() {
   const Router = useRouter();
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat pt-5"
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/bg.png)`,
       }}
@@ -15,9 +15,9 @@ export default function Home() {
       <header
         style={{
           boxShadow:
-            "0 4px 30px rgba(0,0,0,0.3), 2px -2px 20px 0px #FFFFFF40 inset",
+            "0 4px 30px rgba(0,0,0,0.3), 2px -2px 20px 0px #FFFFFF30 inset",
         }}
-        className="relative z-10 flex justify-between items-center px-6 py-4 mx-10 rounded-2xl bg-white/5 backdrop-blur-none border border-white/10"
+        className="relative z-10 flex justify-between items-center px-10 py-2 mx-25 rounded-b-2xl bg-white/5 backdrop-blur-none border border-white/10"
       >
         <div
           onClick={() => Router.push("/")}
@@ -26,7 +26,7 @@ export default function Home() {
           <img
             src="logo.png"
             alt="Logo"
-            className="w-15 h-15 object-cover rounded-full"
+            className="w-10 h-10 object-cover rounded-full"
           />
         </div>
         <button

@@ -5,7 +5,7 @@ import type { Transaction } from "@/features/trading/components/TradeHistoryTabl
 import AdvancedChart from "@/features/trading/components/Chart";
 import { Combobox } from "@/features/trading/components/Combobox";
 import { PriceWidget } from "../../../features/trading/components/PriceWidget";
-import OrderBoxContainer from "@/features/trading/containers/OrderBoxContainer"; // Changed import
+import OrderBoxContainer from "@/features/trading/containers/OrderBoxContainer"; 
 import React from "react";
 import AlertBox from "@/features/trading/components/AlertBox";
 import TradeHistoryTable from "@/features/trading/components/TradeHistoryTable";
