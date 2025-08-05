@@ -42,15 +42,15 @@ const binanceCoins = [
   },
 ];
 
-interface ExampleComboboxProps {
+interface ComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
 }
 
-export function ExampleCombobox({
+export function Combobox({
   value,
   onValueChange,
-}: ExampleComboboxProps) {
+}: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -83,7 +83,6 @@ export function ExampleCombobox({
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "#1F4293";
                     e.currentTarget.style.color = "white";
-                    // เปลี่ยนสี CheckIcon เป็นสีขาว
                     const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
                       checkIcon.style.color = "white";
@@ -92,7 +91,6 @@ export function ExampleCombobox({
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "";
                     e.currentTarget.style.color = "";
-                    // เปลี่ยนสี CheckIcon กลับเป็นสีเดิม
                     const checkIcon = e.currentTarget.querySelector("svg");
                     if (checkIcon) {
                       checkIcon.style.color = "";

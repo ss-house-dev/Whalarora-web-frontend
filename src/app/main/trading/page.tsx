@@ -1,23 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { ExampleCombobox } from "@/components/ui/example-combobox";
-import { PriceWidget } from "@/components/ui/PriceWidget";
-import Chart from "@/components/ui/chart";
-import OrderBox from "@/components/ui/OrderBox";
-import TradeHistoryTable, {
-  Transaction,
-} from "@/components/ui/TradeHistoryTable";
+import type { Transaction } from "@/features/trading/components/TradeHistoryTable";
+import AdvancedChart from "@/features/trading/components/Chart";
+import { Combobox } from "@/features/trading/components/Combobox";
+import { PriceWidget } from "../../../features/trading/components/PriceWidget";
+import OrderBoxContainer from "@/features/trading/containers/OrderBoxContainer"; 
 import React from "react";
-import AlertBox from "@/components/ui/AlertBox";
+import AlertBox from "@/features/trading/components/AlertBox";
+import TradeHistoryTable from "@/features/trading/components/TradeHistoryTable";
 
 export default function TradePage() {
   const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
-  const [coin, setCoin] = useState("BTC");
-
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // --------- สำหรับ AlertBox ---------
   const [alert, setAlert] = useState<{
     title: string;
     message: React.ReactNode;
@@ -27,7 +23,6 @@ export default function TradePage() {
     setAlert({ title, message });
   };
 
-  // รับธุรกรรมใหม่จาก OrderBox แล้วเพิ่มเข้า state
   const handleNewTransaction = (tx: Transaction) => {
     setTransactions((prev) => [tx, ...prev]);
   };
@@ -36,7 +31,7 @@ export default function TradePage() {
     <div className="flex flex-col mx-30 mt-5 gap-5 min-h-screen pb-16">
       <div className="flex gap-2">
         <div>
-          <ExampleCombobox
+          <Combobox
             value={selectedSymbol}
             onValueChange={setSelectedSymbol}
           />
@@ -46,20 +41,19 @@ export default function TradePage() {
         </div>
       </div>
       <div className="flex-1">
-        <Chart symbol={selectedSymbol} />
+        <AdvancedChart symbol={selectedSymbol} />
       </div>
 
-      {/* ส่ง callback ให้ OrderBox */}
-      <OrderBox
+      {/* ส่ง callback ให้ OrderBoxContainer */}
+      <OrderBoxContainer
         mainSymbol={selectedSymbol}
         onNewTransaction={handleNewTransaction}
         onAlert={handleAlert}
       />
 
-      {/* แสดงประวัติการซื้อขาย */}
       <TradeHistoryTable transactions={transactions} />
 
-      {/* แสดง AlertBox ถ้ามี alert */}
+      {/* แสดง AlertBox */}
       {alert && (
         <AlertBox
           title={alert.title}
