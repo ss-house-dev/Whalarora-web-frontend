@@ -2,8 +2,8 @@ import Navbar from "@/shared/components/ui/Navbar";
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Whalalora | Trading',
-  description: 'Trading page',
+  title: 'Whalalora | Login',
+  description: 'Login page',
   icons: '/logo.png',
 }
 
@@ -14,7 +14,6 @@ export default function RootLayout({
 }) {
   return (
     <>
-      <Navbar />
       <div>{children}</div>
     </>
   );
