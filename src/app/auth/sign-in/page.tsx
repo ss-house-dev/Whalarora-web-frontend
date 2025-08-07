@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/Button';
+import { Input } from '@/shared/components/ui/input';
+import { Button } from '@/shared/components/ui/Button';
 
 // Define type for form data
 interface FormData {
