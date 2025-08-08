@@ -1,5 +1,5 @@
-import Navbar from "@/shared/components/ui/Navbar";
 import type { Metadata } from 'next'
+import "@/app/globals.css"; 
 
 export const metadata: Metadata = {
   title: 'Whalalora | Login',

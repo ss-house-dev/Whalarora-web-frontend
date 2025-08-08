@@ -1,46 +1,73 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import Image from "next/image";
-import { Eye, User } from "lucide-react";
+import { Eye, EyeOff, User, ChevronLeft } from "lucide-react";
 import FormInputIcon from "@/shared/components/ui/FormItemInput";
 import { Button } from "@/shared/components/ui/Button";
+import { useRouter } from "next/navigation";
 
 const SignInPage = () => {
+  const Router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  
   return (
-    <div className="flex item-center justify-center min-h-screen p-20">
+    <div className="flex items-center justify-center min-h-screen p-20">
       <div className="w-[520px] rounded-xl bg-[#081125] p-16">
         <div className="flex flex-col space-y-4 text-white">
+          {/* Back Button */}
+          <div>
+            <ChevronLeft
+              onClick={() => Router.push("/main/trading")}
+              className="h-7 w-7 text-gray-400 cursor-pointer"
+            />
+          </div>
           {/* Logo and Text Create */}
           <div className="flex flex-col items-center space-y-4">
             <Image
               src="/logo.png"
               alt="Logo"
-              width={100}
-              height={100}
-              className="rounded-full"
+              width={80}
+              height={80}
+              className="w-[80px] h-[80px] rounded-full object-cover"
             />
-            <p>Sign in an account</p>
+            <p className="text-lg font-bold">Sign in an account</p>
           </div>
-          {/* End Logo and Text Create */}
-
           {/* Username */}
           <div className="flex flex-col">
-             <FormInputIcon
+            <FormInputIcon
               label="Username"
+              placeholder="Enter your username"
               suffixIcon={<User className="h-4 w-4 text-gray-400" />}
             />
           </div>
-
           {/* Password */}
           <div className="flex flex-col">
             <FormInputIcon
               label="Password"
-              suffixIcon={<Eye className="h-4 w-4 text-gray-400" />}
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              suffixIcon={
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-300" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400 hover:text-gray-300" />
+                  )}
+                </button>
+              }
             />
           </div>
-
           {/* Button Confirm */}
           <div className="flex justify-center">
-            <Button variant="default" className="w-[70%]">
+            <Button variant="gradient" className="w-[100%] cursor-pointer">
               Confirm
             </Button>
           </div>
