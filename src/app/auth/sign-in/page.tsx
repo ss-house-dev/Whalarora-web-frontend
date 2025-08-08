@@ -57,9 +57,9 @@ const SignInPage = () => {
                   className="focus:outline-none"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-300" />
-                  ) : (
                     <Eye className="h-4 w-4 text-gray-400 hover:text-gray-300" />
+                  ) : (
+                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-300" />
                   )}
                 </button>
               }
