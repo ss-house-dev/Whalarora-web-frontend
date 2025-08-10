@@ -9,7 +9,7 @@ export default function Home() {
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/bg.png)`,
+        backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/image/bg.png)`,
       }}
     >
       <header
@@ -24,7 +24,7 @@ export default function Home() {
           className="flex items-center space-x-3 cursor-pointer"
         >
           <img
-            src="logo.png"
+            src="/image/logo.png"
             alt="Logo"
             className="w-10 h-10 object-cover rounded-full"
           />
