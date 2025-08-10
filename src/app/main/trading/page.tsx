@@ -1,5 +1,5 @@
 export default function TradePage() {
   return (
-    <div></div>
+    <div>Trading Page</div>
   )
 }
