@@ -33,8 +33,8 @@ export default function Navbar() {
       <div className="flex flex-row items-center gap-10">
         <Image
           onClick={() => router.push("/")}
-          src="/image/logo.png"
-          alt="Logo"
+          src="/assets/whalarora-logo.png"
+          alt="Whalarora Logo"
           width={45}
           height={45}
           className="rounded-full cursor-pointer"

@@ -128,8 +128,8 @@ export default function MarketOrder() {
           {/* SVG Icon */}
           <div className="absolute z-10">
             <Image
-              src="/image/amount.svg"
-              alt="Logo"
+              src="/currency-icons/dollar-icon.svg"
+              alt="Dollar Icon"
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -150,8 +150,8 @@ export default function MarketOrder() {
         {/* arrow */}
         <div className="flex justify-center mt-3">
           <Image
-            src="/image/vector.svg"
-            alt="Logo"
+            src="/currency-icons/currency-switch-icon.svg"
+            alt="Currency Switch Icon"
             width={20}
             height={20}
             className="rounded-full object-cover"
@@ -162,8 +162,8 @@ export default function MarketOrder() {
           {/* SVG Icon */}
           <div className="absolute left-0 z-10">
             <Image
-              src="/image/btc.svg"
-              alt="Logo"
+              src="/currency-icons/bitcoin-icon.svg"
+              alt="Bitcoin Icon"
               width={60}
               height={60}
               className="rounded-full object-cover"
