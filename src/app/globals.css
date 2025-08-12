@@ -47,8 +47,9 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Updated background with your gradient */
+  --background: linear-gradient(180deg, #0C1A38 43.88%, #1A5063 100%);
+  --foreground: oklch(0.985 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -81,7 +82,8 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  /* Keep the same gradient for dark mode */
+  --background: linear-gradient(180deg, #0C1A38 43.88%, #1A5063 100%);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -119,6 +121,14 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background: var(--background);
+    @apply text-foreground;
+   
+  }
+  
+  /* Make sure html element also has the gradient */
+  html {
+    background: var(--background);
+    
   }
 }
