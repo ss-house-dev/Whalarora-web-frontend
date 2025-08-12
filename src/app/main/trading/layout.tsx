@@ -2,10 +2,10 @@ import Navbar from "@/shared/components/ui/Navbar";
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Whalalora | Trading',
-  description: 'Trading page',
-  icons: '/logo.png',
-}
+  title: "Whalalora | Trading",
+  description: "Login page",
+  icons: "/logo.png",
+};
 
 export default function RootLayout({
   children,
@@ -13,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen">
+      <Navbar/>
       <div>{children}</div>
-    </>
+    </div>
   );
 }
