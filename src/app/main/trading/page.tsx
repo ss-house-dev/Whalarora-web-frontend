@@ -351,7 +351,7 @@ export default function MarketOrder() {
                         onBlur={handleAmountBlur}
                       />
                       <span
-                        className={`text-[16px] font-normal ${
+                        className={`text-[14px] font-normal ${
                           amount || isAmountFocused
                             ? "text-white"
                             : "text-[#5775B7]"
