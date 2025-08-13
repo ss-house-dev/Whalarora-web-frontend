@@ -59,14 +59,17 @@ export default function MarketOrder() {
   };
 
   // ฟังก์ชันคำนวณ BTC ที่จะได้รับ
-  const calculateReceiveBTC = (amountValue: string, priceValue: string): string => {
+  const calculateReceiveBTC = (
+    amountValue: string,
+    priceValue: string
+  ): string => {
     if (!amountValue || !priceValue) return "";
-    
+
     const numAmount = parseFloat(amountValue.replace(/,/g, ""));
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
-    
+
     if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
-    
+
     const btcAmount = numAmount / numPrice;
     return btcAmount.toFixed(9); // Bitcoin มักแสดง 8 ตำแหน่งทศนิยม
   };
