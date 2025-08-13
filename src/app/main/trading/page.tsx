@@ -230,9 +230,7 @@ export default function MarketOrder() {
   return (
     <div className="flex mx-[120px] gap-10 mt-10">
       {/* Left Side - Chart */}
-      <div className="flex-1 ">
-        {/* <AdvancedChart /> */}
-      </div>
+      <div className="flex-1 ">{/* <AdvancedChart /> */}</div>
 
       {/* Right Side - Buy/Sell Box */}
       <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[504px]">
@@ -297,7 +295,11 @@ export default function MarketOrder() {
                   {/* Button Matket Price */}
                   <Button
                     onClick={handleMarketClick}
-                    className="bg-[#1F4293] hover:bg-[#1F4293] cursor-pointer h-[28px] w-[68px] rounded-[6px]"
+                    className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
+                      priceLabel === "Price"
+                        ? "bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]"
+                        : "bg-[#1F4293] hover:bg-[#1F4293]"
+                    }`}
                   >
                     <span className="text-[10px] font-normal">Market</span>
                     <svg
