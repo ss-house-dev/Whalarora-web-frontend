@@ -12,26 +12,63 @@ export default function MarketOrder() {
   const [activeTab, setActiveTab] = useState("BUY");
   const inputRef = useRef<HTMLInputElement>(null);
   const [priceLabel, setPriceLabel] = React.useState("Price");
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // ดึงราคาจาก custom hook
   const marketPrice = useMarketPrice();
 
-  // ใช้ useState เพื่อประกาศ setMarketPrice
+  // State สำหรับเก็บ Limit Price ที่ผู้ใช้กรอก
+  const [limitPrice, setLimitPrice] = useState<string>("");
+
+  // ใช้ useState เพื่อเก็บค่า Market Price และ Limit Price
   const [price, setPrice] = useState<string>(marketPrice);
 
   // ฟังก์ชันที่จะเปลี่ยน label เมื่อคลิกที่ input
   const handleFocus = () => {
     setPriceLabel("Limit price");
-    inputRef.current?.focus();
+    setIsInputFocused(true);
+    setPrice("");
+    setLimitPrice("");
   };
 
   // ฟังก์ชันที่จะเปลี่ยนกลับเป็น "Price" เมื่อกดปุ่ม Market
   const handleMarketClick = () => {
     setPriceLabel("Price");
+    const formattedMarketPrice = formatToTwoDecimals(marketPrice);
+    setPrice(formattedMarketPrice);
+    setIsInputFocused(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPrice(e.target.value); // เมื่อกรอกข้อมูลใน input จะอัปเดตค่าใน state
+    const value = e.target.value;
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (value === "" || regex.test(value)) {
+      setLimitPrice(value);
+      setPrice(value);
+    }
+  };
+
+  useEffect(() => {
+    // เมื่อ marketPrice เปลี่ยน ให้กลับไปแสดงราคา Market Price
+    if (priceLabel === "Price") {
+      setPrice(marketPrice);
+    }
+  }, [marketPrice, priceLabel]);
+
+  const formatToTwoDecimals = (value: string): string => {
+    if (!value) return "";
+    const num = parseFloat(value);
+    if (isNaN(num)) return "";
+    return num.toFixed(2);
+  };
+
+  const handleBlur = () => {
+    if (price) {
+      const formattedPrice = formatToTwoDecimals(price);
+      setPrice(formattedPrice);
+      setLimitPrice(formattedPrice);
+    }
+    setIsInputFocused(false);
   };
 
   return (
@@ -82,20 +119,24 @@ export default function MarketOrder() {
               <Input
                 ref={inputRef}
                 type="number"
+                step="0.01"
                 className="w-[80px] rounded-lg bg-[#102047] p-1 text-white text-right"
                 onFocus={handleFocus}
-                value={marketPrice}
+                onBlur={handleBlur}
+                value={price}
                 onChange={handleChange}
               />
               <span className="text-sm font-normal">USD</span>
               {/* Edit Price */}
-              <PencilLine
-                className="h-5 w-5 shrink-0 cursor-pointer text-[#3A8AF7]"
-                onClick={() => {
-                  inputRef.current?.focus();
-                  handleFocus();
-                }}
-              />
+              {!isInputFocused && (
+                <PencilLine
+                  className="h-5 w-5 shrink-0 cursor-pointer text-[#3A8AF7]"
+                  onClick={() => {
+                    inputRef.current?.focus();
+                    handleFocus();
+                  }}
+                />
+              )}
               {/* Button Matket Price */}
               <Button
                 onClick={handleMarketClick}
