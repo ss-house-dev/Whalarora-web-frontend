@@ -3,14 +3,21 @@ import AdvancedChart from "@/features/trading/components/Chart";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { CircleQuestionMark, PencilLine } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 import Image from "next/image";
+import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 
 export default function MarketOrder() {
   const [activeTab, setActiveTab] = useState("BUY");
   const inputRef = useRef<HTMLInputElement>(null);
   const [priceLabel, setPriceLabel] = React.useState("Price");
+
+  // ดึงราคาจาก custom hook
+  const marketPrice = useMarketPrice();
+
+  // ใช้ useState เพื่อประกาศ setMarketPrice
+  const [price, setPrice] = useState<string>(marketPrice);
 
   // ฟังก์ชันที่จะเปลี่ยน label เมื่อคลิกที่ input
   const handleFocus = () => {
@@ -21,6 +28,10 @@ export default function MarketOrder() {
   // ฟังก์ชันที่จะเปลี่ยนกลับเป็น "Price" เมื่อกดปุ่ม Market
   const handleMarketClick = () => {
     setPriceLabel("Price");
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrice(e.target.value); // เมื่อกรอกข้อมูลใน input จะอัปเดตค่าใน state
   };
 
   return (
@@ -73,6 +84,8 @@ export default function MarketOrder() {
                 type="number"
                 className="w-[80px] rounded-lg bg-[#102047] p-1 text-white text-right"
                 onFocus={handleFocus}
+                value={marketPrice}
+                onChange={handleChange}
               />
               <span className="text-sm font-normal">USD</span>
               {/* Edit Price */}
@@ -140,9 +153,7 @@ export default function MarketOrder() {
           <div className="bg-[#212121] rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 w-[344px] h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-xs font-bold">Amount</span>
             <div className="flex gap-2">
-              <span className="text-sm font-bold text-[#92CAFE]">
-                2,500.00
-              </span>
+              <span className="text-sm font-bold text-[#92CAFE]">2,500.00</span>
               <span className="text-sm font-bold text-[#92CAFE]">USD</span>
             </div>
           </div>

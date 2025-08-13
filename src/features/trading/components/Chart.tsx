@@ -1,29 +1,30 @@
-  "use client";
+"use client";
+import dynamic from "next/dynamic";
 
-  import dynamic from "next/dynamic";
+const AdvancedRealTimeChart = dynamic(
+  () =>
+    import("react-ts-tradingview-widgets").then(
+      (mod) => mod.AdvancedRealTimeChart
+    ),
+  { ssr: false }
+);
 
-  const AdvancedRealTimeChart = dynamic(
-    () =>
-      import("react-ts-tradingview-widgets").then(
-        (mod) => mod.AdvancedRealTimeChart
-      ),
-    { ssr: false }
+const AdvancedChart = () => {
+  return (
+    <div className="w-full h-[600px] pr-[1px] rounded-2xl">
+      <AdvancedRealTimeChart
+        symbol="BINANCE:BTCUSDT"
+        allow_symbol_change={false}
+        save_image={true}
+        withdateranges={true}
+        width="100%"
+        height={600}
+        theme="dark"
+        interval="1"
+        autosize={true}
+      />
+    </div>
   );
+};
 
-  const AdvancedChart = () => {
-    return (
-      <div className="w-full h-[600px] pr-[1px] rounded-2xl">
-        <AdvancedRealTimeChart
-          symbol="BINANCE:BTCUSDT"
-          allow_symbol_change={false}
-          save_image={true}
-          withdateranges={true}
-          width="100%"
-          height={600}
-          theme="dark"
-        />
-      </div>
-    );
-  };
-
-  export default AdvancedChart;
+export default AdvancedChart;
