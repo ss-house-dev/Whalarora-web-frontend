@@ -1,13 +1,29 @@
 "use client";
 import * as React from "react";
 
-export default function DiscreteSlider() {
-  const markers = [0, 25, 50, 75, 100];      // หมุดคงเดิม
-  const [percent, setPercent] = React.useState(0); // เลือกได้ 0–100 (ต่อเนื่อง)
+interface DiscreteSliderProps {
+  value?: number;
+  onChange?: (percentage: number) => void;
+}
+
+export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps) {
+  const markers = [0, 25, 50, 75, 100];     
+  const [localPercent, setLocalPercent] = React.useState(0); 
   const barRef = React.useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = React.useState(false);
 
+  // ใช้ value จาก props หรือ local state
+  const percent = value !== undefined ? value : localPercent;
+
   const clamp = (v: number, min = 0, max = 100) => Math.min(Math.max(v, min), max);
+
+  const updatePercent = (newPercent: number) => {
+    if (onChange) {
+      onChange(newPercent);
+    } else {
+      setLocalPercent(newPercent);
+    }
+  };
 
   const percentFromClientX = (clientX: number) => {
     const el = barRef.current;
@@ -18,17 +34,17 @@ export default function DiscreteSlider() {
   };
 
   const handleBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    setPercent(percentFromClientX(e.clientX));
+    updatePercent(percentFromClientX(e.clientX));
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
-    setPercent(percentFromClientX(e.clientX));
+    updatePercent(percentFromClientX(e.clientX));
   };
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging) return;
-    setPercent(percentFromClientX(e.clientX));
+    updatePercent(percentFromClientX(e.clientX));
   };
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
@@ -36,10 +52,10 @@ export default function DiscreteSlider() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowRight") setPercent((p) => clamp(p + 1));
-    if (e.key === "ArrowLeft") setPercent((p) => clamp(p - 1));
-    if (e.key === "Home") setPercent(0);
-    if (e.key === "End") setPercent(100);
+    if (e.key === "ArrowRight") updatePercent(clamp(percent + 1));
+    if (e.key === "ArrowLeft") updatePercent(clamp(percent - 1));
+    if (e.key === "Home") updatePercent(0);
+    if (e.key === "End") updatePercent(100);
   };
 
   return (
@@ -92,14 +108,13 @@ export default function DiscreteSlider() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPercent(m);
+                  updatePercent(m);
                 }}
                 aria-label={`${m}%`}
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all"
                 style={{ left: `${m}%` }}
               >
                 {isEqual ? (
-                  // หมุดที่ตรงกับตำแหน่งปัจจุบัน: เขียวโปร่ง + ไส้ขาว
                   <span className="size-6 rounded-full bg-[rgba(38,246,186,0.5)] ring-1 ring-[rgba(38,246,186,0.5)] grid place-items-center">
                     <span className="block size-4 rounded-full bg-white" />
                   </span>
@@ -115,7 +130,7 @@ export default function DiscreteSlider() {
           })}
         </div>
 
-        {/* Thumb ลอยอิสระ (เลือกได้ทุก %) */}
+        {/* Thumb */}
         <div
           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 size-6 rounded-full bg-[rgba(38,246,186,0.5)] ring-1 ring-[rgba(38,246,186,0.5)] grid place-items-center pointer-events-none"
           style={{ left: `${percent}%` }}
