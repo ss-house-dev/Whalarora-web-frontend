@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 import Image from "next/image";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MarketOrder() {
   const [activeTab, setActiveTab] = useState("BUY");
@@ -230,196 +231,242 @@ export default function MarketOrder() {
     <div className="flex mx-[120px] gap-10 mt-10">
       {/* Left Side - Chart */}
       <div className="flex-1 ">
-        <AdvancedChart />
+        {/* <AdvancedChart /> */}
       </div>
 
       {/* Right Side - Buy/Sell Box */}
-      <div className="w-[384px] h-[502px] bg-[#081125] rounded-lg shadow-md p-5">
-        {/* Tab buttons */}
-        <div className="flex mb-7 bg-[#2D2D2D] rounded-lg">
-          <button
-            onClick={() => setActiveTab("BUY")}
-            className={`flex-1 py-1 px-4 rounded-lg text-sm font-bold cursor-pointer transition-all ${
-              activeTab === "BUY"
-                ? "bg-[linear-gradient(185deg,#309C7D_23.13%,#26F6BA_157.05%)] text-white"
-                : "bg-[#2D2D2D] text-gray-300"
-            }`}
-          >
-            BUY
-          </button>
+      <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[504px]">
+        <Tabs defaultValue="buy">
+          <TabsList className="w-full bg-[#2D2D2D]">
+            <TabsTrigger
+              value="buy"
+              className={`font-bold data-[state=active]:bg-[linear-gradient(185deg,_#309C7D_23.13%,_#26F6BA_157.05%)] h-[28px] cursor-pointer`}
+            >
+              Buy
+            </TabsTrigger>
+            <TabsTrigger
+              value="sell"
+              className={`font-bold data-[state=active]:bg-[linear-gradient(357deg,_#D84C4C_2.29%,_#722828_186.28%)] h-[28px] cursor-pointer`}
+            >
+              Sell
+            </TabsTrigger>
+          </TabsList>
 
-          <button
-            onClick={() => setActiveTab("SELL")}
-            className={`flex-1 py-1 px-4 rounded-lg text-sm font-bold cursor-pointer transition-all ${
-              activeTab === "SELL"
-                ? "bg-[linear-gradient(357deg,#D84C4C_2.29%,#722828_186.28%)] text-white"
-                : "bg-[#2D2D2D] text-gray-300"
-            }`}
-          >
-            SELL
-          </button>
-        </div>
+          <TabsContent value="buy" className="mt-7">
+            {/* Price input */}
+            <div className="space-y-7">
+              <div className="flex items-center rounded-lg bg-[#102047] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7]">
+                {/* Left Side - Price Label */}
+                <span className="text-[12px] font-normal text-[#5775B7]">
+                  {priceLabel}
+                </span>
 
-        {/* Price input */}
-        <div className="h-[44px] w-[344px]">
-          <div className="flex w-[344px] items-center rounded-xl bg-[#102047] px-3 py-2 justify-between min-h-[53px] border border-transparent focus-within:border-[#3A8AF7]">
-            {/* Left Side - Price Label */}
-            <span className="text-xs font-bold text-[#5775B7]">
-              {priceLabel}
-            </span>
+                {/* Right Side - Input + Icon + Button */}
+                <div className="flex items-center gap-2">
+                  {/* Input Market Price or Limit */}
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    className="w-[100px] text-[14px] font-normal rounded-lg bg-[#102047] p-1 text-white text-right border-none outline-none"
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    value={price}
+                    onChange={handleChange}
+                  />
+                  <span className="text-sm font-normal">USD</span>
+                  {/* Edit Price */}
+                  {!isInputFocused && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="16"
+                      viewBox="0 0 14 16"
+                      fill="none"
+                      className="h-4 w-4 shrink-0 cursor-pointer text-[#3A8AF7]"
+                      onClick={() => {
+                        inputRef.current?.focus();
+                        handleFocus();
+                      }}
+                    >
+                      <path
+                        d="M3.43225 12.4891H0.25V9.30683L8.82625 0.730576C8.9669 0.589973 9.15763 0.510986 9.3565 0.510986C9.55537 0.510986 9.7461 0.589973 9.88675 0.730576L12.0085 2.85158C12.0782 2.92123 12.1336 3.00395 12.1713 3.095C12.209 3.18604 12.2285 3.28364 12.2285 3.3822C12.2285 3.48076 12.209 3.57836 12.1713 3.66941C12.1336 3.76046 12.0782 3.84317 12.0085 3.91283L3.43225 12.4891ZM0.25 13.9891H13.75V15.4891H0.25V13.9891Z"
+                        fill="#3A8AF7"
+                      />
+                    </svg>
+                  )}
+                  {/* Button Matket Price */}
+                  <Button
+                    onClick={handleMarketClick}
+                    className="bg-[#1F4293] hover:bg-[#1F4293] cursor-pointer h-[28px] w-[68px] rounded-[6px]"
+                  >
+                    <span className="text-[10px] font-normal">Market</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                    >
+                      <path
+                        d="M5.99998 11.4167C3.00835 11.4167 0.583313 8.99167 0.583313 6.00004C0.583313 3.00842 3.00835 0.583374 5.99998 0.583374C8.9916 0.583374 11.4166 3.00842 11.4166 6.00004C11.4166 8.99167 8.9916 11.4167 5.99998 11.4167ZM5.45831 7.62504V8.70837H6.54165V7.62504H5.45831ZM6.54165 6.734C6.97697 6.60279 7.35068 6.3196 7.59473 5.93598C7.83878 5.55237 7.93693 5.09386 7.87129 4.64396C7.80566 4.19406 7.58062 3.7827 7.23715 3.48479C6.89369 3.18688 6.45464 3.02225 5.99998 3.02087C5.56166 3.02074 5.13684 3.17248 4.79781 3.45029C4.45877 3.72809 4.22647 4.11479 4.14044 4.54458L5.20319 4.75746C5.23335 4.60657 5.30574 4.46734 5.41193 4.35598C5.51812 4.24462 5.65375 4.16571 5.80304 4.12842C5.95233 4.09114 6.10914 4.09701 6.25522 4.14536C6.40131 4.19371 6.53066 4.28254 6.62822 4.40153C6.72579 4.52052 6.78756 4.66477 6.80635 4.8175C6.82514 4.97022 6.80017 5.12514 6.73436 5.26423C6.66854 5.40332 6.56458 5.52086 6.43457 5.60318C6.30457 5.68549 6.15386 5.7292 5.99998 5.72921C5.85632 5.72921 5.71855 5.78628 5.61696 5.88786C5.51538 5.98944 5.45831 6.12722 5.45831 6.27087V7.08337H6.54165V6.734Z"
+                        fill="white"
+                      />
+                    </svg>
+                  </Button>
+                </div>
+              </div>
 
-            {/* Right Side - Input + Icon + Button */}
-            <div className="flex items-center gap-2">
-              {/* Input Market Price or Limit */}
-              <input
-                ref={inputRef}
-                type="text"
-                className="w-[90px] text-sm rounded-lg bg-[#102047] p-1 text-white text-right border-none outline-none"
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                value={price}
-                onChange={handleChange}
-              />
-              <span className="text-sm font-normal">USD</span>
-              {/* Edit Price */}
-              {!isInputFocused && (
-                <PencilLine
-                  className="h-5 w-5 shrink-0 cursor-pointer text-[#3A8AF7]"
-                  onClick={() => {
-                    inputRef.current?.focus();
-                    handleFocus();
-                  }}
+              {/* Available Balance */}
+              <div className="space-y-1">
+                <div className="flex justify-between mt-7">
+                  <div className="text-[10px] text-[#9AAACE]">
+                    Available Balance
+                  </div>
+                  <div className="flex flex-row gap-1 text-[10px] text-[#9AAACE]">
+                    <div>10,000.00</div>
+                    <div>USD</div>
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div className="relative">
+                  <div
+                    className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
+                      !isAmountValid
+                        ? "bg-[#102047] border-[#D84C4C]"
+                        : "bg-[#102047] border-transparent focus-within:border-[#3A8AF7]"
+                    }`}
+                  >
+                    <span className="text-[12px] font-normal text-[#5775B7]">
+                      Amount
+                    </span>
+                    <div className="flex items-center gap-2 text-[16px]">
+                      <Input
+                        ref={amountInputRef}
+                        type="text"
+                        className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                        value={amount}
+                        onChange={handleAmountChange}
+                        onFocus={handleAmountFocus}
+                        onBlur={handleAmountBlur}
+                      />
+                      <span
+                        className={`text-[16px] font-normal ${
+                          amount || isAmountFocused
+                            ? "text-white"
+                            : "text-[#5775B7]"
+                        }`}
+                      >
+                        USD
+                      </span>
+                    </div>
+                  </div>
+                  {!isAmountValid && (
+                    <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
+                      Insufficient balance
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Slider - ส่งค่า value และ onChange callback */}
+              <div className="mx-3">
+                <DiscreteSlider
+                  value={sliderValue}
+                  onChange={handleSliderChange}
                 />
-              )}
-              {/* Button Matket Price */}
-              <Button
-                onClick={handleMarketClick}
-                className="bg-[#1F4293] hover:bg-[#1F4293] cursor-pointer"
-              >
-                <span className="text-xs">Market</span>
-                <CircleQuestionMark className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        {/* Available Balance */}
-        <div className="flex justify-between mt-7">
-          <div className="text-xs text-[#9AAACE]">Available Balance</div>
-          <div className="flex flex-row gap-1 text-xs text-[#9AAACE]">
-            <div>10,000.00</div>
-            <div>USD</div>
-          </div>
-        </div>
-        {/* Amount */}
-        <div className="h-[44px] w-[344px] mt-1">
-          <div
-            className={`flex w-[344px] items-center rounded-xl px-3 py-3 justify-between border min-h-[53px] ${
-              !isAmountValid
-                ? "bg-[#102047] border-[#D84C4C]"
-                : "bg-[#102047] border-transparent focus-within:border-[#3A8AF7]"
-            }`}
-          >
-            <span className="text-xs font-bold text-[#5775B7]">Amount</span>
-            <div className="flex items-center gap-2 text-sm">
-              <input
-                ref={amountInputRef}
-                type="text"
-                className="w-[220px] rounded-lg bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
-                value={amount}
-                onChange={handleAmountChange}
-                onFocus={handleAmountFocus}
-                onBlur={handleAmountBlur}
-              />
-              <span
-                className={`text-sm font-normal ${
-                  amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
-                }`}
-              >
-                USD
-              </span>
-            </div>
-          </div>
-          {!isAmountValid && (
-            <span className="text-xs text-[#D84C4C] mt-1">
-              Insufficient balance
-            </span>
-          )}
-        </div>
-        {/* Slider - ส่งค่า value และ onChange callback */}
-        <div className="mt-11 mx-3">
-          <DiscreteSlider value={sliderValue} onChange={handleSliderChange} />
-        </div>
-        {/* Amount Cal */}
-        <div className="relative flex items-center mt-7">
-          {/* SVG Icon */}
-          <div className="absolute z-10">
-            <Image
-              src="/currency-icons/dollar-icon.svg"
-              alt="Dollar Icon"
-              width={60}
-              height={60}
-              className="rounded-full object-cover"
-            />
-          </div>
+              </div>
+              <div className="space-y-4">
+                {/* Amount Cal */}
+                <div className="relative flex items-center">
+                  {/* SVG Icon */}
+                  <div className="absolute z-10">
+                    <Image
+                      src="/currency-icons/dollar-icon.svg"
+                      alt="Dollar Icon"
+                      width={60}
+                      height={60}
+                      className="rounded-full object-cover"
+                    />
+                  </div>
 
-          {/* สี่เหลี่ยมด้านหลัง */}
-          <div className="bg-[#212121] rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 w-[344px] h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-xs font-bold">Amount</span>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                className="w-[90px] text-sm rounded-lg bg-[#212121] p-1 text-white text-right border-none outline-none"
-                value={amount}
-                readOnly
-              />
-              <span className="text-sm font-bold text-[#92CAFE]">USD</span>
-            </div>
-          </div>
-        </div>
-        {/* arrow */}
-        <div className="flex justify-center mt-3">
-          <Image
-            src="/currency-icons/currency-switch-icon.svg"
-            alt="Currency Switch Icon"
-            width={20}
-            height={20}
-            className="rounded-full object-cover"
-          />
-        </div>
-        {/* Receive */}
-        <div className="relative flex items-center mt-3">
-          {/* SVG Icon */}
-          <div className="absolute left-0 z-10">
-            <Image
-              src="/currency-icons/bitcoin-icon.svg"
-              alt="Bitcoin Icon"
-              width={60}
-              height={60}
-              className="rounded-full object-cover"
-            />
-          </div>
+                  {/* สี่เหลี่ยมด้านหลัง */}
+                  <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
+                    <span className="text-[#92CAFE] text-[12px] font-normal">
+                      Amount
+                    </span>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        className="w-[90px] text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
+                        value={amount}
+                        readOnly
+                      />
+                      <span className="text-[16px] font-normal text-[#92CAFE]">
+                        USD
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-          {/* สี่เหลี่ยมด้านหลัง */}
-          <div className="bg-[#17306B] rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 w-[344px] h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-xs font-bold">Receive</span>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                className="w-[100px] text-sm rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
-                value={receiveBTC}
-                readOnly
-              />
-              <span className="text-sm font-bold text-[#92CAFE]">BTC</span>
-            </div>
-          </div>
-        </div>
+                {/* arrow */}
+                <div className="flex justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      d="M7.00003 13.6355L13.207 7.4285L11.793 6.0145L7.00003 10.8075L2.20703 6.0145L0.79303 7.4285L7.00003 13.6355ZM7.00003 7.9855L13.207 1.7785L11.793 0.364502L7.00003 5.1575L2.20703 0.364502L0.79303 1.7785L7.00003 7.9855Z"
+                      fill="#49B6AE"
+                    />
+                  </svg>
+                </div>
 
-        {/* Button */}
-        <div className="mt-8 w-full">
-          <Button className="w-full bg-[#309C7D] hover:bg-[#28886C] cursor-pointer text-base font-semibold">
-            Buy
-          </Button>
-        </div>
+                {/* Receive */}
+                <div className="relative flex items-center mt-3">
+                  {/* SVG Icon */}
+                  <div className="absolute left-0 z-10">
+                    <Image
+                      src="/currency-icons/bitcoin-icon.svg"
+                      alt="Bitcoin Icon"
+                      width={60}
+                      height={60}
+                      className="rounded-full object-cover"
+                    />
+                  </div>
+
+                  {/* สี่เหลี่ยมด้านหลัง */}
+                  <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
+                    <span className="text-[#92CAFE] text-[12px] font-normal">
+                      Receive
+                    </span>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
+                        value={receiveBTC}
+                        readOnly
+                      />
+                      <span className="text-[16px] font-normal text-[#92CAFE]">
+                        BTC
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Button */}
+              <div className="mt-8 w-full">
+                <Button className="w-full rounded-lg bg-[#309C7D] hover:bg-[#28886C] cursor-pointer text-base font-semibold">
+                  Buy
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sell"></TabsContent>
+        </Tabs>
       </div>
     </div>
   );
