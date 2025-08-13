@@ -27,6 +27,8 @@ export default function MarketOrder() {
   const handleFocus = () => {
     setPriceLabel("Limit price");
     setIsInputFocused(true);
+    setPrice("");
+    setLimitPrice("");
   };
 
   // ฟังก์ชันที่จะเปลี่ยนกลับเป็น "Price" เมื่อกดปุ่ม Market
