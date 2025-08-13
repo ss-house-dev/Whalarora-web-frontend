@@ -31,26 +31,44 @@ export default function MarketOrder() {
   // ใช้ useState เพื่อเก็บค่า Market Price และ Limit Price
   const [price, setPrice] = useState<string>(marketPrice);
 
+  // เพิ่ม state สำหรับเก็บจำนวน BTC ที่จะได้รับ
+  const [receiveBTC, setReceiveBTC] = useState<string>("");
+
   // ฟังก์ชัน helper สำหรับ format ตัวเลขด้วย comma
   const formatNumberWithComma = (value: string): string => {
     if (!value) return "";
-    
+
     // เอาส่วนที่เป็นตัวเลขออกมา (ไม่รวม comma)
     const numericValue = value.replace(/,/g, "");
-    
+
     // ตรวจสอบว่าเป็นตัวเลขที่ถูกต้องหรือไม่
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-    
+
     // แยกส่วนจุดทศนิยม
-    const parts = numericValue.split('.');
+    const parts = numericValue.split(".");
     const integerPart = parts[0];
     const decimalPart = parts[1];
-    
+
     // เพิ่ม comma ในส่วนจำนวนเต็ม
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
     // รวมกลับเป็น string เดียว
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    return decimalPart !== undefined
+      ? `${formattedInteger}.${decimalPart}`
+      : formattedInteger;
+  };
+
+  // ฟังก์ชันคำนวณ BTC ที่จะได้รับ
+  const calculateReceiveBTC = (amountValue: string, priceValue: string): string => {
+    if (!amountValue || !priceValue) return "";
+    
+    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+    const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+    
+    if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
+    
+    const btcAmount = numAmount / numPrice;
+    return btcAmount.toFixed(9); // Bitcoin มักแสดง 8 ตำแหน่งทศนิยม
   };
 
   // ฟังก์ชัน helper สำหรับตรวจสอบ format ที่ยอมให้
@@ -94,7 +112,7 @@ export default function MarketOrder() {
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    
+
     // ตรวจสอบ format
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       // Format ด้วย comma ทันที
@@ -104,8 +122,9 @@ export default function MarketOrder() {
       // ตรวจสอบความถูกต้องของจำนวน
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
-      const isValid = inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
-      
+      const isValid =
+        inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
+
       // ถ้าเงินไม่พอให้เซ็ต slider เป็น 0%
       if (!isValid && inputValue !== "") {
         setSliderValue(0);
@@ -114,7 +133,7 @@ export default function MarketOrder() {
         const sliderPercentage = calculateSliderPercentage(inputValue);
         setSliderValue(sliderPercentage);
       }
-      
+
       setIsAmountValid(isValid);
     }
   };
@@ -151,7 +170,7 @@ export default function MarketOrder() {
   // แก้ไขฟังก์ชัน handleChange สำหรับ Price input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       // Format ด้วย comma ทันที
       const formattedValue = formatNumberWithComma(inputValue);
@@ -167,6 +186,13 @@ export default function MarketOrder() {
       setPrice(formattedPrice);
     }
   }, [marketPrice, priceLabel]);
+
+  // useEffect สำหรับคำนวณ BTC ที่จะได้รับ
+  useEffect(() => {
+    const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
+    const btcAmount = calculateReceiveBTC(amount, currentPrice);
+    setReceiveBTC(btcAmount);
+  }, [amount, price, limitPrice, marketPrice, priceLabel]);
 
   const formatToTwoDecimalsWithComma = (value: string): string => {
     if (!value) return "";
@@ -196,7 +222,6 @@ export default function MarketOrder() {
       setLimitPrice(formattedMarketPrice);
     }
   }, [marketPrice, priceLabel]);
-  
 
   return (
     <div className="flex mx-[120px] gap-10 mt-10">
@@ -302,9 +327,13 @@ export default function MarketOrder() {
                 onFocus={handleAmountFocus}
                 onBlur={handleAmountBlur}
               />
-              <span className={`text-sm font-normal ${
-                (amount || isAmountFocused) ? "text-white" : "text-[#5775B7]"
-              }`}>USD</span>
+              <span
+                className={`text-sm font-normal ${
+                  amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
+                }`}
+              >
+                USD
+              </span>
             </div>
           </div>
           {!isAmountValid && (
@@ -333,8 +362,13 @@ export default function MarketOrder() {
           {/* สี่เหลี่ยมด้านหลัง */}
           <div className="bg-[#212121] rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 w-[344px] h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-xs font-bold">Amount</span>
-            <div className="flex gap-2">
-              <span className="text-sm font-bold text-[#92CAFE]">2,500.00</span>
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                className="w-[90px] text-sm rounded-lg bg-[#212121] p-1 text-white text-right border-none outline-none"
+                value={amount}
+                readOnly
+              />
               <span className="text-sm font-bold text-[#92CAFE]">USD</span>
             </div>
           </div>
@@ -365,10 +399,13 @@ export default function MarketOrder() {
           {/* สี่เหลี่ยมด้านหลัง */}
           <div className="bg-[#17306B] rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 w-[344px] h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-xs font-bold">Receive</span>
-            <div className="flex gap-2">
-              <span className="text-sm font-bold text-[#92CAFE]">
-                0.021701000
-              </span>
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                className="w-[100px] text-sm rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
+                value={receiveBTC}
+                readOnly
+              />
               <span className="text-sm font-bold text-[#92CAFE]">BTC</span>
             </div>
           </div>
