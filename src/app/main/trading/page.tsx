@@ -11,8 +11,16 @@ import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 export default function MarketOrder() {
   const [activeTab, setActiveTab] = useState("BUY");
   const inputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
   const [priceLabel, setPriceLabel] = React.useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isAmountFocused, setIsAmountFocused] = useState(false);
+  const [amount, setAmount] = useState<string>("");
+  const [isAmountValid, setIsAmountValid] = useState(true);
+  const AVAILABLE_BALANCE = 10000;
+
+  // เพิ่ม state สำหรับเก็บค่า slider percentage
+  const [sliderValue, setSliderValue] = useState<number>(0);
 
   // ดึงราคาจาก custom hook
   const marketPrice = useMarketPrice();
@@ -22,6 +30,50 @@ export default function MarketOrder() {
 
   // ใช้ useState เพื่อเก็บค่า Market Price และ Limit Price
   const [price, setPrice] = useState<string>(marketPrice);
+
+  // ฟังก์ชัน helper สำหรับ format ตัวเลขด้วย comma
+  const formatNumberWithComma = (value: string): string => {
+    if (!value) return "";
+    
+    // เอาส่วนที่เป็นตัวเลขออกมา (ไม่รวม comma)
+    const numericValue = value.replace(/,/g, "");
+    
+    // ตรวจสอบว่าเป็นตัวเลขที่ถูกต้องหรือไม่
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+    
+    // แยกส่วนจุดทศนิยม
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // เพิ่ม comma ในส่วนจำนวนเต็ม
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // รวมกลับเป็น string เดียว
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  };
+
+  // ฟังก์ชัน helper สำหรับตรวจสอบ format ที่ยอมให้
+  const isValidNumberFormat = (value: string): boolean => {
+    // ยอมให้มี comma, จุด, และตัวเลข
+    const numericValue = value.replace(/,/g, "");
+    return /^\d*\.?\d{0,2}$/.test(numericValue);
+  };
+
+  // ฟังก์ชันคำนวณเปอร์เซ็นต์จาก Amount
+  const calculateSliderPercentage = (amountValue: string): number => {
+    if (!amountValue) return 0;
+    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+    if (isNaN(numAmount) || numAmount <= 0) return 0;
+    const percentage = (numAmount / AVAILABLE_BALANCE) * 100;
+    return Math.min(percentage, 100); // ไม่ให้เกิน 100%
+  };
+
+  // ฟังก์ชันคำนวณ Amount จากเปอร์เซ็นต์
+  const calculateAmountFromPercentage = (percentage: number): string => {
+    const amount = (percentage / 100) * AVAILABLE_BALANCE;
+    return formatNumberWithComma(amount.toFixed(2));
+  };
 
   // ฟังก์ชันที่จะเปลี่ยน label เมื่อคลิกที่ input
   const handleFocus = () => {
@@ -34,42 +86,117 @@ export default function MarketOrder() {
   // ฟังก์ชันที่จะเปลี่ยนกลับเป็น "Price" เมื่อกดปุ่ม Market
   const handleMarketClick = () => {
     setPriceLabel("Price");
-    const formattedMarketPrice = formatToTwoDecimals(marketPrice);
+    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
     setPrice(formattedMarketPrice);
+    setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
   };
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // ตรวจสอบ format
+    if (inputValue === "" || isValidNumberFormat(inputValue)) {
+      // Format ด้วย comma ทันที
+      const formattedValue = formatNumberWithComma(inputValue);
+      setAmount(formattedValue);
+
+      // ตรวจสอบความถูกต้องของจำนวน
+      const numericValue = inputValue.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      const isValid = inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
+      
+      // ถ้าเงินไม่พอให้เซ็ต slider เป็น 0%
+      if (!isValid && inputValue !== "") {
+        setSliderValue(0);
+      } else {
+        // คำนวณและอัพเดต slider value เมื่อเงินพอ
+        const sliderPercentage = calculateSliderPercentage(inputValue);
+        setSliderValue(sliderPercentage);
+      }
+      
+      setIsAmountValid(isValid);
+    }
+  };
+
+  // ฟังก์ชันจัดการเมื่อ slider เปลี่ยนค่า
+  const handleSliderChange = (percentage: number) => {
+    setSliderValue(percentage);
+    const newAmount = calculateAmountFromPercentage(percentage);
+    setAmount(newAmount);
+
+    // ตรวจสอบความถูกต้องของจำนวน
+    const numericValue = newAmount.replace(/,/g, "");
+    const num = parseFloat(numericValue);
+    setIsAmountValid(!isNaN(num) && num <= AVAILABLE_BALANCE);
+  };
+
+  const handleAmountFocus = () => {
+    setIsAmountFocused(true);
+  };
+
+  const handleAmountBlur = () => {
+    setIsAmountFocused(false);
+    if (amount) {
+      // ตรวจสอบว่ามีทศนิยมครบ 2 ตำแหน่งหรือไม่
+      const numericValue = amount.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      if (!isNaN(num)) {
+        const formattedAmount = formatNumberWithComma(num.toFixed(2));
+        setAmount(formattedAmount);
+      }
+    }
+  };
+
+  // แก้ไขฟังก์ชัน handleChange สำหรับ Price input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const regex = /^\d*\.?\d{0,2}$/;
-    if (value === "" || regex.test(value)) {
-      setLimitPrice(value);
-      setPrice(value);
+    const inputValue = e.target.value;
+    
+    if (inputValue === "" || isValidNumberFormat(inputValue)) {
+      // Format ด้วย comma ทันที
+      const formattedValue = formatNumberWithComma(inputValue);
+      setLimitPrice(formattedValue);
+      setPrice(formattedValue);
     }
   };
 
   useEffect(() => {
     // เมื่อ marketPrice เปลี่ยน ให้กลับไปแสดงราคา Market Price
     if (priceLabel === "Price") {
-      setPrice(marketPrice);
+      const formattedPrice = formatNumberWithComma(marketPrice);
+      setPrice(formattedPrice);
     }
   }, [marketPrice, priceLabel]);
 
-  const formatToTwoDecimals = (value: string): string => {
+  const formatToTwoDecimalsWithComma = (value: string): string => {
     if (!value) return "";
-    const num = parseFloat(value);
+    const numericValue = value.replace(/,/g, "");
+    const num = parseFloat(numericValue);
     if (isNaN(num)) return "";
-    return num.toFixed(2);
+    return formatNumberWithComma(num.toFixed(2));
   };
 
   const handleBlur = () => {
     if (price) {
-      const formattedPrice = formatToTwoDecimals(price);
+      const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
+    } else if (priceLabel === "Price" && marketPrice) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
+      setPrice(formattedMarketPrice);
+      setLimitPrice(formattedMarketPrice);
     }
     setIsInputFocused(false);
   };
+
+  useEffect(() => {
+    if (priceLabel === "Price" && !isInputFocused && marketPrice) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
+      setPrice(formattedMarketPrice);
+      setLimitPrice(formattedMarketPrice);
+    }
+  }, [marketPrice, priceLabel]);
+  
 
   return (
     <div className="flex mx-[120px] gap-10 mt-10">
@@ -79,7 +206,7 @@ export default function MarketOrder() {
       </div>
 
       {/* Right Side - Buy/Sell Box */}
-      <div className="w-[384px] h-[504px] bg-[#081125] rounded-lg shadow-md p-5">
+      <div className="w-[384px] h-[502px] bg-[#081125] rounded-lg shadow-md p-5">
         {/* Tab buttons */}
         <div className="flex mb-7 bg-[#2D2D2D] rounded-lg">
           <button
@@ -107,7 +234,7 @@ export default function MarketOrder() {
 
         {/* Price input */}
         <div className="h-[44px] w-[344px]">
-          <div className="flex w-[344px] items-center rounded-xl bg-[#102047] px-3 py-2 justify-between border border-transparent focus-within:border-[#3A8AF7]">
+          <div className="flex w-[344px] items-center rounded-xl bg-[#102047] px-3 py-2 justify-between min-h-[53px] border border-transparent focus-within:border-[#3A8AF7]">
             {/* Left Side - Price Label */}
             <span className="text-xs font-bold text-[#5775B7]">
               {priceLabel}
@@ -116,11 +243,10 @@ export default function MarketOrder() {
             {/* Right Side - Input + Icon + Button */}
             <div className="flex items-center gap-2">
               {/* Input Market Price or Limit */}
-              <Input
+              <input
                 ref={inputRef}
-                type="number"
-                step="0.01"
-                className="w-[80px] rounded-lg bg-[#102047] p-1 text-white text-right"
+                type="text"
+                className="w-[90px] text-sm rounded-lg bg-[#102047] p-1 text-white text-right border-none outline-none"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 value={price}
@@ -158,24 +284,38 @@ export default function MarketOrder() {
         </div>
         {/* Amount */}
         <div className="h-[44px] w-[344px] mt-1">
-          <div className="flex w-[344px] items-center rounded-xl bg-[#102047] px-3 py-2 justify-between border border-transparent focus-within:border-[#3A8AF7]">
-            {/* Left Side - Price Label */}
+          <div
+            className={`flex w-[344px] items-center rounded-xl px-3 py-3 justify-between border min-h-[53px] ${
+              !isAmountValid
+                ? "bg-[#102047] border-[#D84C4C]"
+                : "bg-[#102047] border-transparent focus-within:border-[#3A8AF7]"
+            }`}
+          >
             <span className="text-xs font-bold text-[#5775B7]">Amount</span>
-
-            {/* Right Side - Input + Icon + Button */}
-            <div className="flex items-center gap-2">
-              {/* Input Market Price or Limit */}
-              <Input
-                type="number"
-                className="w-[220px] rounded-lg bg-[#102047] p-1 text-white text-right"
+            <div className="flex items-center gap-2 text-sm">
+              <input
+                ref={amountInputRef}
+                type="text"
+                className="w-[220px] rounded-lg bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                value={amount}
+                onChange={handleAmountChange}
+                onFocus={handleAmountFocus}
+                onBlur={handleAmountBlur}
               />
-              <span className="text-sm font-normal text-[#5775B7]">USD</span>
+              <span className={`text-sm font-normal ${
+                (amount || isAmountFocused) ? "text-white" : "text-[#5775B7]"
+              }`}>USD</span>
             </div>
           </div>
+          {!isAmountValid && (
+            <span className="text-xs text-[#D84C4C] mt-1">
+              Insufficient balance
+            </span>
+          )}
         </div>
-        {/* Slider */}
+        {/* Slider - ส่งค่า value และ onChange callback */}
         <div className="mt-11 mx-3">
-          <DiscreteSlider />
+          <DiscreteSlider value={sliderValue} onChange={handleSliderChange} />
         </div>
         {/* Amount Cal */}
         <div className="relative flex items-center mt-7">
