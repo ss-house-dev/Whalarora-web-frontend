@@ -255,7 +255,7 @@ export default function MarketOrder() {
           <TabsContent value="buy" className="mt-7">
             {/* Price input */}
             <div className="space-y-7">
-              <div className="flex items-center rounded-lg bg-[#102047] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7]">
+              <div className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7]">
                 {/* Left Side - Price Label */}
                 <span className="text-[12px] font-normal text-[#5775B7]">
                   {priceLabel}
@@ -267,7 +267,7 @@ export default function MarketOrder() {
                   <Input
                     ref={inputRef}
                     type="text"
-                    className="w-[100px] text-[14px] font-normal rounded-lg bg-[#102047] p-1 text-white text-right border-none outline-none"
+                    className="w-[100px] text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     value={price}
@@ -333,8 +333,8 @@ export default function MarketOrder() {
                   <div
                     className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
                       !isAmountValid
-                        ? "bg-[#102047] border-[#D84C4C]"
-                        : "bg-[#102047] border-transparent focus-within:border-[#3A8AF7]"
+                        ? "bg-[#17306B] border-[#D84C4C]"
+                        : "bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]"
                     }`}
                   >
                     <span className="text-[12px] font-normal text-[#5775B7]">
@@ -458,7 +458,7 @@ export default function MarketOrder() {
               </div>
               {/* Button */}
               <div className="mt-8 w-full">
-                <Button className="w-full rounded-lg bg-[#309C7D] hover:bg-[#28886C] cursor-pointer text-base font-semibold">
+                <Button className="w-full rounded-lg bg-[#309C7D] hover:bg-[#28886C] cursor-pointer text-[16px] font-normal">
                   Buy
                 </Button>
               </div>
