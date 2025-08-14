@@ -8,7 +8,7 @@ export default function MarketOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const marketPrice = useMarketPrice();
-
+  
   // Common states
   const [priceLabel, setPriceLabel] = useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -70,10 +70,7 @@ export default function MarketOrderContainer() {
     return /^\d*\.?\d{0,9}$/.test(numericValue);
   };
 
-  const calculateReceiveBTC = (
-    amountValue: string,
-    priceValue: string
-  ): string => {
+  const calculateReceiveBTC = (amountValue: string, priceValue: string): string => {
     if (!amountValue || !priceValue) return "";
     const numAmount = parseFloat(amountValue.replace(/,/g, ""));
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
@@ -82,10 +79,7 @@ export default function MarketOrderContainer() {
     return btcAmount.toFixed(9);
   };
 
-  const calculateReceiveUSD = (
-    btcAmount: string,
-    priceValue: string
-  ): string => {
+  const calculateReceiveUSD = (btcAmount: string, priceValue: string): string => {
     if (!btcAmount || !priceValue) return "";
     const numBTC = parseFloat(btcAmount);
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
@@ -167,8 +161,7 @@ export default function MarketOrderContainer() {
 
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
-      const isValid =
-        inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
+      const isValid = inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
 
       if (!isValid && inputValue !== "") {
         setSliderValue(0);
@@ -211,8 +204,7 @@ export default function MarketOrderContainer() {
       setSellAmount(formattedValue);
 
       const num = parseFloat(inputValue);
-      const isValid =
-        inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BTC_BALANCE);
+      const isValid = inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BTC_BALANCE);
 
       if (!isValid && inputValue !== "") {
         setSellSliderValue(0);
@@ -272,76 +264,82 @@ export default function MarketOrderContainer() {
 
   return (
     <div>
-      <Tabs defaultValue="buy">
-        <TabsList className="w-full bg-[#2D2D2D]">
-          <TabsTrigger
-            value="buy"
-            className="font-bold data-[state=active]:bg-[linear-gradient(185deg,_#309C7D_23.13%,_#26F6BA_157.05%)] h-[28px] cursor-pointer"
-          >
-            Buy
-          </TabsTrigger>
-          <TabsTrigger
-            value="sell"
-            className="font-bold data-[state=active]:bg-[linear-gradient(357deg,_#D84C4C_2.29%,_#722828_186.28%)] h-[28px] cursor-pointer"
-          >
-            Sell
-          </TabsTrigger>
-        </TabsList>
+      {/* Left Side - Chart */}
+      <div className="flex-1">{/* <AdvancedChart /> */}</div>
 
-        {/* Buy Tab */}
-        <TabsContent value="buy" className="mt-7">
-          <OrderForm
-            type="buy"
-            inputRef={inputRef}
-            amountInputRef={amountInputRef}
-            priceLabel={priceLabel}
-            price={price}
-            amount={amount}
-            receiveAmount={receiveBTC}
-            sliderValue={sliderValue}
-            isAmountValid={isAmountValid}
-            isInputFocused={isInputFocused}
-            isAmountFocused={isAmountFocused}
-            availableBalance="10,000.00"
-            balanceCurrency="USD"
-            onPriceFocus={handleFocus}
-            onPriceChange={handlePriceChange}
-            onPriceBlur={handlePriceBlur}
-            onAmountChange={handleAmountChange}
-            onAmountFocus={handleAmountFocus}
-            onAmountBlur={handleAmountBlur}
-            onSliderChange={handleSliderChange}
-            onMarketClick={handleMarketClick}
-          />
-        </TabsContent>
+      {/* Right Side - Buy/Sell Box */}
+      <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[504px]">
+        <Tabs defaultValue="buy">
+          <TabsList className="w-full bg-[#2D2D2D]">
+            <TabsTrigger
+              value="buy"
+              className="font-bold data-[state=active]:bg-[linear-gradient(185deg,_#309C7D_23.13%,_#26F6BA_157.05%)] h-[28px] cursor-pointer"
+            >
+              Buy
+            </TabsTrigger>
+            <TabsTrigger
+              value="sell"
+              className="font-bold data-[state=active]:bg-[linear-gradient(357deg,_#D84C4C_2.29%,_#722828_186.28%)] h-[28px] cursor-pointer"
+            >
+              Sell
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Sell Tab */}
-        <TabsContent value="sell" className="mt-7">
-          <OrderForm
-            type="sell"
-            inputRef={inputRef}
-            amountInputRef={amountInputRef}
-            priceLabel={priceLabel}
-            price={price}
-            amount={sellAmount}
-            receiveAmount={receiveUSD}
-            sliderValue={sellSliderValue}
-            isAmountValid={isSellAmountValid}
-            isInputFocused={isInputFocused}
-            isAmountFocused={isSellAmountFocused}
-            availableBalance="0.021700000"
-            balanceCurrency="BTC"
-            onPriceFocus={handleFocus}
-            onPriceChange={handlePriceChange}
-            onPriceBlur={handlePriceBlur}
-            onAmountChange={handleSellAmountChange}
-            onAmountFocus={handleSellAmountFocus}
-            onAmountBlur={handleSellAmountBlur}
-            onSliderChange={handleSellSliderChange}
-            onMarketClick={handleMarketClick}
-          />
-        </TabsContent>
-      </Tabs>
+          {/* Buy Tab */}
+          <TabsContent value="buy" className="mt-7">
+            <OrderForm
+              type="buy"
+              inputRef={inputRef}
+              amountInputRef={amountInputRef}
+              priceLabel={priceLabel}
+              price={price}
+              amount={amount}
+              receiveAmount={receiveBTC}
+              sliderValue={sliderValue}
+              isAmountValid={isAmountValid}
+              isInputFocused={isInputFocused}
+              isAmountFocused={isAmountFocused}
+              availableBalance="10,000.00"
+              balanceCurrency="USD"
+              onPriceFocus={handleFocus}
+              onPriceChange={handlePriceChange}
+              onPriceBlur={handlePriceBlur}
+              onAmountChange={handleAmountChange}
+              onAmountFocus={handleAmountFocus}
+              onAmountBlur={handleAmountBlur}
+              onSliderChange={handleSliderChange}
+              onMarketClick={handleMarketClick}
+            />
+          </TabsContent>
+
+          {/* Sell Tab */}
+          <TabsContent value="sell" className="mt-7">
+            <OrderForm
+              type="sell"
+              inputRef={inputRef}
+              amountInputRef={amountInputRef}
+              priceLabel={priceLabel}
+              price={price}
+              amount={sellAmount}
+              receiveAmount={receiveUSD}
+              sliderValue={sellSliderValue}
+              isAmountValid={isSellAmountValid}
+              isInputFocused={isInputFocused}
+              isAmountFocused={isSellAmountFocused}
+              availableBalance="0.021700000"
+              balanceCurrency="BTC"
+              onPriceFocus={handleFocus}
+              onPriceChange={handlePriceChange}
+              onPriceBlur={handlePriceBlur}
+              onAmountChange={handleSellAmountChange}
+              onAmountFocus={handleSellAmountFocus}
+              onAmountBlur={handleSellAmountBlur}
+              onSliderChange={handleSellSliderChange}
+              onMarketClick={handleMarketClick}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
