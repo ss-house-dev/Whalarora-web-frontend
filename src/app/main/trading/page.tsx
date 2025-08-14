@@ -722,7 +722,7 @@ export default function MarketOrder() {
                     <div className="flex gap-2 items-center">
                       <input
                         type="text"
-                        className="w-full text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
+                        className="w-[90px] text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
                         value={sellAmount}
                         readOnly
                       />
