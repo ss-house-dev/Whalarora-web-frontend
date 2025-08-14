@@ -1,6 +1,6 @@
 import { Alexandria } from 'next/font/google';
 import type { Metadata } from 'next'
-import Navbar from "@/shared/components/ui/Navbar";
+import Navbar from "@/components/ui/Navbar";
 
 const alexandria = Alexandria({ 
   subsets: ['latin'],

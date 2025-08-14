@@ -3,7 +3,7 @@ import * as React from "react";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/components/ui/Button";
+import { Button } from "@/app/components/ui/Button";
 
 import {
   Command,
@@ -12,12 +12,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/shared/components/ui/command";
+} from "@/app/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/components/ui/popover";
+} from "@/app/components/ui/popover";
 
 const binanceCoins = [
   {

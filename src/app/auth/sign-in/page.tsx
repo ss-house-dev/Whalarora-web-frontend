@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Eye, EyeOff, User, ChevronLeft } from "lucide-react";
-import FormInputIcon from "@/shared/components/ui/FormItemInput";
-import { Button } from "@/shared/components/ui/Button";
+import FormInputIcon from "@/app/components/ui/FormItemInput";
+import { Button } from "@/app/components/ui/Button";
 import { useRouter } from "next/navigation";
 
 const SignInPage = () => {
