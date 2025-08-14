@@ -11,6 +11,7 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
   const [localPercent, setLocalPercent] = React.useState(0); 
   const barRef = React.useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = React.useState(false);
+  const [showBubble, setShowBubble] = React.useState(false); // state to control bubble visibility
 
   // ใช้ value จาก props หรือ local state
   const percent = value !== undefined ? value : localPercent;
@@ -40,15 +41,22 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
+    setShowBubble(true);
     updatePercent(percentFromClientX(e.clientX));
   };
+
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging) return;
     updatePercent(percentFromClientX(e.clientX));
   };
+
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     setDragging(false);
+    
+    setTimeout(() => {
+      setShowBubble(false); // Hide the bubble after the timeout
+    }, 500); 
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -61,12 +69,14 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
   return (
     <div className="relative select-none">
       {/* Bubble */}
-      <div
-        className="absolute -top-6 px-2 py-0.5 text-[10px] font-bold rounded-md bg-[#102047] text-white"
-        style={{ left: `calc(${percent}% - 12px)` }}
-      >
-        {percent}%
-      </div>
+      {showBubble && (
+        <div
+          className="absolute -top-6 px-2 py-0.5 text-[10px] font-bold rounded-md bg-[#102047] text-white"
+          style={{ left: `calc(${percent}% - 12px)` }}
+        >
+          {percent}%
+        </div>
+      )}
 
       {/* Bar */}
       <div
@@ -116,14 +126,12 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
               >
                 {isEqual ? (
                   <span className="size-6 rounded-full bg-[rgba(38,246,186,0.5)] ring-1 ring-[rgba(38,246,186,0.5)] grid place-items-center">
-                    <span className="block size-4 rounded-full bg-white" />
+                    <span className="block size-4 rounded-full bg-white cursor-pointer" />
                   </span>
                 ) : isPassed ? (
-                  // ผ่านแล้ว
-                  <span className="block size-5 rounded-full bg-[#2FACA2]" />
+                  <span className="block size-4 rounded-full bg-[#2FACA2] cursor-pointer" />
                 ) : (
-                  // ยังไม่ถึง
-                  <span className="block size-5 rounded-full bg-[#1F4293]" />
+                  <span className="block size-4 rounded-full bg-[#1F4293] cursor-pointer" />
                 )}
               </button>
             );
