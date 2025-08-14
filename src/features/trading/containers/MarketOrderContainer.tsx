@@ -242,7 +242,6 @@ export default function MarketOrderContainer() {
     }
   };
 
-  // Effects
   useEffect(() => {
     if (priceLabel === "Price") {
       const formattedPrice = formatNumberWithComma(marketPrice);
@@ -270,33 +269,36 @@ export default function MarketOrderContainer() {
     }
   }, [marketPrice, priceLabel, isInputFocused]);
 
-const handleSubmit = (type: "buy" | "sell") => {
-  const action = type === "buy" ? "Buy" : "Sell";
-  const amountToSubmit = type === "buy" ? amount : sellAmount; // USD หรือ BTC
-  const receiveAmountToSubmit = type === "buy" ? receiveBTC : receiveUSD;
+  const handleSubmit = (type: "buy" | "sell") => {
+    const amountToSubmit = type === "buy" ? amount : sellAmount;
 
-  // format ฝั่ง buy (USD) -> 2 ตำแหน่ง พร้อม comma
-  // format ฝั่ง sell (BTC) -> 9 ตำแหน่ง
-  const formattedAmount =
-    type === "buy"
-      ? formatToTwoDecimalsWithComma(amountToSubmit) // USD
-      : parseFloat(amountToSubmit).toFixed(9); // BTC
+    const numericAmount = parseFloat(amountToSubmit.replace(/,/g, "") || "0");
 
-  // format receiveAmount
-  const formattedReceiveAmount =
-    type === "buy"
-      ? parseFloat(receiveAmountToSubmit).toFixed(9) // BTC
-      : formatToTwoDecimalsWithComma(receiveAmountToSubmit); // USD
+    if (!numericAmount || numericAmount === 0) {
+      return;
+    }
 
-  const message = `${action} BTC/USDT (${formattedAmount} ${
-    type === "buy" ? "USD" : "BTC"
-  }) submitted successfully. You will receive ${formattedReceiveAmount} ${
-    type === "buy" ? "BTC" : "USD"
-  }.`;
+    const action = type === "buy" ? "Buy" : "Sell";
+    const receiveAmountToSubmit = type === "buy" ? receiveBTC : receiveUSD;
 
-  alert(message);
-};
+    const formattedAmount =
+      type === "buy"
+        ? formatToTwoDecimalsWithComma(amountToSubmit) 
+        : parseFloat(amountToSubmit).toFixed(9); 
 
+    const formattedReceiveAmount =
+      type === "buy"
+        ? parseFloat(receiveAmountToSubmit).toFixed(9) 
+        : formatToTwoDecimalsWithComma(receiveAmountToSubmit); 
+
+    const message = `${action} BTC/USDT (${formattedAmount} ${
+      type === "buy" ? "USD" : "BTC"
+    }) submitted successfully. You will receive ${formattedReceiveAmount} ${
+      type === "buy" ? "BTC" : "USD"
+    }.`;
+
+    alert(message);
+  };
 
   return (
     <div>
