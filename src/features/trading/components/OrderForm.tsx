@@ -27,6 +27,7 @@ interface OrderFormProps {
   onAmountBlur: () => void;
   onSliderChange: (percentage: number) => void;
   onMarketClick: () => void;
+  onSubmit: () => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -51,15 +52,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onAmountBlur,
   onSliderChange,
   onMarketClick,
+  onSubmit,
 }) => {
   const isBuy = type === "buy";
   const amountCurrency = isBuy ? "USD" : "BTC";
   const receiveCurrency = isBuy ? "BTC" : "USD";
-  const buttonColor = isBuy 
-    ? "bg-[#309C7D] hover:bg-[#28886C]" 
+  const buttonColor = isBuy
+    ? "bg-[#309C7D] hover:bg-[#28886C]"
     : "bg-[#D84C4C] hover:bg-[#C73E3E]";
-  const amountIcon = isBuy ? "/currency-icons/dollar-icon.svg" : "/currency-icons/bitcoin-icon.svg";
-  const receiveIcon = isBuy ? "/currency-icons/bitcoin-icon.svg" : "/currency-icons/dollar-icon.svg";
+  const amountIcon = isBuy
+    ? "/currency-icons/dollar-icon.svg"
+    : "/currency-icons/bitcoin-icon.svg";
+  const receiveIcon = isBuy
+    ? "/currency-icons/bitcoin-icon.svg"
+    : "/currency-icons/dollar-icon.svg";
 
   return (
     <div className="space-y-7">
@@ -145,7 +151,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 : "bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]"
             }`}
           >
-            <span className="text-[12px] font-normal text-[#5775B7]">Amount</span>
+            <span className="text-[12px] font-normal text-[#5775B7]">
+              Amount
+            </span>
             <div className="flex items-center gap-2 text-[16px]">
               <Input
                 ref={amountInputRef}
@@ -191,22 +199,31 @@ const OrderForm: React.FC<OrderFormProps> = ({
             />
           </div>
           <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">Amount</span>
+            <span className="text-[#92CAFE] text-[12px] font-normal">
+              Amount
+            </span>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
-                className="w-[90px] text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
+                className="w-full text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
                 value={amount}
                 readOnly
               />
-              <span className="text-[16px] font-normal text-[#92CAFE]">{amountCurrency}</span>
+              <span className="text-[16px] font-normal text-[#92CAFE]">
+                {amountCurrency}
+              </span>
             </div>
           </div>
         </div>
 
         {/* arrow */}
         <div className="flex justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+          >
             <path
               d="M7.00003 13.6355L13.207 7.4285L11.793 6.0145L7.00003 10.8075L2.20703 6.0145L0.79303 7.4285L7.00003 13.6355ZM7.00003 7.9855L13.207 1.7785L11.793 0.364502L7.00003 5.1575L2.20703 0.364502L0.79303 1.7785L7.00003 7.9855Z"
               fill="#49B6AE"
@@ -226,7 +243,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
             />
           </div>
           <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">Receive</span>
+            <span className="text-[#92CAFE] text-[12px] font-normal">
+              Receive
+            </span>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -234,7 +253,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 value={receiveAmount}
                 readOnly
               />
-              <span className="text-[16px] font-normal text-[#92CAFE]">{receiveCurrency}</span>
+              <span className="text-[16px] font-normal text-[#92CAFE]">
+                {receiveCurrency}
+              </span>
             </div>
           </div>
         </div>
@@ -242,7 +263,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
       {/* Action Button */}
       <div className="mt-8 w-full">
-        <Button className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}>
+        <Button
+          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}
+          onClick={onSubmit} 
+        >
           {isBuy ? "Buy" : "Sell"}
         </Button>
       </div>

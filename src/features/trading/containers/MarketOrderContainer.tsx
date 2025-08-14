@@ -270,6 +270,34 @@ export default function MarketOrderContainer() {
     }
   }, [marketPrice, priceLabel, isInputFocused]);
 
+const handleSubmit = (type: "buy" | "sell") => {
+  const action = type === "buy" ? "Buy" : "Sell";
+  const amountToSubmit = type === "buy" ? amount : sellAmount; // USD หรือ BTC
+  const receiveAmountToSubmit = type === "buy" ? receiveBTC : receiveUSD;
+
+  // format ฝั่ง buy (USD) -> 2 ตำแหน่ง พร้อม comma
+  // format ฝั่ง sell (BTC) -> 9 ตำแหน่ง
+  const formattedAmount =
+    type === "buy"
+      ? formatToTwoDecimalsWithComma(amountToSubmit) // USD
+      : parseFloat(amountToSubmit).toFixed(9); // BTC
+
+  // format receiveAmount
+  const formattedReceiveAmount =
+    type === "buy"
+      ? parseFloat(receiveAmountToSubmit).toFixed(9) // BTC
+      : formatToTwoDecimalsWithComma(receiveAmountToSubmit); // USD
+
+  const message = `${action} BTC/USDT (${formattedAmount} ${
+    type === "buy" ? "USD" : "BTC"
+  }) submitted successfully. You will receive ${formattedReceiveAmount} ${
+    type === "buy" ? "BTC" : "USD"
+  }.`;
+
+  alert(message);
+};
+
+
   return (
     <div>
       <Tabs defaultValue="buy">
@@ -312,6 +340,7 @@ export default function MarketOrderContainer() {
             onAmountBlur={handleAmountBlur}
             onSliderChange={handleSliderChange}
             onMarketClick={handleMarketClick}
+            onSubmit={() => handleSubmit("buy")}
           />
         </TabsContent>
 
@@ -339,6 +368,7 @@ export default function MarketOrderContainer() {
             onAmountBlur={handleSellAmountBlur}
             onSliderChange={handleSellSliderChange}
             onMarketClick={handleMarketClick}
+            onSubmit={() => handleSubmit("sell")}
           />
         </TabsContent>
       </Tabs>
