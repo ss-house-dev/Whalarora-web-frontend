@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
+import "@/app/globals.css";
 import Navbar from "@/components/ui/Navbar";
-import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Whalalora | Trading",
