@@ -11,18 +11,6 @@ export function useMarketPrice() {
       const price = parseFloat(data.p).toFixed(2);
       setMarketPrice(price);
     };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error: ", error);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket closed.");
-    };
-
-    return () => {
-      ws.close();
-    };
   }, []);
 
   return marketPrice;
