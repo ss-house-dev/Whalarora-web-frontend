@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <CustomProviders>
-      <html lang="en" className={anuphan.className}>
+      <html lang="en" className={`min-h-screen ${anuphan.className}`}>
         <body>{children}</body>
       </html>
     </CustomProviders>
