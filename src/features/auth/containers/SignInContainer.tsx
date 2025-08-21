@@ -48,15 +48,14 @@ const SignInContainer = () => {
 
       // Use NextAuth signIn function
       const result = await signIn("credentials", {
-        userName: formData.username, // Note: using userName to match your original code
+        userName: formData.username, 
         password: formData.password,
-        redirect: false, // Handle redirect manually
+        redirect: false, 
       });
 
       if (result?.error) {
         setError("Invalid username or password");
       } else if (result?.ok) {
-        // Sign in successful - use window.location for full page refresh to ensure session is updated
         window.location.href = "/main/trading";
       }
     } catch (err) {
@@ -67,17 +66,14 @@ const SignInContainer = () => {
   };
 
   const handleForgotPassword = () => {
-    // Navigate to forgot password page
     router.push("/auth/forgot-password");
   };
 
   const handleSignUp = () => {
-    // Navigate to sign up page
     router.push("/auth/sign-up");
   };
 
   const handleGoBack = () => {
-    // Go back to previous page
     router.back();
   };
 
