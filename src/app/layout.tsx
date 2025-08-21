@@ -1,7 +1,7 @@
 import { Anuphan } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
-import { CustomProviders } from "@/lib/react-query/QueryClientProvider";
+import { CustomProviders } from "./provider";
 
 const anuphan = Anuphan({
   weight: "400",

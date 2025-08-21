@@ -1,6 +1,5 @@
 import { Alexandria } from "next/font/google";
 import type { Metadata } from "next";
-import { CustomProviders } from "@/lib/react-query/QueryClientProvider";
 
 const alexandria = Alexandria({
   subsets: ["latin"],
@@ -20,10 +19,8 @@ export default function TradingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <CustomProviders>
       <div className={`min-h-screen ${alexandria.className}`}>
         <div>{children}</div>
       </div>
-    </CustomProviders>
   );
 }
