@@ -30,7 +30,7 @@ const handler = NextAuth({
 
         // ของจริง
         try {
-          const res = await fetch("http://whalarora.ddns.net:3001/auth/login", {
+          const res = await fetch("http://141.11.156.52:3001/auth/login", {
             method: "POST",
             body: JSON.stringify({
               userName: credentials?.userName,
