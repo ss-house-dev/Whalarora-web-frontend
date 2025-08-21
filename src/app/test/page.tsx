@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { SymbolInfo } from "@/types/symbol-types";
 
 interface USDTPair {
   symbol: string;
@@ -20,16 +21,16 @@ const BinanceUSDTPairs: React.FC = () => {
       );
       const data = await response.json();
 
-      const usdtPairs: USDTPair[] = data.symbols
+      const usdtPairs: USDTPair[] = (data.symbols as SymbolInfo[])
         .filter(
-          (symbol: any) =>
+          (symbol) =>
             symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
         )
-        .map((symbol: any) => ({
+        .map((symbol) => ({
           symbol: symbol.symbol,
           baseAsset: symbol.baseAsset,
         }))
-        .sort((a: USDTPair, b: USDTPair) => a.symbol.localeCompare(b.symbol));
+        .sort((a, b) => a.symbol.localeCompare(b.symbol));
 
       setPairs(usdtPairs);
     } catch (err) {

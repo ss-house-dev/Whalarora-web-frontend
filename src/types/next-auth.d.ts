@@ -1,12 +1,17 @@
-import NextAuth from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
+    user?: {
+      id?: string;
+    } & DefaultSession["user"];
   }
-  
+
   interface User {
-    accessToken?: string;
+    id?: string;
+    name?: string;
+    accessToken?: string; // 👈 เพิ่มตรงนี้
   }
 }
 
@@ -15,3 +20,4 @@ declare module "next-auth/jwt" {
     accessToken?: string;
   }
 }
+export default NextAuth;
