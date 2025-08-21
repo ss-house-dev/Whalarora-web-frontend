@@ -38,7 +38,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
   onGoBack,
 }) => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
+    if (e.key === "Enter" && !isLoading) {
       onSignIn();
     }
   };
@@ -137,16 +137,20 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                     }
                     className="border-gray-300 bg-white data-[state=checked]:bg-white data-[state=checked]:text-[#1F4293] data-[state=checked]:border-gray-300 cursor-pointer disabled:opacity-50"
                   />
-                  <Label 
-                    htmlFor="remember-me" 
-                    className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}
+                  <Label
+                    htmlFor="remember-me"
+                    className={`cursor-pointer ${
+                      isLoading ? "opacity-50" : ""
+                    }`}
                   >
                     Remember me
                   </Label>
                 </div>
                 <div>
                   <p
-                    className={`text-[14px] underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`text-[14px] underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity ${
+                      isLoading ? "opacity-50 pointer-events-none" : ""
+                    }`}
                     onClick={onForgotPassword}
                   >
                     Forgot password ?
@@ -182,9 +186,11 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             </div>
 
             <div className="text-[12px] font-[400px] flex items-center justify-center">
-              <p className="mr-2">Don't have an account ?</p>
+              <p className="mr-2">Don&apos;t have an account?</p>
               <p
-                className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
+                  isLoading ? "opacity-50 pointer-events-none" : ""
+                }`}
                 onClick={onSignUp}
               >
                 Sign up

@@ -2,6 +2,7 @@ import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 const handler = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -14,7 +15,7 @@ const handler = NextAuth({
           const res = await fetch("http://whalarora.ddns.net:3001/auth/login", {
             method: "POST",
             body: JSON.stringify({
-              userName: credentials?.userName, 
+              userName: credentials?.userName,
               password: credentials?.password,
             }),
             headers: {
@@ -28,7 +29,7 @@ const handler = NextAuth({
 
           if (response.access_token) {
             return {
-              id: response.user?.id || credentials?.userName, 
+              id: response.user?.id || credentials?.userName,
               name: credentials?.userName,
               accessToken: response.access_token,
             };
@@ -51,7 +52,7 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (token.accessToken) {
-        (session as any).accessToken = token.accessToken;
+        session.accessToken = token.accessToken as string;
       }
       return session;
     },

@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { SymbolInfo } from "@/types/symbol-types";
 
 interface USDTPair {
   symbol: string;
@@ -9,29 +10,31 @@ interface USDTPair {
 const BinanceUSDTPairs: React.FC = () => {
   const [pairs, setPairs] = useState<USDTPair[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const fetchUSDTPairs = async () => {
     setLoading(true);
-    
+
     try {
-      const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+      const response = await fetch(
+        "https://api.binance.com/api/v3/exchangeInfo"
+      );
       const data = await response.json();
-      
-      const usdtPairs: USDTPair[] = data.symbols
-        .filter((symbol: any) => 
-          symbol.quoteAsset === 'USDT' && symbol.status === 'TRADING'
+
+      const usdtPairs: USDTPair[] = (data.symbols as SymbolInfo[])
+        .filter(
+          (symbol) =>
+            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
         )
-        .map((symbol: any) => ({
+        .map((symbol) => ({
           symbol: symbol.symbol,
-          baseAsset: symbol.baseAsset
+          baseAsset: symbol.baseAsset,
         }))
-        .sort((a: USDTPair, b: USDTPair) => a.symbol.localeCompare(b.symbol));
-      
+        .sort((a, b) => a.symbol.localeCompare(b.symbol));
+
       setPairs(usdtPairs);
-      
     } catch (err) {
-      console.error('Error:', err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -41,15 +44,16 @@ const BinanceUSDTPairs: React.FC = () => {
     fetchUSDTPairs();
   }, []);
 
-  const filteredPairs = pairs.filter(pair => 
-    pair.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    pair.baseAsset.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPairs = pairs.filter(
+    (pair) =>
+      pair.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pair.baseAsset.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Binance USDT Pairs</h1>
-      
+
       <div className="mb-4 flex gap-2">
         <input
           type="text"
@@ -63,7 +67,7 @@ const BinanceUSDTPairs: React.FC = () => {
           disabled={loading}
           className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
+          {loading ? "กำลังโหลด..." : "รีเฟรช"}
         </button>
       </div>
 
@@ -91,7 +95,7 @@ const BinanceUSDTPairs: React.FC = () => {
           </tbody>
         </table>
       </div>
-    </div>      
+    </div>
   );
 };
 
