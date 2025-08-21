@@ -64,7 +64,7 @@ export default function Home() {
               target.style.boxShadow = "0px 4px 4px rgba(0, 0, 0, 0.25)";
             }}
           >
-            {session ? "Get start !" : "Sign In to Start"}
+            {session ? "Get start !" : "Get start !"}
           </button>
         </div>
       </header>
@@ -120,7 +120,7 @@ export default function Home() {
                 isHoverDemo ? "text-xl font-bold" : "text-xl font-bold"
               } leading-loose`}
             >
-              {session ? "Demo your trading" : "Sign In to Demo"}
+              {session ? "Demo your trading" : "Demo your trading"}
             </div>
           </div>
         </div>

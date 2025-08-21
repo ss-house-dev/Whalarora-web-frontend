@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import FormInputIcon from "@/components/ui/FormItemInput";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ interface SignInFormProps {
   showPassword: boolean;
   formData: SignInData;
   error: string;
+  isLoading?: boolean;
   onTogglePasswordVisibility: () => void;
   onInputChange: (field: keyof SignInData, value: string | boolean) => void;
   onSignIn: () => void;
@@ -28,6 +29,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
   showPassword,
   formData,
   error,
+  isLoading = false,
   onTogglePasswordVisibility,
   onInputChange,
   onSignIn,
@@ -35,6 +37,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({
   onSignUp,
   onGoBack,
 }) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      onSignIn();
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-[464px] h-[640px] rounded-xl bg-[#081125] px-8 py-5">
@@ -48,7 +56,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 height="20"
                 viewBox="0 0 12 20"
                 fill="none"
-                className="cursor-pointer"
+                className="cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={onGoBack}
               >
                 <path
@@ -77,6 +85,10 @@ export const SignInForm: React.FC<SignInFormProps> = ({
               <div className="flex flex-col">
                 <FormInputIcon
                   label="Username"
+                  value={formData.username}
+                  onChange={(e) => onInputChange("username", e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  disabled={isLoading}
                   suffixIcon={
                     <img
                       src="/assets/username.svg"
@@ -92,11 +104,16 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 <FormInputIcon
                   label="Password"
                   type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => onInputChange("password", e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  disabled={isLoading}
                   suffixIcon={
                     <button
                       type="button"
                       onClick={onTogglePasswordVisibility}
-                      className="focus:outline-none"
+                      disabled={isLoading}
+                      className="focus:outline-none disabled:opacity-50"
                     >
                       {showPassword ? (
                         <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
@@ -114,18 +131,22 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   <Checkbox
                     id="remember-me"
                     checked={formData.rememberMe}
+                    disabled={isLoading}
                     onCheckedChange={(checked) =>
                       onInputChange("rememberMe", checked as boolean)
                     }
-                    className="border-gray-300 bg-white data-[state=checked]:bg-white data-[state=checked]:text-[#1F4293] data-[state=checked]:border-gray-300 cursor-pointer"
+                    className="border-gray-300 bg-white data-[state=checked]:bg-white data-[state=checked]:text-[#1F4293] data-[state=checked]:border-gray-300 cursor-pointer disabled:opacity-50"
                   />
-                  <Label htmlFor="remember-me" className="cursor-pointer">
+                  <Label 
+                    htmlFor="remember-me" 
+                    className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}
+                  >
                     Remember me
                   </Label>
                 </div>
                 <div>
                   <p
-                    className="text-[14px] underline underline-offset-2 cursor-pointer"
+                    className={`text-[14px] underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                     onClick={onForgotPassword}
                   >
                     Forgot password ?
@@ -145,17 +166,25 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             <div className="flex justify-center">
               <Button
                 variant="gradient2"
-                className="w-[400px] h-[48px] cursor-pointer text-[18px]"
+                className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onSignIn}
+                disabled={isLoading}
               >
-                Log in
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Log in"
+                )}
               </Button>
             </div>
 
             <div className="text-[12px] font-[400px] flex items-center justify-center">
               <p className="mr-2">Don't have an account ?</p>
               <p
-                className="text-[#3A8AF7] text-[16px] cursor-pointer"
+                className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                 onClick={onSignUp}
               >
                 Sign up

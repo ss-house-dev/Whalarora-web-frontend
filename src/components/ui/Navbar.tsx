@@ -37,6 +37,15 @@ export default function Navbar() {
     };
   }, []);
 
+  const handleSignOut = () => {
+    signOut({ 
+      redirect: false // ไม่ให้ redirect ไปหน้าอื่น
+    }).then(() => {
+      setUserMenuOpen(false);
+      // อยู่ที่หน้าเดิม ไม่ต้อง router.push
+    });
+  };
+
   return (
     <div className="bg-[rgba(255,255,255,0.10)] h-14 flex justify-between items-center mx-[120px] rounded-b-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] px-6 py-3">
       {/* Left Side - Logo and Navigation */}
@@ -100,11 +109,7 @@ export default function Navbar() {
             {userMenuOpen && (
               <div className="absolute right-0 mt-2 w-[160px] bg-[#1F4293] rounded-lg shadow-lg overflow-hidden z-50">
                 <button
-                  onClick={() => {
-                    signOut();
-                    setUserMenuOpen(false);
-                    router.push("/");
-                  }}
+                  onClick={handleSignOut}
                   className="w-full h-10 px-4 flex items-center justify-between hover:bg-[#17306B] text-base cursor-pointer group"
                 >
                   <span>Sign Out</span>
@@ -113,7 +118,15 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        ) : null}
+        ) : (
+          // แสดงปุ่ม Sign In เมื่อยังไม่ได้ล็อกอิน
+          <button
+            onClick={() => router.push("/auth/sign-in")}
+            className="text-white text-sm px-4 py-2 rounded-lg bg-[#1F4293] hover:bg-[#17306B] transition-all duration-300"
+          >
+            Sign In
+          </button>
+        )}
       </div>
     </div>
   );

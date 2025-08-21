@@ -1,5 +1,8 @@
 "use client";
+
 import React, { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { SignInForm } from "@/features/auth/components/SignInForm";
 
 interface SignInData {
@@ -9,6 +12,7 @@ interface SignInData {
 }
 
 const SignInContainer = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<SignInData>({
     username: "",
@@ -16,6 +20,7 @@ const SignInContainer = () => {
     rememberMe: false,
   });
   const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -26,43 +31,54 @@ const SignInContainer = () => {
       ...prev,
       [field]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
   const handleSignIn = async () => {
     try {
       setError("");
+      setIsLoading(true);
+
       // Validate form
       if (!formData.username || !formData.password) {
         setError("Please fill in all required fields");
         return;
       }
 
-      // Add your sign-in logic here
-      console.log("Signing in with:", formData);
-      
-      // Example API call:
-      // const response = await signInAPI(formData);
-      // if (response.success) {
-      //   // Handle success (redirect, store token, etc.)
-      // }
+      // Use NextAuth signIn function
+      const result = await signIn("credentials", {
+        userName: formData.username, // Note: using userName to match your original code
+        password: formData.password,
+        redirect: false, // Handle redirect manually
+      });
+
+      if (result?.error) {
+        setError("Invalid username or password");
+      } else if (result?.ok) {
+        // Sign in successful - use window.location for full page refresh to ensure session is updated
+        window.location.href = "/main/trading";
+      }
     } catch (err) {
       setError("Sign in failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    // Add forgot password logic
-    console.log("Forgot password clicked");
+    // Navigate to forgot password page
+    router.push("/auth/forgot-password");
   };
 
   const handleSignUp = () => {
-    // Add navigation to sign up page
-    console.log("Sign up clicked");
+    // Navigate to sign up page
+    router.push("/auth/sign-up");
   };
 
   const handleGoBack = () => {
-    // Add navigation back logic
-    console.log("Go back clicked");
+    // Go back to previous page
+    router.back();
   };
 
   return (
@@ -70,6 +86,7 @@ const SignInContainer = () => {
       showPassword={showPassword}
       formData={formData}
       error={error}
+      isLoading={isLoading}
       onTogglePasswordVisibility={togglePasswordVisibility}
       onInputChange={handleInputChange}
       onSignIn={handleSignIn}
