@@ -54,7 +54,7 @@ const SignInContainer = () => {
       });
 
       if (result?.error) {
-        setError("Invalid username or password");
+        setError("Invalid username or password. Please try again.");
       } else if (result?.ok) {
         window.location.href = "/main/trading";
       }
