@@ -19,16 +19,23 @@ const FormItemInput = ({
   suffixIcon,
   options,
   type = "text",
-  value,
+  value = "",
   onChange,
   onKeyPress,
   disabled = false,
   placeholder,
   hasError = false,
 }: FormItemInputProps) => {
+  const isEmpty = value.trim() === ""; // Check if the input is empty
+
   return (
-    <>
-      <span className="text-white mb-[2px] text-[16px] block">{label}</span>
+    <div className="relative">
+      <div className="flex justify-between items-center mb-[2px]">
+        <span className="text-white text-[16px]">{label}</span>
+        {isEmpty && hasError && (
+          <span className="text-[#D84C4C] text-[12px]">Required</span>
+        )}
+      </div>
       <div className="relative">
         <Input
           type={type}
@@ -37,7 +44,7 @@ const FormItemInput = ({
           onKeyPress={onKeyPress}
           disabled={disabled}
           className={`rounded-md w-[400px] h-[44px] bg-[#17306B] p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-            hasError
+            isEmpty && hasError
               ? "border-[#D84C4C]"
               : "focus:border-[#3A8AF7]"
           } focus:outline-none ${
@@ -53,7 +60,7 @@ const FormItemInput = ({
         )}
       </div>
       {options}
-    </>
+    </div>
   );
 };
 
