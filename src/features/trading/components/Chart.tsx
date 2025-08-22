@@ -1,5 +1,4 @@
 "use client";
-
 import dynamic from "next/dynamic";
 
 const AdvancedRealTimeChart = dynamic(
@@ -10,23 +9,19 @@ const AdvancedRealTimeChart = dynamic(
   { ssr: false }
 );
 
-interface ChartProps {
-  symbol: string;
-}
-
-const AdvancedChart = ({ symbol }: ChartProps) => {
+const AdvancedChart = () => {
   return (
-    <div className="w-full h-[600px] pr-[1px]">
+    <div className="w-full h-[600px] pr-[1px] rounded-2xl">
       <AdvancedRealTimeChart
-        symbol={symbol || "BINANCE:BTCUSDT"}
+        symbol="BINANCE:BTCUSDT"
         allow_symbol_change={false}
         save_image={true}
         withdateranges={true}
         width="100%"
         height={600}
         theme="dark"
-        // autosize={true}
-        key={symbol} // เพิ่ม key เพื่อให้ component re-render เมื่อ symbol เปลี่ยน
+        interval="1"
+        autosize={true}
       />
     </div>
   );

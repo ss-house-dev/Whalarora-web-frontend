@@ -1,15 +1,29 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
   const [isHoverDemo, setIsHoverDemo] = useState(false);
   const Router = useRouter();
+
+  const { data: session } = useSession();
+
+  const handleGetStartClick = () => {
+    if (session) {
+      // ถ้าล็อกอินแล้วให้ไปหน้า trading
+      Router.push("/main/trading");
+    } else {
+      // ถ้ายังไม่ได้ล็อกอินให้ทำการล็อกอิน
+      signIn();
+    }
+  };
+  
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/bg.png)`,
+        backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/assets/landing-page-background.png)`,
       }}
     >
       <header
@@ -24,32 +38,35 @@ export default function Home() {
           className="flex items-center space-x-3 cursor-pointer"
         >
           <img
-            src="logo.png"
-            alt="Logo"
+            src="/assets/whalarora-logo.png"
+            alt="Whalarora Logo"
             className="w-10 h-10 object-cover rounded-full"
           />
         </div>
-        <button
-          onClick={() => Router.push("/main/trading")}
-          className="rounded-[12px] border border-white/25 text-white px-10 py-2 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] transition-all duration-300 ease-in-out cursor-pointer"
-          style={{
-            background: "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)",
-          }}
-          onMouseEnter={(e) => {
-            const target = e.currentTarget as HTMLElement;
-            target.style.background =
-              "linear-gradient(180deg, #1F4293 0%, #276F88 49.52%, #26F6BA 100%)";
-            target.style.boxShadow = "0px 4px 15px 0px #1D7DFF";
-          }}
-          onMouseLeave={(e) => {
-            const target = e.currentTarget as HTMLElement;
-            target.style.background =
-              "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)";
-            target.style.boxShadow = "0px 4px 4px rgba(0, 0, 0, 0.25)";
-          }}
-        >
-          Get start !
-        </button>
+        
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleGetStartClick}
+            className="rounded-[12px] border border-white/25 text-white px-10 py-2 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] transition-all duration-300 ease-in-out cursor-pointer"
+            style={{
+              background: "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)",
+            }}
+            onMouseEnter={(e) => {
+              const target = e.currentTarget as HTMLElement;
+              target.style.background =
+                "linear-gradient(180deg, #1F4293 0%, #276F88 49.52%, #26F6BA 100%)";
+              target.style.boxShadow = "0px 4px 15px 0px #1D7DFF";
+            }}
+            onMouseLeave={(e) => {
+              const target = e.currentTarget as HTMLElement;
+              target.style.background =
+                "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)";
+              target.style.boxShadow = "0px 4px 4px rgba(0, 0, 0, 0.25)";
+            }}
+          >
+            {session ? "Get start !" : "Get start !"}
+          </button>
+        </div>
       </header>
 
       <div
@@ -98,12 +115,12 @@ export default function Home() {
             } rounded-tl-xl rounded-tr-[60px] rounded-bl-[60px] rounded-br-xl flex justify-center items-center gap-2.5 cursor-pointer transition-all duration-300`}
           >
             <div
-              onClick={() => Router.push("/main/trading")}
+              onClick={handleGetStartClick}
               className={`text-white ${
                 isHoverDemo ? "text-xl font-bold" : "text-xl font-bold"
               } leading-loose`}
             >
-              Demo your trading
+              {session ? "Demo your trading" : "Demo your trading"}
             </div>
           </div>
         </div>

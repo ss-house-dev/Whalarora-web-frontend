@@ -1,21 +1,29 @@
-import Navbar from "@/components/ui/Navbar";
+import { Alexandria } from 'next/font/google';
 import type { Metadata } from 'next'
+import Navbar from "@/components/ui/Navbar";
+
+const alexandria = Alexandria({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-alexandria',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Whalalora | Trading',
   description: 'Trading page',
-  icons: '/logo.png',
 }
 
-export default function RootLayout({
+
+export default function TradingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <Navbar />
+    <div className={`min-h-screen ${alexandria.className}`}>
+      <Navbar/>
       <div>{children}</div>
-    </>
+    </div>
   );
 }

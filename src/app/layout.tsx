@@ -1,31 +1,28 @@
-import { Anuphan } from 'next/font/google'
-import type { Metadata } from 'next'
-import './globals.css'
-import { BalanceProvider } from '@/features/trading/contexts/BalanceContext'
-
+import { Anuphan } from "next/font/google";
+import type { Metadata } from "next";
+import "./globals.css";
+import { CustomProviders } from "./provider";
 
 const anuphan = Anuphan({
-  weight: '400',
-  subsets: ['latin'],
-})
+  weight: "400",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'Whalalora',
-  description: 'Homepage of Whalalora',
-}
+  title: "Whalalora",
+  description: "Homepage of Whalalora",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={anuphan.className}>
-      <body>
-        <BalanceProvider>
-          {children}
-        </BalanceProvider>
-      </body>
-    </html>
-  )
+    <CustomProviders>
+      <html lang="en" className={`min-h-screen ${anuphan.className}`}>
+        <body>{children}</body>
+      </html>
+    </CustomProviders>
+  );
 }
