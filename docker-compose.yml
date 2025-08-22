@@ -11,7 +11,7 @@ services:
     container_name: whalarora-frontend
     # เปิด port 3000 บนเครื่อง แล้วเชื่อมกับ port 3000 ใน container
     ports:
-      - "3000:3000"
+      - "3200:3000"
     env_file:
       - .env
     # ถ้ามีการตั้ง environment variable เฉพาะ container ให้ใส่ใน section นี้
