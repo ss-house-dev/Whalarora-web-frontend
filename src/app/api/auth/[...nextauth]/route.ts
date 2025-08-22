@@ -11,8 +11,26 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        const useMock = process.env.USE_MOCK_AUTH === "true";
+
+        if (useMock) {
+          // ใช้ mock user
+          if (
+            credentials?.userName === "testuser" &&
+            credentials?.password === "testpass"
+          ) {
+            return {
+              id: "mock-id",
+              name: "testuser",
+              accessToken: "mocked-access-token",
+            };
+          }
+          return null;
+        }
+
+        // ของจริง
         try {
-          const res = await fetch("http://whalarora.ddns.net:3001/auth/login", {
+          const res = await fetch("http://141.11.156.52:3001/auth/login", {
             method: "POST",
             body: JSON.stringify({
               userName: credentials?.userName,

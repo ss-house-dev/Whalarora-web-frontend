@@ -43,6 +43,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
     }
   };
 
+  const hasError = Boolean(error);
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-[464px] h-[640px] rounded-xl bg-[#081125] px-8 py-5">
@@ -89,10 +91,13 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   onChange={(e) => onInputChange("username", e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
+                  hasError={hasError}
                   suffixIcon={
-                    <img
+                    <Image
                       src="/assets/username.svg"
                       alt="Username Icon"
+                      width={6}
+                      height={6}
                       className="h-6 w-6 text-gray-400"
                     />
                   }
@@ -108,6 +113,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   onChange={(e) => onInputChange("password", e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
+                  hasError={hasError}
                   suffixIcon={
                     <button
                       type="button"
@@ -162,7 +168,27 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             {/* Error Message */}
             <div className="w-[400px] h-[48px] flex items-center justify-center">
               {error && (
-                <p className="text-red-400 text-sm text-center">{error}</p>
+                <div className="w-full h-full border border-[#D84C4C] rounded-[12px] flex items-center px-2 py-3">
+                  {/* Error Icon */}
+                  <div className="flex-shrink-0 mr-2 mx-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <path
+                        d="M12 24C5.3724 24 0 18.6276 0 12C0 5.3724 5.3724 0 12 0C18.6276 0 24 5.3724 24 12C24 18.6276 18.6276 24 12 24ZM10.8 15.6V18H13.2V15.6H10.8ZM10.8 6V13.2H13.2V6H10.8Z"
+                        fill="#D84C4C"
+                      />
+                    </svg>
+                  </div>
+                  {/* Error Message */}
+                  <div className="flex-1">
+                    <p className="text-[#D84C4C] text-[12px]">{error}</p>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -186,7 +212,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             </div>
 
             <div className="text-[12px] font-[400px] flex items-center justify-center">
-              <p className="mr-2">Don&apos;t have an account?</p>
+              <p className="mr-2">Don&apos;t have an account ?</p>
               <p
                 className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
                   isLoading ? "opacity-50 pointer-events-none" : ""
