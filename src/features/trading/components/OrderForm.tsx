@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 
 interface OrderFormProps {
@@ -54,6 +56,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onMarketClick,
   onSubmit,
 }) => {
+  const { data: session } = useSession();
+  const router = useRouter();
+  
   const isBuy = type === "buy";
   const amountCurrency = isBuy ? "USD" : "BTC";
   const receiveCurrency = isBuy ? "BTC" : "USD";
@@ -66,6 +71,18 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const receiveIcon = isBuy
     ? "/currency-icons/bitcoin-icon.svg"
     : "/currency-icons/dollar-icon.svg";
+
+  const handleSubmit = () => {
+    if (!session) {
+      // แสดง alert และไปหน้า login
+      alert("Please login to continue trading");
+      router.push("/auth/sign-in");
+      return;
+    }
+    
+    // ถ้าล็อกอินแล้วให้ดำเนินการตามปกติ
+    onSubmit();
+  };
 
   return (
     <div className="space-y-7">
@@ -265,7 +282,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       <div className="mt-8 w-full">
         <Button
           className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}
-          onClick={onSubmit} 
+          onClick={handleSubmit}
         >
           {isBuy ? "Buy" : "Sell"}
         </Button>

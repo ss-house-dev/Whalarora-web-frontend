@@ -6,6 +6,11 @@ interface FormItemInputProps {
   suffixIcon: React.ReactNode;
   options?: React.ReactNode;
   type?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+  placeholder?: string;
 }
 
 const FormItemInput = ({
@@ -13,6 +18,11 @@ const FormItemInput = ({
   suffixIcon,
   options,
   type = "text",
+  value,
+  onChange,
+  onKeyPress,
+  disabled = false,
+  placeholder,
 }: FormItemInputProps) => {
   return (
     <>
@@ -20,7 +30,11 @@ const FormItemInput = ({
       <div className="relative">
         <Input
           type={type}
-          className={`rounded-md w-[400px] h-[44px] bg-[#17306B] p-3 ${
+          value={value}
+          onChange={onChange}
+          onKeyPress={onKeyPress}
+          disabled={disabled}
+          className={`rounded-md w-[400px] h-[44px] bg-[#17306B] p-3 disabled:opacity-50 disabled:cursor-not-allowed ${
             type === "password"
               ? "[&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-password-toggle]:hidden [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
               : ""

@@ -1,19 +1,17 @@
-import { Alexandria } from 'next/font/google';
-import type { Metadata } from 'next'
-import Navbar from "@/components/ui/Navbar";
+import { Alexandria } from "next/font/google";
+import type { Metadata } from "next";
 
-const alexandria = Alexandria({ 
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-alexandria',
-  display: 'swap',
+const alexandria = Alexandria({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-alexandria",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: 'Whalalora | Login',
-  description: 'Login page',
-}
-
+  title: "Whalalora | Login",
+  description: "Login page",
+};
 
 export default function TradingLayout({
   children,
@@ -21,8 +19,8 @@ export default function TradingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`min-h-screen ${alexandria.className}`}>
-      <div>{children}</div>
-    </div>
+      <div className={`min-h-screen ${alexandria.className}`}>
+        <div>{children}</div>
+      </div>
   );
 }
