@@ -1,5 +1,5 @@
-import { useMutation, UseMutationOptions } from '@tanstack/react-query'
-import { addCashToTrade, AddCashResponse } from '@/features/wallet/services'
+import { useMutation, UseMutationOptions } from "@tanstack/react-query";
+import { addCashToTrade, AddCashResponse } from "@/features/wallet/services";
 
 export const useAddCashToTrade = (
   options?: UseMutationOptions<AddCashResponse, Error, void>
@@ -7,5 +7,5 @@ export const useAddCashToTrade = (
   return useMutation({
     mutationFn: addCashToTrade,
     ...options,
-  })
-}
+  });
+};

@@ -19,8 +19,8 @@ export default function TradingLayout({
   children: React.ReactNode;
 }) {
   return (
-      <div className={`min-h-screen ${alexandria.className}`}>
-        <div>{children}</div>
-      </div>
+    <div className={`min-h-screen ${alexandria.className}`}>
+      <div>{children}</div>
+    </div>
   );
 }
