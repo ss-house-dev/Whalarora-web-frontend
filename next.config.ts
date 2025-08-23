@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/auth/:path*",
-        destination: "http://141.11.156.52:3002/auth/:path*",
+        destination: "http://141.11.156.52:3001/auth/:path*",
       },
     ];
   },
