@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -31,8 +31,8 @@ export default function MarketOrderContainer() {
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
   const AVAILABLE_BTC_BALANCE = 0.0217;
 
-  // Helper functions
-  const formatNumberWithComma = (value: string): string => {
+  // Helper functions - wrapped in useCallback to prevent unnecessary re-renders
+  const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
@@ -43,82 +43,97 @@ export default function MarketOrderContainer() {
     return decimalPart !== undefined
       ? `${formattedInteger}.${decimalPart}`
       : formattedInteger;
-  };
+  }, []);
 
-  const formatToTwoDecimalsWithComma = (value: string): string => {
-    if (!value) return "";
-    const numericValue = value.replace(/,/g, "");
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return "";
-    return formatNumberWithComma(num.toFixed(2));
-  };
+  const formatToTwoDecimalsWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return "";
+      const numericValue = value.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      if (isNaN(num)) return "";
+      return formatNumberWithComma(num.toFixed(2));
+    },
+    [formatNumberWithComma]
+  );
 
-  const formatBTCNumber = (value: string): string => {
+  const formatBTCNumber = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
     if (!/^\d*\.?\d{0,9}$/.test(numericValue)) return value;
     return numericValue;
-  };
+  }, []);
 
-  const isValidNumberFormat = (value: string): boolean => {
+  const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, "");
     return /^\d*\.?\d{0,2}$/.test(numericValue);
-  };
+  }, []);
 
-  const isValidBTCFormat = (value: string): boolean => {
+  const isValidBTCFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, "");
     return /^\d*\.?\d{0,9}$/.test(numericValue);
-  };
+  }, []);
 
-  const calculateReceiveBTC = (
-    amountValue: string,
-    priceValue: string
-  ): string => {
-    if (!amountValue || !priceValue) return "";
-    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
-    const numPrice = parseFloat(priceValue.replace(/,/g, ""));
-    if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
-    const btcAmount = numAmount / numPrice;
-    return btcAmount.toFixed(9);
-  };
+  const calculateReceiveBTC = useCallback(
+    (amountValue: string, priceValue: string): string => {
+      if (!amountValue || !priceValue) return "";
+      const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+      const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+      if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
+      const btcAmount = numAmount / numPrice;
+      return btcAmount.toFixed(9);
+    },
+    []
+  );
 
-  const calculateReceiveUSD = (
-    btcAmount: string,
-    priceValue: string
-  ): string => {
-    if (!btcAmount || !priceValue) return "";
-    const numBTC = parseFloat(btcAmount);
-    const numPrice = parseFloat(priceValue.replace(/,/g, ""));
-    if (isNaN(numBTC) || isNaN(numPrice) || numPrice <= 0) return "";
-    const usdAmount = numBTC * numPrice;
-    return formatNumberWithComma(usdAmount.toFixed(2));
-  };
+  const calculateReceiveUSD = useCallback(
+    (btcAmount: string, priceValue: string): string => {
+      if (!btcAmount || !priceValue) return "";
+      const numBTC = parseFloat(btcAmount);
+      const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+      if (isNaN(numBTC) || isNaN(numPrice) || numPrice <= 0) return "";
+      const usdAmount = numBTC * numPrice;
+      return formatNumberWithComma(usdAmount.toFixed(2));
+    },
+    [formatNumberWithComma]
+  );
 
-  const calculateSliderPercentage = (amountValue: string): number => {
-    if (!amountValue) return 0;
-    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
-    if (isNaN(numAmount) || numAmount <= 0) return 0;
-    const percentage = (numAmount / AVAILABLE_BALANCE) * 100;
-    return Math.min(percentage, 100);
-  };
+  const calculateSliderPercentage = useCallback(
+    (amountValue: string): number => {
+      if (!amountValue) return 0;
+      const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+      if (isNaN(numAmount) || numAmount <= 0) return 0;
+      const percentage = (numAmount / AVAILABLE_BALANCE) * 100;
+      return Math.min(percentage, 100);
+    },
+    [AVAILABLE_BALANCE]
+  );
 
-  const calculateSellSliderPercentage = (btcAmount: string): number => {
-    if (!btcAmount) return 0;
-    const numAmount = parseFloat(btcAmount);
-    if (isNaN(numAmount) || numAmount <= 0) return 0;
-    const percentage = (numAmount / AVAILABLE_BTC_BALANCE) * 100;
-    return Math.min(percentage, 100);
-  };
+  const calculateSellSliderPercentage = useCallback(
+    (btcAmount: string): number => {
+      if (!btcAmount) return 0;
+      const numAmount = parseFloat(btcAmount);
+      if (isNaN(numAmount) || numAmount <= 0) return 0;
+      const percentage = (numAmount / AVAILABLE_BTC_BALANCE) * 100;
+      return Math.min(percentage, 100);
+    },
+    [AVAILABLE_BTC_BALANCE]
+  );
 
-  const calculateAmountFromPercentage = (percentage: number): string => {
-    const amount = (percentage / 100) * AVAILABLE_BALANCE;
-    return formatNumberWithComma(amount.toFixed(2));
-  };
+  const calculateAmountFromPercentage = useCallback(
+    (percentage: number): string => {
+      const amount = (percentage / 100) * AVAILABLE_BALANCE;
+      return formatNumberWithComma(amount.toFixed(2));
+    },
+    [AVAILABLE_BALANCE, formatNumberWithComma]
+  );
 
-  const calculateBTCFromPercentage = (percentage: number): string => {
-    const btcAmount = (percentage / 100) * AVAILABLE_BTC_BALANCE;
-    return btcAmount.toFixed(9);
-  };
+  const calculateBTCFromPercentage = useCallback(
+    (percentage: number): string => {
+      const btcAmount = (percentage / 100) * AVAILABLE_BTC_BALANCE;
+      return btcAmount.toFixed(9);
+    },
+    [AVAILABLE_BTC_BALANCE]
+  );
 
   // Price handlers
   const handleFocus = () => {
@@ -247,19 +262,26 @@ export default function MarketOrderContainer() {
       const formattedPrice = formatNumberWithComma(marketPrice);
       setPrice(formattedPrice);
     }
-  }, [marketPrice, priceLabel]);
+  }, [marketPrice, priceLabel, formatNumberWithComma]);
 
   useEffect(() => {
     const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
     const btcAmount = calculateReceiveBTC(amount, currentPrice);
     setReceiveBTC(btcAmount);
-  }, [amount, price, limitPrice, marketPrice, priceLabel]);
+  }, [amount, price, limitPrice, marketPrice, priceLabel, calculateReceiveBTC]);
 
   useEffect(() => {
     const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
     const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
     setReceiveUSD(usdAmount);
-  }, [sellAmount, price, limitPrice, marketPrice, priceLabel]);
+  }, [
+    sellAmount,
+    price,
+    limitPrice,
+    marketPrice,
+    priceLabel,
+    calculateReceiveUSD,
+  ]);
 
   useEffect(() => {
     if (priceLabel === "Price" && !isInputFocused && marketPrice) {
@@ -267,7 +289,7 @@ export default function MarketOrderContainer() {
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
-  }, [marketPrice, priceLabel, isInputFocused]);
+  }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
 
   const handleSubmit = (type: "buy" | "sell") => {
     const amountToSubmit = type === "buy" ? amount : sellAmount;
@@ -283,13 +305,13 @@ export default function MarketOrderContainer() {
 
     const formattedAmount =
       type === "buy"
-        ? formatToTwoDecimalsWithComma(amountToSubmit) 
-        : parseFloat(amountToSubmit).toFixed(9); 
+        ? formatToTwoDecimalsWithComma(amountToSubmit)
+        : parseFloat(amountToSubmit).toFixed(9);
 
     const formattedReceiveAmount =
       type === "buy"
-        ? parseFloat(receiveAmountToSubmit).toFixed(9) 
-        : formatToTwoDecimalsWithComma(receiveAmountToSubmit); 
+        ? parseFloat(receiveAmountToSubmit).toFixed(9)
+        : formatToTwoDecimalsWithComma(receiveAmountToSubmit);
 
     const message = `${action} BTC/USDT (${formattedAmount} ${
       type === "buy" ? "USD" : "BTC"

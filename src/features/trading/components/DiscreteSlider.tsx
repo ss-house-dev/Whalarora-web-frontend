@@ -6,9 +6,12 @@ interface DiscreteSliderProps {
   onChange?: (percentage: number) => void;
 }
 
-export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps) {
-  const markers = [0, 25, 50, 75, 100];     
-  const [localPercent, setLocalPercent] = React.useState(0); 
+export default function DiscreteSlider({
+  value,
+  onChange,
+}: DiscreteSliderProps) {
+  const markers = [0, 25, 50, 75, 100];
+  const [localPercent, setLocalPercent] = React.useState(0);
   const barRef = React.useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = React.useState(false);
   const [showBubble, setShowBubble] = React.useState(false); // state to control bubble visibility
@@ -16,7 +19,8 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
   // ใช้ value จาก props หรือ local state
   const percent = value !== undefined ? value : localPercent;
 
-  const clamp = (v: number, min = 0, max = 100) => Math.min(Math.max(v, min), max);
+  const clamp = (v: number, min = 0, max = 100) =>
+    Math.min(Math.max(v, min), max);
 
   const updatePercent = (newPercent: number) => {
     if (onChange) {
@@ -53,10 +57,10 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     setDragging(false);
-    
+
     setTimeout(() => {
       setShowBubble(false); // Hide the bubble after the timeout
-    }, 500); 
+    }, 500);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -110,7 +114,6 @@ export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps)
           {markers.map((m) => {
             const isPassed = m < percent;
             const isEqual = Math.round(percent) === m;
-            const isFuture = m > percent;
 
             return (
               <button

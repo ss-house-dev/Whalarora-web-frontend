@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
+import Image from "next/image";
 
 export default function Home() {
   const [isHoverDemo, setIsHoverDemo] = useState(false);
@@ -18,7 +19,7 @@ export default function Home() {
       signIn();
     }
   };
-  
+
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"
@@ -37,19 +38,22 @@ export default function Home() {
           onClick={() => Router.push("/")}
           className="flex items-center space-x-3 cursor-pointer"
         >
-          <img
+          <Image
             src="/assets/whalarora-logo.png"
             alt="Whalarora Logo"
+            width={10}
+            height={10}
             className="w-10 h-10 object-cover rounded-full"
           />
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <button
             onClick={handleGetStartClick}
             className="rounded-[12px] border border-white/25 text-white px-10 py-2 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] transition-all duration-300 ease-in-out cursor-pointer"
             style={{
-              background: "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)",
+              background:
+                "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)",
             }}
             onMouseEnter={(e) => {
               const target = e.currentTarget as HTMLElement;
