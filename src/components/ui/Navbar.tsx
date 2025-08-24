@@ -94,7 +94,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
             >
               <span>Welcome, {session.user?.name}</span>
               <ChevronDown className="h-4 w-4" />
-            </button>
+            </button> 
 
             {/* User Dropdown Menu */}
             {userMenuOpen && (
