@@ -3,11 +3,23 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useSession } from "next-auth/react";
+import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 
 export default function MarketOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const marketPrice = useMarketPrice();
+  const { data: session } = useSession();
+
+  // ใช้ hook เพื่อดึงยอดเงินจริงจาก wallet
+  const {
+    data: cashBalance,
+    isLoading: isBalanceLoading,
+    error: balanceError,
+  } = useGetCashBalance({
+    enabled: !!session, // เรียก API เฉพาะเมื่อมี session
+  });
 
   // Common states
   const [priceLabel, setPriceLabel] = useState("Price");
@@ -21,7 +33,6 @@ export default function MarketOrderContainer() {
   const [isAmountValid, setIsAmountValid] = useState(true);
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [receiveBTC, setReceiveBTC] = useState<string>("");
-  const AVAILABLE_BALANCE = 10000;
 
   // Sell states
   const [sellAmount, setSellAmount] = useState<string>("");
@@ -30,6 +41,12 @@ export default function MarketOrderContainer() {
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
   const AVAILABLE_BTC_BALANCE = 0.0217;
+
+  // Get available balance dynamically
+  const getAvailableBalance = useCallback(() => {
+    if (!session || !cashBalance) return 0;
+    return cashBalance.amount || 0;
+  }, [session, cashBalance]);
 
   // Helper functions - wrapped in useCallback to prevent unnecessary re-renders
   const formatNumberWithComma = useCallback((value: string): string => {
@@ -101,11 +118,12 @@ export default function MarketOrderContainer() {
     (amountValue: string): number => {
       if (!amountValue) return 0;
       const numAmount = parseFloat(amountValue.replace(/,/g, ""));
-      if (isNaN(numAmount) || numAmount <= 0) return 0;
-      const percentage = (numAmount / AVAILABLE_BALANCE) * 100;
+      const availableBalance = getAvailableBalance();
+      if (isNaN(numAmount) || numAmount <= 0 || availableBalance <= 0) return 0;
+      const percentage = (numAmount / availableBalance) * 100;
       return Math.min(percentage, 100);
     },
-    [AVAILABLE_BALANCE]
+    [getAvailableBalance]
   );
 
   const calculateSellSliderPercentage = useCallback(
@@ -121,10 +139,11 @@ export default function MarketOrderContainer() {
 
   const calculateAmountFromPercentage = useCallback(
     (percentage: number): string => {
-      const amount = (percentage / 100) * AVAILABLE_BALANCE;
+      const availableBalance = getAvailableBalance();
+      const amount = (percentage / 100) * availableBalance;
       return formatNumberWithComma(amount.toFixed(2));
     },
-    [AVAILABLE_BALANCE, formatNumberWithComma]
+    [getAvailableBalance, formatNumberWithComma]
   );
 
   const calculateBTCFromPercentage = useCallback(
@@ -173,7 +192,7 @@ export default function MarketOrderContainer() {
     setIsInputFocused(false);
   };
 
-  // Buy handlers
+  // Buy handlers - Updated to use dynamic balance
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
@@ -182,8 +201,9 @@ export default function MarketOrderContainer() {
 
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
+      const availableBalance = getAvailableBalance();
       const isValid =
-        inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BALANCE);
+        inputValue === "" || (!isNaN(num) && num <= availableBalance);
 
       if (!isValid && inputValue !== "") {
         setSliderValue(0);
@@ -201,7 +221,8 @@ export default function MarketOrderContainer() {
     setAmount(newAmount);
     const numericValue = newAmount.replace(/,/g, "");
     const num = parseFloat(numericValue);
-    setIsAmountValid(!isNaN(num) && num <= AVAILABLE_BALANCE);
+    const availableBalance = getAvailableBalance();
+    setIsAmountValid(!isNaN(num) && num <= availableBalance);
   };
 
   const handleAmountFocus = () => setIsAmountFocused(true);
@@ -291,6 +312,23 @@ export default function MarketOrderContainer() {
     }
   }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
 
+  // Effect to revalidate amount when balance changes
+  useEffect(() => {
+    if (amount && !isAmountFocused) {
+      const numericValue = amount.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      const availableBalance = getAvailableBalance();
+      const isValid = !isNaN(num) && num <= availableBalance;
+      setIsAmountValid(isValid);
+
+      // Update slider value when balance changes
+      if (isValid) {
+        const sliderPercentage = calculateSliderPercentage(numericValue);
+        setSliderValue(sliderPercentage);
+      }
+    }
+  }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
+
   const handleSubmit = (type: "buy" | "sell") => {
     const amountToSubmit = type === "buy" ? amount : sellAmount;
 
@@ -320,6 +358,15 @@ export default function MarketOrderContainer() {
     }.`;
 
     alert(message);
+  };
+
+  // Format available balance for display
+  const formatAvailableBalance = () => {
+    const balance = getAvailableBalance();
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(balance);
   };
 
   return (
@@ -354,7 +401,7 @@ export default function MarketOrderContainer() {
             isAmountValid={isAmountValid}
             isInputFocused={isInputFocused}
             isAmountFocused={isAmountFocused}
-            availableBalance="10,000.00"
+            availableBalance={formatAvailableBalance()}
             balanceCurrency="USD"
             onPriceFocus={handleFocus}
             onPriceChange={handlePriceChange}

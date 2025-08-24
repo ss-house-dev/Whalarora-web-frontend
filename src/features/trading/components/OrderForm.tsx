@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
+import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 
 interface OrderFormProps {
   type: "buy" | "sell";
@@ -59,6 +60,15 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const { data: session } = useSession();
   const router = useRouter();
 
+  // ใช้ hook เพื่อดึงยอดเงินจริงจาก wallet
+  const {
+    data: cashBalance,
+    isLoading: isBalanceLoading,
+    error: balanceError,
+  } = useGetCashBalance({
+    enabled: !!session, // เรียก API เฉพาะเมื่อมี session
+  });
+
   const isBuy = type === "buy";
   const amountCurrency = isBuy ? "USD" : "BTC";
   const receiveCurrency = isBuy ? "BTC" : "USD";
@@ -71,6 +81,38 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const receiveIcon = isBuy
     ? "/currency-icons/bitcoin-icon.svg"
     : "/currency-icons/dollar-icon.svg";
+
+  // Format จำนวนเงิน
+  const formatCurrency = (amount: number | undefined): string => {
+    if (amount === undefined) return "0.00";
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // กำหนดยอดเงินที่จะแสดงตาม type ของการซื้อขาย
+  const getDisplayBalance = () => {
+    if (!session) return "0.00";
+
+    if (balanceError) return "Error";
+
+    if (isBuy) {
+      // สำหรับการซื้อ แสดงยอด USD จาก wallet
+      return formatCurrency(cashBalance?.amount);
+    } else {
+      // สำหรับการขาย แสดงยอด BTC ที่ถือ (ยังใช้ availableBalance เหมือนเดิมสำหรับ BTC)
+      return availableBalance;
+    }
+  };
+
+  const getDisplayCurrency = () => {
+    if (isBuy) {
+      return "USD";
+    } else {
+      return balanceCurrency; // ใช้ balanceCurrency เหมือนเดิมสำหรับ BTC
+    }
+  };
 
   const handleSubmit = () => {
     if (!session) {
@@ -149,13 +191,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
         </div>
       </div>
 
-      {/* Available Balance */}
+      {/* Available Balance - Updated to show real wallet balance */}
       <div className="space-y-1">
         <div className="flex justify-between mt-7">
           <div className="text-[10px] text-[#9AAACE]">Available Balance</div>
           <div className="flex flex-row gap-1 text-[10px] text-[#9AAACE]">
-            <div>{availableBalance}</div>
-            <div>{balanceCurrency}</div>
+            <div>{getDisplayBalance()}</div>
+            <div>{getDisplayCurrency()}</div>
           </div>
         </div>
 
