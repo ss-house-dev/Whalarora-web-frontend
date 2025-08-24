@@ -1,2 +1,2 @@
-export { default as addCashToTrade } from "./addCashToTrade";
-export type { AddCashResponse } from "./addCashToTrade";
+export { default as addCashToTrade } from "./createCash";
+export type { AddCashResponse } from "./createCash";
