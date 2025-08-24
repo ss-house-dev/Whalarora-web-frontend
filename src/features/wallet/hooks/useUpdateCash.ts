@@ -9,16 +9,14 @@ import resetPortfolio, {
 } from "@/features/wallet/services/updateCash";
 
 export const useResetPortfolio = (
-  options?: Partial<
-    UseMutationOptions<ResetPortfolioResponse, Error, void>
-  >
+  options?: Partial<UseMutationOptions<ResetPortfolioResponse, Error, void>>
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: resetPortfolio,
     onSuccess: (data, variables, context) => {
-      console.log("Portfolio reset successfully");
+      console.log("Wallet reset successfully");
 
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
