@@ -1,24 +1,71 @@
 "use client";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
+import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
+import { useQueryClient } from "@tanstack/react-query";
+import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
 
 export default function MarketOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const marketPrice = useMarketPrice();
   const { data: session } = useSession();
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  // ใช้ hook เพื่อดึงยอดเงินจริงจาก wallet
+  // Fetch wallet balance
   const {
     data: cashBalance,
     isLoading: isBalanceLoading,
     error: balanceError,
   } = useGetCashBalance({
-    enabled: !!session, // เรียก API เฉพาะเมื่อมี session
+    enabled: !!session,
+  });
+
+  // Create buy order mutation
+  const createBuyOrderMutation = useCreateBuyOrder({
+    onSuccess: (data) => {
+      console.log("Buy order created successfully:", data); 
+      queryClient.invalidateQueries({
+        queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
+      });
+
+      if (data.filled > 0) {
+        const filledUSD =
+          data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
+        alert(
+          `Buy BTC/USDT Amount ${filledUSD.toFixed(
+            2
+          )} USD submitted successfully`
+        );
+      } else if (data.remaining > 0 && data.filled === 0) {
+        alert(
+          `📝 Order created successfully!\n` +
+            `Order ID: ${data.orderRef}\n` +
+            `Amount remaining: ${data.remaining.toFixed(8)} BTC\n` +
+            `Status: Pending`
+        );
+      } else {
+        let message = `Order ID: ${data.orderRef}`;
+        if (data.refund > 0) {
+          const actualSpent =
+            parseFloat(amount.replace(/,/g, "")) - data.refund;
+          message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
+          message += `\nRefund: ${data.refund.toFixed(2)} USD`;
+          if (data.message) {
+            message += `\nMessage: ${data.message}`;
+          }
+        }
+        alert(message);
+      }
+      handleSubmitSuccess("buy");
+    },
   });
 
   // Common states
@@ -48,7 +95,16 @@ export default function MarketOrderContainer() {
     return cashBalance.amount || 0;
   }, [session, cashBalance]);
 
-  // Helper functions - wrapped in useCallback to prevent unnecessary re-renders
+  // Format available balance for display
+  const formatAvailableBalance = useCallback(() => {
+    const balance = getAvailableBalance();
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(balance);
+  }, [getAvailableBalance]);
+
+  // Helper functions
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
@@ -134,7 +190,7 @@ export default function MarketOrderContainer() {
       const percentage = (numAmount / AVAILABLE_BTC_BALANCE) * 100;
       return Math.min(percentage, 100);
     },
-    [AVAILABLE_BTC_BALANCE]
+    []
   );
 
   const calculateAmountFromPercentage = useCallback(
@@ -151,11 +207,11 @@ export default function MarketOrderContainer() {
       const btcAmount = (percentage / 100) * AVAILABLE_BTC_BALANCE;
       return btcAmount.toFixed(9);
     },
-    [AVAILABLE_BTC_BALANCE]
+    []
   );
 
   // Price handlers
-  const handleFocus = () => {
+  const handlePriceFocus = () => {
     setPriceLabel("Limit price");
     setIsInputFocused(true);
     setPrice("");
@@ -192,7 +248,7 @@ export default function MarketOrderContainer() {
     setIsInputFocused(false);
   };
 
-  // Buy handlers - Updated to use dynamic balance
+  // Buy handlers
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
@@ -278,6 +334,59 @@ export default function MarketOrderContainer() {
     }
   };
 
+  // Submit handler
+  const handleSubmit = (type: "buy" | "sell") => {
+    if (!session) {
+      alert("Please login to continue trading");
+      router.push("/auth/sign-in");
+      return;
+    }
+
+    const amountToSubmit = type === "buy" ? amount : sellAmount;
+    const numericAmount = parseFloat(amountToSubmit.replace(/,/g, "") || "0");
+
+    if (!numericAmount || numericAmount === 0) {
+      return;
+    }
+
+    if (type === "buy") {
+      const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
+      const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
+      const userId =
+        cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+      const orderPayload = {
+        userId: userId,
+        symbol: "BTC",
+        price: numericPrice,
+        amount: btcAmount,
+      };
+
+      // Add console logs here
+      console.log("Order payload:", orderPayload);
+      console.log("USD to spend:", numericAmount);
+      console.log("Price per BTC:", numericPrice);
+      console.log("BTC amount to buy:", btcAmount);
+
+      createBuyOrderMutation.mutate(orderPayload);
+    } else {
+      // Handle sell order submission (implement if needed)
+      alert("Sell order submitted (logic to be implemented)");
+    }
+  };
+
+  const handleSubmitSuccess = (type: "buy" | "sell") => {
+    if (type === "buy") {
+      setAmount("");
+      setSliderValue(0);
+      setReceiveBTC("");
+    } else {
+      setSellAmount("");
+      setSellSliderValue(0);
+      setReceiveUSD("");
+    }
+  };
+
+  // Effects
   useEffect(() => {
     if (priceLabel === "Price") {
       const formattedPrice = formatNumberWithComma(marketPrice);
@@ -312,7 +421,6 @@ export default function MarketOrderContainer() {
     }
   }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
 
-  // Effect to revalidate amount when balance changes
   useEffect(() => {
     if (amount && !isAmountFocused) {
       const numericValue = amount.replace(/,/g, "");
@@ -321,7 +429,6 @@ export default function MarketOrderContainer() {
       const isValid = !isNaN(num) && num <= availableBalance;
       setIsAmountValid(isValid);
 
-      // Update slider value when balance changes
       if (isValid) {
         const sliderPercentage = calculateSliderPercentage(numericValue);
         setSliderValue(sliderPercentage);
@@ -329,38 +436,21 @@ export default function MarketOrderContainer() {
     }
   }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
 
-  const handleSubmit = (type: "buy" | "sell") => {
-    const amountToSubmit = type === "buy" ? amount : sellAmount;
+  // Derive UI-specific props
+  const getButtonColor = (type: "buy" | "sell") =>
+    type === "buy"
+      ? "bg-[#309C7D] hover:bg-[#28886C]"
+      : "bg-[#D84C4C] hover:bg-[#C73E3E]";
 
-    const numericAmount = parseFloat(amountToSubmit.replace(/,/g, "") || "0");
+  const getAmountIcon = (type: "buy" | "sell") =>
+    type === "buy"
+      ? "/currency-icons/dollar-icon.svg"
+      : "/currency-icons/bitcoin-icon.svg";
 
-    if (!numericAmount || numericAmount === 0) {
-      return;
-    }
-
-    const action = type === "buy" ? "Buy" : "Sell";
-    const receiveAmountToSubmit = type === "buy" ? receiveBTC : receiveUSD;
-
-    const formattedAmount =
-      type === "buy"
-        ? formatToTwoDecimalsWithComma(amountToSubmit)
-        : parseFloat(amountToSubmit).toFixed(9);
-
-    const formattedReceiveAmount =
-      type === "buy"
-        ? parseFloat(receiveAmountToSubmit).toFixed(9)
-        : formatToTwoDecimalsWithComma(receiveAmountToSubmit);
-
-  };
-
-  // Format available balance for display
-  const formatAvailableBalance = () => {
-    const balance = getAvailableBalance();
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(balance);
-  };
+  const getReceiveIcon = (type: "buy" | "sell") =>
+    type === "buy"
+      ? "/currency-icons/bitcoin-icon.svg"
+      : "/currency-icons/dollar-icon.svg";
 
   return (
     <div>
@@ -396,7 +486,12 @@ export default function MarketOrderContainer() {
             isAmountFocused={isAmountFocused}
             availableBalance={formatAvailableBalance()}
             balanceCurrency="USD"
-            onPriceFocus={handleFocus}
+            symbol="BTC"
+            buttonColor={getButtonColor("buy")}
+            amountIcon={getAmountIcon("buy")}
+            receiveIcon={getReceiveIcon("buy")}
+            isSubmitting={createBuyOrderMutation.isPending}
+            onPriceFocus={handlePriceFocus}
             onPriceChange={handlePriceChange}
             onPriceBlur={handlePriceBlur}
             onAmountChange={handleAmountChange}
@@ -424,7 +519,12 @@ export default function MarketOrderContainer() {
             isAmountFocused={isSellAmountFocused}
             availableBalance="0.021700000"
             balanceCurrency="BTC"
-            onPriceFocus={handleFocus}
+            symbol="BTC"
+            buttonColor={getButtonColor("sell")}
+            amountIcon={getAmountIcon("sell")}
+            receiveIcon={getReceiveIcon("sell")}
+            isSubmitting={false}
+            onPriceFocus={handlePriceFocus}
             onPriceChange={handlePriceChange}
             onPriceBlur={handlePriceBlur}
             onAmountChange={handleSellAmountChange}

@@ -1,15 +1,10 @@
 "use client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
-import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
-import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
-import { useQueryClient } from "@tanstack/react-query";
-import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
 
 interface OrderFormProps {
   type: "buy" | "sell";
@@ -25,7 +20,11 @@ interface OrderFormProps {
   sliderValue: number;
   availableBalance: string;
   balanceCurrency: string;
-  symbol?: string; // เพิ่ม symbol prop
+  symbol?: string;
+  buttonColor: string;
+  amountIcon: string;
+  receiveIcon: string;
+  isSubmitting: boolean;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -51,7 +50,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
   sliderValue,
   availableBalance,
   balanceCurrency,
-  symbol = "BTC",
+  buttonColor,
+  amountIcon,
+  receiveIcon,
+  isSubmitting,
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -62,135 +64,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onMarketClick,
   onSubmit,
 }) => {
-  const { data: session } = useSession();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  // ใช้ hook เพื่อดึงยอดเงินจริงจาก wallet
-  const {
-    data: cashBalance,
-    isLoading: isBalanceLoading,
-    error: balanceError,
-  } = useGetCashBalance({
-    enabled: !!session, // เรียก API เฉพาะเมื่อมี session
-  });
-
-  // ใช้ hook สำหรับสร้าง buy order
-  const createBuyOrderMutation = useCreateBuyOrder({
-    onSuccess: (data) => {
-      console.log("Buy order created successfully:", data);
-      // Invalidate query เพื่อให้ดึงยอดเงินใหม่ทันที
-      queryClient.invalidateQueries({
-        queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
-      });
-
-      // แสดงผลตามสถานะของ order
-      if (data.filled > 0) {
-        const filledUSD =
-          data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
-        alert(
-          `Buy ${symbol}/USDT Amount ${filledUSD.toFixed(
-            2
-          )} USD submitted successfully`
-        );
-      } else if (data.remaining > 0 && data.filled === 0) {
-        alert(
-          `📝 Order created successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `Amount remaining: ${data.remaining.toFixed(8)} BTC\n` +
-            `Status: Pending`
-        );
-      } else {
-        let message = `Order ID: ${data.orderRef}`;
-        if (data.refund > 0) {
-          const actualSpent =
-            parseFloat(amount.replace(/,/g, "")) - data.refund;
-          message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
-          message += `\nRefund: ${data.refund.toFixed(2)} USD`;
-          if (data.message) {
-            message += `\nMessage: ${data.message}`;
-          }
-        }
-        alert(message);
-      }
-      onSubmit();
-    },
-  });
-
-  const isBuy = type === "buy";
-  const amountCurrency = isBuy ? "USD" : "BTC";
-  const receiveCurrency = isBuy ? "BTC" : "USD";
-  const buttonColor = isBuy
-    ? "bg-[#309C7D] hover:bg-[#28886C]"
-    : "bg-[#D84C4C] hover:bg-[#C73E3E]";
-  const amountIcon = isBuy
-    ? "/currency-icons/dollar-icon.svg"
-    : "/currency-icons/bitcoin-icon.svg";
-  const receiveIcon = isBuy
-    ? "/currency-icons/bitcoin-icon.svg"
-    : "/currency-icons/dollar-icon.svg";
-
-  // Format จำนวนเงิน
-  const formatCurrency = (amount: number | undefined): string => {
-    if (amount === undefined) return "0.00";
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
-
-  // กำหนดยอดเงินที่จะแสดงตาม type ของการซื้อขาย
-  const getDisplayBalance = () => {
-    if (!session) return "0.00";
-
-    if (balanceError) return "Error";
-
-    if (isBuy) {
-      // สำหรับการซื้อ แสดงยอด USD จาก wallet
-      return formatCurrency(cashBalance?.amount);
-    } else {
-      // สำหรับการขาย แสดงยอด BTC ที่ถือ (ยังใช้ availableBalance เหมือนเดิมสำหรับ BTC)
-      return availableBalance;
-    }
-  };
-
-  const getDisplayCurrency = () => {
-    if (isBuy) {
-      return "USD";
-    } else {
-      return balanceCurrency;
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!session) {
-      alert("Please login to continue trading");
-      router.push("/auth/sign-in");
-      return;
-    }
-
-    if (isBuy) {
-      const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
-      const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
-      const btcAmount = parseFloat(receiveAmount.replace(/,/g, "") || "0");
-      const userId = cashBalance?.userId || (session.user as any)?.id || session.user?.email;
-      const orderPayload = {
-        userId: userId,
-        symbol: symbol,
-        price: numericPrice,
-        amount: btcAmount,
-      };
-
-      console.log("Order payload:", orderPayload);
-      console.log("USD to spend:", numericAmount);
-      console.log("Price per BTC:", numericPrice);
-      console.log("BTC amount to buy:", btcAmount);
-
-      createBuyOrderMutation.mutate(orderPayload);
-    } else {
-      onSubmit();
-    }
-  };
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -256,13 +129,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
         </div>
       </div>
 
-      {/* Available Balance - Updated to show real wallet balance */}
+      {/* Available Balance */}
       <div className="space-y-1">
         <div className="flex justify-between mt-7">
           <div className="text-[10px] text-[#9AAACE]">Available Balance</div>
           <div className="flex flex-row gap-1 text-[10px] text-[#9AAACE]">
-            <div>{getDisplayBalance()}</div>
-            <div>{getDisplayCurrency()}</div>
+            <div>{availableBalance}</div>
+            <div>{balanceCurrency}</div>
           </div>
         </div>
 
@@ -293,7 +166,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
                 }`}
               >
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
@@ -316,7 +189,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute z-10">
             <Image
               src={amountIcon}
-              alt={`${amountCurrency} Icon`}
+              alt={`${balanceCurrency} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -334,7 +207,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
@@ -360,7 +233,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute left-0 z-10">
             <Image
               src={receiveIcon}
-              alt={`${receiveCurrency} Icon`}
+              alt={`${type === "buy" ? "BTC" : "USD"} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -378,7 +251,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {receiveCurrency}
+                {type === "buy" ? "BTC" : "USD"}
               </span>
             </div>
           </div>
@@ -389,18 +262,16 @@ const OrderForm: React.FC<OrderFormProps> = ({
       <div className="mt-8 w-full">
         <Button
           className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
-            createBuyOrderMutation.isPending
-              ? "opacity-50 cursor-not-allowed"
-              : ""
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           }`}
-          onClick={handleSubmit}
-          disabled={createBuyOrderMutation.isPending}
+          onClick={onSubmit}
+          disabled={isSubmitting}
         >
-          {createBuyOrderMutation.isPending
-            ? isBuy
+          {isSubmitting
+            ? type === "buy"
               ? "Creating Buy Order..."
               : "Processing..."
-            : isBuy
+            : type === "buy"
             ? "Buy"
             : "Sell"}
         </Button>
