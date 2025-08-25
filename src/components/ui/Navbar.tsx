@@ -163,6 +163,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
               className="flex items-center gap-2 text-white text-sm px-3 py-2 rounded-lg bg-[#1F4293] hover:bg-[#17306B] transition-all duration-300 cursor-pointer"
             >
               <span>Welcome, {session.user?.name}</span>
+            </button> 
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="10"
