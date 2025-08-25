@@ -1,21 +1,23 @@
 import {
-  useMutation,
   UseMutationOptions,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { addCashToTrade, AddCashResponse } from "@/features/wallet/services";
 import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import resetPortfolio, {
+  ResetPortfolioResponse,
+} from "@/features/wallet/services/updateCash";
 
-export const useAddCashToTrade = (
-  options?: UseMutationOptions<AddCashResponse, Error, void>
+export const useResetPortfolio = (
+  options?: Partial<UseMutationOptions<ResetPortfolioResponse, Error, void>>
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: addCashToTrade,
+    mutationFn: resetPortfolio,
     onSuccess: (data, variables, context) => {
-      console.log("Cash added successfully:", data);
-      
+      console.log("Wallet reset successfully");
+
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
@@ -25,7 +27,7 @@ export const useAddCashToTrade = (
       }
     },
     onError: (error, variables, context) => {
-      console.error("Error adding cash:", error);
+      console.error("Error reset cash:", error);
 
       if (options?.onError) {
         options.onError(error, variables, context);
