@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
+import { useQueryClient } from "@tanstack/react-query";
+import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
 
 interface OrderFormProps {
   type: "buy" | "sell";
@@ -62,6 +64,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // ใช้ hook เพื่อดึงยอดเงินจริงจาก wallet
   const {
@@ -76,10 +79,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
       console.log("Buy order created successfully:", data);
+      // Invalidate query เพื่อให้ดึงยอดเงินใหม่ทันที
+      queryClient.invalidateQueries({
+        queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
+      });
 
-      // ตรวจสอบสถานะของ order
+      // แสดงผลตามสถานะของ order
       if (data.filled > 0) {
-        // กรณีซื้อสำเร็จ (บางส่วนหรือทั้งหมด)
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
         alert(
@@ -88,7 +94,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
             `ใช้เงิน: ${filledUSD.toFixed(2)} ดอลลาร์`
         );
       } else if (data.remaining > 0 && data.filled === 0) {
-        // กรณี order ถูกสร้างแต่ยังไม่ได้ execute
         alert(
           `📝 สร้าง Order สำเร็จ!\n` +
             `Order ID: ${data.orderRef}\n` +
@@ -96,31 +101,23 @@ const OrderForm: React.FC<OrderFormProps> = ({
             `สถานะ: รอการจับคู่`
         );
       } else {
-        // กรณีอื่นๆ
         let message = `Order ID: ${data.orderRef}`;
-
         if (data.refund > 0) {
-          // มี refund (อาจเป็น partial fill หรือ error)
           const actualSpent =
             parseFloat(amount.replace(/,/g, "")) - data.refund;
           message += `\nเงินที่ใช้จริง: ${actualSpent.toFixed(2)} ดอลลาร์`;
           message += `\nเงินคืน: ${data.refund.toFixed(2)} ดอลลาร์`;
-
           if (data.message) {
             message += `\nข้อความ: ${data.message}`;
           }
         }
-
         alert(message);
       }
 
-      // เรียก onSubmit ต้นฉบับหากต้องการทำอย่างอื่นเพิ่มเติม
       onSubmit();
     },
     onError: (error) => {
       console.error("Error creating buy order:", error);
-
-      // จัดการ error message ให้เหมาะสม
       let errorMessage = error.message;
       if (errorMessage.includes("Insufficient funds")) {
         errorMessage =
@@ -130,7 +127,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
             parseFloat(price || "0") * parseFloat(amount || "0")
           ).toFixed(2)} ดอลลาร์`;
       }
-
       alert(`❌ ไม่สามารถสร้างคำสั่งซื้อได้\n${errorMessage}`);
     },
   });
@@ -193,12 +189,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // ลบ comma ออกก่อน parse เป็น number
-      const numericAmount = parseFloat(amount.replace(/,/g, "") || "0"); // USD amount
-      const numericPrice = parseFloat(price.replace(/,/g, "") || "0"); // Price per BTC
-
-      console.log("Raw amount (USD):", amount, "Parsed:", numericAmount);
-      console.log("Raw price:", price, "Parsed:", numericPrice);
+      const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
+      const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
 
       if (
         isNaN(numericAmount) ||
@@ -210,7 +202,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // คำนวณจำนวน BTC ที่จะได้รับ (จาก receiveAmount)
       const btcAmount = parseFloat(receiveAmount.replace(/,/g, "") || "0");
 
       if (isNaN(btcAmount) || btcAmount <= 0) {
@@ -218,8 +209,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // ตรวจสอบยอดเงิน (ใช้ USD amount สำหรับตรวจสอบ)
-      const totalCost = numericAmount; // USD amount to spend
+      const totalCost = numericAmount;
       const currentBalance = cashBalance?.amount || 0;
 
       if (totalCost > currentBalance) {
@@ -244,12 +234,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // ส่ง BTC amount แทน USD amount
       const orderPayload = {
         userId: userId,
         symbol: symbol,
-        price: numericPrice, // Price per BTC
-        amount: btcAmount, // BTC amount to buy (ใช้ค่าจาก receiveAmount)
+        price: numericPrice,
+        amount: btcAmount,
       };
 
       console.log("Order payload:", orderPayload);
