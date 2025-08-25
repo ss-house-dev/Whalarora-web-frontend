@@ -3,6 +3,8 @@ import { ChevronDown, Wallet, Download, RotateCcw, LogOut } from "lucide-react";
 import { Session } from "next-auth";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
+import { useResetPortfolio } from "@/features/wallet/hooks/useUpdateCash";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NavbarUIProps {
   open: boolean;
@@ -29,6 +31,8 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   toggleBalanceMenu,
   toggleUserMenu,
 }) => {
+  const queryClient = useQueryClient();
+
   // ใช้ hook เพื่อดึงยอดเงินจริง
   const {
     data: cashBalance,
@@ -41,10 +45,20 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   // ใช้ mutation สำหรับเพิ่มเงิน
   const addCashMutation = useAddCashToTrade();
 
+  // ใช้ mutation สำหรับรีเซ็ตพอร์ต
+  const resetPortfolioMutation = useResetPortfolio();
+
   // Handle add cash
   const handleAddCash = () => {
     if (!addCashMutation.isPending) {
       addCashMutation.mutate();
+    }
+  };
+
+  // Handle reset portfolio
+  const handleResetPortfolio = async () => {
+    if (!resetPortfolioMutation.isPending) {
+      resetPortfolioMutation.mutate();
     }
   };
 
@@ -88,6 +102,8 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 {session
                   ? error
                     ? "Error"
+                    : isLoading
+                    ? "Loading..."
                     : `${formatCurrency(cashBalance?.amount)} USD`
                   : "0.00 USD"}
               </div>
@@ -118,10 +134,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                     : ""
                 }`}
               >
-                <span className="text-[16px] font-normal">
-                  Deposit
-                  {/* {addCashMutation.isPending ? "Adding..." : "Deposit"} */}
-                </span>
+                <span className="text-[16px] font-normal">Deposit</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="18"
@@ -135,8 +148,15 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   />
                 </svg>
               </div>
-              {/* Withdraw Option */}
-              <div className="h-10 px-[14px] flex items-center justify-between hover:bg-[#17306B] text-base cursor-pointer">
+              {/* Reset Balance Option */}
+              <div
+                onClick={handleResetPortfolio}
+                className={`h-10 px-[14px] flex items-center justify-between hover:bg-[#17306B] text-base cursor-pointer ${
+                  resetPortfolioMutation.isPending
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
                 <span className="text-[16px] font-normal">Reset Balance</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
