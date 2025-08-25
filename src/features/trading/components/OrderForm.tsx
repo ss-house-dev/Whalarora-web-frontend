@@ -9,7 +9,7 @@ import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 
-interface OrderFormProps {  
+interface OrderFormProps {
   type: "buy" | "sell";
   inputRef: React.RefObject<HTMLInputElement | null>;
   amountInputRef: React.RefObject<HTMLInputElement | null>;
@@ -210,7 +210,15 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // ตรวจสอบยอดเงิน
+      // คำนวณจำนวน BTC ที่จะได้รับ (จาก receiveAmount)
+      const btcAmount = parseFloat(receiveAmount.replace(/,/g, "") || "0");
+
+      if (isNaN(btcAmount) || btcAmount <= 0) {
+        alert("ไม่สามารถคำนวณจำนวน BTC ได้");
+        return;
+      }
+
+      // ตรวจสอบยอดเงิน (ใช้ USD amount สำหรับตรวจสอบ)
       const totalCost = numericAmount; // USD amount to spend
       const currentBalance = cashBalance?.amount || 0;
 
@@ -236,23 +244,18 @@ const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
-      // ส่ง USD amount ตรงๆ (ไม่ต้องแปลงเป็น BTC)
-      // API คาดหวัง amount เป็นจำนวนเงิน USD ที่ต้องการใช้
-
+      // ส่ง BTC amount แทน USD amount
       const orderPayload = {
         userId: userId,
         symbol: symbol,
         price: numericPrice, // Price per BTC
-        amount: numericAmount, // USD amount to spend (ส่งเป็น USD amount)
+        amount: btcAmount, // BTC amount to buy (ใช้ค่าจาก receiveAmount)
       };
 
       console.log("Order payload:", orderPayload);
       console.log("USD to spend:", numericAmount);
       console.log("Price per BTC:", numericPrice);
-      console.log(
-        "Expected BTC to receive:",
-        (numericAmount / numericPrice).toFixed(8)
-      );
+      console.log("BTC amount to buy:", btcAmount);
 
       createBuyOrderMutation.mutate(orderPayload);
     } else {
