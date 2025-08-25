@@ -15,8 +15,7 @@ export const useAddCashToTrade = (
     mutationFn: addCashToTrade,
     onSuccess: (data, variables, context) => {
       console.log("Cash added successfully:", data);
-      console.log("New balance:", data);
-
+      
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
