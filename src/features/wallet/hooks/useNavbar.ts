@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useAddCashToTrade } from "@/features/wallet/hooks/useAddCashToTrade";
+import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
 
 export const useNavbar = () => {
   const router = useRouter();
