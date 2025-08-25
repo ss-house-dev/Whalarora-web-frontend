@@ -7,8 +7,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
+import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 
-interface OrderFormProps {
+interface OrderFormProps {  
   type: "buy" | "sell";
   inputRef: React.RefObject<HTMLInputElement | null>;
   amountInputRef: React.RefObject<HTMLInputElement | null>;
@@ -22,6 +23,7 @@ interface OrderFormProps {
   sliderValue: number;
   availableBalance: string;
   balanceCurrency: string;
+  symbol?: string; // เพิ่ม symbol prop
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -47,6 +49,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   sliderValue,
   availableBalance,
   balanceCurrency,
+  symbol = "BTC", // default symbol
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -67,6 +70,69 @@ const OrderForm: React.FC<OrderFormProps> = ({
     error: balanceError,
   } = useGetCashBalance({
     enabled: !!session, // เรียก API เฉพาะเมื่อมี session
+  });
+
+  // ใช้ hook สำหรับสร้าง buy order
+  const createBuyOrderMutation = useCreateBuyOrder({
+    onSuccess: (data) => {
+      console.log("Buy order created successfully:", data);
+
+      // ตรวจสอบสถานะของ order
+      if (data.filled > 0) {
+        // กรณีซื้อสำเร็จ (บางส่วนหรือทั้งหมด)
+        const filledUSD =
+          data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
+        alert(
+          `✅ ซื้อสำเร็จ!\n` +
+            `ได้ Bitcoin: ${data.filled} เหรียญ\n` +
+            `ใช้เงิน: ${filledUSD.toFixed(2)} ดอลลาร์`
+        );
+      } else if (data.remaining > 0 && data.filled === 0) {
+        // กรณี order ถูกสร้างแต่ยังไม่ได้ execute
+        alert(
+          `📝 สร้าง Order สำเร็จ!\n` +
+            `Order ID: ${data.orderRef}\n` +
+            `จำนวนที่รอ: ${data.remaining.toFixed(8)} BTC\n` +
+            `สถานะ: รอการจับคู่`
+        );
+      } else {
+        // กรณีอื่นๆ
+        let message = `Order ID: ${data.orderRef}`;
+
+        if (data.refund > 0) {
+          // มี refund (อาจเป็น partial fill หรือ error)
+          const actualSpent =
+            parseFloat(amount.replace(/,/g, "")) - data.refund;
+          message += `\nเงินที่ใช้จริง: ${actualSpent.toFixed(2)} ดอลลาร์`;
+          message += `\nเงินคืน: ${data.refund.toFixed(2)} ดอลลาร์`;
+
+          if (data.message) {
+            message += `\nข้อความ: ${data.message}`;
+          }
+        }
+
+        alert(message);
+      }
+
+      // เรียก onSubmit ต้นฉบับหากต้องการทำอย่างอื่นเพิ่มเติม
+      onSubmit();
+    },
+    onError: (error) => {
+      console.error("Error creating buy order:", error);
+
+      // จัดการ error message ให้เหมาะสม
+      let errorMessage = error.message;
+      if (errorMessage.includes("Insufficient funds")) {
+        errorMessage =
+          `❌ ยอดเงินไม่เพียงพอ\n` +
+          `ยอดเงินที่มี: ${getDisplayBalance()} ${getDisplayCurrency()}\n` +
+          `จำนวนที่ต้องการ: ${(
+            parseFloat(price || "0") * parseFloat(amount || "0")
+          ).toFixed(2)} ดอลลาร์`;
+      }
+
+      alert(`❌ ไม่สามารถสร้างคำสั่งซื้อได้\n${errorMessage}`);
+    },
   });
 
   const isBuy = type === "buy";
@@ -110,22 +176,89 @@ const OrderForm: React.FC<OrderFormProps> = ({
     if (isBuy) {
       return "USD";
     } else {
-      return balanceCurrency; // ใช้ balanceCurrency เหมือนเดิมสำหรับ BTC
+      return balanceCurrency;
     }
   };
 
   const handleSubmit = () => {
     if (!session) {
-      // แสดง alert และไปหน้า login
       alert("Please login to continue trading");
       router.push("/auth/sign-in");
       return;
     }
 
-    // ถ้าล็อกอินแล้วให้ดำเนินการตามปกติ
-    onSubmit();
-  };
+    if (isBuy) {
+      if (!amount || !price) {
+        alert("กรุณากรอกจำนวนและราคา");
+        return;
+      }
 
+      // ลบ comma ออกก่อน parse เป็น number
+      const numericAmount = parseFloat(amount.replace(/,/g, "") || "0"); // USD amount
+      const numericPrice = parseFloat(price.replace(/,/g, "") || "0"); // Price per BTC
+
+      console.log("Raw amount (USD):", amount, "Parsed:", numericAmount);
+      console.log("Raw price:", price, "Parsed:", numericPrice);
+
+      if (
+        isNaN(numericAmount) ||
+        isNaN(numericPrice) ||
+        numericAmount <= 0 ||
+        numericPrice <= 0
+      ) {
+        alert("กรุณากรอกจำนวนและราคาที่ถูกต้อง");
+        return;
+      }
+
+      // ตรวจสอบยอดเงิน
+      const totalCost = numericAmount; // USD amount to spend
+      const currentBalance = cashBalance?.amount || 0;
+
+      if (totalCost > currentBalance) {
+        alert(
+          `ยอดเงินไม่เพียงพอ\nยอดเงินที่มี: ${formatCurrency(
+            currentBalance
+          )}\nยอดเงินที่ต้องการ: ${formatCurrency(totalCost)}`
+        );
+        return;
+      }
+
+      if (!isAmountValid) {
+        alert("ยอดเงินไม่เพียงพอ");
+        return;
+      }
+
+      const userId =
+        cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+
+      if (!userId) {
+        alert("ไม่สามารถระบุตัวตน กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      // ส่ง USD amount ตรงๆ (ไม่ต้องแปลงเป็น BTC)
+      // API คาดหวัง amount เป็นจำนวนเงิน USD ที่ต้องการใช้
+
+      const orderPayload = {
+        userId: userId,
+        symbol: symbol,
+        price: numericPrice, // Price per BTC
+        amount: numericAmount, // USD amount to spend (ส่งเป็น USD amount)
+      };
+
+      console.log("Order payload:", orderPayload);
+      console.log("USD to spend:", numericAmount);
+      console.log("Price per BTC:", numericPrice);
+      console.log(
+        "Expected BTC to receive:",
+        (numericAmount / numericPrice).toFixed(8)
+      );
+
+      createBuyOrderMutation.mutate(orderPayload);
+    } else {
+      onSubmit();
+    }
+  };
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -323,10 +456,21 @@ const OrderForm: React.FC<OrderFormProps> = ({
       {/* Action Button */}
       <div className="mt-8 w-full">
         <Button
-          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}
+          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
+            createBuyOrderMutation.isPending
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          }`}
           onClick={handleSubmit}
+          disabled={createBuyOrderMutation.isPending}
         >
-          {isBuy ? "Buy" : "Sell"}
+          {createBuyOrderMutation.isPending
+            ? isBuy
+              ? "Creating Buy Order..."
+              : "Processing..."
+            : isBuy
+            ? "Buy"
+            : "Sell"}
         </Button>
       </div>
     </div>
