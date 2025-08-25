@@ -113,21 +113,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         }
         alert(message);
       }
-
       onSubmit();
-    },
-    onError: (error) => {
-      console.error("Error creating buy order:", error);
-      let errorMessage = error.message;
-      if (errorMessage.includes("Insufficient funds")) {
-        errorMessage =
-          `Insufficient funds\n` +
-          `Available balance: ${getDisplayBalance()} ${getDisplayCurrency()}\n` +
-          `Amount required: ${(
-            parseFloat(price || "0") * parseFloat(amount || "0")
-          ).toFixed(2)} USD`;
-      }
-      alert(`Unable to create buy order\n${errorMessage}`);
     },
   });
 
@@ -184,56 +170,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
     }
 
     if (isBuy) {
-      if (!amount || !price) {
-        alert("กรุณากรอกจำนวนและราคา");
-        return;
-      }
-
       const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
       const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
-
-      if (
-        isNaN(numericAmount) ||
-        isNaN(numericPrice) ||
-        numericAmount <= 0 ||
-        numericPrice <= 0
-      ) {
-        alert("กรุณากรอกจำนวนและราคาที่ถูกต้อง");
-        return;
-      }
-
       const btcAmount = parseFloat(receiveAmount.replace(/,/g, "") || "0");
-
-      if (isNaN(btcAmount) || btcAmount <= 0) {
-        alert("ไม่สามารถคำนวณจำนวน BTC ได้");
-        return;
-      }
-
-      const totalCost = numericAmount;
-      const currentBalance = cashBalance?.amount || 0;
-
-      if (totalCost > currentBalance) {
-        alert(
-          `ยอดเงินไม่เพียงพอ\nยอดเงินที่มี: ${formatCurrency(
-            currentBalance
-          )}\nยอดเงินที่ต้องการ: ${formatCurrency(totalCost)}`
-        );
-        return;
-      }
-
-      if (!isAmountValid) {
-        alert("ยอดเงินไม่เพียงพอ");
-        return;
-      }
-
-      const userId =
-        cashBalance?.userId || (session.user as any)?.id || session.user?.email;
-
-      if (!userId) {
-        alert("ไม่สามารถระบุตัวตน กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
-
+      const userId = cashBalance?.userId || (session.user as any)?.id || session.user?.email;
       const orderPayload = {
         userId: userId,
         symbol: symbol,
