@@ -2,6 +2,7 @@ import { Anuphan } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import { CustomProviders } from "./provider";
+import QueryProvider from "@/lib/react-query/QueryClientProvider";
 
 const anuphan = Anuphan({
   weight: "400",
@@ -20,9 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <CustomProviders>
-      <html lang="en" className={`min-h-screen ${anuphan.className}`}>
-        <body>{children}</body>
-      </html>
+      <QueryProvider>
+        <html lang="en" className={`min-h-screen ${anuphan.className}`}>
+          <body>{children}</body>
+        </html>
+      </QueryProvider>
     </CustomProviders>
   );
 }
