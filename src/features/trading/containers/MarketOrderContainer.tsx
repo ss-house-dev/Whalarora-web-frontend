@@ -351,13 +351,6 @@ export default function MarketOrderContainer() {
         ? parseFloat(receiveAmountToSubmit).toFixed(9)
         : formatToTwoDecimalsWithComma(receiveAmountToSubmit);
 
-    const message = `${action} BTC/USDT (${formattedAmount} ${
-      type === "buy" ? "USD" : "BTC"
-    }) submitted successfully. You will receive ${formattedReceiveAmount} ${
-      type === "buy" ? "BTC" : "USD"
-    }.`;
-
-    alert(message);
   };
 
   // Format available balance for display

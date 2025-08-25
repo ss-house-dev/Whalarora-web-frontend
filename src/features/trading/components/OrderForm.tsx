@@ -51,7 +51,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   sliderValue,
   availableBalance,
   balanceCurrency,
-  symbol = "BTC", // default symbol
+  symbol = "BTC",
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -89,26 +89,26 @@ const OrderForm: React.FC<OrderFormProps> = ({
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
         alert(
-          `✅ ซื้อสำเร็จ!\n` +
-            `ได้ Bitcoin: ${data.filled} เหรียญ\n` +
-            `ใช้เงิน: ${filledUSD.toFixed(2)} ดอลลาร์`
+          `Buy ${symbol}/USDT Amount ${filledUSD.toFixed(
+            2
+          )} USD submitted successfully`
         );
       } else if (data.remaining > 0 && data.filled === 0) {
         alert(
-          `📝 สร้าง Order สำเร็จ!\n` +
+          `📝 Order created successfully!\n` +
             `Order ID: ${data.orderRef}\n` +
-            `จำนวนที่รอ: ${data.remaining.toFixed(8)} BTC\n` +
-            `สถานะ: รอการจับคู่`
+            `Amount remaining: ${data.remaining.toFixed(8)} BTC\n` +
+            `Status: Pending`
         );
       } else {
         let message = `Order ID: ${data.orderRef}`;
         if (data.refund > 0) {
           const actualSpent =
             parseFloat(amount.replace(/,/g, "")) - data.refund;
-          message += `\nเงินที่ใช้จริง: ${actualSpent.toFixed(2)} ดอลลาร์`;
-          message += `\nเงินคืน: ${data.refund.toFixed(2)} ดอลลาร์`;
+          message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
+          message += `\nRefund: ${data.refund.toFixed(2)} USD`;
           if (data.message) {
-            message += `\nข้อความ: ${data.message}`;
+            message += `\nMessage: ${data.message}`;
           }
         }
         alert(message);
@@ -121,13 +121,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
       let errorMessage = error.message;
       if (errorMessage.includes("Insufficient funds")) {
         errorMessage =
-          `❌ ยอดเงินไม่เพียงพอ\n` +
-          `ยอดเงินที่มี: ${getDisplayBalance()} ${getDisplayCurrency()}\n` +
-          `จำนวนที่ต้องการ: ${(
+          `Insufficient funds\n` +
+          `Available balance: ${getDisplayBalance()} ${getDisplayCurrency()}\n` +
+          `Amount required: ${(
             parseFloat(price || "0") * parseFloat(amount || "0")
-          ).toFixed(2)} ดอลลาร์`;
+          ).toFixed(2)} USD`;
       }
-      alert(`❌ ไม่สามารถสร้างคำสั่งซื้อได้\n${errorMessage}`);
+      alert(`Unable to create buy order\n${errorMessage}`);
     },
   });
 
