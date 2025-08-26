@@ -4,7 +4,6 @@ export interface CreateBuyOrderRequest {
   price: number;
   amount: number;
 }
-
 export interface CreateBuyOrderResponse {
   orderRef: string;
   filled: number;
@@ -12,4 +11,13 @@ export interface CreateBuyOrderResponse {
   spent: number;
   refund: number;
   message: string;
+}
+export interface CreateSellOrderRequest {
+  userId: string;
+  symbol: string;
+  price: number;
+  amount: number;
+}
+export interface CreateSellOrderResponse {
+  orderRef: string;
 }
