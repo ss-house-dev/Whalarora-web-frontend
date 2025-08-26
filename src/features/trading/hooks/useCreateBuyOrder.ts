@@ -7,7 +7,7 @@ import createBuyOrder, {
   CreateBuyOrderRequest, 
   CreateBuyOrderResponse 
 } from "@/features/trading/services/createBuyOrder";
-import { TradeQueryKeys as WalletTradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import { TradeQueryKeys as WalletTradeQueryKeys } from "@/features/trading/constants";
 
 export const useCreateBuyOrder = (
   options?: UseMutationOptions<CreateBuyOrderResponse, Error, CreateBuyOrderRequest>

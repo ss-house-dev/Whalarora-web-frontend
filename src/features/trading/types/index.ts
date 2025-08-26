@@ -21,3 +21,13 @@ export interface CreateSellOrderRequest {
 export interface CreateSellOrderResponse {
   orderRef: string;
 }
+
+export interface GetCoinRequest {
+  symbol: string;
+}
+
+export interface GetCoinResponse {
+  userId: string;
+  symbol: string;
+  amount: number;
+}

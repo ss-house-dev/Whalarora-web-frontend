@@ -10,7 +10,8 @@ import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 import { useCreateSellOrder } from "@/features/trading/hooks/useCreateSellOrder";
 import { useQueryClient } from "@tanstack/react-query";
-import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import { TradeQueryKeys } from "@/features/trading/constants";
+import { useGetCoin } from "@/features/trading/hooks/useGetCoin";
 
 export default function MarketOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,12 +30,25 @@ export default function MarketOrderContainer() {
     enabled: !!session,
   });
 
+  // Fetch BTC balance
+  const {
+    data: btcBalance,
+    isLoading: isBtcBalanceLoading,
+    error: btcBalanceError,
+  } = useGetCoin({
+    symbol: "BTC",
+    enabled: !!session,
+  });
+
   // Create buy order mutation
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
       console.log("Buy order created successfully:", data);
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [TradeQueryKeys.GET_COIN_ASSET, "BTC"],
       });
 
       if (data.filled > 0) {
@@ -76,6 +90,9 @@ export default function MarketOrderContainer() {
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
+      queryClient.invalidateQueries({
+        queryKey: [TradeQueryKeys.GET_COIN_ASSET, "BTC"],
+      });
 
       // Show success message
       alert(
@@ -110,13 +127,18 @@ export default function MarketOrderContainer() {
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
-  const AVAILABLE_BTC_BALANCE = 100;
 
-  // Get available balance dynamically
+  // Get available balance dynamically for USD
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
     return cashBalance.amount || 0;
   }, [session, cashBalance]);
+
+  // Get available BTC balance dynamically
+  const getAvailableBTCBalance = useCallback(() => {
+    if (!session || !btcBalance) return 0;
+    return btcBalance.amount || 0;
+  }, [session, btcBalance]);
 
   // Format available balance for display
   const formatAvailableBalance = useCallback(() => {
@@ -126,6 +148,12 @@ export default function MarketOrderContainer() {
       maximumFractionDigits: 2,
     }).format(balance);
   }, [getAvailableBalance]);
+
+  // Format available BTC balance for display
+  const formatAvailableBTCBalance = useCallback(() => {
+    const balance = getAvailableBTCBalance();
+    return balance.toFixed(9); // แสดงทศนิยม 9 ตำแหน่งสำหรับ BTC
+  }, [getAvailableBTCBalance]);
 
   // Helper functions
   const formatNumberWithComma = useCallback((value: string): string => {
@@ -209,11 +237,12 @@ export default function MarketOrderContainer() {
     (btcAmount: string): number => {
       if (!btcAmount) return 0;
       const numAmount = parseFloat(btcAmount);
-      if (isNaN(numAmount) || numAmount <= 0) return 0;
-      const percentage = (numAmount / AVAILABLE_BTC_BALANCE) * 100;
+      const availableBTC = getAvailableBTCBalance();
+      if (isNaN(numAmount) || numAmount <= 0 || availableBTC <= 0) return 0;
+      const percentage = (numAmount / availableBTC) * 100;
       return Math.min(percentage, 100);
     },
-    []
+    [getAvailableBTCBalance]
   );
 
   const calculateAmountFromPercentage = useCallback(
@@ -227,10 +256,11 @@ export default function MarketOrderContainer() {
 
   const calculateBTCFromPercentage = useCallback(
     (percentage: number): string => {
-      const btcAmount = (percentage / 100) * AVAILABLE_BTC_BALANCE;
+      const availableBTC = getAvailableBTCBalance();
+      const btcAmount = (percentage / 100) * availableBTC;
       return btcAmount.toFixed(9);
     },
-    []
+    [getAvailableBTCBalance]
   );
 
   // Price handlers
@@ -326,8 +356,8 @@ export default function MarketOrderContainer() {
       setSellAmount(formattedValue);
 
       const num = parseFloat(inputValue);
-      const isValid =
-        inputValue === "" || (!isNaN(num) && num <= AVAILABLE_BTC_BALANCE);
+      const availableBTC = getAvailableBTCBalance();
+      const isValid = inputValue === "" || (!isNaN(num) && num <= availableBTC);
 
       if (!isValid && inputValue !== "") {
         setSellSliderValue(0);
@@ -344,7 +374,8 @@ export default function MarketOrderContainer() {
     const newBTCAmount = calculateBTCFromPercentage(percentage);
     setSellAmount(newBTCAmount);
     const num = parseFloat(newBTCAmount);
-    setIsSellAmountValid(!isNaN(num) && num <= AVAILABLE_BTC_BALANCE);
+    const availableBTC = getAvailableBTCBalance();
+    setIsSellAmountValid(!isNaN(num) && num <= availableBTC);
   };
 
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
@@ -556,7 +587,7 @@ export default function MarketOrderContainer() {
             isAmountValid={isSellAmountValid}
             isInputFocused={isInputFocused}
             isAmountFocused={isSellAmountFocused}
-            availableBalance="100"
+            availableBalance={formatAvailableBTCBalance()}
             balanceCurrency="BTC"
             symbol="BTC"
             buttonColor={getButtonColor("sell")}
