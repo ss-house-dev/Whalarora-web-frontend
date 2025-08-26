@@ -2,20 +2,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import Image from "next/image";
+import Header from "@/components/ui/header";
 
 export default function Home() {
   const [isHoverDemo, setIsHoverDemo] = useState(false);
   const Router = useRouter();
-
   const { data: session } = useSession();
 
   const handleGetStartClick = () => {
     if (session) {
-      // ถ้าล็อกอินแล้วให้ไปหน้า trading
       Router.push("/main/trading");
     } else {
-      // ถ้ายังไม่ได้ล็อกอินให้ทำการล็อกอิน
       signIn();
     }
   };
@@ -24,60 +21,16 @@ export default function Home() {
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(173.39deg, rgba(0, 0, 0, 0.5) 4.96%, rgba(0, 0, 0, 0) 95.04%), url(/assets/landing-page-background.png)`,
+        background:
+          "linear-gradient(180deg, rgba(0, 0, 0, 0.50) 27.31%, rgba(0, 0, 0, 0.00) 104.62%), url(/assets/landing-page-background.png) lightgray 50% / cover no-repeat",
       }}
     >
-      <header
-        style={{
-          boxShadow:
-            "0 4px 30px rgba(0,0,0,0.3), 2px -2px 20px 0px #FFFFFF30 inset",
-        }}
-        className="relative z-10 flex justify-between items-center px-10 py-2 mx-25 rounded-b-2xl bg-white/5 backdrop-blur-none border border-white/10"
-      >
-        <div
-          onClick={() => Router.push("/")}
-          className="flex items-center space-x-3 cursor-pointer"
-        >
-          <Image
-            src="/assets/whalarora-logo.png"
-            alt="Whalarora Logo"
-            width={10}
-            height={10}
-            className="w-10 h-10 object-cover rounded-full"
-          />
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handleGetStartClick}
-            className="rounded-[12px] border border-white/25 text-white px-10 py-2 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] transition-all duration-300 ease-in-out cursor-pointer"
-            style={{
-              background:
-                "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)",
-            }}
-            onMouseEnter={(e) => {
-              const target = e.currentTarget as HTMLElement;
-              target.style.background =
-                "linear-gradient(180deg, #1F4293 0%, #276F88 49.52%, #26F6BA 100%)";
-              target.style.boxShadow = "0px 4px 15px 0px #1D7DFF";
-            }}
-            onMouseLeave={(e) => {
-              const target = e.currentTarget as HTMLElement;
-              target.style.background =
-                "linear-gradient(180deg, #1F4293 17.87%, #246AEC 100%)";
-              target.style.boxShadow = "0px 4px 4px rgba(0, 0, 0, 0.25)";
-            }}
-          >
-            {session ? "Get start !" : "Get start !"}
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <div
-        className="flex items-center justify-center text-5xl font-bold bg-clip-text text-transparent mt-10 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)]"
+        className="flex items-center justify-center bg-clip-text mt-10 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed"
         style={{
-          backgroundImage:
-            "linear-gradient(180deg, #1F4293 0%, #276F88 35.02%, #00FFB6 100%)",
+          fontFamily: "Alexandria, sans-serif",
         }}
       >
         Whalalora
