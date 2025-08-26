@@ -23,7 +23,6 @@ const FormItemInput = ({
   onChange,
   onKeyPress,
   disabled = false,
-  placeholder,
   hasError = false,
 }: FormItemInputProps) => {
   const isEmpty = value.trim() === ""; // Check if the input is empty
@@ -44,9 +43,7 @@ const FormItemInput = ({
           onKeyPress={onKeyPress}
           disabled={disabled}
           className={`rounded-md w-[400px] h-[44px] bg-[#17306B] p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-            isEmpty && hasError
-              ? "border-[#D84C4C]"
-              : "focus:border-[#3A8AF7]"
+            isEmpty && hasError ? "border-[#D84C4C]" : "focus:border-[#3A8AF7]"
           } focus:outline-none ${
             type === "password"
               ? "[&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-password-toggle]:hidden [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"

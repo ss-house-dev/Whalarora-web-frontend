@@ -26,10 +26,13 @@ const SignInContainer = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleInputChange = (field: keyof SignInData, value: string | boolean) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof SignInData,
+    value: string | boolean
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     // Clear error when user starts typing
     if (error) setError("");
@@ -48,9 +51,9 @@ const SignInContainer = () => {
 
       // Use NextAuth signIn function
       const result = await signIn("credentials", {
-        userName: formData.username, 
+        userName: formData.username,
         password: formData.password,
-        redirect: false, 
+        redirect: false,
       });
 
       if (result?.error) {
@@ -58,7 +61,7 @@ const SignInContainer = () => {
       } else if (result?.ok) {
         window.location.href = "/main/trading";
       }
-    } catch (err) {
+    } catch {
       setError("Sign in failed. Please try again.");
     } finally {
       setIsLoading(false);

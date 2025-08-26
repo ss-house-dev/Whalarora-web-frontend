@@ -58,7 +58,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  
+
   const isBuy = type === "buy";
   const amountCurrency = isBuy ? "USD" : "BTC";
   const receiveCurrency = isBuy ? "BTC" : "USD";
@@ -79,7 +79,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       router.push("/auth/sign-in");
       return;
     }
-    
+
     // ถ้าล็อกอินแล้วให้ดำเนินการตามปกติ
     onSubmit();
   };
