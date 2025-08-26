@@ -13,16 +13,3 @@ export interface CreateBuyOrderResponse {
   refund: number;
   message: string;
 }
-
-// เพิ่มใน types.ts หรือไฟล์ types ที่เหมาะสม
-
-export interface CreateSellOrderRequest {
-  userId: string;
-  symbol: string;
-  price: number;
-  amount: number;
-}
-
-export interface CreateSellOrderResponse {
-  orderRef: string;
-}
