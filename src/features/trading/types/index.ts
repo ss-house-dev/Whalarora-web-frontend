@@ -13,14 +13,3 @@ export interface CreateBuyOrderResponse {
   refund: number;
   message: string;
 }
-
-export interface CreateSellOrderRequest {
-  userId: string;
-  symbol: string;
-  price: number;
-  amount: number;
-}
-
-export interface CreateSellOrderResponse {
-  orderRef: string;
-}

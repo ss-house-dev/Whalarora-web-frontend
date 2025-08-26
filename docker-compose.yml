@@ -1,4 +1,5 @@
 # กำหนดเวอร์ชันไฟล์ compose
+version: "3.8"
 
 # section "services" คือ กลุ่ม container ที่จะรันในโปรเจกต์นี้
 services:

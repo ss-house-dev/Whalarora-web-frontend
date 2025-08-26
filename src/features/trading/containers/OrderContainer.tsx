@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
-import { useCreateSellOrder } from "@/features/trading/hooks/useCreateSellOrder";
 import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
 
@@ -32,7 +31,7 @@ export default function MarketOrderContainer() {
   // Create buy order mutation
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
-      console.log("Buy order created successfully:", data);
+      console.log("Buy order created successfully:", data); 
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
@@ -69,28 +68,6 @@ export default function MarketOrderContainer() {
     },
   });
 
-  // Create sell order mutation
-  const createSellOrderMutation = useCreateSellOrder({
-    onSuccess: (data) => {
-      console.log("Sell order created successfully:", data);
-      queryClient.invalidateQueries({
-        queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
-      });
-
-      // Show success message
-      alert(
-        `📝 Sell order created successfully!\n` +
-          `Order ID: ${data.orderRef}\n` +
-          `Status: Pending`
-      );
-      handleSubmitSuccess("sell");
-    },
-    onError: (error) => {
-      console.error("Sell order error:", error);
-      alert(`Error creating sell order: ${error.message}`);
-    },
-  });
-
   // Common states
   const [priceLabel, setPriceLabel] = useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -110,7 +87,7 @@ export default function MarketOrderContainer() {
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
-  const AVAILABLE_BTC_BALANCE = 10;
+  const AVAILABLE_BTC_BALANCE = 0.0217;
 
   // Get available balance dynamically
   const getAvailableBalance = useCallback(() => {
@@ -384,32 +361,16 @@ export default function MarketOrderContainer() {
         amount: btcAmount,
       };
 
-      console.log("Buy order payload:", orderPayload);
+      // Add console logs here
+      console.log("Order payload:", orderPayload);
       console.log("USD to spend:", numericAmount);
       console.log("Price per BTC:", numericPrice);
       console.log("BTC amount to buy:", btcAmount);
 
       createBuyOrderMutation.mutate(orderPayload);
     } else {
-      // Handle sell order submission
-      const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
-      const btcAmountToSell = parseFloat(sellAmount || "0");
-      const userId =
-        cashBalance?.userId || (session.user as any)?.id || session.user?.email;
-
-      const sellOrderPayload = {
-        userId: userId,
-        symbol: "BTC",
-        price: numericPrice,
-        amount: btcAmountToSell,
-      };
-
-      console.log("Sell order payload:", sellOrderPayload);
-      console.log("BTC amount to sell:", btcAmountToSell);
-      console.log("Price per BTC:", numericPrice);
-      console.log("USD to receive:", receiveUSD);
-
-      createSellOrderMutation.mutate(sellOrderPayload);
+      // Handle sell order submission (implement if needed)
+      alert("Sell order submitted (logic to be implemented)");
     }
   };
 
@@ -556,13 +517,13 @@ export default function MarketOrderContainer() {
             isAmountValid={isSellAmountValid}
             isInputFocused={isInputFocused}
             isAmountFocused={isSellAmountFocused}
-            availableBalance="10"
+            availableBalance="0.021700000"
             balanceCurrency="BTC"
             symbol="BTC"
             buttonColor={getButtonColor("sell")}
             amountIcon={getAmountIcon("sell")}
             receiveIcon={getReceiveIcon("sell")}
-            isSubmitting={createSellOrderMutation.isPending}
+            isSubmitting={false}
             onPriceFocus={handlePriceFocus}
             onPriceChange={handlePriceChange}
             onPriceBlur={handlePriceBlur}
