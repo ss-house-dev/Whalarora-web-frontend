@@ -3,22 +3,21 @@ import {
   UseMutationOptions,
   useQueryClient,
 } from "@tanstack/react-query";
-import createBuyOrder, { 
-  CreateBuyOrderRequest, 
-  CreateBuyOrderResponse 
-} from "@/features/trading/services/createBuyOrder";
-
+import createSellOrder, { 
+  CreateSellOrderRequest, 
+  CreateSellOrderResponse 
+} from "@/features/trading/services/createSellOrder";
 import { TradeQueryKeys as WalletTradeQueryKeys } from "@/features/trading/constants";
 
-export const useCreateBuyOrder = (
-  options?: UseMutationOptions<CreateBuyOrderResponse, Error, CreateBuyOrderRequest>
+export const useCreateSellOrder = (
+  options?: UseMutationOptions<CreateSellOrderResponse, Error, CreateSellOrderRequest>
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createBuyOrder,
+    mutationFn: createSellOrder,
     onSuccess: (data, variables, context) => {
-      console.log("Buy order created successfully:", data);
+      console.log("Sell order created successfully:", data);
 
       // Invalidate cash balance queries to refresh wallet amount
       queryClient.invalidateQueries({
@@ -35,7 +34,7 @@ export const useCreateBuyOrder = (
       }
     },
     onError: (error, variables, context) => {
-      console.error("Error creating buy order:", error);
+      console.error("Error creating sell order:", error);
 
       if (options?.onError) {
         options.onError(error, variables, context);
