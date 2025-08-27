@@ -19,6 +19,14 @@ export default function MarketOrderContainer() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // State for confirmation dialog
+  const [pendingOrder, setPendingOrder] = useState<{
+    orderRef: string;
+    message: string;
+    options: ("CANCEL" | "KEEP_OPEN")[];
+    originalPayload: any;
+  } | null>(null);
+
   // Fetch wallet balance
   const {
     data: cashBalance,
@@ -31,20 +39,46 @@ export default function MarketOrderContainer() {
   // Create buy order mutation
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
-      console.log("Buy order created successfully:", data); 
+      console.log("Buy order response:", data);
+
+      // Check if requires confirmation
+      if (data.requiresConfirmation) {
+        setPendingOrder({
+          orderRef: data.orderRef,
+          message: data.message || "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ?",
+          options: data.options || ["CANCEL", "KEEP_OPEN"],
+          originalPayload: {
+            userId:
+              cashBalance?.userId ||
+              (session?.user as any)?.id ||
+              session?.user?.email,
+            symbol: "BTC",
+            price: parseFloat(price.replace(/,/g, "")),
+            amount: parseFloat(receiveBTC.replace(/,/g, "")),
+            lotPrice: parseFloat(amount.replace(/,/g, "")),
+          },
+        });
+        return;
+      }
+
+      // Handle successful order execution
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
 
-      if (data.filled > 0) {
+      if (data.filled && data.filled > 0) {
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
         alert(
-          `Buy BTC/USDT Amount ${filledUSD.toFixed(
+          `✅ Buy BTC/USDT Amount ${filledUSD.toFixed(
             2
           )} USD submitted successfully`
         );
-      } else if (data.remaining > 0 && data.filled === 0) {
+      } else if (
+        data.remaining &&
+        data.remaining > 0 &&
+        (!data.filled || data.filled === 0)
+      ) {
         alert(
           `📝 Order created successfully!\n` +
             `Order ID: ${data.orderRef}\n` +
@@ -52,21 +86,47 @@ export default function MarketOrderContainer() {
             `Status: Pending`
         );
       } else {
-        let message = `Order ID: ${data.orderRef}`;
-        if (data.refund > 0) {
+        let message = `✅ Order executed successfully!\nOrder ID: ${data.orderRef}`;
+        if (data.refund && data.refund > 0) {
           const actualSpent =
             parseFloat(amount.replace(/,/g, "")) - data.refund;
           message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
           message += `\nRefund: ${data.refund.toFixed(2)} USD`;
-          if (data.message) {
-            message += `\nMessage: ${data.message}`;
-          }
+        }
+        if (data.message) {
+          message += `\nMessage: ${data.message}`;
         }
         alert(message);
       }
       handleSubmitSuccess("buy");
     },
+    onError: (error) => {
+      console.error("Buy order error:", error);
+      alert(`❌ Error: ${error.message}`);
+    },
   });
+
+  // Handle confirmation decision
+  const handleConfirmationDecision = (decision: "CANCEL" | "KEEP_OPEN") => {
+    if (!pendingOrder) return;
+
+    if (decision === "CANCEL") {
+      alert("❌ Order cancelled");
+      setPendingOrder(null);
+      return;
+    }
+
+    // Continue with KEEP_OPEN
+    const confirmPayload = {
+      ...pendingOrder.originalPayload,
+      confirm: true,
+      onInsufficient: "KEEP_OPEN",
+      keepOpen: true,
+    };
+
+    createBuyOrderMutation.mutate(confirmPayload);
+    setPendingOrder(null);
+  };
 
   // Common states
   const [priceLabel, setPriceLabel] = useState("Price");
@@ -354,14 +414,15 @@ export default function MarketOrderContainer() {
       const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
       const userId =
         cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+
       const orderPayload = {
         userId: userId,
         symbol: "BTC",
         price: numericPrice,
         amount: btcAmount,
+        lotPrice: numericAmount, // จำนวนเงิน USD ที่จะใช้ซื้อ
       };
 
-      // Add console logs here
       console.log("Order payload:", orderPayload);
       console.log("USD to spend:", numericAmount);
       console.log("Price per BTC:", numericPrice);
@@ -454,6 +515,32 @@ export default function MarketOrderContainer() {
 
   return (
     <div>
+      {/* Confirmation Dialog */}
+      {pendingOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              ยืนยันคำสั่งซื้อ
+            </h3>
+            <p className="text-gray-600 mb-6">{pendingOrder.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmationDecision("CANCEL")}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+              >
+                ยกเลิก (CANCEL)
+              </button>
+              <button
+                onClick={() => handleConfirmationDecision("KEEP_OPEN")}
+                className="flex-1 px-4 py-2 bg-[#309C7D] text-white rounded hover:bg-[#28886C] transition-colors"
+              >
+                สร้างออเดอร์ (KEEP_OPEN)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="buy">
         <TabsList className="w-full bg-[#2D2D2D]">
           <TabsTrigger

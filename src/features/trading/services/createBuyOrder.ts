@@ -18,12 +18,23 @@ const createBuyOrder = async (
           status?: number;
           data?: {
             message?: string;
+            requiresConfirmation?: boolean;
+            orderRef?: string;
+            options?: string[];
           };
         };
       };
 
       if (axiosError.response?.status === 401) {
         throw new Error("Please log in again");
+      }
+
+      // ถ้าเป็น 201 แต่ต้อง confirmation ให้ return response แทนการ throw error
+      if (
+        axiosError.response?.status === 201 &&
+        axiosError.response.data?.requiresConfirmation
+      ) {
+        return axiosError.response.data as CreateBuyOrderResponse;
       }
 
       const errorMessage =
