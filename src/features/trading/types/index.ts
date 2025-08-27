@@ -4,6 +4,7 @@ export interface CreateBuyOrderRequest {
   price: number;
   amount: number;
 }
+
 export interface CreateBuyOrderResponse {
   options: ("CANCEL" | "KEEP_OPEN")[];
   requiresConfirmation: any;
