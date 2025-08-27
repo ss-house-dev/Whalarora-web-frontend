@@ -3,32 +3,24 @@ export interface CreateBuyOrderRequest {
   symbol: string;
   price: number;
   amount: number;
+  lotPrice?: number;
+  confirm?: boolean;
+  onInsufficient?: "CANCEL" | "KEEP_OPEN";
+  keepOpen?: boolean;
 }
 export interface CreateBuyOrderResponse {
+  // Success response (when order is executed)
   orderRef: string;
-  filled: number;
-  remaining: number;
-  spent: number;
-  refund: number;
-  message: string;
-}
-export interface CreateSellOrderRequest {
-  userId: string;
-  symbol: string;
-  price: number;
-  amount: number;
-  lotPrice: number;
-}
-export interface CreateSellOrderResponse {
-  orderRef: string;
-  filled: number;
-  proceeds: number;
-}
-export interface GetCoinRequest {
-  symbol: string;
-}
-export interface GetCoinResponse {
-  userId: string;
-  symbol: string;
-  amount: number;
+  filled?: number;
+  remaining?: number;
+  spent?: number;
+  refund?: number;
+  message?: string;
+
+  // Confirmation required response (when insufficient funds)
+  requiresConfirmation?: boolean;
+  filledPreview?: number;
+  spendPreview?: number;
+  remainingPreview?: number;
+  options?: ("CANCEL" | "KEEP_OPEN")[];
 }

@@ -64,6 +64,33 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onMarketClick,
   onSubmit,
 }) => {
+  const [showValidation, setShowValidation] = React.useState(false);
+
+  const handleSubmit = () => {
+    // ตรวจสอบว่ามี amount หรือไม่
+    if (!amount || parseFloat(amount.replace(/,/g, "")) <= 0) {
+      setShowValidation(true);
+      return;
+    }
+    
+    // ตรวจสอบว่า amount ถูกต้องหรือไม่ (เพียงพอสำหรับการซื้อ/ขาย)
+    if (!isAmountValid) {
+      setShowValidation(true);
+      return;
+    }
+
+    // ซ่อนข้อความ validation เมื่อทุกอย่างถูกต้อง
+    setShowValidation(false);
+    onSubmit();
+  };
+
+  // ซ่อนข้อความ validation เมื่อมีการเปลี่ยนแปลง amount
+  React.useEffect(() => {
+    if (amount && parseFloat(amount.replace(/,/g, "")) > 0) {
+      setShowValidation(false);
+    }
+  }, [amount]);
+
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -82,7 +109,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             value={price}
             onChange={onPriceChange}
           />
-          <span className="text-sm font-normal">USD</span>
+          <span className="text-sm font-normal text-[#9AAACE]">USD</span>
 
           {!isInputFocused && (
             <svg
@@ -91,7 +118,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               height="16"
               viewBox="0 0 14 16"
               fill="none"
-              className="h-4 w-4 shrink-0 cursor-pointer text-[#3A8AF7]"
+              className="h-4 w-4 shrink-0 cursor-pointer text-[#3A8AF7] hover:text-[#5BA3FF] transition-colors"
               onClick={() => {
                 inputRef.current?.focus();
                 onPriceFocus();
@@ -99,7 +126,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             >
               <path
                 d="M3.43225 12.4891H0.25V9.30683L8.82625 0.730576C8.9669 0.589973 9.15763 0.510986 9.3565 0.510986C9.55537 0.510986 9.7461 0.589973 9.88675 0.730576L12.0085 2.85158C12.0782 2.92123 12.1336 3.00395 12.1713 3.095C12.209 3.18604 12.2285 3.28364 12.2285 3.3822C12.2285 3.48076 12.209 3.57836 12.1713 3.66941C12.1336 3.76046 12.0782 3.84317 12.0085 3.91283L3.43225 12.4891ZM0.25 13.9891H13.75V15.4891H0.25V13.9891Z"
-                fill="#3A8AF7"
+                fill="currentColor"
               />
             </svg>
           )}
@@ -108,8 +135,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
             onClick={onMarketClick}
             className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
               priceLabel === "Price"
-                ? "bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]"
-                : "bg-[#1F4293] hover:bg-[#1F4293]"
+                ? "bg-[#17306B] border border-[#92CAFE] hover:bg-[#1F4293]"
+                : "bg-[#1F4293] hover:bg-[#2A5BB8]"
             }`}
           >
             <span className="text-[10px] font-normal">Market</span>
@@ -119,6 +146,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               height="12"
               viewBox="0 0 12 12"
               fill="none"
+              className="ml-1"
             >
               <path
                 d="M5.99998 11.4167C3.00835 11.4167 0.583313 8.99167 0.583313 6.00004C0.583313 3.00842 3.00835 0.583374 5.99998 0.583374C8.9916 0.583374 11.4166 3.00842 11.4166 6.00004C11.4166 8.99167 8.9916 11.4167 5.99998 11.4167ZM5.45831 7.62504V8.70837H6.54165V7.62504H5.45831ZM6.54165 6.734C6.97697 6.60279 7.35068 6.3196 7.59473 5.93598C7.83878 5.55237 7.93693 5.09386 7.87129 4.64396C7.80566 4.19406 7.58062 3.7827 7.23715 3.48479C6.89369 3.18688 6.45464 3.02225 5.99998 3.02087C5.56166 3.02074 5.13684 3.17248 4.79781 3.45029C4.45877 3.72809 4.22647 4.11479 4.14044 4.54458L5.20319 4.75746C5.23335 4.60657 5.30574 4.46734 5.41193 4.35598C5.51812 4.24462 5.65375 4.16571 5.80304 4.12842C5.95233 4.09114 6.10914 4.09701 6.25522 4.14536C6.40131 4.19371 6.53066 4.28254 6.62822 4.40153C6.72579 4.52052 6.78756 4.66477 6.80635 4.8175C6.82514 4.97022 6.80017 5.12514 6.73436 5.26423C6.66854 5.40332 6.56458 5.52086 6.43457 5.60318C6.30457 5.68549 6.15386 5.7292 5.99998 5.72921C5.85632 5.72921 5.71855 5.78628 5.61696 5.88786C5.51538 5.98944 5.45831 6.12722 5.45831 6.27087V7.08337H6.54165V6.734Z"
@@ -134,7 +162,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         <div className="flex justify-between mt-7">
           <div className="text-[10px] text-[#9AAACE]">Available Balance</div>
           <div className="flex flex-row gap-1 text-[10px] text-[#9AAACE]">
-            <div>{availableBalance}</div>
+            <div className="font-medium">{availableBalance}</div>
             <div>{balanceCurrency}</div>
           </div>
         </div>
@@ -142,8 +170,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
         {/* Amount */}
         <div className="relative">
           <div
-            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
-              !isAmountValid
+            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] transition-colors ${
+              !isAmountValid || (showValidation && (!amount || parseFloat(amount.replace(/,/g, "")) <= 0))
                 ? "bg-[#17306B] border-[#D84C4C]"
                 : "bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]"
             }`}
@@ -162,7 +190,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 onBlur={onAmountBlur}
               />
               <span
-                className={`text-[14px] font-normal ${
+                className={`text-[14px] font-normal transition-colors ${
                   amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
                 }`}
               >
@@ -170,7 +198,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
               </span>
             </div>
           </div>
-          {!isAmountValid && (
+          {/* Show error messages */}
+          {showValidation && (!amount || parseFloat(amount.replace(/,/g, "")) <= 0) && (
+            <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
+              Please enter amount
+            </span>
+          )}
+          {!isAmountValid && amount && parseFloat(amount.replace(/,/g, "")) > 0 && (
             <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
               Insufficient balance
             </span>
@@ -184,7 +218,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       </div>
 
       <div className="space-y-4">
-        {/* Amount Cal */}
+        {/* Amount Display */}
         <div className="relative flex items-center">
           <div className="absolute z-10">
             <Image
@@ -202,9 +236,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <div className="flex gap-2 items-center">
               <input
                 type="text"
-                className="w-full text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
-                value={amount}
+                className="w-full text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-default select-none"
+                value={amount || "0.00"}
                 readOnly
+                tabIndex={-1}
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
                 {balanceCurrency}
@@ -213,17 +248,18 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </div>
         </div>
 
-        {/* arrow */}
+        {/* Arrow */}
         <div className="flex justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
             height="14"
             viewBox="0 0 14 14"
+            className="text-[#49B6AE]"
           >
             <path
               d="M7.00003 13.6355L13.207 7.4285L11.793 6.0145L7.00003 10.8075L2.20703 6.0145L0.79303 7.4285L7.00003 13.6355ZM7.00003 7.9855L13.207 1.7785L11.793 0.364502L7.00003 5.1575L2.20703 0.364502L0.79303 1.7785L7.00003 7.9855Z"
-              fill="#49B6AE"
+              fill="currentColor"
             />
           </svg>
         </div>
@@ -246,9 +282,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <div className="flex gap-2 items-center">
               <input
                 type="text"
-                className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
-                value={receiveAmount}
+                className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none cursor-default select-none"
+                value={receiveAmount || "0.00"}
                 readOnly
+                tabIndex={-1}
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
                 {type === "buy" ? "BTC" : "USD"}
@@ -261,19 +298,41 @@ const OrderForm: React.FC<OrderFormProps> = ({
       {/* Action Button */}
       <div className="mt-8 w-full">
         <Button
-          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          onClick={onSubmit}
+          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal transition-all duration-200 hover:shadow-lg active:transform active:scale-[0.98]`}
+          onClick={handleSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting
-            ? type === "buy"
-              ? "Creating Buy Order..."
-              : "Processing..."
-            : type === "buy"
-            ? "Buy"
-            : "Sell"}
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg
+                className="animate-spin h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>
+                {type === "buy" ? "Creating Order..." : "Processing..."}
+              </span>
+            </div>
+          ) : (
+            <span className="font-semibold">
+              {type === "buy" ? "Buy" : "Sell"} {type === "buy" ? "BTC" : ""}
+            </span>
+          )}
         </Button>
       </div>
     </div>
