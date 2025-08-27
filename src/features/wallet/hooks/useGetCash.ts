@@ -1,5 +1,5 @@
 import { UseQueryOptions, useQuery } from "@tanstack/react-query";
-import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import { TradeQueryKeys } from "@/features/wallet/constants";
 import getCashBalance, {
   CashBalance,
 } from "@/features/wallet/services/getCash";

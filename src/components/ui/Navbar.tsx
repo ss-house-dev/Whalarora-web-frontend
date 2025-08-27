@@ -150,8 +150,6 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   {session
                     ? error
                       ? "Error"
-                      : isLoading
-                      ? "Loading..."
                       : `${formatCurrency(cashBalance?.amount)} USD`
                     : "0.00 USD"}
                 </div>
