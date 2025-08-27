@@ -1,10 +1,9 @@
 "use client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 
 interface OrderFormProps {
@@ -21,6 +20,11 @@ interface OrderFormProps {
   sliderValue: number;
   availableBalance: string;
   balanceCurrency: string;
+  symbol?: string;
+  buttonColor: string;
+  amountIcon: string;
+  receiveIcon: string;
+  isSubmitting: boolean;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -46,6 +50,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
   sliderValue,
   availableBalance,
   balanceCurrency,
+  buttonColor,
+  amountIcon,
+  receiveIcon,
+  isSubmitting,
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -56,34 +64,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onMarketClick,
   onSubmit,
 }) => {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  const isBuy = type === "buy";
-  const amountCurrency = isBuy ? "USD" : "BTC";
-  const receiveCurrency = isBuy ? "BTC" : "USD";
-  const buttonColor = isBuy
-    ? "bg-[#309C7D] hover:bg-[#28886C]"
-    : "bg-[#D84C4C] hover:bg-[#C73E3E]";
-  const amountIcon = isBuy
-    ? "/currency-icons/dollar-icon.svg"
-    : "/currency-icons/bitcoin-icon.svg";
-  const receiveIcon = isBuy
-    ? "/currency-icons/bitcoin-icon.svg"
-    : "/currency-icons/dollar-icon.svg";
-
-  const handleSubmit = () => {
-    if (!session) {
-      // แสดง alert และไปหน้า login
-      alert("Please login to continue trading");
-      router.push("/auth/sign-in");
-      return;
-    }
-
-    // ถ้าล็อกอินแล้วให้ดำเนินการตามปกติ
-    onSubmit();
-  };
-
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -186,7 +166,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
                 }`}
               >
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
@@ -209,7 +189,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute z-10">
             <Image
               src={amountIcon}
-              alt={`${amountCurrency} Icon`}
+              alt={`${balanceCurrency} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -227,7 +207,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
@@ -253,7 +233,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute left-0 z-10">
             <Image
               src={receiveIcon}
-              alt={`${receiveCurrency} Icon`}
+              alt={`${type === "buy" ? "BTC" : "USD"} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -271,7 +251,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {receiveCurrency}
+                {type === "buy" ? "BTC" : "USD"}
               </span>
             </div>
           </div>
@@ -281,10 +261,19 @@ const OrderForm: React.FC<OrderFormProps> = ({
       {/* Action Button */}
       <div className="mt-8 w-full">
         <Button
-          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}
-          onClick={handleSubmit}
+          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          onClick={onSubmit}
+          disabled={isSubmitting}
         >
-          {isBuy ? "Buy" : "Sell"}
+          {isSubmitting
+            ? type === "buy"
+              ? "Creating Buy Order..."
+              : "Processing..."
+            : type === "buy"
+            ? "Buy"
+            : "Sell"}
         </Button>
       </div>
     </div>

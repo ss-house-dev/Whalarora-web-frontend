@@ -3,7 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import { TradeQueryKeys } from "@/features/wallet/constants";
 import resetPortfolio, {
   ResetPortfolioResponse,
 } from "@/features/wallet/services/updateCash";

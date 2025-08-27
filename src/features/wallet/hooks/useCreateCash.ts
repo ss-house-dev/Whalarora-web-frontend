@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { addCashToTrade, AddCashResponse } from "@/features/wallet/services";
-import { TradeQueryKeys } from "@/features/wallet/constants/TradeQueryKeys";
+import { TradeQueryKeys } from "@/features/wallet/constants";
 
 export const useAddCashToTrade = (
   options?: UseMutationOptions<AddCashResponse, Error, void>

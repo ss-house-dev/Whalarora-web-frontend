@@ -1,4 +1,4 @@
-import MarketOrderContainer from "@/features/trading/containers/MarketOrderContainer";
+import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
 import AdvancedChart from "@/features/trading/components/Chart";
 
 export default function MarketOrderPage() {
