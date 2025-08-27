@@ -94,12 +94,21 @@ export default function MarketOrderContainer() {
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, "BTC"],
       });
 
-      // Show success message
-      alert(
-        `📝 Sell order created successfully!\n` +
-          `Order ID: ${data.orderRef}\n` +
-          `Status: Pending`
-      );
+      // Show success message with updated response format
+      if (data.filled > 0) {
+        alert(
+          `✅ Sell order completed successfully!\n` +
+            `Order ID: ${data.orderRef}\n` +
+            `BTC Sold: ${data.filled.toFixed(8)}\n` +
+            `Proceeds: $${data.proceeds.toFixed(2)}`
+        );
+      } else {
+        alert(
+          `📝 Sell order created successfully!\n` +
+            `Order ID: ${data.orderRef}\n` +
+            `Status: Pending`
+        );
+      }
       handleSubmitSuccess("sell");
     },
     onError: (error) => {
@@ -422,22 +431,27 @@ export default function MarketOrderContainer() {
 
       createBuyOrderMutation.mutate(orderPayload);
     } else {
-      // Handle sell order submission
+      // Handle sell order submission with updated payload
       const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
       const btcAmountToSell = parseFloat(sellAmount || "0");
       const userId =
         cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+
+      // Calculate lotPrice (total value of the trade)
+      const lotPrice = numericPrice * btcAmountToSell;
 
       const sellOrderPayload = {
         userId: userId,
         symbol: "BTC",
         price: numericPrice,
         amount: btcAmountToSell,
+        lotPrice: lotPrice, // เพิ่ม lotPrice ตาม API spec
       };
 
       console.log("Sell order payload:", sellOrderPayload);
       console.log("BTC amount to sell:", btcAmountToSell);
       console.log("Price per BTC:", numericPrice);
+      console.log("Lot Price (total value):", lotPrice);
       console.log("USD to receive:", receiveUSD);
 
       createSellOrderMutation.mutate(sellOrderPayload);

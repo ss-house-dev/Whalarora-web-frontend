@@ -17,15 +17,16 @@ export interface CreateSellOrderRequest {
   symbol: string;
   price: number;
   amount: number;
+  lotPrice: number;
 }
 export interface CreateSellOrderResponse {
   orderRef: string;
+  filled: number;
+  proceeds: number;
 }
-
 export interface GetCoinRequest {
   symbol: string;
 }
-
 export interface GetCoinResponse {
   userId: string;
   symbol: string;
