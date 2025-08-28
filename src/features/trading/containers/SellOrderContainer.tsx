@@ -353,8 +353,6 @@ export default function SellOrderContainer() {
       return;
     }
 
-    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
-
     // Handle sell order submission with updated payload
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmountToSell = parseFloat(sellAmount || "0");

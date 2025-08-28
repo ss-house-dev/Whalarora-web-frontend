@@ -26,6 +26,14 @@ interface AlertState {
   type: "success" | "info" | "error";
 }
 
+interface OrderPayload {
+  userId: string;
+  symbol: string;
+  price: number;
+  amount: number;
+  lotPrice: number;
+}
+
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +51,7 @@ export default function BuyOrderContainer() {
     message: string;
     title?: string;
     options: ("CANCEL" | "KEEP_OPEN")[];
-    originalPayload: any;
+    originalPayload: OrderPayload; // <-- Use the defined type here
   } | null>(null);
 
   // Function to show alert
@@ -60,11 +68,7 @@ export default function BuyOrderContainer() {
   };
 
   // Fetch wallet balance
-  const {
-    data: cashBalance,
-    isLoading: isBalanceLoading,
-    error: balanceError,
-  } = useGetCashBalance({
+  const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
   });
 
