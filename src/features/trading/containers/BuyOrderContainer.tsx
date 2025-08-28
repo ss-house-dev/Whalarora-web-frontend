@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
+import AlertBox from "@/components/ui/alert-box";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,11 @@ import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/wallet/constants";
+
+interface AlertState {
+  message: string;
+  type: "success" | "info" | "error";
+}
 
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -18,6 +24,9 @@ export default function BuyOrderContainer() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // State for alert box
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
+
   // State for confirmation dialog
   const [pendingOrder, setPendingOrder] = useState<{
     orderRef: string;
@@ -25,6 +34,19 @@ export default function BuyOrderContainer() {
     options: ("CANCEL" | "KEEP_OPEN")[];
     originalPayload: any;
   } | null>(null);
+
+  // Function to show alert
+  const showAlert = (
+    message: string,
+    type: "success" | "info" | "error" = "info"
+  ) => {
+    setAlertState({ message, type });
+  };
+
+  // Function to close alert
+  const closeAlert = () => {
+    setAlertState(null);
+  };
 
   // Fetch wallet balance
   const {
@@ -68,40 +90,44 @@ export default function BuyOrderContainer() {
       if (data.filled && data.filled > 0) {
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
-        alert(
-          `✅ Buy BTC/USDT Amount ${filledUSD.toFixed(
+        showAlert(
+          `Buy BTC/USDT Amount ${filledUSD.toFixed(
             2
-          )} USD submitted successfully`
+          )} USD submitted successfully`,
+          "success"
         );
       } else if (
         data.remaining &&
         data.remaining > 0 &&
         (!data.filled || data.filled === 0)
       ) {
-        alert(
-          `📝 Order created successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `Amount remaining: ${data.remaining.toFixed(8)} BTC\n` +
-            `Status: Pending`
+        showAlert(
+          `Order created successfully! Order ID: ${
+            data.orderRef
+          }. Amount remaining: ${data.remaining.toFixed(
+            8
+          )} BTC. Status: Pending`,
+          "info"
         );
       } else {
-        let message = `✅ Order executed successfully!\nOrder ID: ${data.orderRef}`;
+        let message = `Order executed successfully! Order ID: ${data.orderRef}`;
         if (data.refund && data.refund > 0) {
           const actualSpent =
             parseFloat(amount.replace(/,/g, "")) - data.refund;
-          message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
-          message += `\nRefund: ${data.refund.toFixed(2)} USD`;
+          message += `. Actual spent: ${actualSpent.toFixed(
+            2
+          )} USD. Refund: ${data.refund.toFixed(2)} USD`;
         }
         if (data.message) {
-          message += `\nMessage: ${data.message}`;
+          message += `. Message: ${data.message}`;
         }
-        alert(message);
+        showAlert(message, "success");
       }
       handleSubmitSuccess();
     },
     onError: (error) => {
       console.error("Buy order error:", error);
-      alert(`❌ Error: ${error.message}`);
+      showAlert(`Error: ${error.message}`, "error");
     },
   });
 
@@ -110,7 +136,7 @@ export default function BuyOrderContainer() {
     if (!pendingOrder) return;
 
     if (decision === "CANCEL") {
-      alert("❌ Order cancelled");
+      showAlert("Order cancelled", "info");
       setPendingOrder(null);
       return;
     }
@@ -347,7 +373,7 @@ export default function BuyOrderContainer() {
   // Submit handler
   const handleSubmit = () => {
     if (!session) {
-      alert("Please login to continue trading");
+      showAlert("Please login to continue trading", "error");
       router.push("/auth/sign-in");
       return;
     }
@@ -425,6 +451,16 @@ export default function BuyOrderContainer() {
 
   return (
     <div>
+      {/* Alert Box positioned at bottom right */}
+      {alertState && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <AlertBox
+            onClose={closeAlert}
+            duration={5000} // 5 seconds
+          />
+        </div>
+      )}
+
       {/* Confirmation Dialog */}
       {pendingOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

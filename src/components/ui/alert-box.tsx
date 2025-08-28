@@ -12,28 +12,44 @@ export default function AlertBox({ onClose, duration = 3000 }: AlertBoxProps) {
   const [show, setShow] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Progress animation
+  // Progress animation - แก้ไขให้ลดลงเรื่อยๆ ไม่เพิ่มขึ้น
   useEffect(() => {
     if (!show) return;
-    const totalSteps = 60; // smoother
+
+    const totalSteps = 60; // smoother animation
     const stepMs = duration / totalSteps;
-    let curStep = 0;
+    const stepDecrement = 100 / totalSteps; // จำนวนที่ลดลงในแต่ละ step
 
     intervalRef.current = setInterval(() => {
-      curStep += 1;
-      setProgress(100 - (100 * curStep) / totalSteps);
-      if (curStep >= totalSteps) {
-        clearInterval(intervalRef.current!);
-        setTimeout(() => setShow(false), 250); // wait a bit for animation
-        onClose?.();
-      }
+      setProgress((prev) => {
+        const newProgress = prev - stepDecrement;
+
+        // เมื่อ progress ลดลงจนถึง 0 หรือต่ำกว่า
+        if (newProgress <= 0) {
+          clearInterval(intervalRef.current!);
+          setTimeout(() => {
+            setShow(false);
+            onClose?.();
+          }, 100); // รอเล็กน้อยให้ animation เสร็จ
+          return 0;
+        }
+
+        return newProgress;
+      });
     }, stepMs);
 
-    return () => clearInterval(intervalRef.current!);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [duration, onClose, show]);
 
   // Manual close
   function handleClose() {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     setShow(false);
     onClose?.();
   }
@@ -86,6 +102,7 @@ export default function AlertBox({ onClose, duration = 3000 }: AlertBoxProps) {
                 viewBox="0 0 20 20"
                 fill="none"
                 onClick={handleClose}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <path
                   d="M10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20ZM10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18ZM10 8.586L12.828 5.757L14.243 7.172L11.414 10L14.243 12.828L12.828 14.243L10 11.414L7.172 14.243L5.757 12.828L8.586 10L5.757 7.172L7.172 5.757L10 8.586Z"
