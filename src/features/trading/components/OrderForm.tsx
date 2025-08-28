@@ -25,6 +25,7 @@ interface OrderFormProps {
   amountIcon: string;
   receiveIcon: string;
   isSubmitting: boolean;
+  amountErrorMessage?: string;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -54,6 +55,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amountIcon,
   receiveIcon,
   isSubmitting,
+  amountErrorMessage = "Insufficient balance",
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -172,7 +174,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </div>
           {!isAmountValid && (
             <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
-              Insufficient balance
+              {amountErrorMessage}
             </span>
           )}
         </div>
