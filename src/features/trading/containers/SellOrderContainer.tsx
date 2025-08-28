@@ -443,6 +443,7 @@ export default function SellOrderContainer() {
         receiveIcon="/currency-icons/dollar-icon.svg"
         isSubmitting={createSellOrderMutation.isPending}
         amountErrorMessage={sellAmountErrorMessage}
+        isAuthenticated={!!session}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
@@ -452,6 +453,7 @@ export default function SellOrderContainer() {
         onSliderChange={handleSellSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
+        onLoginClick={() => router.push("/auth/sign-in")} 
       />
 
       {/* AlertBox positioned at bottom-right */}

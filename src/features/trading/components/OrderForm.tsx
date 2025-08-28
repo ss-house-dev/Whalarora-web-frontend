@@ -25,6 +25,7 @@ interface OrderFormProps {
   amountIcon: string;
   receiveIcon: string;
   isSubmitting: boolean;
+  isAuthenticated?: boolean; // New prop to check if user is logged in
   amountErrorMessage?: string;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -35,6 +36,7 @@ interface OrderFormProps {
   onSliderChange: (percentage: number) => void;
   onMarketClick: () => void;
   onSubmit: () => void;
+  onLoginClick?: () => void; // New prop for login button click handler
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -55,6 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amountIcon,
   receiveIcon,
   isSubmitting,
+  isAuthenticated = false, // Default to false (unauthorized)
   amountErrorMessage = "Insufficient balance",
   onPriceFocus,
   onPriceChange,
@@ -65,7 +68,23 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onSliderChange,
   onMarketClick,
   onSubmit,
+  onLoginClick,
 }) => {
+  const handleButtonClick = () => {
+    if (!isAuthenticated && onLoginClick) {
+      onLoginClick();
+    } else {
+      onSubmit();
+    }
+  };
+
+  const getButtonText = () => {
+    if (!isAuthenticated) {
+      return "Login";
+    }
+    return type === "buy" ? "Buy" : "Sell";
+  };
+
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -266,13 +285,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
           className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
             isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           }`}
-          onClick={onSubmit}
+          onClick={handleButtonClick}
           disabled={isSubmitting}
         >
           {isSubmitting && (
             <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           )}
-          {type === "buy" ? "Buy" : "Sell"}
+          {getButtonText()}
         </Button>
       </div>
     </div>

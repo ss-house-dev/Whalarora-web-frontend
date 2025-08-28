@@ -543,7 +543,6 @@ export default function BuyOrderContainer() {
           />
         </div>
       )}
-
       {/* Confirmation Dialog using shadcn AlertDialog */}
       <AlertDialog
         open={!!pendingOrder}
@@ -597,6 +596,7 @@ export default function BuyOrderContainer() {
         receiveIcon="/currency-icons/bitcoin-icon.svg"
         isSubmitting={createBuyOrderMutation.isPending}
         amountErrorMessage={amountErrorMessage}
+        isAuthenticated={!!session} 
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
@@ -606,6 +606,7 @@ export default function BuyOrderContainer() {
         onSliderChange={handleSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
+        onLoginClick={() => router.push("/auth/sign-in")}
       />
     </div>
   );
