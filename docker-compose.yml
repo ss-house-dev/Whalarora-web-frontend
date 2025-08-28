@@ -6,7 +6,8 @@ services:
   # --- ส่วนของ frontend (Next.js) ---
   frontend:
     # สร้าง image จาก Dockerfile ในโฟลเดอร์นี้ (.)
-    build: .
+    # build: .
+    image: gumon.dev/ss-house/frontend-whalarora:latest
     # ตั้งชื่อ container (ช่วยให้หาเจอและ debug ง่าย)
     container_name: whalarora-frontend
     # เปิด port 3000 บนเครื่อง แล้วเชื่อมกับ port 3000 ใน container

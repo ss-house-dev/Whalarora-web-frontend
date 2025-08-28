@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
 import { useResetPortfolio } from "@/features/wallet/hooks/useUpdateCash";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,8 +41,6 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   toggleBalanceMenu,
   toggleUserMenu,
 }) => {
-  const queryClient = useQueryClient();
-
   // State สำหรับ AlertDialog
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 

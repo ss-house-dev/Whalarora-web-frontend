@@ -12,6 +12,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/trading/constants";
 import { useGetCoin } from "@/features/trading/hooks/useGetCoin";
 
+// Define a type for the user object with id property
+interface UserWithId {
+  id: string;
+  email?: string;
+}
+
 export default function SellOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -353,7 +359,10 @@ export default function SellOrderContainer() {
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmountToSell = parseFloat(sellAmount || "0");
     const userId =
-      cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+      cashBalance?.userId || 
+      (session.user as UserWithId)?.id || 
+      session.user?.email || 
+      "";
 
     // Calculate lotPrice (total value of the trade)
     const lotPrice = numericPrice * btcAmountToSell;
