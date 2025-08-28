@@ -84,17 +84,83 @@ export default function SellOrderContainer() {
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
 
-  // Get available BTC balance dynamically
+  const formatToMaxDigits = useCallback(
+    (value: number, maxDigits: number = 10): string => {
+      if (typeof value !== "number" || isNaN(value)) return "0";
+
+      const valueStr = value.toString();
+
+      // ถ้าตัวเลขทั้งหมดไม่เกิน maxDigits ให้แสดงทั้งหมด
+      const totalDigits = valueStr.replace(".", "").length;
+      if (totalDigits <= maxDigits) {
+        return valueStr;
+      }
+
+      // หาตำแหน่งจุดทศนิยม
+      const decimalIndex = valueStr.indexOf(".");
+
+      // ถ้าไม่มีทศนิยม
+      if (decimalIndex === -1) {
+        // ถ้าจำนวนเต็มเกิน maxDigits ให้ตัดแสดงแค่ maxDigits ตัวแรก
+        return valueStr.substring(0, maxDigits);
+      }
+
+      const integerPart = valueStr.substring(0, decimalIndex);
+      const decimalPart = valueStr.substring(decimalIndex + 1);
+
+      // คำนวณว่าสามารถแสดงทศนิยมกี่หลัก
+      const availableDecimalDigits = maxDigits - integerPart.length;
+
+      // ถ้าจำนวนเต็มเกิน maxDigits แล้ว
+      if (availableDecimalDigits <= 0) {
+        return integerPart.substring(0, maxDigits);
+      }
+
+      // ตัดทศนิยมให้พอดีกับที่เหลือ
+      const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
+      return integerPart + "." + truncatedDecimal;
+    },
+    []
+  );
+
+  const truncateToDecimals = useCallback(
+    (value: number, decimals: number = 10): string => {
+      if (typeof value !== "number" || isNaN(value)) return "0";
+
+      // แปลงเป็น string เพื่อหาตำแหน่งจุดทศนิยม
+      const valueStr = value.toString();
+      const decimalIndex = valueStr.indexOf(".");
+
+      // ถ้าไม่มีทศนิยม ให้เพิ่ม .0000000000
+      if (decimalIndex === -1) {
+        return valueStr + "." + "0".repeat(decimals);
+      }
+
+      // ตัดให้เหลือจำนวนทศนิยมที่ต้องการ
+      const integerPart = valueStr.substring(0, decimalIndex);
+      const decimalPart = valueStr.substring(decimalIndex + 1);
+
+      // ตัดทศนิยมส่วนเกิน หรือเติม 0 ถ้าไม่ครบ
+      const truncatedDecimal =
+        decimalPart.length >= decimals
+          ? decimalPart.substring(0, decimals)
+          : decimalPart.padEnd(decimals, "0");
+
+      return integerPart + "." + truncatedDecimal;
+    },
+    []
+  );
+
+  // Get available BTC balance
   const getAvailableBTCBalance = useCallback(() => {
     if (!session || !btcBalance) return 0;
     return btcBalance.amount || 0;
   }, [session, btcBalance]);
 
-  // Format available BTC balance for display
   const formatAvailableBTCBalance = useCallback(() => {
     const balance = getAvailableBTCBalance();
-    return balance.toFixed(9); // แสดงทศนิยม 9 ตำแหน่งสำหรับ BTC
-  }, [getAvailableBTCBalance]);
+    return formatToMaxDigits(balance, 10); // แสดงตัวเลขทั้งหมด 10 ตัว
+  }, [getAvailableBTCBalance, formatToMaxDigits]);
 
   // Helper functions
   const formatNumberWithComma = useCallback((value: string): string => {
@@ -166,9 +232,9 @@ export default function SellOrderContainer() {
     (percentage: number): string => {
       const availableBTC = getAvailableBTCBalance();
       const btcAmount = (percentage / 100) * availableBTC;
-      return btcAmount.toFixed(9);
+      return formatToMaxDigits(btcAmount, 10);
     },
-    [getAvailableBTCBalance]
+    [getAvailableBTCBalance, formatToMaxDigits]
   );
 
   // Validation function
@@ -244,9 +310,8 @@ export default function SellOrderContainer() {
       const num = parseFloat(inputValue);
       const availableBTC = getAvailableBTCBalance();
 
-      // Check validation immediately
+      // Check validation
       if (inputValue === "" || num === 0 || isNaN(num)) {
-        // Empty or zero - reset to valid state but don't show error yet
         setIsSellAmountValid(true);
         setSellAmountErrorMessage("");
         setSellSliderValue(0);
@@ -285,7 +350,9 @@ export default function SellOrderContainer() {
     setIsSellAmountFocused(false);
     if (sellAmount) {
       const num = parseFloat(sellAmount);
-      if (!isNaN(num)) setSellAmount(num.toFixed(9));
+      if (!isNaN(num)) {
+        setSellAmount(formatToMaxDigits(num, 10));
+      }
       // Validate on blur
       validateSellAmount();
     }

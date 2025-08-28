@@ -66,7 +66,8 @@ export default function BuyOrderContainer() {
       if (data.requiresConfirmation) {
         setPendingOrder({
           orderRef: data.orderRef,
-          message: "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?",
+          message:
+            "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?",
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId:
@@ -89,7 +90,6 @@ export default function BuyOrderContainer() {
 
       // สร้าง message แบบ dynamic โดยใช้ข้อมูลจริง
       const usdAmount = parseFloat(amount.replace(/,/g, ""));
-      const btcAmount = parseFloat(receiveBTC.replace(/,/g, ""));
 
       if (data.filled && data.filled > 0) {
         const filledUSD =
@@ -177,7 +177,10 @@ export default function BuyOrderContainer() {
   // Get available balance dynamically
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
-    return cashBalance.amount || 0;
+    const amount = cashBalance.amount || 0;
+
+    // ตัดเลขทศนิยมที่เกิน 2 ตำแหน่งทิ้งไป (ไม่ปัดขึ้น)
+    return Math.floor(amount * 100) / 100;
   }, [session, cashBalance]);
 
   // Format available balance for display
