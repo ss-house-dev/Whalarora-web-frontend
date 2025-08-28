@@ -13,7 +13,6 @@ export interface CreateBuyOrderResponse {
   remaining: number;
   spent: number;
   refund: number;
-  message: string;
 }
 export interface CreateSellOrderRequest {
   userId: string;

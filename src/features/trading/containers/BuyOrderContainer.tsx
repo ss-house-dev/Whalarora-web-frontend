@@ -66,7 +66,7 @@ export default function BuyOrderContainer() {
       if (data.requiresConfirmation) {
         setPendingOrder({
           orderRef: data.orderRef,
-          message: data.message || "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ?",
+          message: "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?",
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId:
@@ -130,11 +130,6 @@ export default function BuyOrderContainer() {
             2
           )} USD`;
         }
-
-        if (data.message) {
-          message += `\nMessage: ${data.message}`;
-        }
-
         showAlert(message, "success");
       }
       handleSubmitSuccess();
@@ -481,7 +476,7 @@ export default function BuyOrderContainer() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              ยืนยันคำสั่งซื้อ
+              Not enough BTC
             </h3>
             <p className="text-gray-600 mb-6">{pendingOrder.message}</p>
             <div className="flex gap-3">
@@ -489,13 +484,13 @@ export default function BuyOrderContainer() {
                 onClick={() => handleConfirmationDecision("CANCEL")}
                 className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
               >
-                ยกเลิก (CANCEL)
+                CANCEL
               </button>
               <button
                 onClick={() => handleConfirmationDecision("KEEP_OPEN")}
                 className="flex-1 px-4 py-2 bg-[#309C7D] text-white rounded hover:bg-[#28886C] transition-colors"
               >
-                สร้างออเดอร์ (KEEP_OPEN)
+                KEEP OPEN
               </button>
             </div>
           </div>
