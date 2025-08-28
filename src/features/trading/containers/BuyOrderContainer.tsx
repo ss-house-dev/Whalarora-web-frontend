@@ -26,41 +26,6 @@ interface AlertState {
   type: "success" | "info" | "error";
 }
 
-// Type definitions
-interface User {
-  id?: string;
-  email?: string;
-}
-
-interface PendingOrder {
-  orderRef: string;
-  message: string;
-  options: ("CANCEL" | "KEEP_OPEN")[];
-  originalPayload: OrderPayload;
-}
-
-interface OrderPayload {
-  userId: string;
-  symbol: string;
-  price: number;
-  amount: number;
-  lotPrice: number;
-  confirm?: boolean;
-  onInsufficient?: string;
-  keepOpen?: boolean;
-}
-
-interface BuyOrderResponse {
-  requiresConfirmation?: boolean;
-  orderRef: string;
-  message?: string;
-  options?: ("CANCEL" | "KEEP_OPEN")[];
-  filled?: number;
-  spent?: number;
-  remaining?: number;
-  refund?: number;
-}
-
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -97,13 +62,15 @@ export default function BuyOrderContainer() {
   // Fetch wallet balance
   const {
     data: cashBalance,
+    isLoading: isBalanceLoading,
+    error: balanceError,
   } = useGetCashBalance({
     enabled: !!session,
   });
 
   // Create buy order mutation
   const createBuyOrderMutation = useCreateBuyOrder({
-    onSuccess: (data: BuyOrderResponse) => {
+    onSuccess: (data) => {
       console.log("Buy order response:", data);
 
       // Check if requires confirmation
@@ -134,14 +101,17 @@ export default function BuyOrderContainer() {
           confirmationMessage =
             data.message || "Do you want to proceed with this transaction?";
         }
-        
+
         setPendingOrder({
           orderRef: data.orderRef,
           message: confirmationMessage,
           title: dialogTitle,
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
-            userId,
+            userId:
+              cashBalance?.userId ||
+              (session?.user as any)?.id ||
+              session?.user?.email,
             symbol: "BTC",
             price: parseFloat(price.replace(/,/g, "")),
             amount: parseFloat(receiveBTC.replace(/,/g, "")),
@@ -200,25 +170,11 @@ export default function BuyOrderContainer() {
       }
       handleSubmitSuccess();
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error("Buy order error:", error);
       showAlert(`Error: ${error.message}`, "error");
     },
   });
-
-  // Helper function to get user ID with proper typing
-  const getUserId = useCallback((): string | null => {
-    if (cashBalance?.userId) {
-      return cashBalance.userId;
-    }
-    
-    if (session?.user) {
-      const user = session.user as User;
-      return user.id || user.email || null;
-    }
-    
-    return null;
-  }, [cashBalance?.userId, session?.user]);
 
   // Handle confirmation decision
   const handleConfirmationDecision = (decision: "CANCEL" | "KEEP_OPEN") => {
@@ -231,7 +187,7 @@ export default function BuyOrderContainer() {
     }
 
     // Continue with KEEP_OPEN
-    const confirmPayload: OrderPayload = {
+    const confirmPayload = {
       ...pendingOrder.originalPayload,
       confirm: true,
       onInsufficient: "KEEP_OPEN",
@@ -243,8 +199,8 @@ export default function BuyOrderContainer() {
   };
 
   // Buy states
-  const [priceLabel, setPriceLabel] = useState<string>("Price");
-  const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
+  const [priceLabel, setPriceLabel] = useState("Price");
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>("");
   const [price, setPrice] = useState<string>(marketPrice);
   const [amount, setAmount] = useState<string>("");
@@ -255,7 +211,7 @@ export default function BuyOrderContainer() {
   const [receiveBTC, setReceiveBTC] = useState<string>("");
 
   // Get available balance dynamically
-  const getAvailableBalance = useCallback((): number => {
+  const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
     const amount = cashBalance.amount || 0;
 
@@ -264,7 +220,7 @@ export default function BuyOrderContainer() {
   }, [session, cashBalance]);
 
   // Format available balance for display
-  const formatAvailableBalance = useCallback((): string => {
+  const formatAvailableBalance = useCallback(() => {
     const balance = getAvailableBalance();
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 2,
@@ -362,14 +318,14 @@ export default function BuyOrderContainer() {
   }, [amount, getAvailableBalance]);
 
   // Price handlers
-  const handlePriceFocus = (): void => {
+  const handlePriceFocus = () => {
     setPriceLabel("Limit price");
     setIsInputFocused(true);
     setPrice("");
     setLimitPrice("");
   };
 
-  const handleMarketClick = (): void => {
+  const handleMarketClick = () => {
     setPriceLabel("Price");
     const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
     setPrice(formattedMarketPrice);
@@ -377,7 +333,7 @@ export default function BuyOrderContainer() {
     setIsInputFocused(false);
   };
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
@@ -386,7 +342,7 @@ export default function BuyOrderContainer() {
     }
   };
 
-  const handlePriceBlur = (): void => {
+  const handlePriceBlur = () => {
     if (price) {
       const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
@@ -400,7 +356,7 @@ export default function BuyOrderContainer() {
   };
 
   // Buy handlers
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
@@ -431,7 +387,7 @@ export default function BuyOrderContainer() {
     }
   };
 
-  const handleSliderChange = (percentage: number): void => {
+  const handleSliderChange = (percentage: number) => {
     setSliderValue(percentage);
     const newAmount = calculateAmountFromPercentage(percentage);
     setAmount(newAmount);
@@ -446,9 +402,9 @@ export default function BuyOrderContainer() {
     }
   };
 
-  const handleAmountFocus = (): void => setIsAmountFocused(true);
+  const handleAmountFocus = () => setIsAmountFocused(true);
 
-  const handleAmountBlur = (): void => {
+  const handleAmountBlur = () => {
     setIsAmountFocused(false);
     if (amount) {
       const numericValue = amount.replace(/,/g, "");
@@ -463,7 +419,7 @@ export default function BuyOrderContainer() {
   };
 
   // Submit handler
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (!session) {
       showAlert("Please login to continue trading", "error");
       router.push("/auth/sign-in");
@@ -478,14 +434,10 @@ export default function BuyOrderContainer() {
     const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
-    const userId = getUserId();
+    const userId =
+      cashBalance?.userId || (session.user as any)?.id || session.user?.email;
 
-    if (!userId) {
-      alert("Unable to identify user. Please try again.");
-      return;
-    }
-
-    const orderPayload: OrderPayload = {
+    const orderPayload = {
       userId: userId,
       symbol: "BTC",
       price: numericPrice,
@@ -501,7 +453,7 @@ export default function BuyOrderContainer() {
     createBuyOrderMutation.mutate(orderPayload);
   };
 
-  const handleSubmitSuccess = (): void => {
+  const handleSubmitSuccess = () => {
     setAmount("");
     setSliderValue(0);
     setReceiveBTC("");
