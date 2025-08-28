@@ -27,9 +27,7 @@ export default function Home() {
     >
       <Header />
 
-      <div
-        className="flex items-center justify-center bg-clip-text mt-[44px] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed"
-      >
+      <div className="flex items-center justify-center bg-clip-text mt-[44px] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed">
         Whalalora
       </div>
 
