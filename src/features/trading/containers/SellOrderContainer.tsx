@@ -60,7 +60,7 @@ export default function SellOrderContainer() {
       // Show success message with updated response format using AlertBox
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds: $${data.proceeds.toFixed(2)}`
+          `Sell order completed successfully!\nProceeds : $${data.proceeds.toFixed(2)}`
         );
         setAlertType("success");
       } else {
@@ -352,8 +352,6 @@ export default function SellOrderContainer() {
     if (!validateSellAmount()) {
       return;
     }
-
-    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
 
     // Handle sell order submission with updated payload
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
