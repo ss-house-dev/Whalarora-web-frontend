@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
 import { useResetPortfolio } from "@/features/wallet/hooks/useUpdateCash";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog-reset";
 
 interface NavbarUIProps {
   open: boolean;
@@ -42,17 +41,11 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   toggleBalanceMenu,
   toggleUserMenu,
 }) => {
-  const queryClient = useQueryClient();
-
   // State สำหรับ AlertDialog
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // ใช้ hook เพื่อดึงยอดเงินจริง
-  const {
-    data: cashBalance,
-    isLoading,
-    error,
-  } = useGetCashBalance({
+  const { data: cashBalance, error } = useGetCashBalance({
     enabled: !!session, // เรียก API เฉพาะเมื่อมี session
   });
 
@@ -101,10 +94,12 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   // Format จำนวนเงิน
   const formatCurrency = (amount: number | undefined): string => {
     if (amount === undefined) return "0.00";
+    const truncated = Math.floor(amount * 100) / 100;
+
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(truncated);
   };
 
   return (
@@ -150,8 +145,6 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   {session
                     ? error
                       ? "Error"
-                      : isLoading
-                      ? "Loading..."
                       : `${formatCurrency(cashBalance?.amount)} USD`
                     : "0.00 USD"}
                 </div>

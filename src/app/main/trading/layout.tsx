@@ -4,9 +4,6 @@ import NavbarContainer from "@/features/wallet/containers/NavbarContainer";
 
 const alexandria = Alexandria({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-alexandria",
-  display: "swap",
 });
 
 export const metadata: Metadata = {

@@ -3,10 +3,8 @@ import type { Metadata } from "next";
 
 const alexandria = Alexandria({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-alexandria",
-  display: "swap",
 });
+
 
 export const metadata: Metadata = {
   title: "Whalalora | Login",

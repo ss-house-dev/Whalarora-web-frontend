@@ -1,10 +1,9 @@
 "use client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
 
 interface OrderFormProps {
@@ -21,6 +20,13 @@ interface OrderFormProps {
   sliderValue: number;
   availableBalance: string;
   balanceCurrency: string;
+  symbol?: string;
+  buttonColor: string;
+  amountIcon: string;
+  receiveIcon: string;
+  isSubmitting: boolean;
+  isAuthenticated?: boolean; // New prop to check if user is logged in
+  amountErrorMessage?: string;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -30,6 +36,7 @@ interface OrderFormProps {
   onSliderChange: (percentage: number) => void;
   onMarketClick: () => void;
   onSubmit: () => void;
+  onLoginClick?: () => void; // New prop for login button click handler
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -46,6 +53,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
   sliderValue,
   availableBalance,
   balanceCurrency,
+  buttonColor,
+  amountIcon,
+  receiveIcon,
+  isSubmitting,
+  isAuthenticated = false, // Default to false (unauthorized)
+  amountErrorMessage = "Insufficient balance",
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -55,33 +68,21 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onSliderChange,
   onMarketClick,
   onSubmit,
+  onLoginClick,
 }) => {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  const isBuy = type === "buy";
-  const amountCurrency = isBuy ? "USD" : "BTC";
-  const receiveCurrency = isBuy ? "BTC" : "USD";
-  const buttonColor = isBuy
-    ? "bg-[#309C7D] hover:bg-[#28886C]"
-    : "bg-[#D84C4C] hover:bg-[#C73E3E]";
-  const amountIcon = isBuy
-    ? "/currency-icons/dollar-icon.svg"
-    : "/currency-icons/bitcoin-icon.svg";
-  const receiveIcon = isBuy
-    ? "/currency-icons/bitcoin-icon.svg"
-    : "/currency-icons/dollar-icon.svg";
-
-  const handleSubmit = () => {
-    if (!session) {
-      // แสดง alert และไปหน้า login
-      alert("Please login to continue trading");
-      router.push("/auth/sign-in");
-      return;
+  const handleButtonClick = () => {
+    if (!isAuthenticated && onLoginClick) {
+      onLoginClick();
+    } else {
+      onSubmit();
     }
+  };
 
-    // ถ้าล็อกอินแล้วให้ดำเนินการตามปกติ
-    onSubmit();
+  const getButtonText = () => {
+    if (!isAuthenticated) {
+      return "Login";
+    }
+    return type === "buy" ? "Buy" : "Sell";
   };
 
   return (
@@ -186,13 +187,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
                 }`}
               >
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
           {!isAmountValid && (
             <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
-              Insufficient balance
+              {amountErrorMessage}
             </span>
           )}
         </div>
@@ -209,7 +210,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute z-10">
             <Image
               src={amountIcon}
-              alt={`${amountCurrency} Icon`}
+              alt={`${balanceCurrency} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -227,7 +228,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {amountCurrency}
+                {balanceCurrency}
               </span>
             </div>
           </div>
@@ -253,7 +254,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute left-0 z-10">
             <Image
               src={receiveIcon}
-              alt={`${receiveCurrency} Icon`}
+              alt={`${type === "buy" ? "BTC" : "USD"} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -271,7 +272,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {receiveCurrency}
+                {type === "buy" ? "BTC" : "USD"}
               </span>
             </div>
           </div>
@@ -281,10 +282,16 @@ const OrderForm: React.FC<OrderFormProps> = ({
       {/* Action Button */}
       <div className="mt-8 w-full">
         <Button
-          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal`}
-          onClick={handleSubmit}
+          className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          onClick={handleButtonClick}
+          disabled={isSubmitting}
         >
-          {isBuy ? "Buy" : "Sell"}
+          {isSubmitting && (
+            <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          {getButtonText()}
         </Button>
       </div>
     </div>

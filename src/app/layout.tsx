@@ -1,11 +1,10 @@
-import { Anuphan } from "next/font/google";
+import { Alexandria } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import { CustomProviders } from "./provider";
 import QueryProvider from "@/lib/react-query/QueryClientProvider";
 
-const anuphan = Anuphan({
-  weight: "400",
+const alexandria = Alexandria({
   subsets: ["latin"],
 });
 
@@ -22,7 +21,7 @@ export default function RootLayout({
   return (
     <CustomProviders>
       <QueryProvider>
-        <html lang="en" className={`min-h-screen ${anuphan.className}`}>
+        <html lang="en" className={`min-h-screen ${alexandria.className}`}>
           <body>{children}</body>
         </html>
       </QueryProvider>
