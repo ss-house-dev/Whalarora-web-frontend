@@ -87,13 +87,18 @@ export default function BuyOrderContainer() {
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
 
+      // สร้าง message แบบ dynamic โดยใช้ข้อมูลจริง
+      const usdAmount = parseFloat(amount.replace(/,/g, ""));
+      const btcAmount = parseFloat(receiveBTC.replace(/,/g, ""));
+
       if (data.filled && data.filled > 0) {
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
         showAlert(
-          `Buy BTC/USDT Amount ${filledUSD.toFixed(
-            2
-          )} USD submitted successfully`,
+          `Buy BTC/USDT Amount ${filledUSD.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} USD submitted successfully`,
           "success"
         );
       } else if (
@@ -102,25 +107,34 @@ export default function BuyOrderContainer() {
         (!data.filled || data.filled === 0)
       ) {
         showAlert(
-          `Order created successfully! Order ID: ${
+          `Order created successfully!\nOrder ID: ${
             data.orderRef
-          }. Amount remaining: ${data.remaining.toFixed(
+          }.\nAmount remaining: ${data.remaining.toFixed(
             8
-          )} BTC. Status: Pending`,
+          )} BTC.\nStatus: Pending`,
           "info"
         );
       } else {
-        let message = `Order executed successfully! Order ID: ${data.orderRef}`;
+        // กรณีปกติ - ใช้ข้อมูลจาก form
+        let message = `Buy BTC/USDT Amount ${usdAmount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} USD submitted successfully`;
+
         if (data.refund && data.refund > 0) {
-          const actualSpent =
-            parseFloat(amount.replace(/,/g, "")) - data.refund;
-          message += `. Actual spent: ${actualSpent.toFixed(
+          const actualSpent = usdAmount - data.refund;
+          message = `Buy BTC/USDT Amount ${actualSpent.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} USD submitted successfully\nRefund: ${data.refund.toFixed(
             2
-          )} USD. Refund: ${data.refund.toFixed(2)} USD`;
+          )} USD`;
         }
+
         if (data.message) {
-          message += `. Message: ${data.message}`;
+          message += `\nMessage: ${data.message}`;
         }
+
         showAlert(message, "success");
       }
       handleSubmitSuccess();
@@ -451,10 +465,11 @@ export default function BuyOrderContainer() {
 
   return (
     <div>
-      {/* Alert Box positioned at bottom right */}
       {alertState && (
         <div className="fixed bottom-4 right-4 z-50">
           <AlertBox
+            message={alertState.message}
+            type={alertState.type}
             onClose={closeAlert}
             duration={5000} // 5 seconds
           />
