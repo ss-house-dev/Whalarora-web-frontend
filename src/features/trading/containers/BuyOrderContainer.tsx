@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import AlertBox from "@/components/ui/alert-box";
@@ -34,6 +33,20 @@ interface OrderPayload {
   lotPrice: number;
 }
 
+// Define a type for the user object in session
+interface SessionUser {
+  id?: string;
+  email?: string;
+  name?: string;
+  // Add other properties as needed based on your session user structure
+}
+
+// Extend the session type to include our custom user type
+interface ExtendedSession {
+  user?: SessionUser;
+  // Add other session properties as needed
+}
+
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -51,7 +64,7 @@ export default function BuyOrderContainer() {
     message: string;
     title?: string;
     options: ("CANCEL" | "KEEP_OPEN")[];
-    originalPayload: OrderPayload; // <-- Use the defined type here
+    originalPayload: OrderPayload;
   } | null>(null);
 
   // Function to show alert
@@ -106,16 +119,18 @@ export default function BuyOrderContainer() {
             data.message || "Do you want to proceed with this transaction?";
         }
 
+        // Get userId safely with type assertion and fallback
+        const sessionUser = session?.user as SessionUser | undefined;
+        const userId =
+          cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
+
         setPendingOrder({
           orderRef: data.orderRef,
           message: confirmationMessage,
           title: dialogTitle,
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
-            userId:
-              cashBalance?.userId ||
-              (session?.user as any)?.id ||
-              session?.user?.email,
+            userId,
             symbol: "BTC",
             price: parseFloat(price.replace(/,/g, "")),
             amount: parseFloat(receiveBTC.replace(/,/g, "")),
@@ -124,6 +139,7 @@ export default function BuyOrderContainer() {
         });
         return;
       }
+
       // Handle successful order execution
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
@@ -148,8 +164,7 @@ export default function BuyOrderContainer() {
         (!data.filled || data.filled === 0)
       ) {
         showAlert(
-          `Order created successfully!
-          Amount remaining : ${data.remaining.toFixed(
+          `Order created successfully! Amount remaining : ${data.remaining.toFixed(
             8
           )} BTC.\nStatus: Pending`,
           "info"
@@ -170,8 +185,10 @@ export default function BuyOrderContainer() {
             2
           )} USD`;
         }
+
         showAlert(message, "success");
       }
+
       handleSubmitSuccess();
     },
     onError: (error) => {
@@ -218,7 +235,6 @@ export default function BuyOrderContainer() {
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
     const amount = cashBalance.amount || 0;
-
     // ตัดเลขทศนิยมที่เกิน 2 ตำแหน่งทิ้งไป (ไม่ปัดขึ้น)
     return Math.floor(amount * 100) / 100;
   }, [session, cashBalance]);
@@ -237,10 +253,13 @@ export default function BuyOrderContainer() {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
     const parts = numericValue.split(".");
     const integerPart = parts[0];
     const decimalPart = parts[1];
+
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
     return decimalPart !== undefined
       ? `${formattedInteger}.${decimalPart}`
       : formattedInteger;
@@ -265,9 +284,12 @@ export default function BuyOrderContainer() {
   const calculateReceiveBTC = useCallback(
     (amountValue: string, priceValue: string): string => {
       if (!amountValue || !priceValue) return "";
+
       const numAmount = parseFloat(amountValue.replace(/,/g, ""));
       const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+
       if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
+
       const btcAmount = numAmount / numPrice;
       return btcAmount.toFixed(9);
     },
@@ -277,9 +299,12 @@ export default function BuyOrderContainer() {
   const calculateSliderPercentage = useCallback(
     (amountValue: string): number => {
       if (!amountValue) return 0;
+
       const numAmount = parseFloat(amountValue.replace(/,/g, ""));
       const availableBalance = getAvailableBalance();
+
       if (isNaN(numAmount) || numAmount <= 0 || availableBalance <= 0) return 0;
+
       const percentage = (numAmount / availableBalance) * 100;
       return Math.min(percentage, 100);
     },
@@ -339,6 +364,7 @@ export default function BuyOrderContainer() {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setLimitPrice(formattedValue);
@@ -362,6 +388,7 @@ export default function BuyOrderContainer() {
   // Buy handlers
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setAmount(formattedValue);
@@ -395,12 +422,13 @@ export default function BuyOrderContainer() {
     setSliderValue(percentage);
     const newAmount = calculateAmountFromPercentage(percentage);
     setAmount(newAmount);
+
     const numericValue = newAmount.replace(/,/g, "");
     const num = parseFloat(numericValue);
     const availableBalance = getAvailableBalance();
+
     const isValid = !isNaN(num) && num <= availableBalance;
     setIsAmountValid(isValid);
-
     if (isValid) {
       setAmountErrorMessage("");
     }
@@ -438,8 +466,11 @@ export default function BuyOrderContainer() {
     const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
+
+    // Get userId safely with proper type handling
+    const sessionUser = session.user as SessionUser | undefined;
     const userId =
-      cashBalance?.userId || (session.user as any)?.id || session.user?.email;
+      cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
 
     const orderPayload = {
       userId: userId,
@@ -492,8 +523,8 @@ export default function BuyOrderContainer() {
       const numericValue = amount.replace(/,/g, "");
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
-      const isValid = !isNaN(num) && num <= availableBalance;
 
+      const isValid = !isNaN(num) && num <= availableBalance;
       if (isValid) {
         const sliderPercentage = calculateSliderPercentage(numericValue);
         setSliderValue(sliderPercentage);
