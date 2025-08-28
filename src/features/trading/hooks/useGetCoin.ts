@@ -3,7 +3,6 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query";
 import getCoin, { 
-  GetCoinRequest, 
   GetCoinResponse 
 } from "@/features/trading/services/getCoin";
 import { TradeQueryKeys } from "@/features/trading/constants";

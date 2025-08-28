@@ -7,7 +7,7 @@ export interface CreateBuyOrderRequest {
 
 export interface CreateBuyOrderResponse {
   options: ("CANCEL" | "KEEP_OPEN")[];
-  requiresConfirmation: any;
+  requiresConfirmation: boolean;
   orderRef: string;
   filled: number;
   remaining: number;
@@ -15,6 +15,7 @@ export interface CreateBuyOrderResponse {
   refund: number;
   message: string;
 }
+
 export interface CreateSellOrderRequest {
   userId: string;
   symbol: string;
@@ -22,14 +23,17 @@ export interface CreateSellOrderRequest {
   amount: number;
   lotPrice: number;
 }
+
 export interface CreateSellOrderResponse {
   orderRef: string;
   filled: number;
   proceeds: number;
 }
+
 export interface GetCoinRequest {
   symbol: string;
 }
+
 export interface GetCoinResponse {
   userId: string;
   symbol: string;
