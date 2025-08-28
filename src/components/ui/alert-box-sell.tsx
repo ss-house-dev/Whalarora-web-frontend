@@ -84,27 +84,6 @@ export default function AlertBox({
             </svg>
           ),
         };
-      case "error":
-        return {
-          sidebarColor: "bg-red-400",
-          titleColor: "text-red-400",
-          title: "Error",
-          icon: (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M12 24C5.3724 24 0 18.6276 0 12C0 5.3724 5.3724 0 12 0C18.6276 0 24 5.3724 24 12C24 18.6276 18.6276 24 12 24ZM12 13.414L16.243 17.657L17.657 16.243L13.414 12L17.657 7.757L16.243 6.343L12 10.586L7.757 6.343L6.343 7.757L10.586 12L6.343 16.243L7.757 17.657L12 13.414Z"
-                fill="#EF4444"
-              />
-            </svg>
-          ),
-        };
-      case "info":
       default:
         return {
           sidebarColor: "bg-blue-400",
