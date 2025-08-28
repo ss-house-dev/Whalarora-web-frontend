@@ -5,7 +5,7 @@ interface AlertBoxProps {
   message: string;
   type?: "success" | "info" | "error";
   onClose?: () => void;
-  duration?: number; 
+  duration?: number;
 }
 
 export default function AlertBox({
@@ -14,17 +14,17 @@ export default function AlertBox({
   onClose,
   duration = 3000,
 }: AlertBoxProps) {
-  const [progress, setProgress] = useState(100); 
+  const [progress, setProgress] = useState(100);
   const [show, setShow] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Progress animation 
+  // Progress animation
   useEffect(() => {
     if (!show) return;
 
-    const totalSteps = 60; 
+    const totalSteps = 60;
     const stepMs = duration / totalSteps;
-    const stepDecrement = 100 / totalSteps; 
+    const stepDecrement = 100 / totalSteps;
 
     intervalRef.current = setInterval(() => {
       setProgress((prev) => {
@@ -34,7 +34,7 @@ export default function AlertBox({
           setTimeout(() => {
             setShow(false);
             onClose?.();
-          }, 100); 
+          }, 100);
           return 0;
         }
 
@@ -60,7 +60,7 @@ export default function AlertBox({
 
   if (!show) return null;
 
-  const barWidth = progress > 2 ? `${progress}%` : "8px"; 
+  const barWidth = progress > 2 ? `${progress}%` : "8px";
 
   // กำหนดสีและไอคอนตาม type
   const getTypeConfig = () => {
@@ -132,16 +132,7 @@ export default function AlertBox({
 
   return (
     <>
-      {/* Google Fonts import for Anuphan */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-
-      <div
-        className="relative w-[378px] min-h-[132px] bg-[#13285A] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden pb-[10px] pt-[10px] transition-all duration-500"
-        style={{ fontFamily: "Anuphan, sans-serif" }}
-      >
+      <div className="relative w-[378px] min-h-[132px] bg-[#13285A] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden pb-[10px] pt-[10px] transition-all duration-500">
         {/* Colored sidebar */}
         <div
           className={`absolute left-0 top-0 h-full w-4 bg-[#17B26A] rounded-tl-2xl rounded-bl-2xl`}
