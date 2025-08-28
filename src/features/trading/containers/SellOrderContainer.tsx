@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
+import AlertBox from "@/components/ui/alert-box-sell"; // Import AlertBox component
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -19,11 +20,14 @@ export default function SellOrderContainer() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // Alert Box states
+  const [alertMessage, setAlertMessage] = useState<string>("");
+  const [alertType, setAlertType] = useState<"success" | "info" | "error">("success");
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+
   // Fetch wallet balance
   const {
     data: cashBalance,
-    isLoading: isBalanceLoading,
-    error: balanceError,
   } = useGetCashBalance({
     enabled: !!session,
   });
@@ -31,8 +35,6 @@ export default function SellOrderContainer() {
   // Fetch BTC balance
   const {
     data: btcBalance,
-    isLoading: isBtcBalanceLoading,
-    error: btcBalanceError,
   } = useGetCoin({
     symbol: "BTC",
     enabled: !!session,
@@ -49,26 +51,26 @@ export default function SellOrderContainer() {
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, "BTC"],
       });
 
-      // Show success message with updated response format
+      // Show success message with updated response format using AlertBox
       if (data.filled > 0) {
-        alert(
-          `✅ Sell order completed successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `BTC Sold: ${data.filled.toFixed(8)}\n` +
-            `Proceeds: $${data.proceeds.toFixed(2)}`
+        setAlertMessage(
+          `Sell order completed successfully!\nProceeds: $${data.proceeds.toFixed(2)}`
         );
+        setAlertType("success");
       } else {
-        alert(
-          `📝 Sell order created successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `Status: Pending`
+        setAlertMessage(
+          `Sell order created successfully!\nStatus: Pending`
         );
+        setAlertType("info");
       }
+      setShowAlert(true);
       handleSubmitSuccess();
     },
     onError: (error) => {
       console.error("Sell order error:", error);
-      alert(`Error creating sell order: ${error.message}`);
+      setAlertMessage(`Error creating sell order: ${error.message}`);
+      setAlertType("error");
+      setShowAlert(true);
     },
   });
 
@@ -79,21 +81,60 @@ export default function SellOrderContainer() {
   const [price, setPrice] = useState<string>(marketPrice);
   const [sellAmount, setSellAmount] = useState<string>("");
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
+  const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState("");
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
 
-  // Get available BTC balance dynamically
+  const formatToMaxDigits = useCallback(
+    (value: number, maxDigits: number = 10): string => {
+      if (typeof value !== "number" || isNaN(value)) return "0";
+
+      const valueStr = value.toString();
+
+      // ถ้าตัวเลขทั้งหมดไม่เกิน maxDigits ให้แสดงทั้งหมด
+      const totalDigits = valueStr.replace(".", "").length;
+      if (totalDigits <= maxDigits) {
+        return valueStr;
+      }
+
+      // หาตำแหน่งจุดทศนิยม
+      const decimalIndex = valueStr.indexOf(".");
+
+      // ถ้าไม่มีทศนิยม
+      if (decimalIndex === -1) {
+        // ถ้าจำนวนเต็มเกิน maxDigits ให้ตัดแสดงแค่ maxDigits ตัวแรก
+        return valueStr.substring(0, maxDigits);
+      }
+
+      const integerPart = valueStr.substring(0, decimalIndex);
+      const decimalPart = valueStr.substring(decimalIndex + 1);
+
+      // คำนวณว่าสามารถแสดงทศนิยมกี่หลัก
+      const availableDecimalDigits = maxDigits - integerPart.length;
+
+      // ถ้าจำนวนเต็มเกิน maxDigits แล้ว
+      if (availableDecimalDigits <= 0) {
+        return integerPart.substring(0, maxDigits);
+      }
+
+      // ตัดทศนิยมให้พอดีกับที่เหลือ
+      const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
+      return integerPart + "." + truncatedDecimal;
+    },
+    []
+  );
+
+  // Get available BTC balance
   const getAvailableBTCBalance = useCallback(() => {
     if (!session || !btcBalance) return 0;
     return btcBalance.amount || 0;
   }, [session, btcBalance]);
 
-  // Format available BTC balance for display
   const formatAvailableBTCBalance = useCallback(() => {
     const balance = getAvailableBTCBalance();
-    return balance.toFixed(9); // แสดงทศนิยม 9 ตำแหน่งสำหรับ BTC
-  }, [getAvailableBTCBalance]);
+    return formatToMaxDigits(balance, 10); // แสดงตัวเลขทั้งหมด 10 ตัว
+  }, [getAvailableBTCBalance, formatToMaxDigits]);
 
   // Helper functions
   const formatNumberWithComma = useCallback((value: string): string => {
@@ -165,10 +206,35 @@ export default function SellOrderContainer() {
     (percentage: number): string => {
       const availableBTC = getAvailableBTCBalance();
       const btcAmount = (percentage / 100) * availableBTC;
-      return btcAmount.toFixed(9);
+      return formatToMaxDigits(btcAmount, 10);
     },
-    [getAvailableBTCBalance]
+    [getAvailableBTCBalance, formatToMaxDigits]
   );
+
+  // Validation function
+  const validateSellAmount = useCallback(() => {
+    const num = parseFloat(sellAmount);
+    const availableBTC = getAvailableBTCBalance();
+
+    // Check if amount is empty or zero
+    if (!sellAmount || sellAmount === "" || num === 0 || isNaN(num)) {
+      setIsSellAmountValid(false);
+      setSellAmountErrorMessage("Please enter amount");
+      return false;
+    }
+
+    // Check if amount exceeds available balance
+    if (num > availableBTC) {
+      setIsSellAmountValid(false);
+      setSellAmountErrorMessage("Insufficient balance");
+      return false;
+    }
+
+    // Amount is valid
+    setIsSellAmountValid(true);
+    setSellAmountErrorMessage("");
+    return true;
+  }, [sellAmount, getAvailableBTCBalance]);
 
   // Price handlers
   const handlePriceFocus = () => {
@@ -217,15 +283,24 @@ export default function SellOrderContainer() {
 
       const num = parseFloat(inputValue);
       const availableBTC = getAvailableBTCBalance();
-      const isValid = inputValue === "" || (!isNaN(num) && num <= availableBTC);
 
-      if (!isValid && inputValue !== "") {
+      // Check validation
+      if (inputValue === "" || num === 0 || isNaN(num)) {
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage("");
+        setSellSliderValue(0);
+      } else if (num > availableBTC) {
+        // Amount exceeds balance - show error immediately
+        setIsSellAmountValid(false);
+        setSellAmountErrorMessage("Insufficient balance");
         setSellSliderValue(0);
       } else {
+        // Valid amount
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage("");
         const sliderPercentage = calculateSellSliderPercentage(inputValue);
         setSellSliderValue(sliderPercentage);
       }
-      setIsSellAmountValid(isValid);
     }
   };
 
@@ -235,7 +310,12 @@ export default function SellOrderContainer() {
     setSellAmount(newBTCAmount);
     const num = parseFloat(newBTCAmount);
     const availableBTC = getAvailableBTCBalance();
-    setIsSellAmountValid(!isNaN(num) && num <= availableBTC);
+    const isValid = !isNaN(num) && num <= availableBTC;
+    setIsSellAmountValid(isValid);
+
+    if (isValid) {
+      setSellAmountErrorMessage("");
+    }
   };
 
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
@@ -244,23 +324,30 @@ export default function SellOrderContainer() {
     setIsSellAmountFocused(false);
     if (sellAmount) {
       const num = parseFloat(sellAmount);
-      if (!isNaN(num)) setSellAmount(num.toFixed(9));
+      if (!isNaN(num)) {
+        setSellAmount(formatToMaxDigits(num, 10));
+      }
+      // Validate on blur
+      validateSellAmount();
     }
   };
 
   // Submit handler
   const handleSubmit = () => {
     if (!session) {
-      alert("Please login to continue trading");
+      setAlertMessage("Please login to continue trading");
+      setAlertType("error");
+      setShowAlert(true);
       router.push("/auth/sign-in");
       return;
     }
 
-    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
-
-    if (!numericAmount || numericAmount === 0) {
+    // Validate amount before proceeding
+    if (!validateSellAmount()) {
       return;
     }
+
+    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
 
     // Handle sell order submission with updated payload
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
@@ -292,6 +379,13 @@ export default function SellOrderContainer() {
     setSellAmount("");
     setSellSliderValue(0);
     setReceiveUSD("");
+    setIsSellAmountValid(true);
+    setSellAmountErrorMessage("");
+  };
+
+  // Handle alert close
+  const handleAlertClose = () => {
+    setShowAlert(false);
   };
 
   // Effects
@@ -324,7 +418,7 @@ export default function SellOrderContainer() {
   }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
 
   return (
-    <div>
+    <div className="relative">
       <OrderForm
         type="sell"
         inputRef={inputRef}
@@ -344,6 +438,7 @@ export default function SellOrderContainer() {
         amountIcon="/currency-icons/bitcoin-icon.svg"
         receiveIcon="/currency-icons/dollar-icon.svg"
         isSubmitting={createSellOrderMutation.isPending}
+        amountErrorMessage={sellAmountErrorMessage}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
@@ -354,6 +449,18 @@ export default function SellOrderContainer() {
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
       />
+
+      {/* AlertBox positioned at bottom-right */}
+      {showAlert && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <AlertBox
+            message={alertMessage}
+            type={alertType}
+            onClose={handleAlertClose}
+            duration={5000} // Show for 5 seconds
+          />
+        </div>
+      )}
     </div>
   );
 }
