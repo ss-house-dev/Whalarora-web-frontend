@@ -6,7 +6,7 @@ interface AlertBoxProps {
   message: string;
   type?: "success" | "info" | "error";
   onClose?: () => void;
-  duration?: number; // milliseconds ทั้งหมดที่จะหดจนสุด
+  duration?: number; 
 }
 
 export default function AlertBox({
@@ -15,29 +15,27 @@ export default function AlertBox({
   onClose,
   duration = 3000,
 }: AlertBoxProps) {
-  const [progress, setProgress] = useState(100); // %
+  const [progress, setProgress] = useState(100); 
   const [show, setShow] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Progress animation - แก้ไขให้ลดลงเรื่อยๆ ไม่เพิ่มขึ้น
+  // Progress animation 
   useEffect(() => {
     if (!show) return;
 
-    const totalSteps = 60; // smoother animation
+    const totalSteps = 60; 
     const stepMs = duration / totalSteps;
-    const stepDecrement = 100 / totalSteps; // จำนวนที่ลดลงในแต่ละ step
+    const stepDecrement = 100 / totalSteps; 
 
     intervalRef.current = setInterval(() => {
       setProgress((prev) => {
         const newProgress = prev - stepDecrement;
-
-        // เมื่อ progress ลดลงจนถึง 0 หรือต่ำกว่า
         if (newProgress <= 0) {
           clearInterval(intervalRef.current!);
           setTimeout(() => {
             setShow(false);
             onClose?.();
-          }, 100); // รอเล็กน้อยให้ animation เสร็จ
+          }, 100); 
           return 0;
         }
 
@@ -63,16 +61,13 @@ export default function AlertBox({
 
   if (!show) return null;
 
-  // barWidth เปลี่ยนแปลงไปตาม progress (% ของความกว้าง)
-  // barWidth = 100% → bar เต็ม, barWidth < 2% → วงกลม
-  const barWidth = progress > 2 ? `${progress}%` : "8px"; // 8px = วงกลม
+  const barWidth = progress > 2 ? `${progress}%` : "8px"; 
 
   // กำหนดสีและไอคอนตาม type
   const getTypeConfig = () => {
     switch (type) {
       case "success":
         return {
-          sidebarColor: "bg-teal-400",
           titleColor: "text-[#47CD89]",
           title: "Order Placed",
           icon: (
@@ -150,7 +145,7 @@ export default function AlertBox({
       >
         {/* Colored sidebar */}
         <div
-          className={`absolute left-0 top-0 h-full w-4 ${typeConfig.sidebarColor} rounded-tl-2xl rounded-bl-2xl`}
+          className={`absolute left-0 top-0 h-full w-4 bg-[#17B26A] rounded-tl-2xl rounded-bl-2xl`}
         />
         {/* Content */}
         <div className="pl-8 pr-8 space-y-4">
