@@ -35,9 +35,6 @@ export default function Header() {
           className="w-10 h-10 rounded-full"
         />
         <span
-          style={{
-            fontFamily: "Alexandria, sans-serif",
-          }}
           className="text-white text-[18px] font-[400]"
         >
           Trade
@@ -45,18 +42,12 @@ export default function Header() {
       </div>
       <div className="flex gap-[16px]">
         <button
-          style={{
-            fontFamily: "Alexandria, sans-serif",
-          }}
           onClick={handleGetStartClick}
           className="w-[112px] h-[36px] px-[15px] py-[2px] border-2 border-[#A4A4A4] rounded-[12px] text-[18px] font-[400] text-[#E9ECF4] transition-all duration-200 cursor-pointer"
         >
           Log in
         </button>
         <button
-          style={{
-            fontFamily: "Alexandria, sans-serif",
-          }}
           className="w-[100px] h-[36px] px-[15px] py-[2px] bg-[#225FED] rounded-[12px] text-[18px] font-[400] text-white transition-all duration-200 cursor-pointer"
         >
           Sign up
