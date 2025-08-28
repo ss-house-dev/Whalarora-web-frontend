@@ -28,7 +28,7 @@ export default function Home() {
       <Header />
 
       <div
-        className="flex items-center justify-center bg-clip-text mt-10 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed"
+        className="flex items-center justify-center bg-clip-text mt-[44px] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed"
         style={{
           fontFamily: "Alexandria, sans-serif",
         }}
@@ -41,8 +41,6 @@ export default function Home() {
           className="text-center font-black"
           style={{
             textShadow: "0 4px 4px rgba(0, 0, 0, 0.25)",
-            WebkitTextStrokeWidth: "0.5px",
-            WebkitTextStrokeColor: "#FFF",
             fontFamily: "Inter, sans-serif",
             fontSize: "84px",
             fontWeight: "900",
@@ -56,28 +54,43 @@ export default function Home() {
         >
           Where Giants Rise <br /> Under the Lights
         </div>
-        <div className="text-center text-zinc-300 text-lg font-medium leading-6 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] mt-5">
-          Enter the world of crypto trading. Practice your strategies <br /> and
+        <div className="text-center text-zinc-300 text-[20px] font-[400] leading-6 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] mt-5">
+          Enter the world of crypto trading. Practice your strategies and <br />
           prepare with a demo account
         </div>
 
-        <div className="flex items-center justify-center mt-5">
+        <div className="flex items-center justify-center mt-[44px]">
           <div
             onMouseEnter={() => setIsHoverDemo(true)}
             onMouseLeave={() => setIsHoverDemo(false)}
-            className={`w-72 h-16 px-5 py-3 ${
-              isHoverDemo
-                ? "bg-gradient-to-b from-fuchsia-700 to-blue-900 shadow-[0px_4px_20px_0px_rgba(29,125,255,1.00)]"
-                : "bg-gradient-to-b from-blue-900 via-cyan-700 to-teal-400 shadow-[0px_4px_20px_0px_rgba(4,4,4,0.50)]"
-            } rounded-tl-xl rounded-tr-[60px] rounded-bl-[60px] rounded-br-xl flex justify-center items-center gap-2.5 cursor-pointer transition-all duration-300`}
+            className={`relative w-72 h-16 cursor-pointer transition-all duration-300`}
+            style={{
+              borderRadius: "60px",
+              background: "linear-gradient(180deg, #1F4293 0%, #2FACA2 100%)",
+              padding: "4px",
+            }}
           >
             <div
-              onClick={handleGetStartClick}
-              className={`text-white ${
-                isHoverDemo ? "text-xl font-bold" : "text-xl font-bold"
-              } leading-loose`}
+              className="w-full h-full flex items-center justify-center"
+              style={{
+                borderRadius: "56px",
+                background:
+                  "linear-gradient(177deg, #2FACA2 2.14%, #1F4293 97.86%)",
+              }}
             >
-              {session ? "Demo your trading" : "Demo your trading"}
+              <div
+                style={{
+                  fontFamily: "Alexandria, sans-serif",
+                }}
+                onClick={handleGetStartClick}
+                className={`text-white ${
+                  isHoverDemo
+                    ? "text-[20px] font-[400]"
+                    : "text-[20px] font-[400]"
+                } leading-loose`}
+              >
+                {session ? "Demo your trading" : "Demo your trading"}
+              </div>
             </div>
           </div>
         </div>
