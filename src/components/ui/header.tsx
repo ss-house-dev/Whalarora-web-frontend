@@ -15,6 +15,15 @@ export default function Header() {
     }
   };
 
+  const handleLogoClick = () => {
+    Router.push("/");
+  };
+
+  const handleTradeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    Router.push("/main/trading");
+  };
+
   return (
     <header
       style={{
@@ -24,7 +33,7 @@ export default function Header() {
       className="relative z-10 flex justify-between items-center max-w-[1200px] mx-auto px-10 py-2 rounded-b-2xl"
     >
       <div
-        onClick={() => Router.push("/")}
+        onClick={handleLogoClick}
         className="flex items-center space-x-13 cursor-pointer"
       >
         <Image
@@ -35,7 +44,8 @@ export default function Header() {
           className="w-10 h-10 rounded-full"
         />
         <span
-          className="text-white text-[18px] font-[400]"
+          onClick={handleTradeClick}
+          className="text-white text-[18px] font-[400] cursor-pointer hover:opacity-80"
         >
           Trade
         </span>
@@ -47,9 +57,7 @@ export default function Header() {
         >
           Log in
         </button>
-        <button
-          className="w-[100px] h-[36px] px-[15px] py-[2px] bg-[#225FED] rounded-[12px] text-[18px] font-[400] text-white transition-all duration-200 cursor-pointer"
-        >
+        <button className="w-[100px] h-[36px] px-[15px] py-[2px] bg-[#225FED] rounded-[12px] text-[18px] font-[400] text-white transition-all duration-200 cursor-pointer">
           Sign up
         </button>
       </div>
