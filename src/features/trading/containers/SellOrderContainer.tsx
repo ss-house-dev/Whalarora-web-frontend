@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
+import AlertBox from "@/components/ui/alert-box-sell"; // Import AlertBox component
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,11 @@ export default function SellOrderContainer() {
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Alert Box states
+  const [alertMessage, setAlertMessage] = useState<string>("");
+  const [alertType, setAlertType] = useState<"success" | "info" | "error">("success");
+  const [showAlert, setShowAlert] = useState<boolean>(false);
 
   // Fetch wallet balance
   const {
@@ -45,26 +51,26 @@ export default function SellOrderContainer() {
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, "BTC"],
       });
 
-      // Show success message with updated response format
+      // Show success message with updated response format using AlertBox
       if (data.filled > 0) {
-        alert(
-          `✅ Sell order completed successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `BTC Sold: ${data.filled.toFixed(8)}\n` +
-            `Proceeds: $${data.proceeds.toFixed(2)}`
+        setAlertMessage(
+          `Sell order completed successfully!\nProceeds: $${data.proceeds.toFixed(2)}`
         );
+        setAlertType("success");
       } else {
-        alert(
-          `📝 Sell order created successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `Status: Pending`
+        setAlertMessage(
+          `Sell order created successfully!\nStatus: Pending`
         );
+        setAlertType("info");
       }
+      setShowAlert(true);
       handleSubmitSuccess();
     },
     onError: (error) => {
       console.error("Sell order error:", error);
-      alert(`Error creating sell order: ${error.message}`);
+      setAlertMessage(`Error creating sell order: ${error.message}`);
+      setAlertType("error");
+      setShowAlert(true);
     },
   });
 
@@ -329,7 +335,9 @@ export default function SellOrderContainer() {
   // Submit handler
   const handleSubmit = () => {
     if (!session) {
-      alert("Please login to continue trading");
+      setAlertMessage("Please login to continue trading");
+      setAlertType("error");
+      setShowAlert(true);
       router.push("/auth/sign-in");
       return;
     }
@@ -375,6 +383,11 @@ export default function SellOrderContainer() {
     setSellAmountErrorMessage("");
   };
 
+  // Handle alert close
+  const handleAlertClose = () => {
+    setShowAlert(false);
+  };
+
   // Effects
   useEffect(() => {
     if (priceLabel === "Price") {
@@ -405,7 +418,7 @@ export default function SellOrderContainer() {
   }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
 
   return (
-    <div>
+    <div className="relative">
       <OrderForm
         type="sell"
         inputRef={inputRef}
@@ -436,6 +449,18 @@ export default function SellOrderContainer() {
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
       />
+
+      {/* AlertBox positioned at bottom-right */}
+      {showAlert && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <AlertBox
+            message={alertMessage}
+            type={alertType}
+            onClose={handleAlertClose}
+            duration={5000} // Show for 5 seconds
+          />
+        </div>
+      )}
     </div>
   );
 }
