@@ -341,9 +341,6 @@ export default function SellOrderContainer() {
   // Submit handler
   const handleSubmit = () => {
     if (!session) {
-      setAlertMessage("Please login to continue trading");
-      setAlertType("error");
-      setShowAlert(true);
       router.push("/auth/sign-in");
       return;
     }

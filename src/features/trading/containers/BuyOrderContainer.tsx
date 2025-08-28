@@ -453,7 +453,6 @@ export default function BuyOrderContainer() {
   // Submit handler
   const handleSubmit = () => {
     if (!session) {
-      showAlert("Please login to continue trading", "error");
       router.push("/auth/sign-in");
       return;
     }
