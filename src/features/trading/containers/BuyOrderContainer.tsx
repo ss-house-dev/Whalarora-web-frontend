@@ -10,6 +10,16 @@ import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/wallet/constants";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog-coin";
 
 interface AlertState {
   message: string;
@@ -31,6 +41,7 @@ export default function BuyOrderContainer() {
   const [pendingOrder, setPendingOrder] = useState<{
     orderRef: string;
     message: string;
+    title?: string;
     options: ("CANCEL" | "KEEP_OPEN")[];
     originalPayload: any;
   } | null>(null);
@@ -64,10 +75,37 @@ export default function BuyOrderContainer() {
 
       // Check if requires confirmation
       if (data.requiresConfirmation) {
+        let confirmationMessage = "";
+        let dialogTitle = "";
+
+        // ตรวจสอบ message จาก API response
+        if (
+          data.message ===
+          "คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ"
+        ) {
+          // กรณีเงินพอ - คาดว่าจะสำเร็จ
+          dialogTitle = "Confirm Transaction";
+          confirmationMessage =
+            'The item is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.';
+        } else if (
+          data.message ===
+          "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient"
+        ) {
+          // กรณีเงินไม่พอ
+          dialogTitle = "Not enough BTC";
+          confirmationMessage =
+            "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?";
+        } else {
+          // กรณีอื่นๆ ใช้ข้อความจาก API หรือข้อความ default
+          dialogTitle = "Confirm Transaction";
+          confirmationMessage =
+            data.message || "Do you want to proceed with this transaction?";
+        }
+
         setPendingOrder({
           orderRef: data.orderRef,
-          message:
-            "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?",
+          message: confirmationMessage,
+          title: dialogTitle,
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId:
@@ -82,7 +120,6 @@ export default function BuyOrderContainer() {
         });
         return;
       }
-
       // Handle successful order execution
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
@@ -107,9 +144,8 @@ export default function BuyOrderContainer() {
         (!data.filled || data.filled === 0)
       ) {
         showAlert(
-          `Order created successfully!\nOrder ID: ${
-            data.orderRef
-          }.\nAmount remaining: ${data.remaining.toFixed(
+          `Order created successfully!
+          Amount remaining : ${data.remaining.toFixed(
             8
           )} BTC.\nStatus: Pending`,
           "info"
@@ -469,36 +505,43 @@ export default function BuyOrderContainer() {
             message={alertState.message}
             type={alertState.type}
             onClose={closeAlert}
-            duration={5000} // 5 seconds
+            duration={5000}
           />
         </div>
       )}
 
-      {/* Confirmation Dialog */}
-      {pendingOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Not enough BTC
-            </h3>
-            <p className="text-gray-600 mb-6">{pendingOrder.message}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleConfirmationDecision("CANCEL")}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={() => handleConfirmationDecision("KEEP_OPEN")}
-                className="flex-1 px-4 py-2 bg-[#309C7D] text-white rounded hover:bg-[#28886C] transition-colors"
-              >
-                KEEP OPEN
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirmation Dialog using shadcn AlertDialog */}
+      <AlertDialog
+        open={!!pendingOrder}
+        onOpenChange={(open) => {
+          if (!open) setPendingOrder(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white mb-5">
+              {pendingOrder?.title || "Confirm Transaction"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 whitespace-pre-line">
+              {pendingOrder?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => handleConfirmationDecision("CANCEL")}
+              className="bg-gray-300 text-gray-700 hover:bg-gray-400 cursor-pointer"
+            >
+              CANCEL
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleConfirmationDecision("KEEP_OPEN")}
+              className="bg-[#309C7D] text-white hover:bg-[#28886C] cursor-pointer"
+            >
+              KEEP OPEN
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <OrderForm
         type="buy"

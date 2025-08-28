@@ -22,8 +22,6 @@ export default function SellOrderContainer() {
   // Fetch wallet balance
   const {
     data: cashBalance,
-    isLoading: isBalanceLoading,
-    error: balanceError,
   } = useGetCashBalance({
     enabled: !!session,
   });
@@ -31,8 +29,6 @@ export default function SellOrderContainer() {
   // Fetch BTC balance
   const {
     data: btcBalance,
-    isLoading: isBtcBalanceLoading,
-    error: btcBalanceError,
   } = useGetCoin({
     symbol: "BTC",
     enabled: !!session,
@@ -118,34 +114,6 @@ export default function SellOrderContainer() {
 
       // ตัดทศนิยมให้พอดีกับที่เหลือ
       const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
-      return integerPart + "." + truncatedDecimal;
-    },
-    []
-  );
-
-  const truncateToDecimals = useCallback(
-    (value: number, decimals: number = 10): string => {
-      if (typeof value !== "number" || isNaN(value)) return "0";
-
-      // แปลงเป็น string เพื่อหาตำแหน่งจุดทศนิยม
-      const valueStr = value.toString();
-      const decimalIndex = valueStr.indexOf(".");
-
-      // ถ้าไม่มีทศนิยม ให้เพิ่ม .0000000000
-      if (decimalIndex === -1) {
-        return valueStr + "." + "0".repeat(decimals);
-      }
-
-      // ตัดให้เหลือจำนวนทศนิยมที่ต้องการ
-      const integerPart = valueStr.substring(0, decimalIndex);
-      const decimalPart = valueStr.substring(decimalIndex + 1);
-
-      // ตัดทศนิยมส่วนเกิน หรือเติม 0 ถ้าไม่ครบ
-      const truncatedDecimal =
-        decimalPart.length >= decimals
-          ? decimalPart.substring(0, decimals)
-          : decimalPart.padEnd(decimals, "0");
-
       return integerPart + "." + truncatedDecimal;
     },
     []
