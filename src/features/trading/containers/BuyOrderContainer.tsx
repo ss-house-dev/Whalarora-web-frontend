@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
+import AlertBox from "@/components/ui/alert-box";
 import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,21 @@ import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
 import { useCreateBuyOrder } from "@/features/trading/hooks/useCreateBuyOrder";
 import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/wallet/constants";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog-coin";
+
+interface AlertState {
+  message: string;
+  type: "success" | "info" | "error";
+}
 
 // Type definitions
 interface User {
@@ -53,8 +69,30 @@ export default function BuyOrderContainer() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // State for alert box
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
+
   // State for confirmation dialog
-  const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<{
+    orderRef: string;
+    message: string;
+    title?: string;
+    options: ("CANCEL" | "KEEP_OPEN")[];
+    originalPayload: any;
+  } | null>(null);
+
+  // Function to show alert
+  const showAlert = (
+    message: string,
+    type: "success" | "info" | "error" = "info"
+  ) => {
+    setAlertState({ message, type });
+  };
+
+  // Function to close alert
+  const closeAlert = () => {
+    setAlertState(null);
+  };
 
   // Fetch wallet balance
   const {
@@ -70,12 +108,37 @@ export default function BuyOrderContainer() {
 
       // Check if requires confirmation
       if (data.requiresConfirmation) {
-        const userId = getUserId();
-        if (!userId) return;
+        let confirmationMessage = "";
+        let dialogTitle = "";
 
+        // ตรวจสอบ message จาก API response
+        if (
+          data.message ===
+          "คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ"
+        ) {
+          // กรณีเงินพอ - คาดว่าจะสำเร็จ
+          dialogTitle = "Confirm Transaction";
+          confirmationMessage =
+            'The item is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.';
+        } else if (
+          data.message ===
+          "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient"
+        ) {
+          // กรณีเงินไม่พอ
+          dialogTitle = "Not enough BTC";
+          confirmationMessage =
+            "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?";
+        } else {
+          // กรณีอื่นๆ ใช้ข้อความจาก API หรือข้อความ default
+          dialogTitle = "Confirm Transaction";
+          confirmationMessage =
+            data.message || "Do you want to proceed with this transaction?";
+        }
+        
         setPendingOrder({
           orderRef: data.orderRef,
-          message: data.message || "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ?",
+          message: confirmationMessage,
+          title: dialogTitle,
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId,
@@ -87,49 +150,59 @@ export default function BuyOrderContainer() {
         });
         return;
       }
-
       // Handle successful order execution
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
 
+      // สร้าง message แบบ dynamic โดยใช้ข้อมูลจริง
+      const usdAmount = parseFloat(amount.replace(/,/g, ""));
+
       if (data.filled && data.filled > 0) {
         const filledUSD =
           data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
-        alert(
-          `✅ Buy BTC/USDT Amount ${filledUSD.toFixed(
-            2
-          )} USD submitted successfully`
+        showAlert(
+          `Buy BTC/USDT Amount ${filledUSD.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} USD submitted successfully`,
+          "success"
         );
       } else if (
         data.remaining &&
         data.remaining > 0 &&
         (!data.filled || data.filled === 0)
       ) {
-        alert(
-          `📝 Order created successfully!\n` +
-            `Order ID: ${data.orderRef}\n` +
-            `Amount remaining: ${data.remaining.toFixed(8)} BTC\n` +
-            `Status: Pending`
+        showAlert(
+          `Order created successfully!
+          Amount remaining : ${data.remaining.toFixed(
+            8
+          )} BTC.\nStatus: Pending`,
+          "info"
         );
       } else {
-        let message = `✅ Order executed successfully!\nOrder ID: ${data.orderRef}`;
+        // กรณีปกติ - ใช้ข้อมูลจาก form
+        let message = `Buy BTC/USDT Amount ${usdAmount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} USD submitted successfully`;
+
         if (data.refund && data.refund > 0) {
-          const actualSpent =
-            parseFloat(amount.replace(/,/g, "")) - data.refund;
-          message += `\nActual spent: ${actualSpent.toFixed(2)} USD`;
-          message += `\nRefund: ${data.refund.toFixed(2)} USD`;
+          const actualSpent = usdAmount - data.refund;
+          message = `Buy BTC/USDT Amount ${actualSpent.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} USD submitted successfully\nRefund: ${data.refund.toFixed(
+            2
+          )} USD`;
         }
-        if (data.message) {
-          message += `\nMessage: ${data.message}`;
-        }
-        alert(message);
+        showAlert(message, "success");
       }
       handleSubmitSuccess();
     },
     onError: (error: Error) => {
       console.error("Buy order error:", error);
-      alert(`❌ Error: ${error.message}`);
+      showAlert(`Error: ${error.message}`, "error");
     },
   });
 
@@ -152,7 +225,7 @@ export default function BuyOrderContainer() {
     if (!pendingOrder) return;
 
     if (decision === "CANCEL") {
-      alert("❌ Order cancelled");
+      showAlert("Order cancelled", "info");
       setPendingOrder(null);
       return;
     }
@@ -175,15 +248,19 @@ export default function BuyOrderContainer() {
   const [limitPrice, setLimitPrice] = useState<string>("");
   const [price, setPrice] = useState<string>(marketPrice);
   const [amount, setAmount] = useState<string>("");
-  const [isAmountFocused, setIsAmountFocused] = useState<boolean>(false);
-  const [isAmountValid, setIsAmountValid] = useState<boolean>(true);
+  const [isAmountFocused, setIsAmountFocused] = useState(false);
+  const [isAmountValid, setIsAmountValid] = useState(true);
+  const [amountErrorMessage, setAmountErrorMessage] = useState("");
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [receiveBTC, setReceiveBTC] = useState<string>("");
 
   // Get available balance dynamically
   const getAvailableBalance = useCallback((): number => {
     if (!session || !cashBalance) return 0;
-    return cashBalance.amount || 0;
+    const amount = cashBalance.amount || 0;
+
+    // ตัดเลขทศนิยมที่เกิน 2 ตำแหน่งทิ้งไป (ไม่ปัดขึ้น)
+    return Math.floor(amount * 100) / 100;
   }, [session, cashBalance]);
 
   // Format available balance for display
@@ -258,6 +335,32 @@ export default function BuyOrderContainer() {
     [getAvailableBalance, formatNumberWithComma]
   );
 
+  // Validation function
+  const validateAmount = useCallback(() => {
+    const numericValue = amount.replace(/,/g, "");
+    const num = parseFloat(numericValue);
+    const availableBalance = getAvailableBalance();
+
+    // Check if amount is empty or zero
+    if (!amount || amount === "" || num === 0 || isNaN(num)) {
+      setIsAmountValid(false);
+      setAmountErrorMessage("Please enter amount");
+      return false;
+    }
+
+    // Check if amount exceeds available balance
+    if (num > availableBalance) {
+      setIsAmountValid(false);
+      setAmountErrorMessage("Insufficient balance");
+      return false;
+    }
+
+    // Amount is valid
+    setIsAmountValid(true);
+    setAmountErrorMessage("");
+    return true;
+  }, [amount, getAvailableBalance]);
+
   // Price handlers
   const handlePriceFocus = (): void => {
     setPriceLabel("Limit price");
@@ -306,16 +409,25 @@ export default function BuyOrderContainer() {
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
-      const isValid =
-        inputValue === "" || (!isNaN(num) && num <= availableBalance);
 
-      if (!isValid && inputValue !== "") {
+      // Check validation immediately
+      if (inputValue === "" || num === 0 || isNaN(num)) {
+        // Empty or zero - reset to valid state but don't show error yet
+        setIsAmountValid(true);
+        setAmountErrorMessage("");
+        setSliderValue(0);
+      } else if (num > availableBalance) {
+        // Amount exceeds balance - show error immediately
+        setIsAmountValid(false);
+        setAmountErrorMessage("Insufficient balance");
         setSliderValue(0);
       } else {
+        // Valid amount
+        setIsAmountValid(true);
+        setAmountErrorMessage("");
         const sliderPercentage = calculateSliderPercentage(inputValue);
         setSliderValue(sliderPercentage);
       }
-      setIsAmountValid(isValid);
     }
   };
 
@@ -326,7 +438,12 @@ export default function BuyOrderContainer() {
     const numericValue = newAmount.replace(/,/g, "");
     const num = parseFloat(numericValue);
     const availableBalance = getAvailableBalance();
-    setIsAmountValid(!isNaN(num) && num <= availableBalance);
+    const isValid = !isNaN(num) && num <= availableBalance;
+    setIsAmountValid(isValid);
+
+    if (isValid) {
+      setAmountErrorMessage("");
+    }
   };
 
   const handleAmountFocus = (): void => setIsAmountFocused(true);
@@ -340,23 +457,25 @@ export default function BuyOrderContainer() {
         const formattedAmount = formatNumberWithComma(num.toFixed(2));
         setAmount(formattedAmount);
       }
+      // Validate on blur
+      validateAmount();
     }
   };
 
   // Submit handler
   const handleSubmit = (): void => {
     if (!session) {
-      alert("Please login to continue trading");
+      showAlert("Please login to continue trading", "error");
       router.push("/auth/sign-in");
       return;
     }
 
-    const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
-
-    if (!numericAmount || numericAmount === 0) {
+    // Validate amount before proceeding
+    if (!validateAmount()) {
       return;
     }
 
+    const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
     const userId = getUserId();
@@ -386,6 +505,8 @@ export default function BuyOrderContainer() {
     setAmount("");
     setSliderValue(0);
     setReceiveBTC("");
+    setIsAmountValid(true);
+    setAmountErrorMessage("");
   };
 
   // Effects
@@ -416,7 +537,6 @@ export default function BuyOrderContainer() {
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
       const isValid = !isNaN(num) && num <= availableBalance;
-      setIsAmountValid(isValid);
 
       if (isValid) {
         const sliderPercentage = calculateSliderPercentage(numericValue);
@@ -427,31 +547,49 @@ export default function BuyOrderContainer() {
 
   return (
     <div>
-      {/* Confirmation Dialog */}
-      {pendingOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              ยืนยันคำสั่งซื้อ
-            </h3>
-            <p className="text-gray-600 mb-6">{pendingOrder.message}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleConfirmationDecision("CANCEL")}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-              >
-                ยกเลิก (CANCEL)
-              </button>
-              <button
-                onClick={() => handleConfirmationDecision("KEEP_OPEN")}
-                className="flex-1 px-4 py-2 bg-[#309C7D] text-white rounded hover:bg-[#28886C] transition-colors"
-              >
-                สร้างออเดอร์ (KEEP_OPEN)
-              </button>
-            </div>
-          </div>
+      {alertState && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <AlertBox
+            message={alertState.message}
+            type={alertState.type}
+            onClose={closeAlert}
+            duration={5000}
+          />
         </div>
       )}
+
+      {/* Confirmation Dialog using shadcn AlertDialog */}
+      <AlertDialog
+        open={!!pendingOrder}
+        onOpenChange={(open) => {
+          if (!open) setPendingOrder(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white mb-5">
+              {pendingOrder?.title || "Confirm Transaction"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 whitespace-pre-line">
+              {pendingOrder?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => handleConfirmationDecision("CANCEL")}
+              className="bg-gray-300 text-gray-700 hover:bg-gray-400 cursor-pointer"
+            >
+              CANCEL
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleConfirmationDecision("KEEP_OPEN")}
+              className="bg-[#309C7D] text-white hover:bg-[#28886C] cursor-pointer"
+            >
+              KEEP OPEN
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <OrderForm
         type="buy"
@@ -472,6 +610,7 @@ export default function BuyOrderContainer() {
         amountIcon="/currency-icons/dollar-icon.svg"
         receiveIcon="/currency-icons/bitcoin-icon.svg"
         isSubmitting={createBuyOrderMutation.isPending}
+        amountErrorMessage={amountErrorMessage}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}

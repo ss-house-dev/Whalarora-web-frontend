@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog-reset";
 
 interface NavbarUIProps {
   open: boolean;
@@ -45,10 +45,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // ใช้ hook เพื่อดึงยอดเงินจริง
-  const {
-    data: cashBalance,
-    error,
-  } = useGetCashBalance({
+  const { data: cashBalance, error } = useGetCashBalance({
     enabled: !!session, // เรียก API เฉพาะเมื่อมี session
   });
 
@@ -97,10 +94,12 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   // Format จำนวนเงิน
   const formatCurrency = (amount: number | undefined): string => {
     if (amount === undefined) return "0.00";
+    const truncated = Math.floor(amount * 100) / 100;
+
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(truncated);
   };
 
   return (
