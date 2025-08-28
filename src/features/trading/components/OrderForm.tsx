@@ -267,13 +267,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
           onClick={onSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting
-            ? type === "buy"
-              ? "Creating Buy Order..."
-              : "Processing..."
-            : type === "buy"
-            ? "Buy"
-            : "Sell"}
+          {isSubmitting && (
+            <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          {type === "buy" ? "Buy" : "Sell"}
         </Button>
       </div>
     </div>

@@ -79,6 +79,7 @@ export default function SellOrderContainer() {
   const [price, setPrice] = useState<string>(marketPrice);
   const [sellAmount, setSellAmount] = useState<string>("");
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
+  const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState("");
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>("");
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
@@ -170,6 +171,31 @@ export default function SellOrderContainer() {
     [getAvailableBTCBalance]
   );
 
+  // Validation function
+  const validateSellAmount = useCallback(() => {
+    const num = parseFloat(sellAmount);
+    const availableBTC = getAvailableBTCBalance();
+
+    // Check if amount is empty or zero
+    if (!sellAmount || sellAmount === "" || num === 0 || isNaN(num)) {
+      setIsSellAmountValid(false);
+      setSellAmountErrorMessage("Please enter amount");
+      return false;
+    }
+
+    // Check if amount exceeds available balance
+    if (num > availableBTC) {
+      setIsSellAmountValid(false);
+      setSellAmountErrorMessage("Insufficient balance");
+      return false;
+    }
+
+    // Amount is valid
+    setIsSellAmountValid(true);
+    setSellAmountErrorMessage("");
+    return true;
+  }, [sellAmount, getAvailableBTCBalance]);
+
   // Price handlers
   const handlePriceFocus = () => {
     setPriceLabel("Limit price");
@@ -217,15 +243,25 @@ export default function SellOrderContainer() {
 
       const num = parseFloat(inputValue);
       const availableBTC = getAvailableBTCBalance();
-      const isValid = inputValue === "" || (!isNaN(num) && num <= availableBTC);
 
-      if (!isValid && inputValue !== "") {
+      // Check validation immediately
+      if (inputValue === "" || num === 0 || isNaN(num)) {
+        // Empty or zero - reset to valid state but don't show error yet
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage("");
+        setSellSliderValue(0);
+      } else if (num > availableBTC) {
+        // Amount exceeds balance - show error immediately
+        setIsSellAmountValid(false);
+        setSellAmountErrorMessage("Insufficient balance");
         setSellSliderValue(0);
       } else {
+        // Valid amount
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage("");
         const sliderPercentage = calculateSellSliderPercentage(inputValue);
         setSellSliderValue(sliderPercentage);
       }
-      setIsSellAmountValid(isValid);
     }
   };
 
@@ -235,7 +271,12 @@ export default function SellOrderContainer() {
     setSellAmount(newBTCAmount);
     const num = parseFloat(newBTCAmount);
     const availableBTC = getAvailableBTCBalance();
-    setIsSellAmountValid(!isNaN(num) && num <= availableBTC);
+    const isValid = !isNaN(num) && num <= availableBTC;
+    setIsSellAmountValid(isValid);
+
+    if (isValid) {
+      setSellAmountErrorMessage("");
+    }
   };
 
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
@@ -245,6 +286,8 @@ export default function SellOrderContainer() {
     if (sellAmount) {
       const num = parseFloat(sellAmount);
       if (!isNaN(num)) setSellAmount(num.toFixed(9));
+      // Validate on blur
+      validateSellAmount();
     }
   };
 
@@ -256,11 +299,12 @@ export default function SellOrderContainer() {
       return;
     }
 
-    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
-
-    if (!numericAmount || numericAmount === 0) {
+    // Validate amount before proceeding
+    if (!validateSellAmount()) {
       return;
     }
+
+    const numericAmount = parseFloat(sellAmount.replace(/,/g, "") || "0");
 
     // Handle sell order submission with updated payload
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
@@ -292,6 +336,8 @@ export default function SellOrderContainer() {
     setSellAmount("");
     setSellSliderValue(0);
     setReceiveUSD("");
+    setIsSellAmountValid(true);
+    setSellAmountErrorMessage("");
   };
 
   // Effects
@@ -344,6 +390,7 @@ export default function SellOrderContainer() {
         amountIcon="/currency-icons/bitcoin-icon.svg"
         receiveIcon="/currency-icons/dollar-icon.svg"
         isSubmitting={createSellOrderMutation.isPending}
+        amountErrorMessage={sellAmountErrorMessage}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}

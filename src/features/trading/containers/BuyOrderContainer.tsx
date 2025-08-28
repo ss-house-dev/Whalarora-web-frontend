@@ -135,6 +135,7 @@ export default function BuyOrderContainer() {
   const [amount, setAmount] = useState<string>("");
   const [isAmountFocused, setIsAmountFocused] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(true);
+  const [amountErrorMessage, setAmountErrorMessage] = useState("");
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [receiveBTC, setReceiveBTC] = useState<string>("");
 
@@ -216,6 +217,32 @@ export default function BuyOrderContainer() {
     [getAvailableBalance, formatNumberWithComma]
   );
 
+  // Validation function
+  const validateAmount = useCallback(() => {
+    const numericValue = amount.replace(/,/g, "");
+    const num = parseFloat(numericValue);
+    const availableBalance = getAvailableBalance();
+
+    // Check if amount is empty or zero
+    if (!amount || amount === "" || num === 0 || isNaN(num)) {
+      setIsAmountValid(false);
+      setAmountErrorMessage("Please enter amount");
+      return false;
+    }
+
+    // Check if amount exceeds available balance
+    if (num > availableBalance) {
+      setIsAmountValid(false);
+      setAmountErrorMessage("Insufficient balance");
+      return false;
+    }
+
+    // Amount is valid
+    setIsAmountValid(true);
+    setAmountErrorMessage("");
+    return true;
+  }, [amount, getAvailableBalance]);
+
   // Price handlers
   const handlePriceFocus = () => {
     setPriceLabel("Limit price");
@@ -264,16 +291,25 @@ export default function BuyOrderContainer() {
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
-      const isValid =
-        inputValue === "" || (!isNaN(num) && num <= availableBalance);
 
-      if (!isValid && inputValue !== "") {
+      // Check validation immediately
+      if (inputValue === "" || num === 0 || isNaN(num)) {
+        // Empty or zero - reset to valid state but don't show error yet
+        setIsAmountValid(true);
+        setAmountErrorMessage("");
+        setSliderValue(0);
+      } else if (num > availableBalance) {
+        // Amount exceeds balance - show error immediately
+        setIsAmountValid(false);
+        setAmountErrorMessage("Insufficient balance");
         setSliderValue(0);
       } else {
+        // Valid amount
+        setIsAmountValid(true);
+        setAmountErrorMessage("");
         const sliderPercentage = calculateSliderPercentage(inputValue);
         setSliderValue(sliderPercentage);
       }
-      setIsAmountValid(isValid);
     }
   };
 
@@ -284,7 +320,12 @@ export default function BuyOrderContainer() {
     const numericValue = newAmount.replace(/,/g, "");
     const num = parseFloat(numericValue);
     const availableBalance = getAvailableBalance();
-    setIsAmountValid(!isNaN(num) && num <= availableBalance);
+    const isValid = !isNaN(num) && num <= availableBalance;
+    setIsAmountValid(isValid);
+
+    if (isValid) {
+      setAmountErrorMessage("");
+    }
   };
 
   const handleAmountFocus = () => setIsAmountFocused(true);
@@ -298,6 +339,8 @@ export default function BuyOrderContainer() {
         const formattedAmount = formatNumberWithComma(num.toFixed(2));
         setAmount(formattedAmount);
       }
+      // Validate on blur
+      validateAmount();
     }
   };
 
@@ -309,12 +352,12 @@ export default function BuyOrderContainer() {
       return;
     }
 
-    const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
-
-    if (!numericAmount || numericAmount === 0) {
+    // Validate amount before proceeding
+    if (!validateAmount()) {
       return;
     }
 
+    const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
     const userId =
@@ -340,6 +383,8 @@ export default function BuyOrderContainer() {
     setAmount("");
     setSliderValue(0);
     setReceiveBTC("");
+    setIsAmountValid(true);
+    setAmountErrorMessage("");
   };
 
   // Effects
@@ -370,7 +415,6 @@ export default function BuyOrderContainer() {
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
       const isValid = !isNaN(num) && num <= availableBalance;
-      setIsAmountValid(isValid);
 
       if (isValid) {
         const sliderPercentage = calculateSliderPercentage(numericValue);
@@ -426,6 +470,7 @@ export default function BuyOrderContainer() {
         amountIcon="/currency-icons/dollar-icon.svg"
         receiveIcon="/currency-icons/bitcoin-icon.svg"
         isSubmitting={createBuyOrderMutation.isPending}
+        amountErrorMessage={amountErrorMessage}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
