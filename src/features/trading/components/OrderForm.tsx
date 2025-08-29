@@ -85,6 +85,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
     return type === "buy" ? "Buy" : "Sell";
   };
 
+  // Handle price input blur - automatically switch to market price
+  const handlePriceBlur = () => {
+    onPriceBlur(); // Call the original blur handler
+    onMarketClick(); // Automatically trigger market price when user clicks away
+  };
+
   return (
     <div className="space-y-7">
       {/* Price input */}
@@ -99,7 +105,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             type="text"
             className="w-[100px] text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
             onFocus={onPriceFocus}
-            onBlur={onPriceBlur}
+            onBlur={handlePriceBlur} // Updated to use our new handler
             value={price}
             onChange={onPriceChange}
           />
