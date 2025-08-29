@@ -1,14 +1,23 @@
 import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
 import AdvancedChart from "@/features/trading/components/Chart";
+import OrderTable from "@/features/trading/components/OrderTable";
 
 export default function MarketOrderPage() {
   return (
-    <div className="flex justify-center mx-[120px] gap-10 mt-10">
-      <div className="flex-1 ">
-        <AdvancedChart />
+    <div className="flex flex-col mx-[120px] mt-10 gap-10">
+      {/* Chart + Order Form */}
+      <div className="flex gap-10">
+        <div className="flex-1">
+          <AdvancedChart />
+        </div>
+        <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[504px]">
+          <MarketOrderContainer />
+        </div>
       </div>
-      <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[504px]">
-        <MarketOrderContainer />
+
+      {/* Order Table at bottom */}
+      <div className="flex-1">
+        <OrderTable />
       </div>
     </div>
   );
