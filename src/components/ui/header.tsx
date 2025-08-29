@@ -37,7 +37,7 @@ export default function Header() {
         className="flex items-center space-x-13 cursor-pointer"
       >
         <Image
-          src="/logo.png"
+          src="/assets/whalarora-logo.png"
           alt="Logo"
           width={40}
           height={40}

@@ -9,8 +9,8 @@ const alexandria = Alexandria({
 });
 
 export const metadata: Metadata = {
-  title: "Whalalora",
-  description: "Homepage of Whalalora",
+  title: "Whalarora",
+  description: "Homepage of Whalarora",
 };
 
 export default function RootLayout({
