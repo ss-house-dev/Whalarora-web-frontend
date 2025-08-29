@@ -28,20 +28,18 @@ export default function SellOrderContainer() {
 
   // Alert Box states
   const [alertMessage, setAlertMessage] = useState<string>("");
-  const [alertType, setAlertType] = useState<"success" | "info" | "error">("success");
+  const [alertType, setAlertType] = useState<"success" | "info" | "error">(
+    "success"
+  );
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
   // Fetch wallet balance
-  const {
-    data: cashBalance,
-  } = useGetCashBalance({
+  const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
   });
 
   // Fetch BTC balance
-  const {
-    data: btcBalance,
-  } = useGetCoin({
+  const { data: btcBalance } = useGetCoin({
     symbol: "BTC",
     enabled: !!session,
   });
@@ -60,13 +58,13 @@ export default function SellOrderContainer() {
       // Show success message with updated response format using AlertBox
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds : $${data.proceeds.toFixed(2)}`
+          `Sell order completed successfully!\nProceeds : $${data.proceeds.toFixed(
+            2
+          )}`
         );
         setAlertType("success");
       } else {
-        setAlertMessage(
-          `Sell order created successfully!\nStatus: Pending`
-        );
+        setAlertMessage(`Sell order created successfully!\nStatus: Pending`);
         setAlertType("info");
       }
       setShowAlert(true);
@@ -96,7 +94,14 @@ export default function SellOrderContainer() {
     (value: number, maxDigits: number = 10): string => {
       if (typeof value !== "number" || isNaN(value)) return "0";
 
-      const valueStr = value.toString();
+      // ใช้ toFixed เพื่อหลีกเลี่ยง scientific notation
+      let valueStr = value.toFixed(9); // BTC มีทศนิยม 9 หลัก
+
+      // ตัดเลข 0 ที่ท้ายออก
+      valueStr = valueStr.replace(/\.?0+$/, "");
+
+      // ถ้าผลลัพธ์ว่างเปล่า ให้คืน "0"
+      if (valueStr === "" || valueStr === ".") return "0";
 
       // ถ้าตัวเลขทั้งหมดไม่เกิน maxDigits ให้แสดงทั้งหมด
       const totalDigits = valueStr.replace(".", "").length;
@@ -109,7 +114,6 @@ export default function SellOrderContainer() {
 
       // ถ้าไม่มีทศนิยม
       if (decimalIndex === -1) {
-        // ถ้าจำนวนเต็มเกิน maxDigits ให้ตัดแสดงแค่ maxDigits ตัวแรก
         return valueStr.substring(0, maxDigits);
       }
 
@@ -211,7 +215,19 @@ export default function SellOrderContainer() {
   const calculateBTCFromPercentage = useCallback(
     (percentage: number): string => {
       const availableBTC = getAvailableBTCBalance();
-      const btcAmount = (percentage / 100) * availableBTC;
+
+      if (availableBTC <= 0 || percentage <= 0) {
+        return "0";
+      }
+
+      // ใช้ตัวเลขคูณแล้วหารเพื่อหลีกเลี่ยงปัญหา floating point precision
+      const multiplier = 1000000000; // 9 หลัก เพราะ BTC มี 9 ทศนิยม
+      const availableSatoshis = Math.floor(availableBTC * multiplier); 
+      const percentageSatoshis = Math.floor(
+        (percentage / 100) * availableSatoshis
+      ); 
+      const btcAmount = percentageSatoshis / multiplier;
+
       return formatToMaxDigits(btcAmount, 10);
     },
     [getAvailableBTCBalance, formatToMaxDigits]
@@ -354,9 +370,9 @@ export default function SellOrderContainer() {
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
     const btcAmountToSell = parseFloat(sellAmount || "0");
     const userId =
-      cashBalance?.userId || 
-      (session.user as UserWithId)?.id || 
-      session.user?.email || 
+      cashBalance?.userId ||
+      (session.user as UserWithId)?.id ||
+      session.user?.email ||
       "";
 
     // Calculate lotPrice (total value of the trade)
@@ -453,7 +469,7 @@ export default function SellOrderContainer() {
         onSliderChange={handleSellSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
-        onLoginClick={() => router.push("/auth/sign-in")} 
+        onLoginClick={() => router.push("/auth/sign-in")}
       />
 
       {/* AlertBox positioned at bottom-right */}
