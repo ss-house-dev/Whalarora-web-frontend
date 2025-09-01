@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -22,10 +21,18 @@ const SignInContainer = () => {
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * Toggles the visibility of the password field
+   */
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
+  /**
+   * Handles input changes for the sign-in form
+   * @param field - The field being updated
+   * @param value - The new value for the field
+   */ 
   const handleInputChange = (
     field: keyof SignInData,
     value: string | boolean
@@ -38,6 +45,9 @@ const SignInContainer = () => {
     if (error) setError("");
   };
 
+  /**
+   * Handles the sign-in process
+   */
   const handleSignIn = async () => {
     try {
       setError("");
