@@ -25,7 +25,7 @@ interface OrderFormProps {
   amountIcon: string;
   receiveIcon: string;
   isSubmitting: boolean;
-  isAuthenticated?: boolean; // New prop to check if user is logged in
+  isAuthenticated?: boolean;
   amountErrorMessage?: string;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -36,7 +36,7 @@ interface OrderFormProps {
   onSliderChange: (percentage: number) => void;
   onMarketClick: () => void;
   onSubmit: () => void;
-  onLoginClick?: () => void; // New prop for login button click handler
+  onLoginClick?: () => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -57,7 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amountIcon,
   receiveIcon,
   isSubmitting,
-  isAuthenticated = false, // Default to false (unauthorized)
+  isAuthenticated = false,
   amountErrorMessage = "Insufficient balance",
   onPriceFocus,
   onPriceChange,
@@ -70,6 +70,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onSubmit,
   onLoginClick,
 }) => {
+  // Track if user has manually entered a price
+  const [hasUserPrice, setHasUserPrice] = React.useState(false);
+
   const handleButtonClick = () => {
     if (!isAuthenticated && onLoginClick) {
       onLoginClick();
@@ -85,11 +88,38 @@ const OrderForm: React.FC<OrderFormProps> = ({
     return type === "buy" ? "Buy" : "Sell";
   };
 
-  // Handle price input blur - automatically switch to market price
+  // Handle price changes - track if user is entering custom price
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHasUserPrice(e.target.value.trim() !== ""); // Mark as user price if not empty
+    onPriceChange(e);
+  };
+
+  // Handle price input blur - only switch to market if user hasn't entered a custom price
   const handlePriceBlur = () => {
     onPriceBlur(); // Call the original blur handler
-    onMarketClick(); // Automatically trigger market price when user clicks away
+    
+    // Only auto-switch to market price if user hasn't entered a custom price
+    if (!hasUserPrice) {
+      onMarketClick();
+    }
   };
+
+  // Handle market button click - reset the user price flag
+  const handleMarketClick = () => {
+    setHasUserPrice(false); // Reset flag when explicitly clicking market
+    onMarketClick();
+  };
+
+  // Reset user price flag when switching between limit and market modes
+  React.useEffect(() => {
+    if (priceLabel === "Price") {
+      // When switching to limit mode, don't reset the flag
+      // User should be able to keep their custom price
+    } else {
+      // When switching to market mode, reset the flag
+      setHasUserPrice(false);
+    }
+  }, [priceLabel]);
 
   return (
     <div className="space-y-7">
@@ -105,9 +135,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
             type="text"
             className="w-[100px] text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
             onFocus={onPriceFocus}
-            onBlur={handlePriceBlur} // Updated to use our new handler
+            onBlur={handlePriceBlur}
             value={price}
-            onChange={onPriceChange}
+            onChange={handlePriceChange} // Updated to use our new handler
           />
           <span className="text-sm font-normal">USD</span>
 
@@ -132,7 +162,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           )}
 
           <Button
-            onClick={onMarketClick}
+            onClick={handleMarketClick} // Updated to use our new handler
             className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
               priceLabel === "Price"
                 ? "bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]"
