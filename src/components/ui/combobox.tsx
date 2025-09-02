@@ -18,6 +18,16 @@ import {
 } from "@/components/ui/popover";
 import { SelectCoin } from "./select-coin";
 
+interface USDTPair {
+  symbol: string;
+  baseAsset: string;
+}
+
+interface ExampleComboboxProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
 const BTCIcon = () => (
   <Image
     src="/currency-icons/bitcoin-icon.svg"
@@ -78,6 +88,26 @@ const ADAIcon = () => (
   />
 );
 
+const DOGEIcon = () => (
+  <Image
+    src="/currency-icons/doge-coin.svg"
+    alt="Dogecoin"
+    width={28}
+    height={28}
+    className="rounded-full"
+  />
+);
+
+const DefaultIcon = () => (
+  <Image
+    src="/currency-icons/default-coin.svg"
+    alt="Default Coin"
+    width={28}
+    height={28}
+    className="rounded-full"
+  />
+);
+
 const binanceCoins = [
   {
     value: "BINANCE:BTCUSDT",
@@ -109,20 +139,63 @@ const binanceCoins = [
     label: "ADA/USDT",
     icon: <ADAIcon />,
   },
+   {
+    value: "BINANCE:DOGEUSDT",
+    label: "DOGE/USDT",
+    icon: <DOGEIcon />,
+  },
 ];
-
-interface ExampleComboboxProps {
-  value: string;
-  onValueChange: (value: string) => void;
-}
 
 export function ExampleCombobox({
   value,
   onValueChange,
 }: ExampleComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [pairs, setPairs] = React.useState<USDTPair[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
 
-  const selectedCoin = binanceCoins.find((coin) => coin.value === value);
+  // Fetch USDT pairs from Binance
+  const fetchUSDTPairs = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        "https://api.binance.com/api/v3/exchangeInfo"
+      );
+      const data = await response.json();
+      const usdtPairs: USDTPair[] = (data.symbols as any[])
+        .filter(
+          (symbol) =>
+            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
+        )
+        .map((symbol) => ({
+          symbol: symbol.symbol,
+          baseAsset: symbol.baseAsset,
+        }))
+        .sort((a, b) => a.symbol.localeCompare(b.symbol));
+      setPairs(usdtPairs);
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchUSDTPairs();
+  }, []);
+
+  const coins = pairs.map((pair) => {
+    const matchedCoin = binanceCoins.find(
+      (coin) => coin.value === `BINANCE:${pair.symbol}`
+    );
+    return {
+      value: `BINANCE:${pair.symbol}`,
+      label: `${pair.baseAsset}/USDT`,
+      icon: matchedCoin ? matchedCoin.icon : <DefaultIcon />,
+    };
+  });
+
+  const selectedCoin = coins.find((coin) => coin.value === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -157,11 +230,11 @@ export function ExampleCombobox({
         sideOffset={4}
       >
         <Command>
-          <CommandInput />
+          <CommandInput placeholder="Search coin..." />
           <CommandList>
             <CommandEmpty>No coin found.</CommandEmpty>
             <CommandGroup>
-              {binanceCoins.map((coin) => (
+              {coins.map((coin) => (
                 <CommandItem
                   key={coin.value}
                   value={coin.value}
