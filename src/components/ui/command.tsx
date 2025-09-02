@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
 
 function Command({
