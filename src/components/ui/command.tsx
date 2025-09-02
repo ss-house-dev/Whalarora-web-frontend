@@ -17,7 +17,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "bg-[#16171D] w-[216px] text-popover-foreground flex flex-col overflow-hidden rounded-[12px] border border-[#474747]",
+        "bg-[#16171D] w-[202px] text-popover-foreground flex flex-col overflow-hidden rounded-[12px] border border-[#474747]",
         className
       )}
       {...props}
@@ -39,7 +39,7 @@ function CommandPopover({
         className={cn("w-[200px] p-0 !border-0", className)}
         style={{ border: "none" }}
       >
-        <Command className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command>
           {children}
         </Command>
       </PopoverContent>
@@ -88,7 +88,7 @@ function CommandList({
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto",
+        "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto text-[#7a7a7a]",
         className
       )}
       {...props}
@@ -116,7 +116,7 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
+        "text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden py-[4px] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
         className
       )}
       {...props}
@@ -145,7 +145,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        " [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-pointer items-center w-[192px] h-[40px] gap-2 rounded-sm p-[12px] text-[16px] font-[400] outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:text-white",
+        " [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-pointer items-center w-[192px] h-[40px] gap-2 rounded-sm p-[12px] text-[14px] font-[400] outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:text-white",
         className
       )}
       {...props}

@@ -18,143 +18,183 @@ import {
 } from "@/components/ui/popover";
 import { SelectCoin } from "./select-coin";
 
+/**
+ * Represents a trading pair with USDT as the quote asset.
+ */
 interface USDTPair {
   symbol: string;
   baseAsset: string;
 }
 
+/**
+ * Props for the example combobox component.
+ */
 interface ExampleComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
 }
 
-const BTCIcon = () => (
+/**
+ * Bitcoin icon component.
+ * @param param0 - The props for the component.
+ * @returns The Bitcoin icon.
+ */
+const BTCIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/bitcoin-icon.svg"
     alt="Bitcoin"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const ETHIcon = () => (
+const ETHIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/ethereum-icon.svg"
     alt="Ethereum"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const BNBIcon = () => (
+const BNBIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/bnb-coin.svg"
     alt="BNB"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const SOLIcon = () => (
+const SOLIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/solana-icon.svg"
     alt="Solana"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const XRPIcon = () => (
+const XRPIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/xrp-coin.svg"
     alt="XRP"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const ADAIcon = () => (
+const ADAIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/ada-coin.svg"
     alt="Cardano"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const DOGEIcon = () => (
+const DOGEIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/doge-coin.svg"
     alt="Dogecoin"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
-const DefaultIcon = () => (
+const DefaultIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/default-coin.svg"
     alt="Default Coin"
-    width={28}
-    height={28}
+    width={size}
+    height={size}
     className="rounded-full"
   />
 );
 
+/**
+ * Represents a trading pair on Binance.
+ */
 const binanceCoins = [
   {
     value: "BINANCE:BTCUSDT",
     label: "BTC/USDT",
     icon: <BTCIcon />,
+    popoverIcon: <BTCIcon size={20} />,
   },
   {
     value: "BINANCE:ETHUSDT",
     label: "ETH/USDT",
     icon: <ETHIcon />,
+    popoverIcon: <ETHIcon size={20} />,
   },
   {
     value: "BINANCE:BNBUSDT",
     label: "BNB/USDT",
     icon: <BNBIcon />,
+    popoverIcon: <BNBIcon size={20} />,
   },
   {
     value: "BINANCE:SOLUSDT",
     label: "SOL/USDT",
     icon: <SOLIcon />,
+    popoverIcon: <SOLIcon size={20} />,
   },
   {
     value: "BINANCE:XRPUSDT",
     label: "XRP/USDT",
     icon: <XRPIcon />,
+    popoverIcon: <XRPIcon size={20} />,
   },
   {
     value: "BINANCE:ADAUSDT",
     label: "ADA/USDT",
     icon: <ADAIcon />,
+    popoverIcon: <ADAIcon size={20} />,
   },
-   {
+  {
     value: "BINANCE:DOGEUSDT",
     label: "DOGE/USDT",
     icon: <DOGEIcon />,
+    popoverIcon: <DOGEIcon size={20} />,
   },
 ];
 
+/**
+ * Example combobox component.
+ * @param param0 - The props for the component.
+ * @returns The example combobox.
+ */
 export function ExampleCombobox({
   value,
   onValueChange,
 }: ExampleComboboxProps) {
+  /**
+   * Combobox open state.
+   * Controls the visibility of the combobox.
+   */
   const [open, setOpen] = React.useState(false);
+  /**
+   * Combobox options.
+   * Represents the available trading pairs for the combobox.
+   */
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [searchValue, setSearchValue] = React.useState<string>("");
+  const listRef = React.useRef<HTMLDivElement>(null);
 
-  // Fetch USDT pairs from Binance
+  /**
+   * Fetch USDT pairs from Binance API.
+   * This function retrieves the trading pairs for USDT from the Binance API
+   * and updates the component state with the fetched pairs.
+   */
   const fetchUSDTPairs = async () => {
     setLoading(true);
     try {
@@ -180,11 +220,28 @@ export function ExampleCombobox({
     }
   };
 
+  /**
+   * Fetch USDT pairs from Binance API.
+   */
   React.useEffect(() => {
     fetchUSDTPairs();
   }, []);
 
-  const coins = pairs.map((pair) => {
+  /**
+   * Reset scroll position when search value changes
+   */
+  React.useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [searchValue]);
+
+  /**
+   * Map USDT pairs to coin objects.
+   * This function takes the USDT pairs and maps them to the corresponding coin objects
+   * defined in the binanceCoins array.
+   */
+  const allCoins = pairs.map((pair) => {
     const matchedCoin = binanceCoins.find(
       (coin) => coin.value === `BINANCE:${pair.symbol}`
     );
@@ -192,10 +249,27 @@ export function ExampleCombobox({
       value: `BINANCE:${pair.symbol}`,
       label: `${pair.baseAsset}/USDT`,
       icon: matchedCoin ? matchedCoin.icon : <DefaultIcon />,
+      popoverIcon: matchedCoin ? (
+        matchedCoin.popoverIcon
+      ) : (
+        <DefaultIcon size={20} />
+      ),
     };
   });
 
-  const selectedCoin = coins.find((coin) => coin.value === value);
+  // Filter coins based on search value, if no search show first 20
+  const coins = searchValue 
+    ? allCoins
+        .filter(coin => 
+          coin.label.toLowerCase().startsWith(searchValue.toLowerCase())
+        )
+        .sort((a, b) => a.label.localeCompare(b.label))
+    : allCoins.slice(0, 20);
+
+  /**
+   * Find the selected coin based on the current value.
+   */
+  const selectedCoin = allCoins.find((coin) => coin.value === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -203,7 +277,7 @@ export function ExampleCombobox({
         <SelectCoin
           role="combobox"
           aria-expanded={open}
-          className="w-[174px] h-[48px] py-[12px] px-[12px] justify-between text-[16px] font-[600] bg-[#16171D] cursor-pointer"
+          className="w-[174px] h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-[#16171D] cursor-pointer"
         >
           <div className="flex items-center gap-2">
             {selectedCoin && selectedCoin.icon}
@@ -230,8 +304,11 @@ export function ExampleCombobox({
         sideOffset={4}
       >
         <Command>
-          <CommandInput placeholder="Search coin..." />
-          <CommandList>
+          <CommandInput
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
+          <CommandList ref={listRef} className="max-h-[280px]">
             <CommandEmpty>No coin found.</CommandEmpty>
             <CommandGroup>
               {coins.map((coin) => (
@@ -244,12 +321,12 @@ export function ExampleCombobox({
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex items-center justify-between rounded-[8px]",
+                    "flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]",
                     value === coin.value && "bg-[#323338]"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    {coin.icon}
+                    {coin.popoverIcon}
                     <span>{coin.label}</span>
                   </div>
                 </CommandItem>
