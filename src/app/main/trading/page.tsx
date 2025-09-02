@@ -1,6 +1,6 @@
 import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
 import AdvancedChart from "@/features/trading/components/Chart";
-import OrderTable from "@/features/trading/components/OrderTable";
+import OrderTableContainer from "@/features/trading/containers/OrderTableContainer";
 
 export default function MarketOrderPage() {
   return (
@@ -17,7 +17,7 @@ export default function MarketOrderPage() {
 
       {/* Order Table at bottom */}
       <div className="flex-1">
-        <OrderTable />
+        <OrderTableContainer />
       </div>
     </div>
   );
