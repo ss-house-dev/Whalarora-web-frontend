@@ -1,10 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
 import {
   Command,
   CommandEmpty,
@@ -18,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { SelectCoin } from "./select-coin";
 
 const binanceCoins = [
   {
@@ -56,10 +54,10 @@ export function ExampleCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <SelectCoin
           role="combobox"
           aria-expanded={open}
-          className="w-[174px] h-[48px] justify-between text-[16px] font-[600] bg-[#16171D]"
+          className="w-[174px] h-[48px] py-[12px] px-[12px] justify-between text-[16px] font-[600] bg-[#16171D] cursor-pointer"
         >
           {value
             ? binanceCoins.find((coin) => coin.value === value)?.label
@@ -76,9 +74,14 @@ export function ExampleCombobox({
               fill="white"
             />
           </svg>
-        </Button>
+        </SelectCoin>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0 border-0 bg-transparent">
+      <PopoverContent
+        className="w-[174px] p-0 border-0 bg-transparent"
+        align="start"
+        side="bottom"
+        sideOffset={4}
+      >
         <Command>
           <CommandInput />
           <CommandList>
@@ -94,7 +97,7 @@ export function ExampleCombobox({
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex items-center justify-between",
+                    "flex items-center justify-between rounded-[8px]",
                     value === coin.value && "bg-[#323338]"
                   )}
                 >
