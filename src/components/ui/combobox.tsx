@@ -308,7 +308,7 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
           <Command>
             <CommandInput value={searchValue} onValueChange={setSearchValue} />
             <CommandList ref={listRef} className="max-h-[280px]">
-              <CommandEmpty>No coin found.</CommandEmpty>
+              <CommandEmpty>Coin not found</CommandEmpty>
               <CommandGroup>
                 {coins.map((coin) => (
                   <CommandItem
@@ -318,6 +318,7 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
                       const newValue =
                         currentValue === selectedCoin ? "" : currentValue;
                       setSelectedCoin(newValue);
+                      setSearchValue(""); // Clear search value when selecting
                       setOpen(false);
                     }}
                     className={cn(
