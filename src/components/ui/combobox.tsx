@@ -17,25 +17,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SelectCoin } from "./select-coin";
+import { useCoinContext } from "@/features/trading/contexts/CoinContext";
 
-/**
- * Represents a trading pair with USDT as the quote asset.
- */
 interface USDTPair {
   symbol: string;
   baseAsset: string;
 }
 
-/**
- * Props for the combined combobox with price info component.
- */
 interface CombinedComboboxProps {
   className?: string;
 }
 
-/**
- * Bitcoin icon component.
- */
 const BTCIcon = ({ size = 28 }: { size?: number }) => (
   <Image
     src="/currency-icons/bitcoin-icon.svg"
@@ -116,9 +108,6 @@ const DefaultIcon = ({ size = 28 }: { size?: number }) => (
   />
 );
 
-/**
- * Represents a trading pair on Binance.
- */
 const binanceCoins = [
   {
     value: "BINANCE:BTCUSDT",
@@ -164,32 +153,21 @@ const binanceCoins = [
   },
 ];
 
-/**
- * Combined combobox with price info component.
- */
 export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
-  const [selectedCoin, setSelectedCoin] = React.useState("BINANCE:BTCUSDT");
+  const { selectedCoin, setSelectedCoin } = useCoinContext();
   const [open, setOpen] = React.useState(false);
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [searchValue, setSearchValue] = React.useState<string>("");
   const listRef = React.useRef<HTMLDivElement>(null);
 
-  /**
-   * Fetch USDT pairs from Binance API.
-   */
   const fetchUSDTPairs = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://api.binance.com/api/v3/exchangeInfo"
-      );
+      const response = await fetch("https://api.binance.com/api/v3/exchangeInfo");
       const data = await response.json();
       const usdtPairs: USDTPair[] = (data.symbols as any[])
-        .filter(
-          (symbol) =>
-            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
-        )
+        .filter((symbol) => symbol.quoteAsset === "USDT" && symbol.status === "TRADING")
         .map((symbol) => ({
           symbol: symbol.symbol,
           baseAsset: symbol.baseAsset,
@@ -213,22 +191,13 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
     }
   }, [searchValue]);
 
-  /**
-   * Map USDT pairs to coin objects.
-   */
   const allCoins = pairs.map((pair) => {
-    const matchedCoin = binanceCoins.find(
-      (coin) => coin.value === `BINANCE:${pair.symbol}`
-    );
+    const matchedCoin = binanceCoins.find((coin) => coin.value === `BINANCE:${pair.symbol}`);
     return {
       value: `BINANCE:${pair.symbol}`,
       label: `${pair.baseAsset}/USDT`,
       icon: matchedCoin ? matchedCoin.icon : <DefaultIcon />,
-      popoverIcon: matchedCoin ? (
-        matchedCoin.popoverIcon
-      ) : (
-        <DefaultIcon size={20} />
-      ),
+      popoverIcon: matchedCoin ? matchedCoin.popoverIcon : <DefaultIcon size={20} />,
     };
   });
 
@@ -243,35 +212,20 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
   ];
 
   const coins = searchValue
-    ? allCoins
-        .filter((coin) =>
-          coin.label.toLowerCase().startsWith(searchValue.toLowerCase())
-        )
-        .sort((a, b) => a.label.localeCompare(b.label))
+    ? allCoins.filter((coin) => coin.label.toLowerCase().startsWith(searchValue.toLowerCase()))
     : (() => {
-        const priority = allCoins.filter((coin) =>
-          priorityCoins.includes(coin.value)
-        );
-        const others = allCoins.filter(
-          (coin) => !priorityCoins.includes(coin.value)
-        );
-
+        const priority = allCoins.filter((coin) => priorityCoins.includes(coin.value));
+        const others = allCoins.filter((coin) => !priorityCoins.includes(coin.value));
         const sortedPriority = priorityCoins
           .map((value) => priority.find((coin) => coin.value === value))
-          .filter(
-            (coin): coin is NonNullable<typeof coin> => coin !== undefined
-          );
-
+          .filter((coin): coin is NonNullable<typeof coin> => coin !== undefined);
         return [...sortedPriority, ...others.slice(0, 13)];
       })();
 
-  const selectedCoinData = allCoins.find((coin) => coin.value === selectedCoin);
+  const selectedCoinData = allCoins.find((coin) => coin.value === selectedCoin.value) || selectedCoin;
 
   return (
-    <div
-      className={`bg-[#16171D] h-[60px] flex items-center rounded-[12px] ${className}`}
-    >
-      {/* Combobox Section */}
+    <div className={`bg-[#16171D] h-[60px] flex items-center rounded-[12px] ${className}`}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <SelectCoin
@@ -280,10 +234,8 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
             className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-transparent cursor-pointer border-0"
           >
             <div className="flex items-center gap-2">
-              {selectedCoinData && selectedCoinData.icon}
-              <span>
-                {selectedCoinData ? selectedCoinData.label : "Select Coin"}
-              </span>
+              {selectedCoinData.icon} {/* บรรทัด 237 */}
+              <span>{selectedCoinData.label}</span>
             </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -299,12 +251,7 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
             </svg>
           </SelectCoin>
         </PopoverTrigger>
-        <PopoverContent
-          className="w-[174px] p-0 border-0 bg-transparent"
-          align="start"
-          side="bottom"
-          sideOffset={4}
-        >
+        <PopoverContent className="w-[174px] p-0 border-0 bg-transparent" align="start" side="bottom" sideOffset={4}>
           <Command>
             <CommandInput value={searchValue} onValueChange={setSearchValue} />
             <CommandList ref={listRef} className="max-h-[280px]">
@@ -314,16 +261,19 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
                   <CommandItem
                     key={coin.value}
                     value={coin.value}
-                    onSelect={(currentValue) => {
-                      const newValue =
-                        currentValue === selectedCoin ? "" : currentValue;
-                      setSelectedCoin(newValue);
-                      setSearchValue(""); // Clear search value when selecting
+                    onSelect={() => {
+                      setSelectedCoin({
+                        value: coin.value,
+                        label: coin.label,
+                        icon: coin.icon, // บรรทัด 268
+                        popoverIcon: coin.popoverIcon,
+                      });
+                      setSearchValue("");
                       setOpen(false);
                     }}
                     className={cn(
                       "flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]",
-                      selectedCoin === coin.value && "bg-[#323338]"
+                      selectedCoin.value === coin.value && "bg-[#323338]"
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -353,32 +303,22 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
         />
       </svg>
 
-      {/* Price Info Section */}
       <div className="flex items-center px-4 flex-1">
-        {/* Current Price */}
         <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">
           115,200.00
         </div>
-
-        {/* 24h High */}
         <div className="flex flex-col items-start mr-6">
           <span className="text-[#8B8E93] text-xs">24h High</span>
           <span className="text-white text-sm font-medium">116,000.00</span>
         </div>
-
-        {/* 24h Low */}
         <div className="flex flex-col items-start mr-6">
           <span className="text-[#8B8E93] text-xs">24h Low</span>
           <span className="text-white text-sm font-medium">114,000.00</span>
         </div>
-
-        {/* 24h Volume (BTC) */}
         <div className="flex flex-col items-start mr-6">
           <span className="text-[#8B8E93] text-xs">24h Volume (BTC)</span>
           <span className="text-white text-sm font-medium">114,000.00</span>
         </div>
-
-        {/* 24h Volume (USDT) */}
         <div className="flex flex-col items-start">
           <span className="text-[#8B8E93] text-xs">24h Volume (USDT)</span>
           <span className="text-white text-sm font-medium">114,000.00</span>

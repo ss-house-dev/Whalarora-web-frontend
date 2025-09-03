@@ -24,6 +24,7 @@ interface OrderFormProps {
   buttonColor: string;
   amountIcon: string;
   receiveIcon: string;
+  receiveCurrency?: string; // เพิ่ม prop สำหรับหน่วยของช่อง Receive
   isSubmitting: boolean;
   isAuthenticated?: boolean;
   amountErrorMessage?: string;
@@ -56,6 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   buttonColor,
   amountIcon,
   receiveIcon,
+  receiveCurrency, // เพิ่มใน props
   isSubmitting,
   isAuthenticated = false,
   amountErrorMessage = "Insufficient balance",
@@ -290,7 +292,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute left-0 z-10">
             <Image
               src={receiveIcon}
-              alt={`${type === "buy" ? "BTC" : "USD"} Icon`}
+              alt={`${receiveCurrency || (type === "buy" ? "Coin" : "USD")} Icon`} // อัปเดต alt text
               width={60}
               height={60}
               className="rounded-full object-cover"
@@ -308,7 +310,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {type === "buy" ? "BTC" : "USD"}
+                {type === "buy" ? receiveCurrency || "Coin" : "USD"}
               </span>
             </div>
           </div>
