@@ -347,8 +347,8 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
         <path
           d="M1.69824 1V35"
           stroke="#474747"
-          stroke-width="2"
-          stroke-linecap="round"
+          strokeWidth="2"
+          strokeLinecap="round"
         />
       </svg>
 

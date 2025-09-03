@@ -1,6 +1,6 @@
 import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
 import AdvancedChart from "@/features/trading/components/Chart";
-import { CombinedCombobox } from "@/components/ui/combobox"; // Updated import
+import { CombinedCombobox } from "@/components/ui/combobox"; 
 
 export default function MarketOrderPage() {
   return (
