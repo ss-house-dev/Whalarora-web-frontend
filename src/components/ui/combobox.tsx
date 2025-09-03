@@ -27,17 +27,14 @@ interface USDTPair {
 }
 
 /**
- * Props for the example combobox component.
+ * Props for the combined combobox with price info component.
  */
-interface ExampleComboboxProps {
-  value: string;
-  onValueChange: (value: string) => void;
+interface CombinedComboboxProps {
+  className?: string;
 }
 
 /**
  * Bitcoin icon component.
- * @param param0 - The props for the component.
- * @returns The Bitcoin icon.
  */
 const BTCIcon = ({ size = 28 }: { size?: number }) => (
   <Image
@@ -168,23 +165,11 @@ const binanceCoins = [
 ];
 
 /**
- * Example combobox component.
- * @param param0 - The props for the component.
- * @returns The example combobox.
+ * Combined combobox with price info component.
  */
-export function ExampleCombobox({
-  value,
-  onValueChange,
-}: ExampleComboboxProps) {
-  /**
-   * Combobox open state.
-   * Controls the visibility of the combobox.
-   */
+export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
+  const [selectedCoin, setSelectedCoin] = React.useState("BINANCE:BTCUSDT");
   const [open, setOpen] = React.useState(false);
-  /**
-   * Combobox options.
-   * Represents the available trading pairs for the combobox.
-   */
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [searchValue, setSearchValue] = React.useState<string>("");
@@ -192,8 +177,6 @@ export function ExampleCombobox({
 
   /**
    * Fetch USDT pairs from Binance API.
-   * This function retrieves the trading pairs for USDT from the Binance API
-   * and updates the component state with the fetched pairs.
    */
   const fetchUSDTPairs = async () => {
     setLoading(true);
@@ -220,16 +203,10 @@ export function ExampleCombobox({
     }
   };
 
-  /**
-   * Fetch USDT pairs from Binance API.
-   */
   React.useEffect(() => {
     fetchUSDTPairs();
   }, []);
 
-  /**
-   * Reset scroll position when search value changes
-   */
   React.useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = 0;
@@ -238,8 +215,6 @@ export function ExampleCombobox({
 
   /**
    * Map USDT pairs to coin objects.
-   * This function takes the USDT pairs and maps them to the corresponding coin objects
-   * defined in the binanceCoins array.
    */
   const allCoins = pairs.map((pair) => {
     const matchedCoin = binanceCoins.find(
@@ -267,9 +242,6 @@ export function ExampleCombobox({
     "BINANCE:XRPUSDT",
   ];
 
-  /**
-   * Filter coins based on search value, if no search show first 20
-   */
   const coins = searchValue
     ? allCoins
         .filter((coin) =>
@@ -277,9 +249,6 @@ export function ExampleCombobox({
         )
         .sort((a, b) => a.label.localeCompare(b.label))
     : (() => {
-        /**
-         * Separate priority and other coins
-         */
         const priority = allCoins.filter((coin) =>
           priorityCoins.includes(coin.value)
         );
@@ -287,87 +256,133 @@ export function ExampleCombobox({
           (coin) => !priorityCoins.includes(coin.value)
         );
 
-        /**
-         * Sort priority coins by the defined order
-         */
         const sortedPriority = priorityCoins
           .map((value) => priority.find((coin) => coin.value === value))
           .filter(
             (coin): coin is NonNullable<typeof coin> => coin !== undefined
           );
 
-        /**
-         * Combine priority coins with first 13 other coins (7 + 13 = 20 total)
-         */
         return [...sortedPriority, ...others.slice(0, 13)];
       })();
 
-  /**
-   * Find the selected coin based on the current value.
-   */
-  const selectedCoin = allCoins.find((coin) => coin.value === value);
+  const selectedCoinData = allCoins.find((coin) => coin.value === selectedCoin);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <SelectCoin
-          role="combobox"
-          aria-expanded={open}
-          className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-[#16171D] cursor-pointer"
-        >
-          <div className="flex items-center gap-2">
-            {selectedCoin && selectedCoin.icon}
-            <span>{selectedCoin ? selectedCoin.label : "Select Coin"}</span>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="10"
-            height="8"
-            viewBox="0 0 10 8"
-            fill="none"
+    <div
+      className={`bg-[#16171D] h-[60px] flex items-center rounded-[12px] ${className}`}
+    >
+      {/* Combobox Section */}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <SelectCoin
+            role="combobox"
+            aria-expanded={open}
+            className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-transparent cursor-pointer border-0"
           >
-            <path
-              d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
-              fill="white"
-            />
-          </svg>
-        </SelectCoin>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[174px] p-0 border-0 bg-transparent"
-        align="start"
-        side="bottom"
-        sideOffset={4}
+            <div className="flex items-center gap-2">
+              {selectedCoinData && selectedCoinData.icon}
+              <span>
+                {selectedCoinData ? selectedCoinData.label : "Select Coin"}
+              </span>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="8"
+              viewBox="0 0 10 8"
+              fill="none"
+            >
+              <path
+                d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
+                fill="white"
+              />
+            </svg>
+          </SelectCoin>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[174px] p-0 border-0 bg-transparent"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+        >
+          <Command>
+            <CommandInput value={searchValue} onValueChange={setSearchValue} />
+            <CommandList ref={listRef} className="max-h-[280px]">
+              <CommandEmpty>No coin found.</CommandEmpty>
+              <CommandGroup>
+                {coins.map((coin) => (
+                  <CommandItem
+                    key={coin.value}
+                    value={coin.value}
+                    onSelect={(currentValue) => {
+                      const newValue =
+                        currentValue === selectedCoin ? "" : currentValue;
+                      setSelectedCoin(newValue);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]",
+                      selectedCoin === coin.value && "bg-[#323338]"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      {coin.popoverIcon}
+                      <span>{coin.label}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="3"
+        height="36"
+        viewBox="0 0 3 36"
+        fill="none"
       >
-        <Command>
-          <CommandInput value={searchValue} onValueChange={setSearchValue} />
-          <CommandList ref={listRef} className="max-h-[280px]">
-            <CommandEmpty>No coin found.</CommandEmpty>
-            <CommandGroup>
-              {coins.map((coin) => (
-                <CommandItem
-                  key={coin.value}
-                  value={coin.value}
-                  onSelect={(currentValue) => {
-                    const newValue = currentValue === value ? "" : currentValue;
-                    onValueChange(newValue);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]",
-                    value === coin.value && "bg-[#323338]"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    {coin.popoverIcon}
-                    <span>{coin.label}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+        <path
+          d="M1.69824 1V35"
+          stroke="#474747"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+
+      {/* Price Info Section */}
+      <div className="flex items-center px-4 flex-1">
+        {/* Current Price */}
+        <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">
+          115,200.00
+        </div>
+
+        {/* 24h High */}
+        <div className="flex flex-col items-start mr-6">
+          <span className="text-[#8B8E93] text-xs">24h High</span>
+          <span className="text-white text-sm font-medium">116,000.00</span>
+        </div>
+
+        {/* 24h Low */}
+        <div className="flex flex-col items-start mr-6">
+          <span className="text-[#8B8E93] text-xs">24h Low</span>
+          <span className="text-white text-sm font-medium">114,000.00</span>
+        </div>
+
+        {/* 24h Volume (BTC) */}
+        <div className="flex flex-col items-start mr-6">
+          <span className="text-[#8B8E93] text-xs">24h Volume (BTC)</span>
+          <span className="text-white text-sm font-medium">114,000.00</span>
+        </div>
+
+        {/* 24h Volume (USDT) */}
+        <div className="flex flex-col items-start">
+          <span className="text-[#8B8E93] text-xs">24h Volume (USDT)</span>
+          <span className="text-white text-sm font-medium">114,000.00</span>
+        </div>
+      </div>
+    </div>
   );
 }
