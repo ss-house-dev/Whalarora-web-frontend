@@ -2,19 +2,18 @@
 import dynamic from "next/dynamic";
 
 const AdvancedRealTimeChart = dynamic(
-  () => import("react-ts-tradingview-widgets").then((mod) => mod.AdvancedRealTimeChart),
+  () =>
+    import("react-ts-tradingview-widgets").then(
+      (mod) => mod.AdvancedRealTimeChart
+    ),
   { ssr: false }
 );
 
-interface AdvancedChartProps {
-  symbol: string;
-}
-
-const AdvancedChart = ({ symbol }: AdvancedChartProps) => {
+const AdvancedChart = () => {
   return (
     <div className="w-full h-[600px] pr-[1px] rounded-2xl">
       <AdvancedRealTimeChart
-        symbol={symbol}
+        symbol="BINANCE:BTCUSDT"
         allow_symbol_change={false}
         save_image={true}
         withdateranges={true}
