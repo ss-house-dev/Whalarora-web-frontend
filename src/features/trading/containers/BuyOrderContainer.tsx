@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import AlertBox from "@/components/ui/alert-box";
+import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
@@ -47,7 +48,8 @@ interface ExtendedSession {
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice } = useCoinContext();
+  const { selectedCoin } = useCoinContext();
+  const { marketPrice, isPriceLoading } = useMarketPrice(selectedCoin.label);
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,7 +77,9 @@ export default function BuyOrderContainer() {
 
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
-      console.log("Buy order response:", data);
+      console.log("BuyOrderContainer: Buy order response:", data);
+      const coinSymbol = selectedCoin.label.split("/")[0];
+
       if (data.requiresConfirmation) {
         let confirmationMessage = "";
         let dialogTitle = "";
@@ -83,15 +87,15 @@ export default function BuyOrderContainer() {
           data.message === "คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ"
         ) {
           dialogTitle = "Confirm Transaction";
-          confirmationMessage = 'The item is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.';
+          confirmationMessage = `The ${coinSymbol} is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.`;
         } else if (
           data.message === "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient"
         ) {
-          dialogTitle = `Not enough ${selectedCoin.label.split("/")[0]}`;
-          confirmationMessage = `The asset you want to buy is not available in market right now.\nDo you want to place an Order ?`;
+          dialogTitle = `Not enough ${coinSymbol}`;
+          confirmationMessage = `The ${coinSymbol} you want to buy is not available in market right now.\nDo you want to place an Order?`;
         } else {
           dialogTitle = "Confirm Transaction";
-          confirmationMessage = data.message || "Do you want to proceed with this transaction?";
+          confirmationMessage = data.message || `Do you want to proceed with this ${coinSymbol} transaction?`;
         }
 
         const sessionUser = session?.user as SessionUser | undefined;
@@ -104,7 +108,7 @@ export default function BuyOrderContainer() {
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId,
-            symbol: selectedCoin.label.split("/")[0],
+            symbol: coinSymbol,
             price: parseFloat(price.replace(/,/g, "")),
             amount: parseFloat(receiveCoin.replace(/,/g, "")),
             lotPrice: parseFloat(amount.replace(/,/g, "")),
@@ -118,7 +122,6 @@ export default function BuyOrderContainer() {
       });
 
       const usdAmount = parseFloat(amount.replace(/,/g, ""));
-      const coinSymbol = selectedCoin.label.split("/")[0];
 
       if (data.filled && data.filled > 0) {
         const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
@@ -131,7 +134,7 @@ export default function BuyOrderContainer() {
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! Amount remaining : ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus: Pending`,
+          `Order created successfully! Amount remaining: ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus: Pending`,
           "info"
         );
       } else {
@@ -154,7 +157,7 @@ export default function BuyOrderContainer() {
       handleSubmitSuccess();
     },
     onError: (error) => {
-      console.error("Buy order error:", error);
+      console.error("BuyOrderContainer: Buy order error:", error);
       showAlert(`Error: ${error.message}`, "error");
     },
   });
@@ -182,7 +185,7 @@ export default function BuyOrderContainer() {
   const [priceLabel, setPriceLabel] = useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>("");
-  const [price, setPrice] = useState<string>(marketPrice);
+  const [price, setPrice] = useState<string>("0.00");
   const [amount, setAmount] = useState<string>("");
   const [isAmountFocused, setIsAmountFocused] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(true);
@@ -216,10 +219,10 @@ export default function BuyOrderContainer() {
   }, []);
 
   const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return "";
+    if (!value) return "0.00";
     const numericValue = value.replace(/,/g, "");
     const num = parseFloat(numericValue);
-    if (isNaN(num)) return "";
+    if (isNaN(num)) return "0.00";
     return formatNumberWithComma(num.toFixed(2));
   }, [formatNumberWithComma]);
 
@@ -229,7 +232,7 @@ export default function BuyOrderContainer() {
   }, []);
 
   const calculateReceiveCoin = useCallback((amountValue: string, priceValue: string): string => {
-    if (!amountValue || !priceValue) return "";
+    if (!amountValue || !priceValue || priceValue === "0.00") return "";
     const numAmount = parseFloat(amountValue.replace(/,/g, ""));
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
     if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
@@ -303,7 +306,7 @@ export default function BuyOrderContainer() {
       const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === "Price" && marketPrice) {
+    } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
       const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
@@ -380,19 +383,20 @@ export default function BuyOrderContainer() {
     const coinAmount = parseFloat(receiveCoin.replace(/,/g, "") || "0");
     const sessionUser = session.user as SessionUser | undefined;
     const userId = cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
+    const coinSymbol = selectedCoin.label.split("/")[0];
 
     const orderPayload = {
       userId: userId,
-      symbol: selectedCoin.label.split("/")[0],
+      symbol: coinSymbol,
       price: numericPrice,
       amount: coinAmount,
       lotPrice: numericAmount,
     };
 
-    console.log("Order payload:", orderPayload);
-    console.log("USD to spend:", numericAmount);
-    console.log("Price per coin:", numericPrice);
-    console.log("Coin amount to buy:", coinAmount);
+    console.log("BuyOrderContainer: Order payload:", orderPayload);
+    console.log("BuyOrderContainer: USD to spend:", numericAmount);
+    console.log("BuyOrderContainer: Price per coin:", numericPrice);
+    console.log("BuyOrderContainer: Coin amount to buy:", coinAmount);
 
     createBuyOrderMutation.mutate(orderPayload);
   };
@@ -406,25 +410,37 @@ export default function BuyOrderContainer() {
   };
 
   useEffect(() => {
-    if (priceLabel === "Price") {
-      const formattedPrice = formatNumberWithComma(marketPrice);
+    console.log(`BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
+    if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
+      const formattedPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedPrice);
+      setLimitPrice(formattedPrice);
+      console.log(`BuyOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
+    } else if (isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, formatNumberWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   useEffect(() => {
-    const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
+    const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
     const coinAmount = calculateReceiveCoin(amount, currentPrice);
     setReceiveCoin(coinAmount);
-  }, [amount, price, limitPrice, marketPrice, priceLabel, calculateReceiveCoin]);
+  }, [amount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveCoin]);
 
   useEffect(() => {
-    if (priceLabel === "Price" && !isInputFocused && marketPrice) {
+    if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
       const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
+      console.log(`BuyOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
+    } else if (priceLabel === "Price" && isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
@@ -439,7 +455,6 @@ export default function BuyOrderContainer() {
     }
   }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
 
-  // Map ชื่อเหรียญไปยังชื่อไฟล์ไอคอนให้ตรงกับ CombinedCombobox.tsx
   const coinSymbolMap: { [key: string]: string } = {
     BTC: "bitcoin-icon.svg",
     ETH: "ethereum-icon.svg",
@@ -451,7 +466,7 @@ export default function BuyOrderContainer() {
   };
   const coinSymbol = selectedCoin.label.split("/")[0];
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || "default-coin.svg"}`;
-  const receiveCurrency = coinSymbol; // เพิ่ม receiveCurrency เพื่อกำหนดหน่วยของช่อง Receive
+  const receiveCurrency = coinSymbol;
 
   return (
     <div>
@@ -515,7 +530,7 @@ export default function BuyOrderContainer() {
         buttonColor="bg-[#309C7D] hover:bg-[#28886C]"
         amountIcon="/currency-icons/dollar-icon.svg"
         receiveIcon={receiveIcon}
-        receiveCurrency={receiveCurrency} // เพิ่ม prop เพื่อระบุหน่วยของ Receive
+        receiveCurrency={receiveCurrency}
         isSubmitting={createBuyOrderMutation.isPending}
         amountErrorMessage={amountErrorMessage}
         isAuthenticated={!!session}

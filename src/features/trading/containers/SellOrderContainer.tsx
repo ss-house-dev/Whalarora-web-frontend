@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { TradeQueryKeys } from "@/features/trading/constants";
 import { useGetCoin } from "@/features/trading/hooks/useGetCoin";
 import { useCoinContext } from "@/features/trading/contexts/CoinContext";
+import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
 
 interface UserWithId {
   id: string;
@@ -20,7 +21,8 @@ interface UserWithId {
 export default function SellOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice } = useCoinContext();
+  const { selectedCoin } = useCoinContext();
+  const { marketPrice, isPriceLoading } = useMarketPrice(selectedCoin.label);
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -40,7 +42,7 @@ export default function SellOrderContainer() {
 
   const createSellOrderMutation = useCreateSellOrder({
     onSuccess: (data) => {
-      console.log("Sell order created successfully:", data);
+      console.log("SellOrderContainer: Sell order created successfully:", data);
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
@@ -51,7 +53,7 @@ export default function SellOrderContainer() {
       const coinSymbol = selectedCoin.label.split("/")[0];
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds : $${data.proceeds.toFixed(2)}`
+          `Sell order completed successfully!\nProceeds: $${data.proceeds.toFixed(2)}`
         );
         setAlertType("success");
       } else {
@@ -62,7 +64,7 @@ export default function SellOrderContainer() {
       handleSubmitSuccess();
     },
     onError: (error) => {
-      console.error("Sell order error:", error);
+      console.error("SellOrderContainer: Sell order error:", error);
       setAlertMessage(`Error creating sell order: ${error.message}`);
       setAlertType("error");
       setShowAlert(true);
@@ -72,7 +74,7 @@ export default function SellOrderContainer() {
   const [priceLabel, setPriceLabel] = useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>("");
-  const [price, setPrice] = useState<string>(marketPrice);
+  const [price, setPrice] = useState<string>("0.00");
   const [sellAmount, setSellAmount] = useState<string>("");
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
   const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState("");
@@ -119,10 +121,10 @@ export default function SellOrderContainer() {
   }, []);
 
   const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return "";
+    if (!value) return "0.00";
     const numericValue = value.replace(/,/g, "");
     const num = parseFloat(numericValue);
-    if (isNaN(num)) return "";
+    if (isNaN(num)) return "0.00";
     return formatNumberWithComma(num.toFixed(2));
   }, [formatNumberWithComma]);
 
@@ -144,7 +146,7 @@ export default function SellOrderContainer() {
   }, []);
 
   const calculateReceiveUSD = useCallback((coinAmount: string, priceValue: string): string => {
-    if (!coinAmount || !priceValue) return "";
+    if (!coinAmount || !priceValue || priceValue === "0.00") return "";
     const numCoin = parseFloat(coinAmount);
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
     if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return "";
@@ -218,7 +220,7 @@ export default function SellOrderContainer() {
       const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === "Price" && marketPrice) {
+    } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
       const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
@@ -291,20 +293,21 @@ export default function SellOrderContainer() {
     const userId =
       cashBalance?.userId || (session.user as UserWithId)?.id || session.user?.email || "";
     const lotPrice = numericPrice * coinAmountToSell;
+    const coinSymbol = selectedCoin.label.split("/")[0];
 
     const sellOrderPayload = {
       userId: userId,
-      symbol: selectedCoin.label.split("/")[0],
+      symbol: coinSymbol,
       price: numericPrice,
       amount: coinAmountToSell,
       lotPrice: lotPrice,
     };
 
-    console.log("Sell order payload:", sellOrderPayload);
-    console.log("Coin amount to sell:", coinAmountToSell);
-    console.log("Price per coin:", numericPrice);
-    console.log("Lot Price (total value):", lotPrice);
-    console.log("USD to receive:", receiveUSD);
+    console.log("SellOrderContainer: Sell order payload:", sellOrderPayload);
+    console.log("SellOrderContainer: Coin amount to sell:", coinAmountToSell);
+    console.log("SellOrderContainer: Price per coin:", numericPrice);
+    console.log("SellOrderContainer: Lot Price (total value):", lotPrice);
+    console.log("SellOrderContainer: USD to receive:", receiveUSD);
 
     createSellOrderMutation.mutate(sellOrderPayload);
   };
@@ -322,27 +325,38 @@ export default function SellOrderContainer() {
   };
 
   useEffect(() => {
-    if (priceLabel === "Price") {
-      const formattedPrice = formatNumberWithComma(marketPrice);
+    console.log(`SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
+    if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
+      const formattedPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedPrice);
+      setLimitPrice(formattedPrice);
+      console.log(`SellOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
+    } else if (isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, formatNumberWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   useEffect(() => {
-    const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
+    const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
     const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
     setReceiveUSD(usdAmount);
-  }, [sellAmount, price, limitPrice, marketPrice, priceLabel, calculateReceiveUSD]);
+  }, [sellAmount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveUSD]);
 
   useEffect(() => {
-    if (priceLabel === "Price" && !isInputFocused && marketPrice) {
+    if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
       const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
+      console.log(`SellOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
+    } else if (priceLabel === "Price" && isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
-  // Map ชื่อเหรียญไปยังชื่อไฟล์ไอคอนให้ตรงกับ BuyOrderContainer.tsx
   const coinSymbolMap: { [key: string]: string } = {
     BTC: "bitcoin-icon.svg",
     ETH: "ethereum-icon.svg",
@@ -375,7 +389,7 @@ export default function SellOrderContainer() {
         buttonColor="bg-[#D84C4C] hover:bg-[#C73E3E]"
         amountIcon={amountIcon}
         receiveIcon="/currency-icons/dollar-icon.svg"
-        receiveCurrency="USD" // เพิ่มเพื่อระบุหน่วยของ Receive เป็น USD
+        receiveCurrency="USD"
         isSubmitting={createSellOrderMutation.isPending}
         amountErrorMessage={sellAmountErrorMessage}
         isAuthenticated={!!session}
