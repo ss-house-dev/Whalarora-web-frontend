@@ -257,14 +257,50 @@ export function ExampleCombobox({
     };
   });
 
-  // Filter coins based on search value, if no search show first 20
-  const coins = searchValue 
+  const priorityCoins = [
+    "BINANCE:ADAUSDT",
+    "BINANCE:BNBUSDT",
+    "BINANCE:BTCUSDT",
+    "BINANCE:DOGEUSDT",
+    "BINANCE:ETHUSDT",
+    "BINANCE:SOLUSDT",
+    "BINANCE:XRPUSDT",
+  ];
+
+  /**
+   * Filter coins based on search value, if no search show first 20
+   */
+  const coins = searchValue
     ? allCoins
-        .filter(coin => 
+        .filter((coin) =>
           coin.label.toLowerCase().startsWith(searchValue.toLowerCase())
         )
         .sort((a, b) => a.label.localeCompare(b.label))
-    : allCoins.slice(0, 20);
+    : (() => {
+        /**
+         * Separate priority and other coins
+         */
+        const priority = allCoins.filter((coin) =>
+          priorityCoins.includes(coin.value)
+        );
+        const others = allCoins.filter(
+          (coin) => !priorityCoins.includes(coin.value)
+        );
+
+        /**
+         * Sort priority coins by the defined order
+         */
+        const sortedPriority = priorityCoins
+          .map((value) => priority.find((coin) => coin.value === value))
+          .filter(
+            (coin): coin is NonNullable<typeof coin> => coin !== undefined
+          );
+
+        /**
+         * Combine priority coins with first 13 other coins (7 + 13 = 20 total)
+         */
+        return [...sortedPriority, ...others.slice(0, 13)];
+      })();
 
   /**
    * Find the selected coin based on the current value.
@@ -277,7 +313,7 @@ export function ExampleCombobox({
         <SelectCoin
           role="combobox"
           aria-expanded={open}
-          className="w-[174px] h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-[#16171D] cursor-pointer"
+          className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-[#16171D] cursor-pointer"
         >
           <div className="flex items-center gap-2">
             {selectedCoin && selectedCoin.icon}
@@ -304,10 +340,7 @@ export function ExampleCombobox({
         sideOffset={4}
       >
         <Command>
-          <CommandInput
-            value={searchValue}
-            onValueChange={setSearchValue}
-          />
+          <CommandInput value={searchValue} onValueChange={setSearchValue} />
           <CommandList ref={listRef} className="max-h-[280px]">
             <CommandEmpty>No coin found.</CommandEmpty>
             <CommandGroup>
