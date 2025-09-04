@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export function useMarketPrice(symbol: string) {
   const [marketPrice, setMarketPrice] = useState<string>("");
@@ -7,7 +7,7 @@ export function useMarketPrice(symbol: string) {
   const priceCache = useRef<{ [key: string]: string }>({});
 
   // ฟังก์ชันสำหรับตัดทิ้งตัวเลขทศนิยมเกิน 2 ตำแหน่งและเพิ่ม comma
-  const truncateToTwoDecimalsWithComma = (value: number): string => {
+  const truncateToTwoDecimalsWithComma = useCallback((value: number): string => {
     if (isNaN(value)) return "0.00";
     const factor = Math.pow(10, 2);
     const truncated = Math.floor(value * factor) / factor;
@@ -15,7 +15,7 @@ export function useMarketPrice(symbol: string) {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(truncated);
-  };
+  }, []);
 
   useEffect(() => {
     console.log(`useMarketPrice: Symbol changed to ${symbol}`);
@@ -63,8 +63,11 @@ export function useMarketPrice(symbol: string) {
       }
     };
 
+    // Use refs to access current state values without adding them as dependencies
     const fallbackTimeout = setTimeout(async () => {
-      if (!marketPrice && isPriceLoading && currentSymbolRef.current === symbol) {
+      // Access current values through refs or by checking cache
+      const currentMarketPrice = priceCache.current[symbol];
+      if (!currentMarketPrice && currentSymbolRef.current === symbol) {
         console.log(`useMarketPrice: WebSocket timeout, using HTTP fallback for ${coinSymbol}`);
         try {
           const response = await fetch(
@@ -88,8 +91,9 @@ export function useMarketPrice(symbol: string) {
     return () => {
       console.log(`useMarketPrice: Cleaning up WebSocket for ${wsStream}`);
       clearTimeout(fallbackTimeout);
+      ws.close();
     };
-  }, [symbol]);
+  }, [symbol, truncateToTwoDecimalsWithComma]);
 
   return { marketPrice, isPriceLoading };
 }

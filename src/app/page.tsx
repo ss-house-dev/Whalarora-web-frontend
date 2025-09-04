@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Header from "@/components/ui/header";
 
 export default function Home() {

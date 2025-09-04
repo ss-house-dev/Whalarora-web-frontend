@@ -41,10 +41,6 @@ interface SessionUser {
   name?: string;
 }
 
-interface ExtendedSession {
-  user?: SessionUser;
-}
-
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);

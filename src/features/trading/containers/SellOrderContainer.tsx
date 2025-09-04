@@ -50,7 +50,6 @@ export default function SellOrderContainer() {
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, selectedCoin.label.split("/")[0]],
       });
 
-      const coinSymbol = selectedCoin.label.split("/")[0];
       if (data.filled > 0) {
         setAlertMessage(
           `Sell order completed successfully!\nProceeds: $${new Intl.NumberFormat("en-US", {
@@ -147,7 +146,6 @@ export default function SellOrderContainer() {
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
     const parts = numericValue.split(".");
-    const integerPart = parts[0];
     const decimalPart = parts[1];
 
     // ถ้ามีทศนิยม จำกัดไม่เกิน 9 ตำแหน่ง
