@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { SymbolInfo } from "@/types/symbol-types";
 
 interface USDTPair {
@@ -22,7 +23,7 @@ const BinanceUSDTPairs: React.FC = () => {
   const [coinIcons, setCoinIcons] = useState<Map<string, string>>(new Map());
 
   // ฟังก์ชันดึงไอคอนจาก CoinGecko
-  const fetchCoinIcons = async (symbols: string[]) => {
+  const fetchCoinIcons = useCallback(async (symbols: string[]) => {
     try {
       // CoinGecko API มีข้อจำกัดในการเรียกครั้งเดียว เลยต้องแบ่งเป็น batch
       const batchSize = 50;
@@ -57,9 +58,9 @@ const BinanceUSDTPairs: React.FC = () => {
     } catch (error) {
       console.error("Error fetching coin icons:", error);
     }
-  };
+  }, []);
 
-  const fetchUSDTPairs = async () => {
+  const fetchUSDTPairs = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -91,11 +92,11 @@ const BinanceUSDTPairs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchCoinIcons]);
 
   useEffect(() => {
     fetchUSDTPairs();
-  }, []);
+  }, [fetchUSDTPairs]);
 
   const filteredPairs = pairs.filter(
     (pair) =>
@@ -147,15 +148,23 @@ const BinanceUSDTPairs: React.FC = () => {
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">
                   {coinIcons.get(pair.baseAsset) ? (
-                    <img
-                      src={coinIcons.get(pair.baseAsset)}
+                    <Image
+                      src={coinIcons.get(pair.baseAsset) || ""}
                       alt={`${pair.baseAsset} icon`}
-                      className="w-6 h-6 rounded-full"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                      unoptimized
                       onError={(e) => {
                         // แสดงตัวอักษรแรกถ้าโหลดรูปไม่ได้
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
-                        target.nextElementSibling?.classList.remove("hidden");
+                        const fallback =
+                          target.nextElementSibling as HTMLDivElement;
+                        if (fallback) {
+                          fallback.classList.remove("hidden");
+                          fallback.style.display = "flex";
+                        }
                       }}
                     />
                   ) : (
