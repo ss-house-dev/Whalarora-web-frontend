@@ -1,6 +1,7 @@
 import { Alexandria } from "next/font/google";
 import type { Metadata } from "next";
 import NavbarContainer from "@/features/wallet/containers/NavbarContainer";
+import { CoinProvider } from "@/features/trading/contexts/CoinContext";
 
 const alexandria = Alexandria({
   subsets: ["latin"],
@@ -18,8 +19,11 @@ export default function TradingLayout({
 }) {
   return (
     <div className={`min-h-screen ${alexandria.className}`}>
-      <NavbarContainer />
-      <div>{children}</div>
+      <CoinProvider>
+          <NavbarContainer />
+        <div>{children}</div>
+      </CoinProvider>
+      
     </div>
   );
 }
