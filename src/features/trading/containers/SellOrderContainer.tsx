@@ -112,35 +112,49 @@ export default function SellOrderContainer() {
     return formatToMaxDigits(balance, 10);
   }, [getAvailableCoinBalance, formatToMaxDigits]);
 
+  // แก้ไขฟังก์ชัน formatNumberWithComma ให้เหมือนโค้ดแรก
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return value;
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: numericValue.includes(".") ? 9 : 0,
-    }).format(num);
+
+    const parts = numericValue.split(".");
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    return decimalPart !== undefined
+      ? `${formattedInteger}.${decimalPart}`
+      : formattedInteger;
   }, []);
 
-  const truncateToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return "0.00";
-    const numericValue = value.replace(/,/g, "");
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return "0.00";
-    const factor = Math.pow(10, 2);
-    const truncated = Math.floor(num * factor) / factor;
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(truncated);
-  }, []);
+  const formatToTwoDecimalsWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return "";
+      const numericValue = value.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      if (isNaN(num)) return "";
+      return formatNumberWithComma(num.toFixed(2));
+    },
+    [formatNumberWithComma]
+  );
 
+  // แก้ไขให้ support ทศนิยม 9 ตำแหน่งสำหรับ coin
   const formatCoinNumber = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
-    if (!/^\d*\.?\d{0,9}$/.test(numericValue)) return value;
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    const parts = numericValue.split(".");
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // ถ้ามีทศนิยม จำกัดไม่เกิน 9 ตำแหน่ง
+    if (decimalPart !== undefined && decimalPart.length > 9) {
+      return value; // ไม่อนุญาตให้เกิน 9 ตำแหน่ง
+    }
+
     return numericValue;
   }, []);
 
@@ -160,8 +174,8 @@ export default function SellOrderContainer() {
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
     if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return "";
     const usdAmount = numCoin * numPrice;
-    return truncateToTwoDecimalsWithComma(usdAmount.toString());
-  }, [truncateToTwoDecimalsWithComma]);
+    return formatToTwoDecimalsWithComma(usdAmount.toString());
+  }, [formatToTwoDecimalsWithComma]);
 
   const calculateSellSliderPercentage = useCallback((coinAmount: string): number => {
     if (!coinAmount) return 0;
@@ -209,14 +223,15 @@ export default function SellOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel("Price");
-    const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
     setPrice(formattedMarketPrice);
     setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.replace(/,/g, "");
+    const inputValue = e.target.value;
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setLimitPrice(formattedValue);
@@ -226,11 +241,11 @@ export default function SellOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = truncateToTwoDecimalsWithComma(price);
+      const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
     } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
@@ -238,12 +253,15 @@ export default function SellOrderContainer() {
   };
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.replace(/,/g, "");
+    const inputValue = e.target.value;
+
     if (inputValue === "" || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
       setSellAmount(formattedValue);
-      const num = parseFloat(inputValue);
+      const numericValue = inputValue.replace(/,/g, "");
+      const num = parseFloat(numericValue);
       const availableCoin = getAvailableCoinBalance();
+
       if (inputValue === "" || num === 0 || isNaN(num)) {
         setIsSellAmountValid(true);
         setSellAmountErrorMessage("");
@@ -255,7 +273,7 @@ export default function SellOrderContainer() {
       } else {
         setIsSellAmountValid(true);
         setSellAmountErrorMessage("");
-        const sliderPercentage = calculateSellSliderPercentage(inputValue);
+        const sliderPercentage = calculateSellSliderPercentage(numericValue);
         setSellSliderValue(sliderPercentage);
       }
     }
@@ -336,7 +354,7 @@ export default function SellOrderContainer() {
   useEffect(() => {
     console.log(`SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
     if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
-      const formattedPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedPrice = formatNumberWithComma(marketPrice);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
       console.log(`SellOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
@@ -345,7 +363,7 @@ export default function SellOrderContainer() {
       setLimitPrice("0.00");
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, truncateToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
 
   useEffect(() => {
     const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
@@ -355,7 +373,7 @@ export default function SellOrderContainer() {
 
   useEffect(() => {
     if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
       console.log(`SellOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
@@ -364,7 +382,7 @@ export default function SellOrderContainer() {
       setLimitPrice("0.00");
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, truncateToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: "bitcoin-icon.svg",

@@ -207,30 +207,33 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
+  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return value;
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: numericValue.includes(".") ? 2 : 0,
-    }).format(num);
+
+    const parts = numericValue.split(".");
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    return decimalPart !== undefined
+      ? `${formattedInteger}.${decimalPart}`
+      : formattedInteger;
   }, []);
 
-  const truncateToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return "0.00";
-    const numericValue = value.replace(/,/g, "");
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return "0.00";
-    const factor = Math.pow(10, 2);
-    const truncated = Math.floor(num * factor) / factor;
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(truncated);
-  }, []);
+  const formatToTwoDecimalsWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return "";
+      const numericValue = value.replace(/,/g, "");
+      const num = parseFloat(numericValue);
+      if (isNaN(num)) return "";
+      return formatNumberWithComma(num.toFixed(2));
+    },
+    [formatNumberWithComma]
+  );
 
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, "");
@@ -243,7 +246,7 @@ export default function BuyOrderContainer() {
     const numPrice = parseFloat(priceValue.replace(/,/g, ""));
     if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
     const coinAmount = numAmount / numPrice;
-    return (Math.floor(coinAmount * 1000000000) / 1000000000).toFixed(9);
+    return coinAmount.toFixed(9);
   }, []);
 
   const calculateSliderPercentage = useCallback((amountValue: string): number => {
@@ -258,8 +261,8 @@ export default function BuyOrderContainer() {
   const calculateAmountFromPercentage = useCallback((percentage: number): string => {
     const availableBalance = getAvailableBalance();
     const amount = (percentage / 100) * availableBalance;
-    return truncateToTwoDecimalsWithComma(amount.toString());
-  }, [getAvailableBalance, truncateToTwoDecimalsWithComma]);
+    return formatNumberWithComma(amount.toFixed(2));
+  }, [getAvailableBalance, formatNumberWithComma]);
 
   const validateAmount = useCallback(() => {
     const numericValue = amount.replace(/,/g, "");
@@ -292,14 +295,15 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel("Price");
-    const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
     setPrice(formattedMarketPrice);
     setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.replace(/,/g, "");
+    const inputValue = e.target.value;
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setLimitPrice(formattedValue);
@@ -309,11 +313,11 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = truncateToTwoDecimalsWithComma(price);
+      const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
     } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
@@ -321,25 +325,32 @@ export default function BuyOrderContainer() {
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.replace(/,/g, "");
+    const inputValue = e.target.value;
+
     if (inputValue === "" || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setAmount(formattedValue);
+
       const numericValue = inputValue.replace(/,/g, "");
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
+
+      // Check validation immediately
       if (inputValue === "" || num === 0 || isNaN(num)) {
+        // Empty or zero - reset to valid state but don't show error yet
         setIsAmountValid(true);
         setAmountErrorMessage("");
         setSliderValue(0);
       } else if (num > availableBalance) {
+        // Amount exceeds balance - show error immediately
         setIsAmountValid(false);
         setAmountErrorMessage("Insufficient balance");
         setSliderValue(0);
       } else {
+        // Valid amount
         setIsAmountValid(true);
         setAmountErrorMessage("");
-        const sliderPercentage = calculateSliderPercentage(numericValue);
+        const sliderPercentage = calculateSliderPercentage(inputValue);
         setSliderValue(sliderPercentage);
       }
     }
@@ -367,7 +378,7 @@ export default function BuyOrderContainer() {
       const numericValue = amount.replace(/,/g, "");
       const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        const formattedAmount = truncateToTwoDecimalsWithComma(numericValue);
+        const formattedAmount = formatNumberWithComma(num.toFixed(2));
         setAmount(formattedAmount);
       }
       validateAmount();
@@ -418,7 +429,7 @@ export default function BuyOrderContainer() {
   useEffect(() => {
     console.log(`BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
     if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
-      const formattedPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedPrice = formatNumberWithComma(marketPrice);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
       console.log(`BuyOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
@@ -427,7 +438,7 @@ export default function BuyOrderContainer() {
       setLimitPrice("0.00");
       console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, truncateToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
 
   useEffect(() => {
     const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
@@ -437,7 +448,7 @@ export default function BuyOrderContainer() {
 
   useEffect(() => {
     if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = truncateToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
       console.log(`BuyOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
@@ -446,7 +457,7 @@ export default function BuyOrderContainer() {
       setLimitPrice("0.00");
       console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, truncateToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
