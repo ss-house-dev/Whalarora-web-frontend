@@ -6,23 +6,30 @@ export function useMarketPrice(symbol: string) {
   const currentSymbolRef = useRef<string>("");
   const priceCache = useRef<{ [key: string]: string }>({});
 
+  // ฟังก์ชันสำหรับตัดทิ้งตัวเลขทศนิยมเกิน 2 ตำแหน่งและเพิ่ม comma
+  const truncateToTwoDecimalsWithComma = (value: number): string => {
+    if (isNaN(value)) return "0.00";
+    const factor = Math.pow(10, 2);
+    const truncated = Math.floor(value * factor) / factor;
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(truncated);
+  };
+
   useEffect(() => {
     console.log(`useMarketPrice: Symbol changed to ${symbol}`);
-    // อัปเดต currentSymbolRef เพื่อใช้กรองข้อมูล WebSocket
     currentSymbolRef.current = symbol;
 
-    // รีเซ็ต marketPrice และตั้ง isPriceLoading
     setMarketPrice("");
     setIsPriceLoading(true);
 
-    // ใช้ราคาจาก cache ถ้ามี
     if (priceCache.current[symbol]) {
       console.log(`useMarketPrice: Using cached price for ${symbol}: ${priceCache.current[symbol]}`);
       setMarketPrice(priceCache.current[symbol]);
       setIsPriceLoading(false);
     }
 
-    // แปลง symbol (เช่น BTC/USDT) เป็นรูปแบบ WebSocket (เช่น btcusdt)
     const coinSymbol = symbol.split("/")[0]?.toLowerCase();
     if (!coinSymbol) {
       console.warn("useMarketPrice: Invalid symbol, stopping WebSocket");
@@ -41,9 +48,8 @@ export function useMarketPrice(symbol: string) {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // ตรวจสอบว่า symbol ยังตรงกับ currentSymbolRef
         if (currentSymbolRef.current === symbol) {
-          const price = parseFloat(data.p).toFixed(2);
+          const price = truncateToTwoDecimalsWithComma(parseFloat(data.p));
           priceCache.current[symbol] = price;
           setMarketPrice(price);
           setIsPriceLoading(false);
@@ -56,8 +62,7 @@ export function useMarketPrice(symbol: string) {
         setIsPriceLoading(false);
       }
     };
-    
-    // Fallback ไปยัง HTTP API หาก WebSocket ไม่ส่งข้อมูลภายใน 1 วินาที
+
     const fallbackTimeout = setTimeout(async () => {
       if (!marketPrice && isPriceLoading && currentSymbolRef.current === symbol) {
         console.log(`useMarketPrice: WebSocket timeout, using HTTP fallback for ${coinSymbol}`);
@@ -66,8 +71,8 @@ export function useMarketPrice(symbol: string) {
             `https://api.binance.com/api/v3/ticker/price?symbol=${coinSymbol.toUpperCase()}USDT`
           );
           const data = await response.json();
-          const price = parseFloat(data.price).toFixed(2);
           if (currentSymbolRef.current === symbol) {
+            const price = truncateToTwoDecimalsWithComma(parseFloat(data.price));
             priceCache.current[symbol] = price;
             setMarketPrice(price);
             setIsPriceLoading(false);
@@ -80,10 +85,8 @@ export function useMarketPrice(symbol: string) {
       }
     }, 1000);
 
-    // Cleanup WebSocket และ timeout
     return () => {
       console.log(`useMarketPrice: Cleaning up WebSocket for ${wsStream}`);
-      ws.close();
       clearTimeout(fallbackTimeout);
     };
   }, [symbol]);
