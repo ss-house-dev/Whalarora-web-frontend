@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import OrderForm from "@/features/trading/components/OrderForm";
 import AlertBox from "@/components/ui/alert-box";
@@ -19,6 +20,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog-coin";
+import { useCoinContext } from "@/features/trading/contexts/CoinContext";
 
 interface AlertState {
   message: string;
@@ -33,32 +35,26 @@ interface OrderPayload {
   lotPrice: number;
 }
 
-// Define a type for the user object in session
 interface SessionUser {
   id?: string;
   email?: string;
   name?: string;
-  // Add other properties as needed based on your session user structure
 }
 
-// Extend the session type to include our custom user type
 interface ExtendedSession {
   user?: SessionUser;
-  // Add other session properties as needed
 }
 
 export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const marketPrice = useMarketPrice();
+  const { selectedCoin } = useCoinContext();
+  const { marketPrice, isPriceLoading } = useMarketPrice(selectedCoin.label);
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // State for alert box
   const [alertState, setAlertState] = useState<AlertState | null>(null);
-
-  // State for confirmation dialog
   const [pendingOrder, setPendingOrder] = useState<{
     orderRef: string;
     message: string;
@@ -67,62 +63,43 @@ export default function BuyOrderContainer() {
     originalPayload: OrderPayload;
   } | null>(null);
 
-  // Function to show alert
-  const showAlert = (
-    message: string,
-    type: "success" | "info" | "error" = "info"
-  ) => {
+  const showAlert = (message: string, type: "success" | "info" | "error" = "info") => {
     setAlertState({ message, type });
   };
 
-  // Function to close alert
   const closeAlert = () => {
     setAlertState(null);
   };
 
-  // Fetch wallet balance
   const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
   });
 
-  // Create buy order mutation
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
-      console.log("Buy order response:", data);
+      console.log("BuyOrderContainer: Buy order response:", data);
+      const coinSymbol = selectedCoin.label.split("/")[0];
 
-      // Check if requires confirmation
       if (data.requiresConfirmation) {
         let confirmationMessage = "";
         let dialogTitle = "";
-
-        // ตรวจสอบ message จาก API response
         if (
-          data.message ===
-          "คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ"
+          data.message === "คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ"
         ) {
-          // กรณีเงินพอ - คาดว่าจะสำเร็จ
           dialogTitle = "Confirm Transaction";
-          confirmationMessage =
-            'The item is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.';
+          confirmationMessage = `The ${coinSymbol} is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.`;
         } else if (
-          data.message ===
-          "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient"
+          data.message === "สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient"
         ) {
-          // กรณีเงินไม่พอ
-          dialogTitle = "Not enough BTC";
-          confirmationMessage =
-            "The asset you want to buy is not available in market right now.\nDo you want to place an Order ?";
+          dialogTitle = `Not enough ${coinSymbol}`;
+          confirmationMessage = `The ${coinSymbol} you want to buy is not available in market right now.\nDo you want to place an Order?`;
         } else {
-          // กรณีอื่นๆ ใช้ข้อความจาก API หรือข้อความ default
           dialogTitle = "Confirm Transaction";
-          confirmationMessage =
-            data.message || "Do you want to proceed with this transaction?";
+          confirmationMessage = data.message || `Do you want to proceed with this ${coinSymbol} transaction?`;
         }
 
-        // Get userId safely with type assertion and fallback
         const sessionUser = session?.user as SessionUser | undefined;
-        const userId =
-          cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
+        const userId = cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
 
         setPendingOrder({
           orderRef: data.orderRef,
@@ -131,59 +108,47 @@ export default function BuyOrderContainer() {
           options: data.options || ["CANCEL", "KEEP_OPEN"],
           originalPayload: {
             userId,
-            symbol: "BTC",
+            symbol: coinSymbol,
             price: parseFloat(price.replace(/,/g, "")),
-            amount: parseFloat(receiveBTC.replace(/,/g, "")),
+            amount: parseFloat(receiveCoin.replace(/,/g, "")),
             lotPrice: parseFloat(amount.replace(/,/g, "")),
           },
         });
         return;
       }
 
-      // Handle successful order execution
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
 
-      // สร้าง message แบบ dynamic โดยใช้ข้อมูลจริง
       const usdAmount = parseFloat(amount.replace(/,/g, ""));
 
       if (data.filled && data.filled > 0) {
-        const filledUSD =
-          data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
+        const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ""));
         showAlert(
-          `Buy BTC/USDT Amount ${filledUSD.toLocaleString("en-US", {
+          `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          })} USD submitted successfully`,
+          }).format(filledUSD)} USD submitted successfully`,
           "success"
         );
-      } else if (
-        data.remaining &&
-        data.remaining > 0 &&
-        (!data.filled || data.filled === 0)
-      ) {
+      } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! Amount remaining : ${data.remaining.toFixed(
-            8
-          )} BTC.\nStatus: Pending`,
+          `Order created successfully! Amount remaining: ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus: Pending`,
           "info"
         );
       } else {
-        // กรณีปกติ - ใช้ข้อมูลจาก form
-        let message = `Buy BTC/USDT Amount ${usdAmount.toLocaleString("en-US", {
+        let message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })} USD submitted successfully`;
+        }).format(usdAmount)} USD submitted successfully`;
 
         if (data.refund && data.refund > 0) {
           const actualSpent = usdAmount - data.refund;
-          message = `Buy BTC/USDT Amount ${actualSpent.toLocaleString("en-US", {
+          message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          })} USD submitted successfully\nRefund: ${data.refund.toFixed(
-            2
-          )} USD`;
+          }).format(actualSpent)} USD submitted successfully\nRefund: ${data.refund.toFixed(2)} USD`;
         }
 
         showAlert(message, "success");
@@ -192,12 +157,11 @@ export default function BuyOrderContainer() {
       handleSubmitSuccess();
     },
     onError: (error) => {
-      console.error("Buy order error:", error);
+      console.error("BuyOrderContainer: Buy order error:", error);
       showAlert(`Error: ${error.message}`, "error");
     },
   });
 
-  // Handle confirmation decision
   const handleConfirmationDecision = (decision: "CANCEL" | "KEEP_OPEN") => {
     if (!pendingOrder) return;
 
@@ -207,7 +171,6 @@ export default function BuyOrderContainer() {
       return;
     }
 
-    // Continue with KEEP_OPEN
     const confirmPayload = {
       ...pendingOrder.originalPayload,
       confirm: true,
@@ -219,27 +182,23 @@ export default function BuyOrderContainer() {
     setPendingOrder(null);
   };
 
-  // Buy states
   const [priceLabel, setPriceLabel] = useState("Price");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>("");
-  const [price, setPrice] = useState<string>(marketPrice);
+  const [price, setPrice] = useState<string>("0.00");
   const [amount, setAmount] = useState<string>("");
   const [isAmountFocused, setIsAmountFocused] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(true);
   const [amountErrorMessage, setAmountErrorMessage] = useState("");
   const [sliderValue, setSliderValue] = useState<number>(0);
-  const [receiveBTC, setReceiveBTC] = useState<string>("");
+  const [receiveCoin, setReceiveCoin] = useState<string>("");
 
-  // Get available balance dynamically
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
     const amount = cashBalance.amount || 0;
-    // ตัดเลขทศนิยมที่เกิน 2 ตำแหน่งทิ้งไป (ไม่ปัดขึ้น)
     return Math.floor(amount * 100) / 100;
   }, [session, cashBalance]);
 
-  // Format available balance for display
   const formatAvailableBalance = useCallback(() => {
     const balance = getAvailableBalance();
     return new Intl.NumberFormat("en-US", {
@@ -248,7 +207,7 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
-  // Helper functions
+  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return "";
     const numericValue = value.replace(/,/g, "");
@@ -281,72 +240,52 @@ export default function BuyOrderContainer() {
     return /^\d*\.?\d{0,2}$/.test(numericValue);
   }, []);
 
-  const calculateReceiveBTC = useCallback(
-    (amountValue: string, priceValue: string): string => {
-      if (!amountValue || !priceValue) return "";
+  const calculateReceiveCoin = useCallback((amountValue: string, priceValue: string): string => {
+    if (!amountValue || !priceValue || priceValue.replace(/,/g, "") === "0.00") return "";
+    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+    const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+    if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
+    const coinAmount = numAmount / numPrice;
+    return coinAmount.toFixed(9);
+  }, []);
 
-      const numAmount = parseFloat(amountValue.replace(/,/g, ""));
-      const numPrice = parseFloat(priceValue.replace(/,/g, ""));
+  const calculateSliderPercentage = useCallback((amountValue: string): number => {
+    if (!amountValue) return 0;
+    const numAmount = parseFloat(amountValue.replace(/,/g, ""));
+    const availableBalance = getAvailableBalance();
+    if (isNaN(numAmount) || numAmount <= 0 || availableBalance <= 0) return 0;
+    const percentage = (numAmount / availableBalance) * 100;
+    return Math.min(percentage, 100);
+  }, [getAvailableBalance]);
 
-      if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return "";
+  const calculateAmountFromPercentage = useCallback((percentage: number): string => {
+    const availableBalance = getAvailableBalance();
+    const amount = (percentage / 100) * availableBalance;
+    return formatNumberWithComma(amount.toFixed(2));
+  }, [getAvailableBalance, formatNumberWithComma]);
 
-      const btcAmount = numAmount / numPrice;
-      return btcAmount.toFixed(9);
-    },
-    []
-  );
-
-  const calculateSliderPercentage = useCallback(
-    (amountValue: string): number => {
-      if (!amountValue) return 0;
-
-      const numAmount = parseFloat(amountValue.replace(/,/g, ""));
-      const availableBalance = getAvailableBalance();
-
-      if (isNaN(numAmount) || numAmount <= 0 || availableBalance <= 0) return 0;
-
-      const percentage = (numAmount / availableBalance) * 100;
-      return Math.min(percentage, 100);
-    },
-    [getAvailableBalance]
-  );
-
-  const calculateAmountFromPercentage = useCallback(
-    (percentage: number): string => {
-      const availableBalance = getAvailableBalance();
-      const amount = (percentage / 100) * availableBalance;
-      return formatNumberWithComma(amount.toFixed(2));
-    },
-    [getAvailableBalance, formatNumberWithComma]
-  );
-
-  // Validation function
   const validateAmount = useCallback(() => {
     const numericValue = amount.replace(/,/g, "");
     const num = parseFloat(numericValue);
     const availableBalance = getAvailableBalance();
 
-    // Check if amount is empty or zero
     if (!amount || amount === "" || num === 0 || isNaN(num)) {
       setIsAmountValid(false);
       setAmountErrorMessage("Please enter amount");
       return false;
     }
 
-    // Check if amount exceeds available balance
     if (num > availableBalance) {
       setIsAmountValid(false);
       setAmountErrorMessage("Insufficient balance");
       return false;
     }
 
-    // Amount is valid
     setIsAmountValid(true);
     setAmountErrorMessage("");
     return true;
   }, [amount, getAvailableBalance]);
 
-  // Price handlers
   const handlePriceFocus = () => {
     setPriceLabel("Limit price");
     setIsInputFocused(true);
@@ -356,7 +295,7 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel("Price");
-    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
+    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
     setPrice(formattedMarketPrice);
     setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
@@ -377,15 +316,14 @@ export default function BuyOrderContainer() {
       const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === "Price" && marketPrice) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
+    } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
     setIsInputFocused(false);
   };
 
-  // Buy handlers
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
@@ -422,11 +360,9 @@ export default function BuyOrderContainer() {
     setSliderValue(percentage);
     const newAmount = calculateAmountFromPercentage(percentage);
     setAmount(newAmount);
-
     const numericValue = newAmount.replace(/,/g, "");
     const num = parseFloat(numericValue);
     const availableBalance = getAvailableBalance();
-
     const isValid = !isNaN(num) && num <= availableBalance;
     setIsAmountValid(isValid);
     if (isValid) {
@@ -445,44 +381,39 @@ export default function BuyOrderContainer() {
         const formattedAmount = formatNumberWithComma(num.toFixed(2));
         setAmount(formattedAmount);
       }
-      // Validate on blur
       validateAmount();
     }
   };
 
-  // Submit handler
   const handleSubmit = () => {
     if (!session) {
       router.push("/auth/sign-in");
       return;
     }
 
-    // Validate amount before proceeding
     if (!validateAmount()) {
       return;
     }
 
     const numericAmount = parseFloat(amount.replace(/,/g, "") || "0");
     const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
-    const btcAmount = parseFloat(receiveBTC.replace(/,/g, "") || "0");
-
-    // Get userId safely with proper type handling
+    const coinAmount = parseFloat(receiveCoin.replace(/,/g, "") || "0");
     const sessionUser = session.user as SessionUser | undefined;
-    const userId =
-      cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
+    const userId = cashBalance?.userId || sessionUser?.id || sessionUser?.email || "";
+    const coinSymbol = selectedCoin.label.split("/")[0];
 
     const orderPayload = {
       userId: userId,
-      symbol: "BTC",
+      symbol: coinSymbol,
       price: numericPrice,
-      amount: btcAmount,
-      lotPrice: numericAmount, // จำนวนเงิน USD ที่จะใช้ซื้อ
+      amount: coinAmount,
+      lotPrice: numericAmount,
     };
 
-    console.log("Order payload:", orderPayload);
-    console.log("USD to spend:", numericAmount);
-    console.log("Price per BTC:", numericPrice);
-    console.log("BTC amount to buy:", btcAmount);
+    console.log("BuyOrderContainer: Order payload:", orderPayload);
+    console.log("BuyOrderContainer: USD to spend:", numericAmount);
+    console.log("BuyOrderContainer: Price per coin:", numericPrice);
+    console.log("BuyOrderContainer: Coin amount to buy:", coinAmount);
 
     createBuyOrderMutation.mutate(orderPayload);
   };
@@ -490,39 +421,49 @@ export default function BuyOrderContainer() {
   const handleSubmitSuccess = () => {
     setAmount("");
     setSliderValue(0);
-    setReceiveBTC("");
+    setReceiveCoin("");
     setIsAmountValid(true);
     setAmountErrorMessage("");
   };
 
-  // Effects
   useEffect(() => {
-    if (priceLabel === "Price") {
+    console.log(`BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
+    if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
       const formattedPrice = formatNumberWithComma(marketPrice);
       setPrice(formattedPrice);
+      setLimitPrice(formattedPrice);
+      console.log(`BuyOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
+    } else if (isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, formatNumberWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
 
   useEffect(() => {
-    const currentPrice = priceLabel === "Price" ? marketPrice : limitPrice;
-    const btcAmount = calculateReceiveBTC(amount, currentPrice);
-    setReceiveBTC(btcAmount);
-  }, [amount, price, limitPrice, marketPrice, priceLabel, calculateReceiveBTC]);
+    const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
+    const coinAmount = calculateReceiveCoin(amount, currentPrice);
+    setReceiveCoin(coinAmount);
+  }, [amount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveCoin]);
 
   useEffect(() => {
-    if (priceLabel === "Price" && !isInputFocused && marketPrice) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice);
+    if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
+      console.log(`BuyOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
+    } else if (priceLabel === "Price" && isPriceLoading) {
+      setPrice("0.00");
+      setLimitPrice("0.00");
+      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, formatToTwoDecimalsWithComma]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
       const numericValue = amount.replace(/,/g, "");
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
-
       const isValid = !isNaN(num) && num <= availableBalance;
       if (isValid) {
         const sliderPercentage = calculateSliderPercentage(numericValue);
@@ -530,6 +471,19 @@ export default function BuyOrderContainer() {
       }
     }
   }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
+
+  const coinSymbolMap: { [key: string]: string } = {
+    BTC: "bitcoin-icon.svg",
+    ETH: "ethereum-icon.svg",
+    BNB: "bnb-coin.svg",
+    SOL: "solana-icon.svg",
+    XRP: "xrp-coin.svg",
+    ADA: "ada-coin.svg",
+    DOGE: "doge-coin.svg",
+  };
+  const coinSymbol = selectedCoin.label.split("/")[0];
+  const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || "default-coin.svg"}`;
+  const receiveCurrency = coinSymbol;
 
   return (
     <div>
@@ -543,7 +497,6 @@ export default function BuyOrderContainer() {
           />
         </div>
       )}
-      {/* Confirmation Dialog using shadcn AlertDialog */}
       <AlertDialog
         open={!!pendingOrder}
         onOpenChange={(open) => {
@@ -583,20 +536,21 @@ export default function BuyOrderContainer() {
         priceLabel={priceLabel}
         price={price}
         amount={amount}
-        receiveAmount={receiveBTC}
+        receiveAmount={receiveCoin}
         sliderValue={sliderValue}
         isAmountValid={isAmountValid}
         isInputFocused={isInputFocused}
         isAmountFocused={isAmountFocused}
         availableBalance={formatAvailableBalance()}
         balanceCurrency="USD"
-        symbol="BTC"
+        symbol={coinSymbol}
         buttonColor="bg-[#309C7D] hover:bg-[#28886C]"
         amountIcon="/currency-icons/dollar-icon.svg"
-        receiveIcon="/currency-icons/bitcoin-icon.svg"
+        receiveIcon={receiveIcon}
+        receiveCurrency={receiveCurrency}
         isSubmitting={createBuyOrderMutation.isPending}
         amountErrorMessage={amountErrorMessage}
-        isAuthenticated={!!session} 
+        isAuthenticated={!!session}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}

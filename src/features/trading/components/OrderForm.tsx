@@ -24,6 +24,7 @@ interface OrderFormProps {
   buttonColor: string;
   amountIcon: string;
   receiveIcon: string;
+  receiveCurrency?: string; // เพิ่ม prop สำหรับหน่วยของช่อง Receive
   isSubmitting: boolean;
   isAuthenticated?: boolean;
   amountErrorMessage?: string;
@@ -56,6 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   buttonColor,
   amountIcon,
   receiveIcon,
+  receiveCurrency, // เพิ่มใน props
   isSubmitting,
   isAuthenticated = false,
   amountErrorMessage = "Insufficient balance",
@@ -252,7 +254,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               className="rounded-full object-cover"
             />
           </div>
-          <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
+          <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-[12px] font-normal">
               Amount
             </span>
@@ -287,16 +289,16 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
         {/* Receive */}
         <div className="relative flex items-center mt-3">
-          <div className="absolute left-0 z-10">
+          <div className="absolute z-10">
             <Image
               src={receiveIcon}
-              alt={`${type === "buy" ? "BTC" : "USD"} Icon`}
+              alt={`${receiveCurrency || (type === "buy" ? "Coin" : "USD")} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
             />
           </div>
-          <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between pl-[90px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
+          <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-[12px] font-normal">
               Receive
             </span>
@@ -308,7 +310,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {type === "buy" ? "BTC" : "USD"}
+                {type === "buy" ? receiveCurrency || "Coin" : "USD"}
               </span>
             </div>
           </div>

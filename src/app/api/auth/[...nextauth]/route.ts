@@ -1,9 +1,13 @@
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
+import axios from "axios";
 
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
+    /**
+     * Credentials provider for username/password authentication
+     */
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -11,45 +15,29 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const useMock = process.env.USE_MOCK_AUTH === "true";
-
-        if (useMock) {
-          // ใช้ mock user
-          if (
-            credentials?.userName === "testuser" &&
-            credentials?.password === "testpass"
-          ) {
-            return {
-              id: "mock-id",
-              name: "testuser",
-              accessToken: "mocked-access-token",
-            };
-          }
-          return null;
-        }
-
-        // ของจริง
+        // Authentication with axios
         try {
-          const res = await fetch("http://141.11.156.52:3001/auth/login", {
-            method: "POST",
-            body: JSON.stringify({
+          const response = await axios.post(
+            "http://141.11.156.52:3001/auth/login",
+            {
               userName: credentials?.userName,
               password: credentials?.password,
-            }),
-            headers: {
-              "Content-Type": "application/json",
             },
-          });
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              timeout: 10000, // 10 second timeout
+            }
+          );
 
-          if (!res.ok) return null;
+          const data = response.data;
 
-          const response = await res.json();
-
-          if (response.access_token) {
+          if (data.access_token) {
             return {
-              id: response.user?.id || credentials?.userName,
+              id: data.user?.id || credentials?.userName,
               name: credentials?.userName,
-              accessToken: response.access_token,
+              accessToken: data.access_token,
             };
           }
 
@@ -61,6 +49,9 @@ const handler = NextAuth({
       },
     }),
   ],
+  /**
+   * JWT callbacks
+   */
   callbacks: {
     async jwt({ token, user }) {
       if (user?.accessToken) {
