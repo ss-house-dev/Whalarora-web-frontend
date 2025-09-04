@@ -17,7 +17,7 @@ export default function OrderTableContainer() {
   };
 
   return (
-    <div className="w-[800px] h-[540px] bg-[#081125] rounded-xl px-5 pt-3 pb-3 flex flex-col">
+    <div className="w-[900px] h-[540px] bg-[#081125] rounded-xl px-5 pt-3 pb-3 flex flex-col">
       {/* Tabs */}
       <div
         className="flex border-b-2 pb-3 gap-3 pl-4"

@@ -22,30 +22,39 @@ export default function OrderCard({ order, onDelete }: Props) {
   const isBuy = order.side === "buy";
 
   const MetaLeft = () => (
-    <div className="flex items-center gap-3 self-center">{/* ⭐ self-center */}
+    <div className="flex items-center gap-3">
       <span
-        className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+        className={`relative top-[3.5px] px-2 py-0.5 rounded-md text-[11px] font-semibold ${
           isBuy ? "bg-green-700 text-white" : "bg-red-700 text-white"
         }`}
       >
         {isBuy ? "Buy" : "Sell"}
       </span>
-      <span className="text-white text-sm font-medium">{order.pair}</span>
+      <span className="text-white text-sm font-medium mt-1.5">
+        {order.pair}
+      </span>
     </div>
   );
 
-  // ใช้กับสถานะที่ไม่ใช่ partial (ไม่ span 2 แถว)
+  // ใช้กับสถานะที่ไม่ใช่ partial/pending
   const TopRight = () => (
-    <div className="self-center grid grid-cols-[1fr_auto] items-center gap-x-3">{/* ⭐ self-center */}
-      <div className="flex items-center gap-3 justify-end flex-wrap">
-        <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
+    <div className="self-center grid grid-cols-[1fr_auto] items-center gap-x-3">
+      {/* ยืดเต็มช่อง 1fr ให้กว้างเท่ากับตอนมี progress */}
+      <div className="flex items-center gap-3 justify-end flex-wrap w-full min-w-0">
+        <span className="text-slate-400 text-xs whitespace-nowrap">
+          {order.datetime}
+        </span>
         <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
-          <span className="text-[15px] font-medium text-white">{order.price}</span>
+          <span className="text-[12px] font-medium text-white">
+            {order.price}
+          </span>
         </div>
         <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
-          <span className="text-[15px] font-medium text-white">{order.amount}</span>
+          <span className="text-[12px] font-medium text-white">
+            {order.amount}
+          </span>
         </div>
       </div>
       {onDelete ? (
@@ -66,23 +75,31 @@ export default function OrderCard({ order, onDelete }: Props) {
     <div className="w-full rounded-xl border border-[#2A2A2A] bg-[#0D0F1A] px-4 py-3 mb-3">
       {/* กริดหลัก 2 คอลัมน์ */}
       <div className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2 items-start">
-        {/* แถวบน */}
+        {/* แถวบน-ซ้าย */}
         <MetaLeft />
 
+        {/* แถวบน-ขวา */}
         {order.status === "partial" ? (
-          /* partial: ขวา span 2 แถว เพื่อให้ความกว้าง progress เท่ากับกลุ่มขวา */
-          <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-3">
-            <div className="flex items-center gap-3 justify-end flex-wrap">
-              <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-              <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+          // partial: ใช้ layout แบบ pending + มี progress bar
+          <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
+            <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
+              <span className="text-slate-400 text-xs whitespace-nowrap">
+                {order.datetime}
+              </span>
+              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
-                <span className="text-[15px] font-medium text-white">{order.price}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {order.price}
+                </span>
               </div>
-              <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[15px] font-medium text-white">{order.amount}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {order.amount}
+                </span>
               </div>
             </div>
+
             {onDelete ? (
               <button
                 onClick={() => onDelete(order.id)}
@@ -94,12 +111,51 @@ export default function OrderCard({ order, onDelete }: Props) {
             ) : (
               <div />
             )}
+
+            {/* progress bar */}
             <div className="col-start-1 mt-3">
               <ProgressBar
                 filledAmount={order.filledAmount}
                 filledPercent={order.filledPercent ?? 0}
               />
             </div>
+            <div />
+          </div>
+        ) : order.status === "pending" ? (
+          // pending: เลย์เอาต์เดียวกับ partial + ช่องว่างคงที่แทน progress
+          <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
+            <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
+              <span className="text-slate-400 text-xs whitespace-nowrap ">
+                {order.datetime}
+              </span>
+              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+                <span className="text-slate-400 text-xs">Price</span>
+                <span className="text-[12px] font-medium text-white">
+                  {order.price}
+                </span>
+              </div>
+              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+                <span className="text-slate-400 text-xs">Amount</span>
+                <span className="text-[12px] font-medium text-white">
+                  {order.amount}
+                </span>
+              </div>
+            </div>
+
+            {onDelete ? (
+              <button
+                onClick={() => onDelete(order.id)}
+                className="p-1.5 rounded-md hover:bg-[#2A2A2A] transition-colors justify-self-end"
+                aria-label="Delete order"
+              >
+                <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-500" />
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {/* ช่องว่างคงที่แทนความสูงบล็อก progress */}
+            <div className="col-start-1 mt-3 h-[8px]" />
             <div />
           </div>
         ) : (
@@ -115,9 +171,9 @@ export default function OrderCard({ order, onDelete }: Props) {
         )}
 
         {order.status === "pending" && (
-          <div className="col-span-2 flex justify-center items-center gap-2 mt-4 text-blue-400 text-xs">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span>Pending</span>
+          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[8px]">
+            <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
+            <span className="leading-none">Pending</span>
           </div>
         )}
 
