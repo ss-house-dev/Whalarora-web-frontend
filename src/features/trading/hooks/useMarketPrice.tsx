@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export function useMarketPrice(symbol: string) {
-  const [marketPrice, setMarketPrice] = useState<string>("");
+  const [marketPrice, setMarketPrice] = useState<string>('');
   const [isPriceLoading, setIsPriceLoading] = useState<boolean>(true);
-  const currentSymbolRef = useRef<string>("");
+  const currentSymbolRef = useRef<string>('');
   const priceCache = useRef<{ [key: string]: string }>({});
 
   // ฟังก์ชันสำหรับตัดทิ้งตัวเลขทศนิยมเกิน 2 ตำแหน่งและเพิ่ม comma
   const truncateToTwoDecimalsWithComma = useCallback((value: number): string => {
-    if (isNaN(value)) return "0.00";
+    if (isNaN(value)) return '0.00';
     const factor = Math.pow(10, 2);
     const truncated = Math.floor(value * factor) / factor;
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(truncated);
@@ -21,18 +21,20 @@ export function useMarketPrice(symbol: string) {
     console.log(`useMarketPrice: Symbol changed to ${symbol}`);
     currentSymbolRef.current = symbol;
 
-    setMarketPrice("");
+    setMarketPrice('');
     setIsPriceLoading(true);
 
     if (priceCache.current[symbol]) {
-      console.log(`useMarketPrice: Using cached price for ${symbol}: ${priceCache.current[symbol]}`);
+      console.log(
+        `useMarketPrice: Using cached price for ${symbol}: ${priceCache.current[symbol]}`
+      );
       setMarketPrice(priceCache.current[symbol]);
       setIsPriceLoading(false);
     }
 
-    const coinSymbol = symbol.split("/")[0]?.toLowerCase();
+    const coinSymbol = symbol.split('/')[0]?.toLowerCase();
     if (!coinSymbol) {
-      console.warn("useMarketPrice: Invalid symbol, stopping WebSocket");
+      console.warn('useMarketPrice: Invalid symbol, stopping WebSocket');
       setIsPriceLoading(false);
       return;
     }
@@ -55,10 +57,12 @@ export function useMarketPrice(symbol: string) {
           setIsPriceLoading(false);
           console.log(`useMarketPrice: Price updated for ${coinSymbol}: ${price}`);
         } else {
-          console.warn(`useMarketPrice: Ignored price update for ${coinSymbol}, current symbol is ${currentSymbolRef.current}`);
+          console.warn(
+            `useMarketPrice: Ignored price update for ${coinSymbol}, current symbol is ${currentSymbolRef.current}`
+          );
         }
       } catch (error) {
-        console.error("useMarketPrice: WebSocket message error:", error);
+        console.error('useMarketPrice: WebSocket message error:', error);
         setIsPriceLoading(false);
       }
     };
@@ -82,7 +86,7 @@ export function useMarketPrice(symbol: string) {
             console.log(`useMarketPrice: Fallback HTTP price for ${coinSymbol}: ${price}`);
           }
         } catch (error) {
-          console.error("useMarketPrice: HTTP API fallback error:", error);
+          console.error('useMarketPrice: HTTP API fallback error:', error);
           setIsPriceLoading(false);
         }
       }

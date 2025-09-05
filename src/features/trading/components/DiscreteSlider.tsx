@@ -1,15 +1,12 @@
-"use client";
-import * as React from "react";
+'use client';
+import * as React from 'react';
 
 interface DiscreteSliderProps {
   value?: number;
   onChange?: (percentage: number) => void;
 }
 
-export default function DiscreteSlider({
-  value,
-  onChange,
-}: DiscreteSliderProps) {
+export default function DiscreteSlider({ value, onChange }: DiscreteSliderProps) {
   const markers = [0, 25, 50, 75, 100];
   const [localPercent, setLocalPercent] = React.useState(0);
   const barRef = React.useRef<HTMLDivElement>(null);
@@ -19,8 +16,7 @@ export default function DiscreteSlider({
   // ใช้ value จาก props หรือ local state
   const percent = value !== undefined ? value : localPercent;
 
-  const clamp = (v: number, min = 0, max = 100) =>
-    Math.min(Math.max(v, min), max);
+  const clamp = (v: number, min = 0, max = 100) => Math.min(Math.max(v, min), max);
 
   const updatePercent = (newPercent: number) => {
     if (onChange) {
@@ -64,10 +60,10 @@ export default function DiscreteSlider({
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowRight") updatePercent(clamp(percent + 1));
-    if (e.key === "ArrowLeft") updatePercent(clamp(percent - 1));
-    if (e.key === "Home") updatePercent(0);
-    if (e.key === "End") updatePercent(100);
+    if (e.key === 'ArrowRight') updatePercent(clamp(percent + 1));
+    if (e.key === 'ArrowLeft') updatePercent(clamp(percent - 1));
+    if (e.key === 'Home') updatePercent(0);
+    if (e.key === 'End') updatePercent(100);
   };
 
   return (
@@ -105,7 +101,7 @@ export default function DiscreteSlider({
           className="absolute left-0 h-2 rounded-full"
           style={{
             width: `${percent}%`,
-            background: "linear-gradient(90deg, #1F4293 0%, #49B6AE 82.5%)",
+            background: 'linear-gradient(90deg, #1F4293 0%, #49B6AE 82.5%)',
           }}
         />
 

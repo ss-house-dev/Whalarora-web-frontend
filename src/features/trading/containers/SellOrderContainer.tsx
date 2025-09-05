@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import OrderForm from "@/features/trading/components/OrderForm";
-import AlertBox from "@/components/ui/alert-box-sell";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
-import { useCreateSellOrder } from "@/features/trading/hooks/useCreateSellOrder";
-import { useQueryClient } from "@tanstack/react-query";
-import { TradeQueryKeys } from "@/features/trading/constants";
-import { useGetCoin } from "@/features/trading/hooks/useGetCoin";
-import { useCoinContext } from "@/features/trading/contexts/CoinContext";
-import { useMarketPrice } from "@/features/trading/hooks/useMarketPrice";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import OrderForm from '@/features/trading/components/OrderForm';
+import AlertBox from '@/components/ui/alert-box-sell';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
+import { useCreateSellOrder } from '@/features/trading/hooks/useCreateSellOrder';
+import { useQueryClient } from '@tanstack/react-query';
+import { TradeQueryKeys } from '@/features/trading/constants';
+import { useGetCoin } from '@/features/trading/hooks/useGetCoin';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 
 interface UserWithId {
   id: string;
@@ -27,8 +27,8 @@ export default function SellOrderContainer() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [alertMessage, setAlertMessage] = useState<string>("");
-  const [alertType, setAlertType] = useState<"success" | "info" | "error">("success");
+  const [alertMessage, setAlertMessage] = useState<string>('');
+  const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
   const { data: cashBalance } = useGetCashBalance({
@@ -36,69 +36,69 @@ export default function SellOrderContainer() {
   });
 
   const { data: coinBalance } = useGetCoin({
-    symbol: selectedCoin.label.split("/")[0],
+    symbol: selectedCoin.label.split('/')[0],
     enabled: !!session,
   });
 
   const createSellOrderMutation = useCreateSellOrder({
     onSuccess: (data) => {
-      console.log("SellOrderContainer: Sell order created successfully:", data);
+      console.log('SellOrderContainer: Sell order created successfully:', data);
       queryClient.invalidateQueries({
         queryKey: [TradeQueryKeys.GET_CASH_BALANCE],
       });
       queryClient.invalidateQueries({
-        queryKey: [TradeQueryKeys.GET_COIN_ASSET, selectedCoin.label.split("/")[0]],
+        queryKey: [TradeQueryKeys.GET_COIN_ASSET, selectedCoin.label.split('/')[0]],
       });
 
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds: $${new Intl.NumberFormat("en-US", {
+          `Sell order completed successfully!\nProceeds: $${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(data.proceeds)}`
         );
-        setAlertType("success");
+        setAlertType('success');
       } else {
         setAlertMessage(`Sell order created successfully!\nStatus: Pending`);
-        setAlertType("info");
+        setAlertType('info');
       }
       setShowAlert(true);
       handleSubmitSuccess();
     },
     onError: (error) => {
-      console.error("SellOrderContainer: Sell order error:", error);
+      console.error('SellOrderContainer: Sell order error:', error);
       setAlertMessage(`Error creating sell order: ${error.message}`);
-      setAlertType("error");
+      setAlertType('error');
       setShowAlert(true);
     },
   });
 
-  const [priceLabel, setPriceLabel] = useState("Price");
+  const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [limitPrice, setLimitPrice] = useState<string>("");
-  const [price, setPrice] = useState<string>("0.00");
-  const [sellAmount, setSellAmount] = useState<string>("");
+  const [limitPrice, setLimitPrice] = useState<string>('');
+  const [price, setPrice] = useState<string>('0.00');
+  const [sellAmount, setSellAmount] = useState<string>('');
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
-  const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState("");
+  const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState('');
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
-  const [receiveUSD, setReceiveUSD] = useState<string>("");
+  const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
 
   const formatToMaxDigits = useCallback((value: number, maxDigits: number = 10): string => {
-    if (typeof value !== "number" || isNaN(value)) return "0";
+    if (typeof value !== 'number' || isNaN(value)) return '0';
     let valueStr = value.toFixed(9);
-    valueStr = valueStr.replace(/\.?0+$/, "");
-    if (valueStr === "" || valueStr === ".") return "0";
-    const totalDigits = valueStr.replace(".", "").length;
+    valueStr = valueStr.replace(/\.?0+$/, '');
+    if (valueStr === '' || valueStr === '.') return '0';
+    const totalDigits = valueStr.replace('.', '').length;
     if (totalDigits <= maxDigits) return valueStr;
-    const decimalIndex = valueStr.indexOf(".");
+    const decimalIndex = valueStr.indexOf('.');
     if (decimalIndex === -1) return valueStr.substring(0, maxDigits);
     const integerPart = valueStr.substring(0, decimalIndex);
     const decimalPart = valueStr.substring(decimalIndex + 1);
     const availableDecimalDigits = maxDigits - integerPart.length;
     if (availableDecimalDigits <= 0) return integerPart.substring(0, maxDigits);
     const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
-    return integerPart + "." + truncatedDecimal;
+    return integerPart + '.' + truncatedDecimal;
   }, []);
 
   const getAvailableCoinBalance = useCallback(() => {
@@ -113,27 +113,25 @@ export default function SellOrderContainer() {
 
   // แก้ไขฟังก์ชัน formatNumberWithComma ให้เหมือนโค้ดแรก
   const formatNumberWithComma = useCallback((value: string): string => {
-    if (!value) return "";
-    const numericValue = value.replace(/,/g, "");
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    const parts = numericValue.split(".");
+    const parts = numericValue.split('.');
     const integerPart = parts[0];
     const decimalPart = parts[1];
 
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    return decimalPart !== undefined
-      ? `${formattedInteger}.${decimalPart}`
-      : formattedInteger;
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
   const formatToTwoDecimalsWithComma = useCallback(
     (value: string): string => {
-      if (!value) return "";
-      const numericValue = value.replace(/,/g, "");
+      if (!value) return '';
+      const numericValue = value.replace(/,/g, '');
       const num = parseFloat(numericValue);
-      if (isNaN(num)) return "";
+      if (isNaN(num)) return '';
       return formatNumberWithComma(num.toFixed(2));
     },
     [formatNumberWithComma]
@@ -141,11 +139,11 @@ export default function SellOrderContainer() {
 
   // แก้ไขให้ support ทศนิยม 9 ตำแหน่งสำหรับ coin
   const formatCoinNumber = useCallback((value: string): string => {
-    if (!value) return "";
-    const numericValue = value.replace(/,/g, "");
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    const parts = numericValue.split(".");
+    const parts = numericValue.split('.');
     const decimalPart = parts[1];
 
     // ถ้ามีทศนิยม จำกัดไม่เกิน 9 ตำแหน่ง
@@ -157,71 +155,80 @@ export default function SellOrderContainer() {
   }, []);
 
   const isValidNumberFormat = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, "");
+    const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,2}$/.test(numericValue);
   }, []);
 
   const isValidCoinFormat = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, "");
+    const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,9}$/.test(numericValue);
   }, []);
 
-  const calculateReceiveUSD = useCallback((coinAmount: string, priceValue: string): string => {
-    if (!coinAmount || !priceValue || priceValue.replace(/,/g, "") === "0.00") return "";
-    const numCoin = parseFloat(coinAmount);
-    const numPrice = parseFloat(priceValue.replace(/,/g, ""));
-    if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return "";
-    const usdAmount = numCoin * numPrice;
-    return formatToTwoDecimalsWithComma(usdAmount.toString());
-  }, [formatToTwoDecimalsWithComma]);
+  const calculateReceiveUSD = useCallback(
+    (coinAmount: string, priceValue: string): string => {
+      if (!coinAmount || !priceValue || priceValue.replace(/,/g, '') === '0.00') return '';
+      const numCoin = parseFloat(coinAmount);
+      const numPrice = parseFloat(priceValue.replace(/,/g, ''));
+      if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
+      const usdAmount = numCoin * numPrice;
+      return formatToTwoDecimalsWithComma(usdAmount.toString());
+    },
+    [formatToTwoDecimalsWithComma]
+  );
 
-  const calculateSellSliderPercentage = useCallback((coinAmount: string): number => {
-    if (!coinAmount) return 0;
-    const numAmount = parseFloat(coinAmount);
-    const availableCoin = getAvailableCoinBalance();
-    if (isNaN(numAmount) || numAmount <= 0 || availableCoin <= 0) return 0;
-    const percentage = (numAmount / availableCoin) * 100;
-    return Math.min(percentage, 100);
-  }, [getAvailableCoinBalance]);
+  const calculateSellSliderPercentage = useCallback(
+    (coinAmount: string): number => {
+      if (!coinAmount) return 0;
+      const numAmount = parseFloat(coinAmount);
+      const availableCoin = getAvailableCoinBalance();
+      if (isNaN(numAmount) || numAmount <= 0 || availableCoin <= 0) return 0;
+      const percentage = (numAmount / availableCoin) * 100;
+      return Math.min(percentage, 100);
+    },
+    [getAvailableCoinBalance]
+  );
 
-  const calculateCoinFromPercentage = useCallback((percentage: number): string => {
-    const availableCoin = getAvailableCoinBalance();
-    if (availableCoin <= 0 || percentage <= 0) return "0";
-    const multiplier = 1000000000;
-    const availableSatoshis = Math.floor(availableCoin * multiplier);
-    const percentageSatoshis = Math.floor((percentage / 100) * availableSatoshis);
-    const coinAmount = percentageSatoshis / multiplier;
-    return formatToMaxDigits(coinAmount, 10);
-  }, [getAvailableCoinBalance, formatToMaxDigits]);
+  const calculateCoinFromPercentage = useCallback(
+    (percentage: number): string => {
+      const availableCoin = getAvailableCoinBalance();
+      if (availableCoin <= 0 || percentage <= 0) return '0';
+      const multiplier = 1000000000;
+      const availableSatoshis = Math.floor(availableCoin * multiplier);
+      const percentageSatoshis = Math.floor((percentage / 100) * availableSatoshis);
+      const coinAmount = percentageSatoshis / multiplier;
+      return formatToMaxDigits(coinAmount, 10);
+    },
+    [getAvailableCoinBalance, formatToMaxDigits]
+  );
 
   const validateSellAmount = useCallback(() => {
     const num = parseFloat(sellAmount);
     const availableCoin = getAvailableCoinBalance();
-    if (!sellAmount || sellAmount === "" || num === 0 || isNaN(num)) {
+    if (!sellAmount || sellAmount === '' || num === 0 || isNaN(num)) {
       setIsSellAmountValid(false);
-      setSellAmountErrorMessage("Please enter amount");
+      setSellAmountErrorMessage('Please enter amount');
       return false;
     }
     if (num > availableCoin) {
       setIsSellAmountValid(false);
-      setSellAmountErrorMessage("Insufficient balance");
+      setSellAmountErrorMessage('Insufficient balance');
       return false;
     }
     setIsSellAmountValid(true);
-    setSellAmountErrorMessage("");
+    setSellAmountErrorMessage('');
     return true;
   }, [sellAmount, getAvailableCoinBalance]);
 
   const handlePriceFocus = () => {
-    setPriceLabel("Limit price");
+    setPriceLabel('Limit price');
     setIsInputFocused(true);
-    setPrice("");
-    setLimitPrice("");
+    setPrice('');
+    setLimitPrice('');
   };
 
   const handleMarketClick = () => {
-    setPriceLabel("Price");
-    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+    setPriceLabel('Price');
+    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
     setPrice(formattedMarketPrice);
     setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
@@ -230,7 +237,7 @@ export default function SellOrderContainer() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    if (inputValue === "" || isValidNumberFormat(inputValue)) {
+    if (inputValue === '' || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setLimitPrice(formattedValue);
       setPrice(formattedValue);
@@ -242,8 +249,8 @@ export default function SellOrderContainer() {
       const formattedPrice = formatToTwoDecimalsWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
@@ -253,24 +260,24 @@ export default function SellOrderContainer() {
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    if (inputValue === "" || isValidCoinFormat(inputValue)) {
+    if (inputValue === '' || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
       setSellAmount(formattedValue);
-      const numericValue = inputValue.replace(/,/g, "");
+      const numericValue = inputValue.replace(/,/g, '');
       const num = parseFloat(numericValue);
       const availableCoin = getAvailableCoinBalance();
 
-      if (inputValue === "" || num === 0 || isNaN(num)) {
+      if (inputValue === '' || num === 0 || isNaN(num)) {
         setIsSellAmountValid(true);
-        setSellAmountErrorMessage("");
+        setSellAmountErrorMessage('');
         setSellSliderValue(0);
       } else if (num > availableCoin) {
         setIsSellAmountValid(false);
-        setSellAmountErrorMessage("Insufficient balance");
+        setSellAmountErrorMessage('Insufficient balance');
         setSellSliderValue(0);
       } else {
         setIsSellAmountValid(true);
-        setSellAmountErrorMessage("");
+        setSellAmountErrorMessage('');
         const sliderPercentage = calculateSellSliderPercentage(numericValue);
         setSellSliderValue(sliderPercentage);
       }
@@ -286,7 +293,7 @@ export default function SellOrderContainer() {
     const isValid = !isNaN(num) && num <= availableCoin;
     setIsSellAmountValid(isValid);
     if (isValid) {
-      setSellAmountErrorMessage("");
+      setSellAmountErrorMessage('');
     }
   };
 
@@ -305,7 +312,7 @@ export default function SellOrderContainer() {
 
   const handleSubmit = () => {
     if (!session) {
-      router.push("/auth/sign-in");
+      router.push('/auth/sign-in');
       return;
     }
 
@@ -313,12 +320,12 @@ export default function SellOrderContainer() {
       return;
     }
 
-    const numericPrice = parseFloat(price.replace(/,/g, "") || "0");
-    const coinAmountToSell = parseFloat(sellAmount || "0");
+    const numericPrice = parseFloat(price.replace(/,/g, '') || '0');
+    const coinAmountToSell = parseFloat(sellAmount || '0');
     const userId =
-      cashBalance?.userId || (session.user as UserWithId)?.id || session.user?.email || "";
+      cashBalance?.userId || (session.user as UserWithId)?.id || session.user?.email || '';
     const lotPrice = numericPrice * coinAmountToSell;
-    const coinSymbol = selectedCoin.label.split("/")[0];
+    const coinSymbol = selectedCoin.label.split('/')[0];
 
     const sellOrderPayload = {
       userId: userId,
@@ -328,21 +335,21 @@ export default function SellOrderContainer() {
       lotPrice: lotPrice,
     };
 
-    console.log("SellOrderContainer: Sell order payload:", sellOrderPayload);
-    console.log("SellOrderContainer: Coin amount to sell:", coinAmountToSell);
-    console.log("SellOrderContainer: Price per coin:", numericPrice);
-    console.log("SellOrderContainer: Lot Price (total value):", lotPrice);
-    console.log("SellOrderContainer: USD to receive:", receiveUSD);
+    console.log('SellOrderContainer: Sell order payload:', sellOrderPayload);
+    console.log('SellOrderContainer: Coin amount to sell:', coinAmountToSell);
+    console.log('SellOrderContainer: Price per coin:', numericPrice);
+    console.log('SellOrderContainer: Lot Price (total value):', lotPrice);
+    console.log('SellOrderContainer: USD to receive:', receiveUSD);
 
     createSellOrderMutation.mutate(sellOrderPayload);
   };
 
   const handleSubmitSuccess = () => {
-    setSellAmount("");
+    setSellAmount('');
     setSellSliderValue(0);
-    setReceiveUSD("");
+    setReceiveUSD('');
     setIsSellAmountValid(true);
-    setSellAmountErrorMessage("");
+    setSellAmountErrorMessage('');
   };
 
   const handleAlertClose = () => {
@@ -350,49 +357,63 @@ export default function SellOrderContainer() {
   };
 
   useEffect(() => {
-    console.log(`SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`);
-    if (priceLabel === "Price" && marketPrice && !isPriceLoading) {
+    console.log(
+      `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
+    );
+    if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
       const formattedPrice = formatNumberWithComma(marketPrice);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-      console.log(`SellOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`);
+      console.log(
+        `SellOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`
+      );
     } else if (isPriceLoading) {
-      setPrice("0.00");
-      setLimitPrice("0.00");
+      setPrice('0.00');
+      setLimitPrice('0.00');
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
   }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
 
   useEffect(() => {
-    const currentPrice = priceLabel === "Price" ? (isPriceLoading ? "0.00" : marketPrice) : limitPrice;
+    const currentPrice =
+      priceLabel === 'Price' ? (isPriceLoading ? '0.00' : marketPrice) : limitPrice;
     const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
     setReceiveUSD(usdAmount);
   }, [sellAmount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveUSD]);
 
   useEffect(() => {
-    if (priceLabel === "Price" && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ""));
+    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
+      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
-      console.log(`SellOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`);
-    } else if (priceLabel === "Price" && isPriceLoading) {
-      setPrice("0.00");
-      setLimitPrice("0.00");
+      console.log(
+        `SellOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`
+      );
+    } else if (priceLabel === 'Price' && isPriceLoading) {
+      setPrice('0.00');
+      setLimitPrice('0.00');
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, formatToTwoDecimalsWithComma]);
+  }, [
+    marketPrice,
+    priceLabel,
+    isInputFocused,
+    isPriceLoading,
+    selectedCoin.label,
+    formatToTwoDecimalsWithComma,
+  ]);
 
   const coinSymbolMap: { [key: string]: string } = {
-    BTC: "bitcoin-icon.svg",
-    ETH: "ethereum-icon.svg",
-    BNB: "bnb-coin.svg",
-    SOL: "solana-icon.svg",
-    XRP: "xrp-coin.svg",
-    ADA: "ada-coin.svg",
-    DOGE: "doge-coin.svg",
+    BTC: 'bitcoin-icon.svg',
+    ETH: 'ethereum-icon.svg',
+    BNB: 'bnb-coin.svg',
+    SOL: 'solana-icon.svg',
+    XRP: 'xrp-coin.svg',
+    ADA: 'ada-coin.svg',
+    DOGE: 'doge-coin.svg',
   };
-  const coinSymbol = selectedCoin.label.split("/")[0];
-  const amountIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || "default-coin.svg"}`;
+  const coinSymbol = selectedCoin.label.split('/')[0];
+  const amountIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
 
   return (
     <div className="relative">
@@ -427,7 +448,7 @@ export default function SellOrderContainer() {
         onSliderChange={handleSellSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
-        onLoginClick={() => router.push("/auth/sign-in")}
+        onLoginClick={() => router.push('/auth/sign-in')}
       />
 
       {showAlert && (

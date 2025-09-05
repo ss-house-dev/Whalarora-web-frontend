@@ -9,9 +9,9 @@ interface ProgressBarProps {
 export default function ProgressBar({
   filledAmount,
   filledPercent = 0,
-  height = 8,                 // ความหนาแท่ง
-  trackColor = "#474747",     // สีพื้นหลัง (track)
-  fillColor = "#28479B",      // สีแท่งที่เติม
+  height = 8, // ความหนาแท่ง
+  trackColor = '#474747', // สีพื้นหลัง (track)
+  fillColor = '#28479B', // สีแท่งที่เติม
 }: ProgressBarProps) {
   const pct = Math.max(0, Math.min(100, filledPercent));
 
@@ -29,7 +29,7 @@ export default function ProgressBar({
       </div>
 
       <div className="flex justify-between text-[13px] text-slate-400 mt-1">
-        <span>Filled : {filledAmount ?? "-"}</span>
+        <span>Filled : {filledAmount ?? '-'}</span>
         <span>{pct.toFixed(2)} %</span>
       </div>
     </div>

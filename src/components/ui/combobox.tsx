@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 import {
   Command,
   CommandEmpty,
@@ -10,14 +10,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { SelectCoin } from "./select-coin";
-import { useCoinContext } from "@/features/trading/contexts/CoinContext";
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SelectCoin } from './select-coin';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 interface USDTPair {
   symbol: string;
@@ -121,67 +117,62 @@ const DefaultIcon = ({ size = 28 }: { size?: number }) => (
 
 const binanceCoins = [
   {
-    value: "BINANCE:BTCUSDT",
-    label: "BTC/USDT",
+    value: 'BINANCE:BTCUSDT',
+    label: 'BTC/USDT',
     icon: <BTCIcon />,
     popoverIcon: <BTCIcon size={20} />,
   },
   {
-    value: "BINANCE:ETHUSDT",
-    label: "ETH/USDT",
+    value: 'BINANCE:ETHUSDT',
+    label: 'ETH/USDT',
     icon: <ETHIcon />,
     popoverIcon: <ETHIcon size={20} />,
   },
   {
-    value: "BINANCE:BNBUSDT",
-    label: "BNB/USDT",
+    value: 'BINANCE:BNBUSDT',
+    label: 'BNB/USDT',
     icon: <BNBIcon />,
     popoverIcon: <BNBIcon size={20} />,
   },
   {
-    value: "BINANCE:SOLUSDT",
-    label: "SOL/USDT",
+    value: 'BINANCE:SOLUSDT',
+    label: 'SOL/USDT',
     icon: <SOLIcon />,
     popoverIcon: <SOLIcon size={20} />,
   },
   {
-    value: "BINANCE:XRPUSDT",
-    label: "XRP/USDT",
+    value: 'BINANCE:XRPUSDT',
+    label: 'XRP/USDT',
     icon: <XRPIcon />,
     popoverIcon: <XRPIcon size={20} />,
   },
   {
-    value: "BINANCE:ADAUSDT",
-    label: "ADA/USDT",
+    value: 'BINANCE:ADAUSDT',
+    label: 'ADA/USDT',
     icon: <ADAIcon />,
     popoverIcon: <ADAIcon size={20} />,
   },
   {
-    value: "BINANCE:DOGEUSDT",
-    label: "DOGE/USDT",
+    value: 'BINANCE:DOGEUSDT',
+    label: 'DOGE/USDT',
     icon: <DOGEIcon />,
     popoverIcon: <DOGEIcon size={20} />,
   },
 ];
 
-export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
+export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const { selectedCoin, setSelectedCoin } = useCoinContext();
   const [open, setOpen] = React.useState(false);
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
-  const [searchValue, setSearchValue] = React.useState<string>("");
+  const [searchValue, setSearchValue] = React.useState<string>('');
   const listRef = React.useRef<HTMLDivElement>(null);
 
   const fetchUSDTPairs = async () => {
     try {
-      const response = await fetch(
-        "https://api.binance.com/api/v3/exchangeInfo"
-      );
+      const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
       const data = (await response.json()) as BinanceExchangeInfo;
       const usdtPairs: USDTPair[] = data.symbols
-        .filter(
-          (symbol) =>
-            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
-        )
+        .filter((symbol) => symbol.quoteAsset === 'USDT' && symbol.status === 'TRADING')
         .map((symbol) => ({
           symbol: symbol.symbol,
           baseAsset: symbol.baseAsset,
@@ -189,7 +180,7 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
         .sort((a, b) => a.symbol.localeCompare(b.symbol));
       setPairs(usdtPairs);
     } catch (err) {
-      console.error("Error:", err);
+      console.error('Error:', err);
     }
   };
 
@@ -204,47 +195,33 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
   }, [searchValue]);
 
   const allCoins = pairs.map((pair) => {
-    const matchedCoin = binanceCoins.find(
-      (coin) => coin.value === `BINANCE:${pair.symbol}`
-    );
+    const matchedCoin = binanceCoins.find((coin) => coin.value === `BINANCE:${pair.symbol}`);
     return {
       value: `BINANCE:${pair.symbol}`,
       label: `${pair.baseAsset}/USDT`,
       icon: matchedCoin ? matchedCoin.icon : <DefaultIcon />,
-      popoverIcon: matchedCoin ? (
-        matchedCoin.popoverIcon
-      ) : (
-        <DefaultIcon size={20} />
-      ),
+      popoverIcon: matchedCoin ? matchedCoin.popoverIcon : <DefaultIcon size={20} />,
     };
   });
 
   const priorityCoins = [
-    "BINANCE:ADAUSDT",
-    "BINANCE:BNBUSDT",
-    "BINANCE:BTCUSDT",
-    "BINANCE:DOGEUSDT",
-    "BINANCE:ETHUSDT",
-    "BINANCE:SOLUSDT",
-    "BINANCE:XRPUSDT",
+    'BINANCE:ADAUSDT',
+    'BINANCE:BNBUSDT',
+    'BINANCE:BTCUSDT',
+    'BINANCE:DOGEUSDT',
+    'BINANCE:ETHUSDT',
+    'BINANCE:SOLUSDT',
+    'BINANCE:XRPUSDT',
   ];
 
   const coins = searchValue
-    ? allCoins.filter((coin) =>
-        coin.label.toLowerCase().startsWith(searchValue.toLowerCase())
-      )
+    ? allCoins.filter((coin) => coin.label.toLowerCase().startsWith(searchValue.toLowerCase()))
     : (() => {
-        const priority = allCoins.filter((coin) =>
-          priorityCoins.includes(coin.value)
-        );
-        const others = allCoins.filter(
-          (coin) => !priorityCoins.includes(coin.value)
-        );
+        const priority = allCoins.filter((coin) => priorityCoins.includes(coin.value));
+        const others = allCoins.filter((coin) => !priorityCoins.includes(coin.value));
         const sortedPriority = priorityCoins
           .map((value) => priority.find((coin) => coin.value === value))
-          .filter(
-            (coin): coin is NonNullable<typeof coin> => coin !== undefined
-          );
+          .filter((coin): coin is NonNullable<typeof coin> => coin !== undefined);
         return [...sortedPriority, ...others.slice(0, 13)];
       })();
 
@@ -302,12 +279,12 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
                         icon: coin.icon,
                         popoverIcon: coin.popoverIcon,
                       });
-                      setSearchValue("");
+                      setSearchValue('');
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]",
-                      selectedCoin.value === coin.value && "bg-[#323338]"
+                      'flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]',
+                      selectedCoin.value === coin.value && 'bg-[#323338]'
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -322,25 +299,12 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
         </PopoverContent>
       </Popover>
 
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="3"
-        height="36"
-        viewBox="0 0 3 36"
-        fill="none"
-      >
-        <path
-          d="M1.69824 1V35"
-          stroke="#474747"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
+      <svg xmlns="http://www.w3.org/2000/svg" width="3" height="36" viewBox="0 0 3 36" fill="none">
+        <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
       <div className="flex items-center px-4 flex-1">
-        <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">
-          --
-        </div>
+        <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">--</div>
         <div className="flex flex-col items-start mr-6">
           <span className="text-[#8B8E93] text-xs">24h High</span>
           <span className="text-white text-sm font-medium">--</span>

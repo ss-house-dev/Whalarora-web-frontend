@@ -1,10 +1,10 @@
-import Image from "next/image";
-import { LogOut } from "lucide-react";
-import { Session } from "next-auth";
-import { useState } from "react";
-import { useGetCashBalance } from "@/features/wallet/hooks/useGetCash";
-import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
-import { useResetPortfolio } from "@/features/wallet/hooks/useUpdateCash";
+import Image from 'next/image';
+import { LogOut } from 'lucide-react';
+import { Session } from 'next-auth';
+import { useState } from 'react';
+import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
+import { useAddCashToTrade } from '@/features/wallet/hooks/useCreateCash';
+import { useResetPortfolio } from '@/features/wallet/hooks/useUpdateCash';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog-reset";
+} from '@/components/ui/alert-dialog-reset';
 
 interface NavbarUIProps {
   open: boolean;
@@ -93,10 +93,10 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
   // Format จำนวนเงิน
   const formatCurrency = (amount: number | undefined): string => {
-    if (amount === undefined) return "0.00";
+    if (amount === undefined) return '0.00';
     const truncated = Math.floor(amount * 100) / 100;
 
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(truncated);
@@ -144,9 +144,9 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 <div>
                   {session
                     ? error
-                      ? "Error"
+                      ? 'Error'
                       : `${formatCurrency(cashBalance?.amount)} USD`
-                    : "0.00 USD"}
+                    : '0.00 USD'}
                 </div>
                 {open ? (
                   <svg
@@ -185,7 +185,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 <div
                   onClick={handleAddCash}
                   className={`h-10 px-[14px] flex items-center justify-between hover:bg-[#17306B] text-base cursor-pointer border-b border-[#9AAACE] group ${
-                    addCashMutation.isPending ? "cursor-not-allowed" : ""
+                    addCashMutation.isPending ? 'cursor-not-allowed' : ''
                   }`}
                 >
                   <span className="text-[16px] font-normal">Deposit</span>
@@ -207,8 +207,8 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   onClick={handleResetPortfolio}
                   className={`h-10 px-[14px] flex items-center justify-between text-base cursor-pointer group ${
                     showResetConfirm || resetPortfolioMutation.isPending
-                      ? "bg-[#17306B] cursor-not-allowed"
-                      : "hover:bg-[#17306B]"
+                      ? 'bg-[#17306B] cursor-not-allowed'
+                      : 'hover:bg-[#17306B]'
                   }`}
                 >
                   <span className="text-[16px] font-normal">Reset Balance</span>
@@ -310,9 +310,8 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
               Reset your wallet ?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center mt-4 text-[14px] text-white font-normal">
-              If you continue, all settings and <br /> trading history and
-              holding assets will <br /> be removed. Your Demo Account will{" "}
-              <br /> restart with default balance.
+              If you continue, all settings and <br /> trading history and holding assets will{' '}
+              <br /> be removed. Your Demo Account will <br /> restart with default balance.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 text-white">
@@ -327,7 +326,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
               onClick={handleConfirmReset}
               disabled={resetPortfolioMutation.isPending}
             >
-              {resetPortfolioMutation.isPending ? "Reset" : "Reset"}
+              {resetPortfolioMutation.isPending ? 'Reset' : 'Reset'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
