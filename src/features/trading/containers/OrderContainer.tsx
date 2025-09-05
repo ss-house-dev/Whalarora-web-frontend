@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import BuyOrderContainer from "@/features/trading/containers/BuyOrderContainer";
-import SellOrderContainer from "@/features/trading/containers/SellOrderContainer";
+import React from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import BuyOrderContainer from '@/features/trading/containers/BuyOrderContainer';
+import SellOrderContainer from '@/features/trading/containers/SellOrderContainer';
 
 export default function MarketOrderContainer() {
   return (

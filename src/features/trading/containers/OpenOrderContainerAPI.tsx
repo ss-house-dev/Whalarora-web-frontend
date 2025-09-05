@@ -1,26 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
-import OrderCard, { Order } from "./OrderCard";
+import { useEffect, useMemo, useState } from 'react';
+import OrderCard, { Order } from './OrderCard';
 
 type ApiOrder = {
   id: string;
-  side: "buy" | "sell";
-  symbol: string;           // เช่น "BTC/USDT"
-  createdAt: string;        // ISO string
-  price: number;            // 120000
-  amount: number;           // 0.02
-  status: "pending" | "partial" | "filled" | "cancelled";
-  filledAmount?: number;    // 0.01
-  filledPercent?: number;   // 50
+  side: 'buy' | 'sell';
+  symbol: string; // เช่น "BTC/USDT"
+  createdAt: string; // ISO string
+  price: number; // 120000
+  amount: number; // 0.02
+  status: 'pending' | 'partial' | 'filled' | 'cancelled';
+  filledAmount?: number; // 0.01
+  filledPercent?: number; // 50
 };
 
 type OrdersResponse = {
   data: ApiOrder[];
   page: number;
   perPage: number;
-  total: number;           // เอาไว้คำนวณ totalPages
+  total: number; // เอาไว้คำนวณ totalPages
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? ""; 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const PER_PAGE = 10;
 
 export default function OpenOrderContainer() {
@@ -40,10 +40,10 @@ export default function OpenOrderContainer() {
     amount: formatAmount(o.amount, o.symbol),
     status: o.status,
     filledAmount:
-      o.status === "partial" && o.filledAmount != null
+      o.status === 'partial' && o.filledAmount != null
         ? formatAmount(o.filledAmount, o.symbol)
         : undefined,
-    filledPercent: o.status === "partial" ? o.filledPercent ?? 0 : undefined,
+    filledPercent: o.status === 'partial' ? (o.filledPercent ?? 0) : undefined,
   });
 
   // ดึงข้อมูลเมื่อ page เปลี่ยน
@@ -52,16 +52,16 @@ export default function OpenOrderContainer() {
       setLoading(true);
       setErr(null);
       try {
-        const res = await fetch(
-          `${API_BASE}/orders?status=open&page=${page}&perPage=${PER_PAGE}`,
-          { headers: { "Content-Type": "application/json" }, cache: "no-store" }
-        );
+        const res = await fetch(`${API_BASE}/orders?status=open&page=${page}&perPage=${PER_PAGE}`, {
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
         if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
         const json: OrdersResponse = await res.json();
         setOrders(json.data.map(mapToOrder));
         setTotal(json.total);
       } catch (e: any) {
-        setErr(e?.message ?? "Something went wrong");
+        setErr(e?.message ?? 'Something went wrong');
       } finally {
         setLoading(false);
       }
@@ -70,17 +70,14 @@ export default function OpenOrderContainer() {
     fetchOrders();
   }, [page]);
 
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(total / PER_PAGE)),
-    [total]
-  );
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PER_PAGE)), [total]);
 
   const handleDelete = async (id: string) => {
     // optimistic update
     const prev = orders;
     setOrders((p) => p.filter((o) => o.id !== id));
     try {
-      const res = await fetch(`${API_BASE}/orders/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/orders/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
       // ลบสำเร็จ — ไม่มีอะไรเพิ่ม หรืออาจจะมีแจ้งเตือนว่ากดลบ ไม่รู้
       // อาจ refetch หน้านี้อีกครั้ง เผื่อหลังบ้านเปลี่ยน total
@@ -88,7 +85,7 @@ export default function OpenOrderContainer() {
     } catch (e) {
       // rollback ถ้าลบไม่ผ่าน
       setOrders(prev);
-      alert("ลบคำสั่งไม่สำเร็จ");
+      alert('ลบคำสั่งไม่สำเร็จ');
     }
   };
 
@@ -101,17 +98,13 @@ export default function OpenOrderContainer() {
             Loading...
           </div>
         ) : err ? (
-          <div className="text-red-400 text-sm flex justify-center items-center h-full">
-            {err}
-          </div>
+          <div className="text-red-400 text-sm flex justify-center items-center h-full">{err}</div>
         ) : orders.length === 0 ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-full">
             No open order
           </div>
         ) : (
-          orders.map((order) => (
-            <OrderCard key={order.id} order={order} onDelete={handleDelete} />
-          ))
+          orders.map((order) => <OrderCard key={order.id} order={order} onDelete={handleDelete} />)
         )}
       </div>
 
@@ -123,11 +116,9 @@ export default function OpenOrderContainer() {
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              page === 1
-                ? "text-slate-500 cursor-not-allowed"
-                : "text-slate-300 hover:text-white"
+              page === 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
             }`}
-            style={{ backgroundColor: "#212121" }}
+            style={{ backgroundColor: '#212121' }}
           >
             ‹
           </button>
@@ -137,10 +128,10 @@ export default function OpenOrderContainer() {
               key={p}
               onClick={() => setPage(p)}
               className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                page === p ? "text-white" : "text-slate-400 hover:text-white"
+                page === p ? 'text-white' : 'text-slate-400 hover:text-white'
               }`}
               style={{
-                backgroundColor: page === p ? "#1F4293" : "transparent",
+                backgroundColor: page === p ? '#1F4293' : 'transparent',
               }}
             >
               {p}
@@ -152,10 +143,10 @@ export default function OpenOrderContainer() {
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               page === totalPages
-                ? "text-slate-500 cursor-not-allowed"
-                : "text-slate-300 hover:text-white"
+                ? 'text-slate-500 cursor-not-allowed'
+                : 'text-slate-300 hover:text-white'
             }`}
-            style={{ backgroundColor: "#212121" }}
+            style={{ backgroundColor: '#212121' }}
           >
             ›
           </button>
@@ -170,16 +161,16 @@ function formatPrice(n: number) {
   return `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 }
 function formatAmount(n: number, symbol: string) {
-  const base = symbol.split("/")[0]; // "BTC/USDT" -> "BTC"
+  const base = symbol.split('/')[0]; // "BTC/USDT" -> "BTC"
   return `${n.toFixed(9)} ${base}`;
 }
 function formatDateTime(iso: string) {
   // เวลาแบบเดิม"13-08-2025 14:30"
   const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
   return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
 }

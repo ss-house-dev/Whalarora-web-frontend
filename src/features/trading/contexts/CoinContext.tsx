@@ -1,13 +1,7 @@
-"use client";
+'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import Image from "next/image";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
 interface Coin {
   value: string; // e.g., "BINANCE:BTCUSDT"
@@ -24,12 +18,10 @@ interface CoinContextType {
 
 const CoinContext = createContext<CoinContextType | undefined>(undefined);
 
-export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCoin, setSelectedCoin] = useState<Coin>({
-    value: "BINANCE:BTCUSDT",
-    label: "BTC/USDT",
+    value: 'BINANCE:BTCUSDT',
+    label: 'BTC/USDT',
     icon: (
       <Image
         src="/currency-icons/bitcoin-icon.svg"
@@ -49,20 +41,18 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({
       />
     ),
   });
-  const [marketPrice, setMarketPrice] = useState<string>("");
+  const [marketPrice, setMarketPrice] = useState<string>('');
 
   const fetchMarketPrice = useCallback(async () => {
     try {
-      const symbol = selectedCoin.value.replace("BINANCE:", "");
-      const response = await fetch(
-        `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
-      );
+      const symbol = selectedCoin.value.replace('BINANCE:', '');
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
       const data = await response.json();
       const price = parseFloat(data.price).toFixed(2);
       setMarketPrice(price);
     } catch (error) {
-      console.error("Error fetching market price:", error);
-      setMarketPrice("");
+      console.error('Error fetching market price:', error);
+      setMarketPrice('');
     }
   }, [selectedCoin]);
 
@@ -73,9 +63,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchMarketPrice]);
 
   return (
-    <CoinContext.Provider
-      value={{ selectedCoin, setSelectedCoin, marketPrice }}
-    >
+    <CoinContext.Provider value={{ selectedCoin, setSelectedCoin, marketPrice }}>
       {children}
     </CoinContext.Provider>
   );
@@ -84,7 +72,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useCoinContext = () => {
   const context = useContext(CoinContext);
   if (!context) {
-    throw new Error("useCoinContext must be used within a CoinProvider");
+    throw new Error('useCoinContext must be used within a CoinProvider');
   }
   return context;
 };

@@ -1,6 +1,6 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { SymbolInfo } from "@/types/symbol-types";
+'use client';
+import React, { useState, useEffect } from 'react';
+import { SymbolInfo } from '@/types/symbol-types';
 
 interface USDTPair {
   symbol: string;
@@ -10,22 +10,17 @@ interface USDTPair {
 const BinanceUSDTPairs: React.FC = () => {
   const [pairs, setPairs] = useState<USDTPair[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const fetchUSDTPairs = async () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://api.binance.com/api/v3/exchangeInfo"
-      );
+      const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
       const data = await response.json();
 
       const usdtPairs: USDTPair[] = (data.symbols as SymbolInfo[])
-        .filter(
-          (symbol) =>
-            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
-        )
+        .filter((symbol) => symbol.quoteAsset === 'USDT' && symbol.status === 'TRADING')
         .map((symbol) => ({
           symbol: symbol.symbol,
           baseAsset: symbol.baseAsset,
@@ -34,7 +29,7 @@ const BinanceUSDTPairs: React.FC = () => {
 
       setPairs(usdtPairs);
     } catch (err) {
-      console.error("Error:", err);
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +62,7 @@ const BinanceUSDTPairs: React.FC = () => {
           disabled={loading}
           className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? "กำลังโหลด..." : "รีเฟรช"}
+          {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
         </button>
       </div>
 
