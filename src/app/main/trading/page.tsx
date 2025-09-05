@@ -1,6 +1,8 @@
-import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
-import AdvancedChart from "@/features/trading/components/Chart";
-import { CombinedCombobox } from "@/components/ui/combobox"; 
+import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
+import AdvancedChart from '@/features/trading/components/Chart';
+import { CombinedCombobox } from '@/components/ui/combobox';
+import OrderTableContainer from '@/features/trading/containers/OrderTableContainer';
+import DevOrderCardPreview from '@/features/trading/containers/DevOrderCardPreview';
 
 export default function MarketOrderPage() {
   return (
@@ -21,6 +23,16 @@ export default function MarketOrderPage() {
         <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[507px]">
           <MarketOrderContainer />
         </div>
+      </div>
+
+      {/* Order Table at bottom */}
+      <div className="flex-1">
+        <OrderTableContainer />
+      </div>
+
+      {/* Dev Order Card Preview */}
+      <div className="flex justify-center">
+        <DevOrderCardPreview />
       </div>
     </div>
   );
