@@ -137,3 +137,12 @@ input[type="number"] {
     background: var(--background);
   }
 }
+
+.tradingview-widget-copyright {
+  display: none !important;
+}
+
+.toolbar_bg {
+  background-color: #16171D !important;
+}
+
