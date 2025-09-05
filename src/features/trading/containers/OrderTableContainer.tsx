@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import OpenOrderContainer from "./OpenOrderContainer";
 import TradeHistoryContainer from "./TradeHistoryContainer";
+import DevOrderCardPreview from "./DevOrderCardPreview";
 
 export default function OrderTableContainer() {
   const [tab, setTab] = useState<"open" | "history">("open");
@@ -45,8 +46,8 @@ export default function OrderTableContainer() {
         </button>
       </div>
 
-      {/* Content (fixed frame + scroll inside) */}
-      <div className="flex-1 overflow-hidden">
+      {/* Content (fixed frame + scroll ข้างในได้) */}
+      <div className="flex-1 overflow-hidden mt-4">
         {tab === "open" ? <OpenOrderContainer /> : <TradeHistoryContainer />}
       </div>
       

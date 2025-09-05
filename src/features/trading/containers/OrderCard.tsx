@@ -22,24 +22,26 @@ export default function OrderCard({ order, onDelete }: Props) {
   const isBuy = order.side === "buy";
 
   const MetaLeft = () => (
-    <div className="flex items-center gap-3">
-      <span
-        className={`relative top-[3.5px] px-2 py-0.5 rounded-md text-[11px] font-semibold ${
-          isBuy ? "bg-green-700 text-white" : "bg-red-700 text-white"
-        }`}
+    <div className="flex items-center gap-3 ">
+      <div
+        className={`w-12 h-7 px-2 rounded-lg inline-flex justify-center items-center 
+        ${isBuy ? "bg-[#217871]" : "bg-[#D32F2F]"}`}
       >
-        {isBuy ? "Buy" : "Sell"}
-      </span>
-      <span className="text-white text-sm font-medium mt-1.5">
+        <span className="text-white text-xs font-normal leading-none ">
+          {isBuy ? "Buy" : "Sell"}
+        </span>
+      </div>
+      <span className="text-white text-sm font-medium mt-1 ml-5.5 mb-0.5">
         {order.pair}
       </span>
     </div>
   );
 
+
   // ใช้กับสถานะที่ไม่ใช่ partial/pending
   const TopRight = () => (
     <div className="self-center grid grid-cols-[1fr_auto] items-center gap-x-3">
-      {/* ยืดเต็มช่อง 1fr ให้กว้างเท่ากับตอนมี progress */}
+      {/* ยืดเต็มช่องไว้ก่อน ใส่ 1fr ให้กว้างเท่ากับตอนมี progress */}
       <div className="flex items-center gap-3 justify-end flex-wrap w-full min-w-0">
         <span className="text-slate-400 text-xs whitespace-nowrap">
           {order.datetime}
@@ -60,10 +62,12 @@ export default function OrderCard({ order, onDelete }: Props) {
       {onDelete ? (
         <button
           onClick={() => onDelete(order.id)}
-          className="p-1.5 rounded-md hover:bg-[#2A2A2A] transition-colors justify-self-end"
+          className="p-1.5 rounded-md justify-self-end transition-colors 
+               bg-transparent text-slate-400
+               hover:bg-[#2A2A2A] hover:text-blue-500"
           aria-label="Delete order"
         >
-          <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-500" />
+          <Trash2 className="w-4 h-4" />
         </button>
       ) : (
         <div />
@@ -103,17 +107,19 @@ export default function OrderCard({ order, onDelete }: Props) {
             {onDelete ? (
               <button
                 onClick={() => onDelete(order.id)}
-                className="p-1.5 rounded-md hover:bg-[#2A2A2A] transition-colors justify-self-end"
+                className="p-1.5 rounded-md justify-self-end transition-colors 
+               bg-transparent text-slate-400
+               hover:bg-[#2A2A2A] hover:text-blue-500"
                 aria-label="Delete order"
               >
-                <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                <Trash2 className="w-4 h-4" />
               </button>
             ) : (
               <div />
             )}
 
             {/* progress bar */}
-            <div className="col-start-1 mt-3">
+            <div className="col-start-1 mt-3 flex-1 ml-[32px]">
               <ProgressBar
                 filledAmount={order.filledAmount}
                 filledPercent={order.filledPercent ?? 0}
@@ -145,10 +151,12 @@ export default function OrderCard({ order, onDelete }: Props) {
             {onDelete ? (
               <button
                 onClick={() => onDelete(order.id)}
-                className="p-1.5 rounded-md hover:bg-[#2A2A2A] transition-colors justify-self-end"
+                className="p-1.5 rounded-md justify-self-end transition-colors 
+               bg-transparent text-slate-400
+               hover:bg-[#2A2A2A] hover:text-blue-500"
                 aria-label="Delete order"
               >
-                <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                <Trash2 className="w-4 h-4" />
               </button>
             ) : (
               <div />
@@ -164,7 +172,7 @@ export default function OrderCard({ order, onDelete }: Props) {
 
         {/* แถวล่าง (สถานะ) */}
         {order.status === "partial" && (
-          <div className="flex items-center text-yellow-400 text-xs mt-3">
+          <div className="flex items-center text-yellow-400 text-xs mt-1 ml-2">
             <span className="w-2 h-2 rounded-full bg-yellow-400 mr-2" />
             Partially Filled
           </div>

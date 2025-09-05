@@ -1,6 +1,7 @@
 import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
 import AdvancedChart from "@/features/trading/components/Chart";
 import OrderTableContainer from "@/features/trading/containers/OrderTableContainer";
+import DevOrderCardPreview from "@/features/trading/containers/DevOrderCardPreview";
 
 export default function MarketOrderPage() {
   return (
@@ -18,6 +19,11 @@ export default function MarketOrderPage() {
       {/* Order Table at bottom */}
       <div className="flex-1">
         <OrderTableContainer />
+      </div>
+
+      {/* Dev Order Card Preview */}
+      <div className="flex justify-center">
+        <DevOrderCardPreview />
       </div>
     </div>
   );
