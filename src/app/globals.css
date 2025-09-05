@@ -146,3 +146,18 @@ input[type="number"] {
   background-color: #16171D !important;
 }
 
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; 
+}
+
