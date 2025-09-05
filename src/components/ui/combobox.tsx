@@ -253,7 +253,7 @@ export function CombinedCombobox({ className = "" }: CombinedComboboxProps) {
 
   return (
     <div
-      className={`bg-[#16171D] h-[60px] flex items-center rounded-[12px] ${className}`}
+      className={`bg-[#16171D] h-[60px] w-[900px] flex items-center rounded-[12px] ${className}`}
     >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
