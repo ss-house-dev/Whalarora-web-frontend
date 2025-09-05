@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Header from "@/components/ui/header";
 
 export default function Home() {
@@ -9,12 +9,9 @@ export default function Home() {
   const Router = useRouter();
   const { data: session } = useSession();
 
-  const handleGetStartClick = () => {
-    if (session) {
-      Router.push("/main/trading");
-    } else {
-      signIn();
-    }
+  const handleTradeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    Router.push("/main/trading");
   };
 
   return (
@@ -28,7 +25,7 @@ export default function Home() {
       <Header />
 
       <div className="flex items-center justify-center bg-clip-text mt-[44px] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] text-[#52BAB2] text-[36px] font-[700] leading-relaxed">
-        Whalalora
+        Whalarora
       </div>
 
       <div className="flex flex-col items-center mt-3">
@@ -74,7 +71,7 @@ export default function Home() {
               }}
             >
               <div
-                onClick={handleGetStartClick}
+                onClick={handleTradeClick}
                 className={`text-white ${
                   isHoverDemo
                     ? "text-[20px] font-[400]"

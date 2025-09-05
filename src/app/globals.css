@@ -58,7 +58,6 @@ input[type="number"] {
 
 :root {
   --radius: 0.625rem;
-  /* Updated background with your gradient */
   --background: linear-gradient(180deg, #0C1A38 43.88%, #1A5063 100%);
   --foreground: oklch(0.985 0 0);
   --card: oklch(1 0 0);
@@ -93,7 +92,6 @@ input[type="number"] {
 }
 
 .dark {
-  /* Keep the same gradient for dark mode */
   --background: linear-gradient(180deg, #0C1A38 43.88%, #1A5063 100%);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -134,12 +132,17 @@ input[type="number"] {
   body {
     background: var(--background);
     @apply text-foreground;
-   
   }
-  
-  /* Make sure html element also has the gradient */
   html {
     background: var(--background);
-    
   }
 }
+
+.tradingview-widget-copyright {
+  display: none !important;
+}
+
+.toolbar_bg {
+  background-color: #16171D !important;
+}
+
