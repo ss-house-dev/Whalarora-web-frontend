@@ -53,6 +53,31 @@ export default function OrderCard({ order, onDelete }: Props) {
     return `${formattedNumber} ${baseCurrency}`;
   };
 
+  // ฟังก์ชันสำหรับจัดรูปแบบจำนวน Filled ให้แสดงแค่ 10 หลักแรก (ไม่ปัดเศษ)
+  const formatFilledAmount = (amount: string | undefined, pair: string): string => {
+    if (!amount) return '0';
+    
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return amount;
+    
+    // ดึงหน่วยจาก pair
+    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    
+    // แปลงเป็น string แล้วตัดให้เหลือแค่ 10 หลักแรก
+    const numStr = numAmount.toString();
+    let formattedNumber = numStr;
+    
+    if (numStr.length > 10) {
+      formattedNumber = numStr.substring(0, 10);
+      // ถ้าตัวสุดท้ายเป็นจุดทศนิยม ให้เอาออก
+      if (formattedNumber.endsWith('.')) {
+        formattedNumber = formattedNumber.slice(0, -1);
+      }
+    }
+    
+    return `${formattedNumber} ${baseCurrency}`;
+  };
+
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
@@ -136,7 +161,7 @@ export default function OrderCard({ order, onDelete }: Props) {
             {/* progress bar - แสดงเฉพาะ partial */}
             <div className="col-start-1 mt-3 flex-1 ml-[32px]">
               <ProgressBar
-                filledAmount={order.filledAmount}
+                filledAmount={formatFilledAmount(order.filledAmount, order.pair)}
                 filledPercent={order.filledPercent ?? 0}
               />
             </div>
