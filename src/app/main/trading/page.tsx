@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState } from 'react';
 import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
 import { CombinedCombobox } from '@/components/ui/combobox';
-import OrderTableContainer from '@/features/open-order/components/OrderTableContainer'; // Updated path
-import DevOrderCardPreview from '@/features/trading/containers/DevOrderCardPreview';
-import { OpenOrdersContainer } from '@/features/open-order/containers/OpenOrdersContainer';
+import OrderTableContainer from '@/features/open-order/components/OrderTableContainer'; 
 
 type OrderTabType = 'open' | 'history';
 
@@ -43,17 +41,12 @@ export default function MarketOrderPage() {
       </div>
 
       {/* Tabbed Orders Section */}
-      <div className="flex-1">
+      <div className="flex-1 mb-10">
         <OrderTableContainer
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onCancelOrder={handleCancelOrder}
         />
-      </div>
-
-      {/* Dev Order Card Preview */}
-      <div className="flex justify-center">
-        <DevOrderCardPreview />
       </div>
     </div>
   );

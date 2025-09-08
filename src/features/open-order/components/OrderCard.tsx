@@ -97,11 +97,11 @@ export default function OrderCard({ order, onDelete }: Props) {
     <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
       <div className="flex items-center gap-x-4 justify-end flex-wrap w-full min-w-0">
         <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-        <div className="flex items-center justify-between w-[220px] gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+        <div className="flex items-center justify-between w-[213px] gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
           <span className="text-[12px] font-medium text-white">{formatPrice(order.price)}</span>
         </div>
-        <div className="flex items-center w-[220px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+        <div className="flex items-center w-[213px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
           <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
         </div>
@@ -134,11 +134,11 @@ export default function OrderCard({ order, onDelete }: Props) {
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-              <div className="flex items-center justify-between w-[220px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{formatPrice(order.price)}</span>
               </div>
-              <div className="flex items-center w-[220px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
                 <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
               </div>

@@ -17,10 +17,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
     orders,
     pagination,
     loading,
-    error,
-    refreshOrders,
     setPage,
-    setLimit,
   } = useOpenOrders();
 
   // ใช้ pagination data จาก API แทนการคำนวณเอง
@@ -28,32 +25,13 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const totalPages = pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-red-800 font-medium">เกิดข้อผิดพลาด</h3>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
-          </div>
-          <button
-            onClick={refreshOrders}
-            className="text-red-800 hover:text-red-900 font-medium text-sm"
-          >
-            ลองใหม่
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+if (loading) {
+  return (
+    <div className="flex justify-center items-center h-full">
+      <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+}
 
   return (
     <div className="flex flex-col h-full">
