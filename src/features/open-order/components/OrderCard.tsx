@@ -37,6 +37,22 @@ export default function OrderCard({ order, onDelete }: Props) {
     return `${formattedNumber} USD`;
   };
 
+  // ฟังก์ชันสำหรับจัดรูปแบบจำนวนพร้อมหน่วยตาม pair
+  const formatAmount = (amount: string, pair: string): string => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return amount;
+    
+    // ดึงหน่วยจาก pair (ส่วนแรกของ pair เช่น BTC จาก BTC/USD)
+    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    
+    const formattedNumber = numAmount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8 // สำหรับ crypto ที่อาจมีทศนิยมเยอะ
+    });
+    
+    return `${formattedNumber} ${baseCurrency}`;
+  };
+
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
@@ -62,7 +78,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         </div>
         <div className="flex items-center w-[220px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
-          <span className="text-[12px] font-medium text-white">{order.amount}</span>
+          <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
         </div>
       </div>
       {onDelete ? (
@@ -99,7 +115,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               </div>
               <div className="flex items-center w-[220px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[12px] font-medium text-white">{order.amount}</span>
+                <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
               </div>
             </div>
 
