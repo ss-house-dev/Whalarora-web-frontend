@@ -73,7 +73,7 @@ export default function HoldingAssetsTable({
       <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
         <span>Total : {totalAssets} Assets</span>
 
-        {showPagination && totalPages > 1 && (
+        {showPagination && totalAssets > 0 && (
           <div className="flex items-center gap-1 text-xs">
             {/* Prev */}
             <button
@@ -93,10 +93,13 @@ export default function HoldingAssetsTable({
               const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
               const active = trio.fixed ? i === trio.activeIndex : p === page;
               const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
+              const isSingle = totalPages === 1;
               return (
                 <button
                   key={stableKey}
-                  onClick={() => changePage(p)}
+                  onClick={() => !isSingle && changePage(p)}
+                  disabled={isSingle}
+                  aria-disabled={isSingle}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                     active ? 'text-white border' : 'text-slate-400 hover:text-white'
                   }`}
