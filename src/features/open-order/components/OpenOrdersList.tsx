@@ -34,14 +34,6 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
     );
   }
 
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">ไม่มีคำสั่งซื้อที่เปิดอยู่</p>
-      </div>
-    );
-  }
-
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white border border-gray-200">
