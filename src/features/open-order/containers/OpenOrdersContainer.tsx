@@ -65,17 +65,22 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
           </div>
         ) : (
           orders.map((order) => {
-            // Type assertion with fallback values - ใช้ originalAmount แทน amount
+            // Type assertion with fallback values
+            const remainingAmount = order.amount; // amount คือจำนวนที่เหลือ
+            const originalAmount = order.originalAmount; // originalAmount คือจำนวนเดิม
+            const filledAmount = originalAmount - remainingAmount; // จำนวนที่ fill แล้ว
+            const filledPercent = originalAmount > 0 ? (filledAmount / originalAmount) * 100 : 0;
+
             const mappedOrder: Order = {
               id: order._id,
               side: order.side.toLowerCase() as 'buy' | 'sell',
               pair: `${order.symbol}/USDT`,
               datetime: order.createdAt || '',
               price: order.price.toString(),
-              amount: order.originalAmount.toString(), // เปลี่ยนจาก order.amount เป็น order.originalAmount
+              amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
               status: order.status.toLowerCase() as 'pending' | 'partial' | 'filled' | 'cancelled',
-              filledAmount: (order as any).filledAmount?.toString() || '0',
-              filledPercent: (order as any).filledPercent || 0,
+              filledAmount: filledAmount.toString(), // Filled ใช้ originalAmount - amount
+              filledPercent: filledPercent, // คำนวณเปอร์เซ็นต์จาก (originalAmount - amount) / originalAmount
               _id: order._id,
               symbol: order.symbol,
               createdAt: order.createdAt,
@@ -188,3 +193,6 @@ export const OpenOrdersContainer: React.FC<OpenOrdersContainerProps> = ({
     </div>
   );
 };
+
+// Add default export for backward compatibility
+export default OpenOrdersContainer;
