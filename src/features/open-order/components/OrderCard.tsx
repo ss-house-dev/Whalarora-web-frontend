@@ -38,10 +38,9 @@ export default function OrderCard({ order, onDelete }: Props) {
     </div>
   );
 
-  // ใช้กับสถานะที่ไม่ใช่ partial/pending
+  // ใช้กับสถานะที่ไม่ใช่ partial
   const TopRight = () => (
     <div className="self-center grid grid-cols-[1fr_auto] items-center gap-x-3">
-      {/* ยืดเต็มช่องไว้ก่อน ใส่ 1fr ให้กว้างเท่ากับตอนมี progress */}
       <div className="flex items-center gap-3 justify-end flex-wrap w-full min-w-0">
         <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
         <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
@@ -71,14 +70,13 @@ export default function OrderCard({ order, onDelete }: Props) {
 
   return (
     <div className="w-full rounded-xl border border-[#2A2A2A] bg-[#0D0F1A] px-4 py-3 mb-3">
-      {/* กริดหลัก 2 คอลัมน์ */}
       <div className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2 items-start">
         {/* แถวบน-ซ้าย */}
         <MetaLeft />
 
         {/* แถวบน-ขวา */}
         {order.status === 'partial' ? (
-          // partial: ใช้ layout แบบ pending + มี progress bar
+          // เฉพาะ partial เท่านั้นที่จะมี progress bar
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
@@ -106,7 +104,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               <div />
             )}
 
-            {/* progress bar */}
+            {/* progress bar - แสดงเฉพาะ partial */}
             <div className="col-start-1 mt-3 flex-1 ml-[32px]">
               <ProgressBar
                 filledAmount={order.filledAmount}
@@ -115,40 +113,8 @@ export default function OrderCard({ order, onDelete }: Props) {
             </div>
             <div />
           </div>
-        ) : order.status === 'pending' ? (
-          // pending: เลย์เอาต์เดียวกับ partial + ช่องว่างคงที่แทน progress
-          <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
-            <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
-              <span className="text-slate-400 text-xs whitespace-nowrap ">{order.datetime}</span>
-              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
-                <span className="text-slate-400 text-xs">Price</span>
-                <span className="text-[12px] font-medium text-white">{order.price}</span>
-              </div>
-              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
-                <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[12px] font-medium text-white">{order.amount}</span>
-              </div>
-            </div>
-
-            {onDelete ? (
-              <button
-                onClick={() => onDelete(order.id)}
-                className="p-1.5 rounded-md justify-self-end transition-colors 
-               bg-transparent text-slate-400
-               hover:bg-[#2A2A2A] hover:text-blue-500"
-                aria-label="Delete order"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            ) : (
-              <div />
-            )}
-
-            {/* ช่องว่างคงที่แทนความสูงบล็อก progress */}
-            <div className="col-start-1 mt-3 h-[8px]" />
-            <div />
-          </div>
         ) : (
+          // สถานะอื่นๆ ใช้ TopRight ปกติ
           <TopRight />
         )}
 

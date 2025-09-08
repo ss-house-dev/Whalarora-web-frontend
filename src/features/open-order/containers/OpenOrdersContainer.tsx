@@ -65,14 +65,14 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
           </div>
         ) : (
           orders.map((order) => {
-            // Type assertion with fallback values
+            // Type assertion with fallback values - ใช้ originalAmount แทน amount
             const mappedOrder: Order = {
               id: order._id,
               side: order.side.toLowerCase() as 'buy' | 'sell',
               pair: `${order.symbol}/USDT`,
               datetime: order.createdAt || '',
               price: order.price.toString(),
-              amount: order.amount.toString(),
+              amount: order.originalAmount.toString(), // เปลี่ยนจาก order.amount เป็น order.originalAmount
               status: order.status.toLowerCase() as 'pending' | 'partial' | 'filled' | 'cancelled',
               filledAmount: (order as any).filledAmount?.toString() || '0',
               filledPercent: (order as any).filledPercent || 0,
