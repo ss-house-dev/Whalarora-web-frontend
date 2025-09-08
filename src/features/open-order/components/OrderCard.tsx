@@ -24,6 +24,19 @@ interface Props {
 export default function OrderCard({ order, onDelete }: Props) {
   const isBuy = order.side === 'buy';
 
+  // ฟังก์ชันสำหรับจัดรูปแบบราคาเป็น USD
+  const formatPrice = (price: string): string => {
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice)) return price;
+    
+    const formattedNumber = numPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    return `${formattedNumber} USD`;
+  };
+
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
@@ -45,7 +58,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
         <div className="flex items-center justify-between w-[220px] gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
-          <span className="text-[12px] font-medium text-white">{order.price}</span>
+          <span className="text-[12px] font-medium text-white">{formatPrice(order.price)}</span>
         </div>
         <div className="flex items-center w-[220px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
@@ -82,7 +95,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
               <div className="flex items-center justify-between w-[220px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
-                <span className="text-[12px] font-medium text-white">{order.price}</span>
+                <span className="text-[12px] font-medium text-white">{formatPrice(order.price)}</span>
               </div>
               <div className="flex items-center w-[220px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
