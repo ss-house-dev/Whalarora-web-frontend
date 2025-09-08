@@ -23,6 +23,11 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
     setLimit,
   } = useOpenOrders();
 
+  // ใช้ pagination data จาก API แทนการคำนวณเอง
+  const currentPage = pagination?.page || 1;
+  const totalPages = pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
+  const totalItems = pagination?.total || orders.length;
+
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -69,8 +74,8 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
               price: order.price.toString(),
               amount: order.amount.toString(),
               status: order.status.toLowerCase() as 'pending' | 'partial' | 'filled' | 'cancelled',
-              filledAmount: (order as any).filledAmount?.toString() || '0', // Type assertion with fallback
-              filledPercent: (order as any).filledPercent || 0, // Type assertion with fallback
+              filledAmount: (order as any).filledAmount?.toString() || '0',
+              filledPercent: (order as any).filledPercent || 0,
               _id: order._id,
               symbol: order.symbol,
               createdAt: order.createdAt,
@@ -86,58 +91,85 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
         )}
       </div>
 
-      {/* Pagination */}
-      {showPagination && pagination.totalPages > 1 && (
+      {/* Footer */}
+      {showPagination && totalItems > 0 && (
         <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
           {/* Total */}
-          <span>Total : {pagination.total} Items</span>
+          <span>Total : {totalItems} Items</span>
 
-          {/* Pagination */}
-          <div className="flex items-center gap-1">
-            {/* Prev */}
-            <button
-              disabled={pagination.page === 1}
-              onClick={() => setPage(pagination.page - 1)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                pagination.page === 1
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              style={{ backgroundColor: '#212121' }}
-            >
-              ‹
-            </button>
-
-            {/* Visible pages */}
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+          {/* Pagination - แสดงเฉพาะเมื่อมีมากกว่า 1 หน้า */}
+          {totalPages > 0 && (
+            <div className="flex items-center gap-1">
+              {/* Prev */}
               <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                  pagination.page === p ? 'text-white' : 'text-slate-400 hover:text-white'
+                disabled={currentPage === 1}
+                onClick={() => setPage(Math.max(1, currentPage - 1))}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  currentPage === 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
                 }`}
-                style={{
-                  backgroundColor: pagination.page === p ? '#1F4293' : 'transparent',
-                }}
+                style={{ backgroundColor: '#212121' }}
               >
-                {p}
+                ‹
               </button>
-            ))}
 
-            {/* Next */}
-            <button
-              disabled={pagination.page === pagination.totalPages}
-              onClick={() => setPage(pagination.page + 1)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                pagination.page === pagination.totalPages
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              style={{ backgroundColor: '#212121' }}
-            >
-              ›
-            </button>
-          </div>
+              {/* Page numbers - แสดงแค่ 3 หน้า โดยให้หน้าปัจจุบันอยู่ตรงกลาง */}
+              {(() => {
+                const pages = [];
+                const maxVisible = 3; // แสดงแค่ 3 หน้า
+                
+                if (totalPages <= maxVisible) {
+                  // ถ้ามีหน้าน้อยกว่าหรือเท่ากับ 3 หน้า แสดงทุกหน้า
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  // ถ้ามีมากกว่า 3 หน้า แสดงแค่ 3 หน้า โดยให้หน้าปัจจุบันอยู่ตรงกลาง
+                  let startPage = Math.max(1, currentPage - 1);
+                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                  
+                  // ปรับ startPage ถ้า endPage ไม่ครบ 3 หน้า
+                  if (endPage - startPage + 1 < maxVisible) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                  }
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+                }
+
+                return pages.map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => totalPages > 1 ? setPage(pageNum) : undefined}
+                    disabled={totalPages <= 1}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
+                      currentPage === pageNum ? 'text-white' : 
+                      totalPages <= 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-400 hover:text-white'
+                    }`}
+                    style={{
+                      backgroundColor: currentPage === pageNum ? '#1F4293' : 'transparent',
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                ));
+              })()}
+
+              {/* Next */}
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  currentPage === totalPages
+                    ? 'text-slate-500 cursor-not-allowed'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+                style={{ backgroundColor: '#212121' }}
+              >
+                ›
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -149,7 +181,7 @@ export const OpenOrdersContainer: React.FC<OpenOrdersContainerProps> = ({
   ...props
 }) => {
   return (
-    <div className={className}>
+    <div className={`h-full ${className}`}>
       <OpenOrdersProvider>
         <OpenOrdersContent {...props} />
       </OpenOrdersProvider>
