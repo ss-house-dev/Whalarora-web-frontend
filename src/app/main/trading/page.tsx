@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Dispatch, SetStateAction } from 'react';
 import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
 import { CombinedCombobox } from '@/components/ui/combobox';
-import OrderTableContainer from '@/features/trading/containers/OrderTableContainer';
+import OrderTableContainer from '@/features/open-order/components/OrderTableContainer'; // Updated path
 import DevOrderCardPreview from '@/features/trading/containers/DevOrderCardPreview';
 import { OpenOrdersContainer } from '@/features/open-order/containers/OpenOrdersContainer';
 
@@ -16,15 +16,11 @@ export default function MarketOrderPage() {
   const handleCancelOrder = async (orderId: string) => {
     try {
       console.log('Cancelling order:', orderId);
-    
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
     } catch (error) {
       console.error('Cancel order error:', error);
     }
   };
-
 
   return (
     <div className="mx-[120px] mt-[20px] space-y-[20px] min-h-screen">
@@ -48,25 +44,11 @@ export default function MarketOrderPage() {
 
       {/* Tabbed Orders Section */}
       <div className="flex-1">
-        <div className="bg-white rounded-lg shadow-md">
-          {/* Tab Headers */}
-          <div className="border-b border-gray-200">
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-0">
-            {activeTab === 'open' ? (
-              <OpenOrdersContainer
-                className="w-full"
-                showPagination={true}
-                showRefreshButton={true}
-                onCancelOrder={handleCancelOrder}
-              />
-            ) : (
-              <OrderTableContainer />
-            )}
-          </div>
-        </div>
+        <OrderTableContainer
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onCancelOrder={handleCancelOrder}
+        />
       </div>
 
       {/* Dev Order Card Preview */}

@@ -11,6 +11,9 @@ export interface Order {
   status: 'pending' | 'partial' | 'filled' | 'cancelled';
   filledAmount?: string;
   filledPercent?: number;
+  _id?: string;
+  symbol?: string;
+  createdAt?: string;
 }
 
 interface Props {
