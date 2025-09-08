@@ -40,14 +40,14 @@ export default function OrderCard({ order, onDelete }: Props) {
 
   // ใช้กับสถานะที่ไม่ใช่ partial
   const TopRight = () => (
-    <div className="self-center grid grid-cols-[1fr_auto] items-center gap-x-3">
-      <div className="flex items-center gap-3 justify-end flex-wrap w-full min-w-0">
+    <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
+      <div className="flex items-center gap-x-4 justify-end flex-wrap w-full min-w-0">
         <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-        <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+        <div className="flex items-center justify-between w-[220px] gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
           <span className="text-[12px] font-medium text-white">{order.price}</span>
         </div>
-        <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+        <div className="flex items-center w-[220px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
           <span className="text-[12px] font-medium text-white">{order.amount}</span>
         </div>
@@ -80,11 +80,11 @@ export default function OrderCard({ order, onDelete }: Props) {
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center justify-between w-[220px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{order.price}</span>
               </div>
-              <div className="flex items-center gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center w-[220px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
                 <span className="text-[12px] font-medium text-white">{order.amount}</span>
               </div>
@@ -128,7 +128,7 @@ export default function OrderCard({ order, onDelete }: Props) {
 
         {/* แสดง Pending สำหรับทุกสถานะที่ไม่ใช่ partial */}
         {order.status !== 'partial' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[8px]">
+          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[2px]">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
             <span className="leading-none">Pending</span>
           </div>
