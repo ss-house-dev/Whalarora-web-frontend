@@ -118,7 +118,7 @@ export default function OrderCard({ order, onDelete }: Props) {
           <TopRight />
         )}
 
-        {/* แถวล่าง (สถานะ) */}
+        {/* แถวล่าง (สถานะ) - แสดงเฉพาะ Partially Filled และ Pending */}
         {order.status === 'partial' && (
           <div className="flex items-center text-yellow-400 text-xs mt-1 ml-2">
             <span className="w-2 h-2 rounded-full bg-yellow-400 mr-2" />
@@ -126,24 +126,11 @@ export default function OrderCard({ order, onDelete }: Props) {
           </div>
         )}
 
-        {order.status === 'pending' && (
+        {/* แสดง Pending สำหรับทุกสถานะที่ไม่ใช่ partial */}
+        {order.status !== 'partial' && (
           <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[8px]">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
             <span className="leading-none">Pending</span>
-          </div>
-        )}
-
-        {order.status === 'filled' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 mt-4 text-green-400 text-xs">
-            <span className="w-2 h-2 rounded-full bg-green-400" />
-            <span>Completed</span>
-          </div>
-        )}
-
-        {order.status === 'cancelled' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 mt-4 text-red-400 text-xs">
-            <span className="w-2 h-2 rounded-full bg-red-400" />
-            <span>Cancelled</span>
           </div>
         )}
       </div>
