@@ -42,7 +42,7 @@ export default function HoldingAssetsTable({
 
   return (
     <section
-      className={`w-[1304px] h-[792px] bg-[#16171D] rounded-2xl px-5 py-3 flex flex-col ${className}`}
+      className={`w-[1304px] h-[792px] m-[20px] bg-[#16171D] rounded-2xl px-5 py-3 flex flex-col ${className}`}
       role="region"
       aria-label="Holdings table container"
     >

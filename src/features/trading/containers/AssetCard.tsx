@@ -76,7 +76,7 @@ function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="w-36 shrink-0 h-11 inline-flex flex-col justify-center items-start rounded-xl">
+    <div className="w-36 shrink-0 h-11 inline-flex flex-col justify-center items-start rounded-xl gap-1">
       <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
@@ -109,7 +109,7 @@ export function AssetCard(props: AssetCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`w-full rounded-xl outline outline-1 outline-offset-[-1px] p-4 bg-transparent overflow-hidden font-['Alexandria'] ${className ?? ''}`}
+      className={`w-full rounded-xl outline outline-offset-[-1px] p-4 bg-transparent overflow-hidden font-['Alexandria'] ${className ?? ''}`}
       style={{ outlineColor: colors.gray500 }}
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
@@ -158,7 +158,7 @@ export function AssetCard(props: AssetCardProps) {
           <Stat label="Current price" value={`$ ${fmtMoney(currentPrice)}`} />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat label="Value" value={`$ ${fmtMoney(value)}`} />
-          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start">
+          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
