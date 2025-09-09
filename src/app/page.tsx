@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Header from '@/components/ui/header';
 
+const { data: session } = useSession();
+console.log("session.accessToken =", session?.accessToken);
+
+
 export default function Home() {
   const [isHoverDemo, setIsHoverDemo] = useState(false);
   const Router = useRouter();
