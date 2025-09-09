@@ -5,6 +5,7 @@ export interface Asset {
   amount: number;
   avgPrice: number;
   total: number;
+  currentPrice?: number;
   createdAt: string;
   updatedAt: string;
   __v: number;

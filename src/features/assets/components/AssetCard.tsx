@@ -83,7 +83,7 @@ function Stat({ label, value, isLoading = false }: {
   isLoading?: boolean;
 }) {
   return (
-    <div className="w-36 shrink-0 h-11 inline-flex flex-col justify-center items-start rounded-xl gap-1">
+    <div className="w-36 shrink-0 inline-flex flex-col justify-center items-start rounded-xl gap-1">
       <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
@@ -141,7 +141,7 @@ export function AssetCard(props: AssetCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`w-full p-4 border-1 border-[#666] rounded-[12px]`}
+      className="w-full max-w-[1248px] h-[80px] px-4 py-3 border border-[#666] rounded-[12px] flex items-center"
       style={{ outlineColor: colors.gray500 }}
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
@@ -191,43 +191,40 @@ export function AssetCard(props: AssetCardProps) {
           <Stat 
             label="Current price" 
             value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
-            isLoading={enableRealTimePrice && isPriceLoading}
           />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat 
             label="Value" 
             value={`$ ${fmtMoney(realTimeValue)}`} 
-            isLoading={enableRealTimePrice && isPriceLoading}
+           
           />
-          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
+          <div className="w-56 shrink-0 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
 
-            <div
-              className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
-              style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
-            >
-              {enableRealTimePrice && isPriceLoading ? (
-                <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
-              ) : (
-                <>
-                  ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
-                  {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
-                  {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                </>
-              )}
-            </div>
+ <div
+  className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
+  style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
+>
+  <>
+    ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
+    {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
+    {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+  </>
+</div>
+
           </div>
         </div>
         
         {/* Right: CTA */}
-        <button
-          onClick={onBuySell}
-          className="ml-auto shrink-0 h-9 px-6 lg:px-9 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
-        >
-          Buy/Sell
-        </button>
+          <button
+            onClick={onBuySell}
+            className="w-[128px] h-[32px] px-6 mr-[16px] rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
+          >
+            Buy/Sell
+          </button>
+
       </div>
     </motion.div>
   );

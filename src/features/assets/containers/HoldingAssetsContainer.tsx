@@ -16,19 +16,6 @@ const getAssetName = (symbol: string): string => {
   return nameMap[symbol] || symbol;
 };
 
-// Mock function สำหรับดึงราคาปัจจุบัน (ควรแทนที่ด้วย API จริง)
-const getCurrentPrices = async (symbols: string[]): Promise<Record<string, number>> => {
-  // ในที่นี้ควรเรียก API เพื่อดึงราคาปัจจุบัน
-  // เช่น จาก Binance API หรือ API อื่นๆ
-  const mockPrices: Record<string, number> = {
-    BTC: 65000,
-    ADA: 0.5,
-    ETH: 3000,
-    // เพิ่มสกุลเงินอื่นๆ ตามต้องการ
-  };
-  return mockPrices;
-};
-
 interface HoldingAssetsContainerProps {
   pageSize?: number;
 }
@@ -60,12 +47,10 @@ export default function HoldingAssetsContainer({
 
       setIsProcessing(true);
       try {
-        // ดึงราคาปัจจุบันของสินทรัพย์ทั้งหมด
-        const symbols = tradableAssets.map(asset => asset.symbol);
-        const currentPrices = await getCurrentPrices(symbols);
-
+        // ใช้ข้อมูลราคาที่กำหนดเอง หรือใช้ค่าคงที่
         const processedData = tradableAssets.map(asset => {
-          const currentPrice = currentPrices[asset.symbol] || 0;
+          // กำหนดราคาสินทรัพย์โดยตรงที่นี่
+          const currentPrice = 0.00; // ตัวอย่างราคา
           const value = asset.amount * currentPrice;
           const pnlAbs = value - asset.total;
           const pnlPct = asset.total > 0 ? pnlAbs / asset.total : 0;
