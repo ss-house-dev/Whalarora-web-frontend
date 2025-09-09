@@ -71,7 +71,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             {/* Logo and Text Create */}
             <div className="flex flex-col items-center">
               <Image
-                src="/assets/whalarora-logo.png"
+                src="/assets/whalarora-logo.svg"
                 alt="Logo"
                 width={105}
                 height={105}
