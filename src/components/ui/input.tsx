@@ -28,7 +28,6 @@ function Input({ className, type, suffixIcon, ...props }: InputProps) {
     );
   }
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
@@ -40,7 +39,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };
