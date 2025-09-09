@@ -1,7 +1,7 @@
-"use client";
-import { useRouter } from "next/navigation";
-import { useSession, signIn } from "next-auth/react";
-import Image from "next/image";
+'use client';
+import { useRouter } from 'next/navigation';
+import { useSession, signIn } from 'next-auth/react';
+import Image from 'next/image';
 
 export default function Header() {
   const Router = useRouter();
@@ -9,33 +9,30 @@ export default function Header() {
 
   const handleGetStartClick = () => {
     if (session) {
-      Router.push("/main/trading");
+      Router.push('/main/trading');
     } else {
       signIn();
     }
   };
 
   const handleLogoClick = () => {
-    Router.push("/");
+    Router.push('/');
   };
 
   const handleTradeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    Router.push("/main/trading");
+    Router.push('/main/trading');
   };
 
   return (
     <header
       style={{
-        background: "rgba(255, 255, 255, 0.12)",
-        boxShadow: "0 4px 4px 0 rgba(0, 0, 0, 0.30)",
+        background: 'rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 4px 4px 0 rgba(0, 0, 0, 0.30)',
       }}
       className="relative z-10 flex justify-between items-center max-w-[1200px] mx-auto px-10 py-2 rounded-b-2xl"
     >
-      <div
-        onClick={handleLogoClick}
-        className="flex items-center space-x-13 cursor-pointer"
-      >
+      <div onClick={handleLogoClick} className="flex items-center space-x-13 cursor-pointer">
         <Image
           src="/assets/whalarora-logo.svg"
           alt="Logo"

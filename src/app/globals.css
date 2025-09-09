@@ -1,18 +1,18 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 @plugin "daisyui";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ซ่อนปุ่มลูกศรใน Chrome, Safari, Edge, Opera */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
 /* ซ่อนปุ่มลูกศรใน Firefox */
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
@@ -92,7 +92,7 @@ input[type="number"] {
 }
 
 .dark {
-  --background: linear-gradient(180deg, #0C1A38 43.88%, #1A5063 100%);
+  --background: linear-gradient(180deg, #0c1a38 43.88%, #1a5063 100%);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -143,7 +143,7 @@ input[type="number"] {
 }
 
 .toolbar_bg {
-  background-color: #16171D !important;
+  background-color: #16171d !important;
 }
 
 @layer base {
@@ -154,4 +154,3 @@ input[type="number"] {
     @apply bg-background text-foreground;
   }
 }
-

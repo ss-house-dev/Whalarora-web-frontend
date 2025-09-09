@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { useAddCashToTrade } from "@/features/wallet/hooks/useCreateCash";
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import { useAddCashToTrade } from '@/features/wallet/hooks/useCreateCash';
 
 export const useNavbar = () => {
   const router = useRouter();
@@ -13,10 +13,10 @@ export const useNavbar = () => {
 
   const addCashMutation = useAddCashToTrade({
     onSuccess: (data) => {
-      console.log("Updated balance:", data);
+      console.log('Updated balance:', data);
     },
     onError: (error) => {
-      console.error("Deposit error:", error.message);
+      console.error('Deposit error:', error.message);
     },
   });
 
@@ -26,27 +26,24 @@ export const useNavbar = () => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target as Node)
-      ) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
     };
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setOpen(false);
         setUserMenuOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
 
     return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
     };
   }, []);
 
@@ -63,11 +60,11 @@ export const useNavbar = () => {
   };
 
   const handleLogoClick = () => {
-    router.push("/");
+    router.push('/');
   };
 
   const handleSignInClick = () => {
-    router.push("/auth/sign-in");
+    router.push('/auth/sign-in');
   };
 
   const toggleBalanceMenu = () => {

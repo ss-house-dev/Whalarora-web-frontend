@@ -5,19 +5,15 @@ import { CoinProvider } from "@/features/trading/contexts/CoinContext";
 import Sidebar from "@/components/Sidebar";  // Import Sidebar component
 
 const alexandria = Alexandria({
-  subsets: ["latin"],
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Whalalora | Trading",
-  description: "Trading page",
+  title: 'Whalalora | Trading',
+  description: 'Trading page',
 };
 
-export default function TradingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function TradingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`min-h-screen overflow-x-hidden ${alexandria.className}`}>
       <CoinProvider>

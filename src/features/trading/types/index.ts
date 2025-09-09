@@ -6,7 +6,7 @@ export interface CreateBuyOrderRequest {
 }
 
 export interface CreateBuyOrderResponse {
-  options: ("CANCEL" | "KEEP_OPEN")[];
+  options: ('CANCEL' | 'KEEP_OPEN')[];
   requiresConfirmation: boolean;
   orderRef: string;
   filled: number;
