@@ -16,7 +16,6 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const {
     orders,
     pagination,
-    loading,
     setPage,
   } = useOpenOrders();
 
@@ -25,20 +24,12 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const totalPages = pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
 
-if (loading) {
-  return (
-    <div className="flex justify-center items-center h-full">
-      <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-}
-
   return (
     <div className="flex flex-col h-full">
       {/* Order list */}
       <div className="flex-1 overflow-y-auto pr-2">
         {orders.length === 0 ? (
-          <div className="text-slate-400 text-sm flex justify-center items-center h-full">
+          <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
         ) : (
@@ -74,85 +65,66 @@ if (loading) {
         )}
       </div>
 
-      {/* Footer */}
-      {showPagination && totalItems > 0 && (
+      {/* Footer - แสดงเสมอ */}
+      {showPagination && (
         <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
           {/* Total */}
           <span>Total : {totalItems} Items</span>
 
-          {/* Pagination - แสดงเฉพาะเมื่อมีมากกว่า 1 หน้า */}
-          {totalPages > 0 && (
-            <div className="flex items-center gap-1">
-              {/* Prev */}
+          {/* Pagination - แสดงเสมอ */}
+          <div className="flex items-center gap-1">
+            {/* Prev */}
+            <button
+              disabled={currentPage === 1 || totalPages === 0}
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                currentPage === 1 || totalPages === 0 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
+              }`}
+              style={{ backgroundColor: '#212121' }}
+            >
+              ‹
+            </button>
+
+            {/* Page numbers - แสดงทุกหน้า หรืออย่างน้อย 1 หน้า */}
+            {totalPages > 0 ? (
+              Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
+                    currentPage === pageNum ? 'text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                  style={{
+                    backgroundColor: currentPage === pageNum ? '#1F4293' : 'transparent',
+                  }}
+                >
+                  {pageNum}
+                </button>
+              ))
+            ) : (
               <button
-                disabled={currentPage === 1}
-                onClick={() => setPage(Math.max(1, currentPage - 1))}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  currentPage === 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
-                }`}
-                style={{ backgroundColor: '#212121' }}
+                disabled
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 cursor-not-allowed"
+                style={{ backgroundColor: 'transparent' }}
               >
-                ‹
+                1
               </button>
+            )}
 
-              {/* Page numbers - แสดงแค่ 3 หน้า โดยให้หน้าปัจจุบันอยู่ตรงกลาง */}
-              {(() => {
-                const pages = [];
-                const maxVisible = 3; // แสดงแค่ 3 หน้า
-                
-                if (totalPages <= maxVisible) {
-                  // ถ้ามีหน้าน้อยกว่าหรือเท่ากับ 3 หน้า แสดงทุกหน้า
-                  for (let i = 1; i <= totalPages; i++) {
-                    pages.push(i);
-                  }
-                } else {
-                  // ถ้ามีมากกว่า 3 หน้า แสดงแค่ 3 หน้า โดยให้หน้าปัจจุบันอยู่ตรงกลาง
-                  let startPage = Math.max(1, currentPage - 1);
-                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-                  
-                  // ปรับ startPage ถ้า endPage ไม่ครบ 3 หน้า
-                  if (endPage - startPage + 1 < maxVisible) {
-                    startPage = Math.max(1, endPage - maxVisible + 1);
-                  }
-                  
-                  for (let i = startPage; i <= endPage; i++) {
-                    pages.push(i);
-                  }
-                }
-
-                return pages.map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => totalPages > 1 ? setPage(pageNum) : undefined}
-                    disabled={totalPages <= 1}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                      currentPage === pageNum ? 'text-white' : 
-                      totalPages <= 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-400 hover:text-white'
-                    }`}
-                    style={{
-                      backgroundColor: currentPage === pageNum ? '#1F4293' : 'transparent',
-                    }}
-                  >
-                    {pageNum}
-                  </button>
-                ));
-              })()}
-
-              {/* Next */}
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  currentPage === totalPages
-                    ? 'text-slate-500 cursor-not-allowed'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-                style={{ backgroundColor: '#212121' }}
-              >
-                ›
-              </button>
-            </div>
-          )}
+            {/* Next */}
+            <button
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                currentPage === totalPages || totalPages === 0
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              style={{ backgroundColor: '#212121' }}
+            >
+              ›
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -172,5 +144,4 @@ export const OpenOrdersContainer: React.FC<OpenOrdersContainerProps> = ({
   );
 };
 
-// Add default export for backward compatibility
 export default OpenOrdersContainer;

@@ -1,21 +1,29 @@
 import { useState } from 'react';
-import OrderCard, { Order } from './OrderCard';
+
+// Order type definition
+export interface Order {
+  id: string;
+  side: 'buy' | 'sell';
+  pair: string;
+  datetime: string;
+  price: string;
+  amount: string;
+  status: 'filled' | 'cancelled';
+}
+
+// OrderCard component with proper typing
+const OrderCard = ({ order }: { order: Order }) => (
+  <div className="p-3 border-b border-slate-700">
+    <div className="text-sm text-white">{order.pair}</div>
+  </div>
+);
 
 export default function TradeHistoryContainer() {
   const [page, setPage] = useState(1);
   const perPage = 10;
 
-  const [orders] = useState<Order[]>(
-    Array.from({ length: 15 }, (_, i) => ({
-      id: `${i + 1}`,
-      side: i % 2 === 0 ? 'buy' : 'sell',
-      pair: 'BTC/USDT',
-      datetime: '13-08-2025 14:30',
-      price: '120,000.00 USD',
-      amount: '0.010000000 BTC',
-      status: i % 3 === 0 ? 'filled' : 'cancelled',
-    }))
-  );
+  // เปลี่ยนจากการสร้างข้อมูลตัวอย่างเป็น array ว่าง
+  const [orders] = useState<Order[]>([]);
 
   const totalPages = Math.ceil(orders.length / perPage);
   const currentOrders = orders.slice((page - 1) * perPage, page * perPage);
@@ -25,7 +33,7 @@ export default function TradeHistoryContainer() {
       {/* Order list */}
       <div className="flex-1 overflow-y-auto pr-2">
         {currentOrders.length === 0 ? (
-          <div className="text-slate-400 text-sm flex justify-center items-center h-full">
+          <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No trade history
           </div>
         ) : (
@@ -42,10 +50,10 @@ export default function TradeHistoryContainer() {
         <div className="flex items-center gap-1">
           {/* Prev */}
           <button
-            disabled={page === 1}
+            disabled={page === 1 || totalPages === 0}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              page === 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
+              page === 1 || totalPages === 0 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
             }`}
             style={{ backgroundColor: '#212121' }}
           >
@@ -53,27 +61,37 @@ export default function TradeHistoryContainer() {
           </button>
 
           {/* Visible pages */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+          {totalPages > 0 ? (
+            Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
+                  page === p ? 'text-white' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{
+                  backgroundColor: page === p ? '#1F4293' : 'transparent',
+                }}
+              >
+                {p}
+              </button>
+            ))
+          ) : (
             <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                page === p ? 'text-white' : 'text-slate-400 hover:text-white'
-              }`}
-              style={{
-                backgroundColor: page === p ? '#1F4293' : 'transparent',
-              }}
+              disabled
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 cursor-not-allowed"
+              style={{ backgroundColor: 'transparent' }}
             >
-              {p}
+              1
             </button>
-          ))}
+          )}
 
           {/* Next */}
           <button
-            disabled={page === totalPages}
+            disabled={page === totalPages || totalPages === 0}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              page === totalPages
+              page === totalPages || totalPages === 0
                 ? 'text-slate-500 cursor-not-allowed'
                 : 'text-slate-300 hover:text-white'
             }`}
