@@ -47,17 +47,17 @@ export default function HoldingAssetsTable({
       aria-label="Holdings table container"
     >
       {/* Title */}
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-white/90 text-sm font-medium pl-1">{title}</h3>
+      <div className="mb-5 lg:mb-6 flex items-center justify-between">
+        <h3 className="text-white/90 text-xl font pl-1">{title}</h3>
       </div>
 
       {/* Content area */}
       <div className="relative flex-1 overflow-hidden">
         <div
           className="h-full overflow-auto pr-4"
-          style={{ scrollbarGutter: 'stable both-edges', overscrollBehavior: 'contain' }}
+          style={{ scrollbarGutter: 'stable', overscrollBehavior: 'contain' }}
         >
-          <div className="px-5">
+          <div className="px-0">
             {totalAssets === 0 ? (
               <div className="mt-6 flex justify-center">
                 <p className="text-slate-300 text-sm">No holding asset.</p>
