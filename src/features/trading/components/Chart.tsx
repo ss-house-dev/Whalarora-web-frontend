@@ -20,7 +20,7 @@ const AdvancedChart = () => {
       width="900px"
       height="540"
       theme="dark"
-      interval="1"
+      interval="15"
     />
   );
 };
