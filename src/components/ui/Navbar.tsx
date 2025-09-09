@@ -109,7 +109,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
         <div className="flex flex-row items-center gap-5">
           <Image
             onClick={handleLogoClick}
-            src="/assets/whalarora-logo.png"
+            src="/assets/whalarora-logo.svg"
             alt="Whalarora Logo"
             width={40}
             height={40}
