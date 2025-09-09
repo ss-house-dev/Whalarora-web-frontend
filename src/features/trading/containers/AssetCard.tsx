@@ -76,12 +76,14 @@ function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="w-36 h-11 inline-flex flex-col justify-center items-start rounded-xl">
+    <div className="w-36 shrink-0 h-11 inline-flex flex-col justify-center items-start rounded-xl">
       <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
       {/* เพิ่ม: + nowrap เพื่อคุมความสูง/ความกว้างตัวเลข */}
-      <div className="text-base leading-normal text-white whitespace-nowrap">{value}</div>
+      <div className="text-base leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis">
+        {value}
+      </div>
     </div>
   );
 }
@@ -111,9 +113,12 @@ export function AssetCard(props: AssetCardProps) {
       className={`w-full rounded-xl outline outline-1 outline-offset-[-1px] p-4 bg-transparent overflow-hidden font-['Alexandria'] ${className ?? ''}`}
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
-        {/* Left: Ticker + amount */}
-        <div className="min-w-[260px] lg:pr-6 lg:border-r" style={{ borderColor: colors.gray600 }}>
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
+        {/* Left: Ticker + amount (fixed width so all rows align) */}{' '}
+        <div
+          className="w-[260px] flex-none pr-4 lg:pr-6 lg:border-r"
+          style={{ borderColor: colors.gray600 }}
+        >
           <div className="flex items-center gap-4">
             {/* Token icon */}
             <div className="w-10 h-10 relative">
@@ -148,19 +153,18 @@ export function AssetCard(props: AssetCardProps) {
             </div>
           </div>
         </div>
-
         {/* Middle: stats */}
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-nowrap items-center gap-6 flex-1 min-w-0">
           <Stat label="Current price" value={`$ ${fmtMoney(currentPrice)}`} />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat label="Value" value={`$ ${fmtMoney(value)}`} />
-          <div className="w-48 h-11 inline-flex flex-col justify-center items-start">
+          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
             {/* เพิ่ม: nowrap ป้องกันขึ้นบรรทัด */}
             <div
-              className="w-44 text-base leading-normal flex items-center gap-1 whitespace-nowrap"
+              className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: isGain ? colors.success : '#FF6B6B' }}
             >
               ${fmtMoney(Math.abs(pnlAbs))} ({isGain ? '+' : '-'}
@@ -169,11 +173,10 @@ export function AssetCard(props: AssetCardProps) {
             </div>
           </div>
         </div>
-
         {/* Right: CTA */}
         <button
           onClick={onBuySell}
-          className="ml-auto h-9 px-6 lg:px-9 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
+          className="ml-auto shrink-0 h-9 px-6 lg:px-9 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
         >
           Buy/Sell
         </button>
