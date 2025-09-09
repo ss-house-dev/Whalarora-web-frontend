@@ -60,8 +60,9 @@ export default function OpenOrderContainer() {
         const json: OrdersResponse = await res.json();
         setOrders(json.data.map(mapToOrder));
         setTotal(json.total);
-      } catch (e: any) {
-        setErr(e?.message ?? 'Something went wrong');
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong';
+        setErr(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -82,7 +83,7 @@ export default function OpenOrderContainer() {
       // ลบสำเร็จ — ไม่มีอะไรเพิ่ม หรืออาจจะมีแจ้งเตือนว่ากดลบ ไม่รู้
       // อาจ refetch หน้านี้อีกครั้ง เผื่อหลังบ้านเปลี่ยน total
       setTotal((t) => Math.max(0, t - 1));
-    } catch (e) {
+    } catch {
       // rollback ถ้าลบไม่ผ่าน
       setOrders(prev);
       alert('ลบคำสั่งไม่สำเร็จ');

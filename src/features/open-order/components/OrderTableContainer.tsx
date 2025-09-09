@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { OpenOrdersContainer } from '../containers/OpenOrdersContainer'; // Corrected named import
 import TradeHistoryContainer from './TradeHistoryContainer';
 
