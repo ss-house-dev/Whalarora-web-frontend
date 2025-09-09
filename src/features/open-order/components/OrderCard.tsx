@@ -54,7 +54,7 @@ export default function OrderCard({ order, onDelete }: Props) {
   };
 
   // ฟังก์ชันสำหรับจัดรูปแบบจำนวน Filled ให้แสดงแค่ 10 หลักแรก (ไม่ปัดเศษ)
-  const formatFilledAmount = (amount: string | undefined, pair: string): string => {
+   const formatFilledAmount = (amount: string | undefined, pair: string): string => {
     if (!amount) return '0';
     
     const numAmount = parseFloat(amount);
@@ -63,21 +63,48 @@ export default function OrderCard({ order, onDelete }: Props) {
     // ดึงหน่วยจาก pair
     const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
     
-    // แปลงเป็น string แล้วตัดให้เหลือแค่ 10 หลักแรก
+    // แปลงเลขเป็น string แล้วนับจำนวนหลักทั้งหมด
     const numStr = numAmount.toString();
-    let formattedNumber = numStr;
+    let formattedNumber: string;
     
-    if (numStr.length > 10) {
-      formattedNumber = numStr.substring(0, 10);
-      // ถ้าตัวสุดท้ายเป็นจุดทศนิยม ให้เอาออก
-      if (formattedNumber.endsWith('.')) {
-        formattedNumber = formattedNumber.slice(0, -1);
+    // นับจำนวนหลักทั้งหมด (รวมหน้าหลังจุดทศนิยม ไม่นับจุด)
+    const totalDigits = numStr.replace('.', '').length;
+    
+    if (totalDigits >= 10) {
+      // ถ้ามีครบ 10 หลักแล้ว ให้ตัดเอาแค่ 10 หลักแรก
+      const digitsOnly = numStr.replace('.', '');
+      const decimalIndex = numStr.indexOf('.');
+      
+      if (decimalIndex === -1) {
+        // ไม่มีทศนิยม ให้เอาแค่ 10 หลักแรก
+        formattedNumber = digitsOnly.substring(0, 10);
+      } else {
+        // มีทศนิยม ให้จัดรูปแบบใหม่
+        const beforeDecimal = numStr.substring(0, decimalIndex);
+        const afterDecimal = numStr.substring(decimalIndex + 1);
+        const remainingDigits = 10 - beforeDecimal.length;
+        
+        if (remainingDigits > 0) {
+          formattedNumber = beforeDecimal + '.' + afterDecimal.substring(0, remainingDigits);
+        } else {
+          formattedNumber = beforeDecimal.substring(0, 10);
+        }
+      }
+    } else {
+      // ถ้ายังไม่ครب 10 หลัก ให้เติม 0 ข้างหลัง
+      const digitsNeeded = 10 - totalDigits;
+      
+      if (numStr.includes('.')) {
+        // มีทศนิยมอยู่แล้ว ให้เติม 0 ข้างหลัง
+        formattedNumber = numStr + '0'.repeat(digitsNeeded);
+      } else {
+        // ไม่มีทศนิยม ให้เติมจุดทศนิยมและ 0
+        formattedNumber = numStr + '.' + '0'.repeat(digitsNeeded);
       }
     }
     
     return `${formattedNumber} ${baseCurrency}`;
   };
-
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
