@@ -1,7 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import getOpenOrders, {
   GetOpenOrdersResponse,
-  GetOpenOrdersRequest,
 } from '@/features/open-order/services/getOpenOrders';
 import { TradeQueryKeys, REFETCH_INTERVALS } from '@/features/open-order/constants';
 
