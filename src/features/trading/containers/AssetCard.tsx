@@ -100,7 +100,6 @@ export function AssetCard(props: AssetCardProps) {
     pnlPct,
     onBuySell,
     icon,
-    className,
   } = props;
 
   const isGain = pnlAbs >= 0;
@@ -109,7 +108,7 @@ export function AssetCard(props: AssetCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`w-full rounded-xl outline outline-offset-[-1px] p-4 bg-transparent overflow-hidden font-['Alexandria'] ${className ?? ''}`}
+      className={`w-full p-4 border-1 border-[#666] rounded-[12px]`}
       style={{ outlineColor: colors.gray500 }}
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">

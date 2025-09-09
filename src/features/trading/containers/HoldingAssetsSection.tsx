@@ -41,7 +41,7 @@ export default function HoldingAssetsSection({
       onPageChange={setPage}
       // showPagination: ใช้ค่าดีฟอลต์ true ตามไฟล์เดิม
     >
-      <div className="flex flex-col space-y-3">
+      <div className="flex flex-col space-y-[16px]">
         {pagedRows.map((r) => (
           <AssetCard
             key={r.id}
