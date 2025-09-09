@@ -41,7 +41,7 @@ export default function HoldingAssetsSection({
       onPageChange={setPage}
       // showPagination: ใช้ค่าดีฟอลต์ true ตามไฟล์เดิม
     >
-      <div className="flex flex-col divide-y divide-white/5">
+      <div className="flex flex-col space-y-3">
         {pagedRows.map((r) => (
           <AssetCard
             key={r.id}
@@ -54,7 +54,7 @@ export default function HoldingAssetsSection({
             pnlAbs={r.pnlAbs}
             pnlPct={r.pnlPct}
             onBuySell={() => {/* open trade modal */}}
-            className="outline-0 rounded-none"
+            className="outline-0 rounded-xl"
           />
         ))}
       </div>

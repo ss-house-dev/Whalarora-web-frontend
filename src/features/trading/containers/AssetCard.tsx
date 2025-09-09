@@ -115,7 +115,7 @@ export function AssetCard(props: AssetCardProps) {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
         {/* Left: Ticker + amount (fixed width so all rows align) */}{' '}
         <div
-          className="w-[260px] flex-none pr-4 lg:pr-6 lg:border-r"
+          className="w-[280px] flex-none pr-4 lg:pr-6 lg:border-r"
           style={{ borderColor: colors.gray600 }}
         >
           <div className="flex items-center gap-4">
@@ -132,8 +132,11 @@ export function AssetCard(props: AssetCardProps) {
             </div>
 
             <div className="flex flex-col gap-1">
-              <div className="text-white text-sm leading-tight max-w-[200px] truncate">
-                {truncateCode(symbol)} ({name})
+              <div
+                className="text-white text-sm leading-tight max-w-[240px] truncate"
+                title={`${symbol} (${name})`}
+              >
+                {symbol} ({name})
               </div>
               <div
                 className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5"
@@ -151,7 +154,7 @@ export function AssetCard(props: AssetCardProps) {
           </div>
         </div>
         {/* Middle: stats */}
-        <div className="flex flex-nowrap items-center gap-6 flex-1 min-w-0">
+        <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
           <Stat label="Current price" value={`$ ${fmtMoney(currentPrice)}`} />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat label="Value" value={`$ ${fmtMoney(value)}`} />
@@ -159,7 +162,7 @@ export function AssetCard(props: AssetCardProps) {
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
-      
+
             <div
               className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: isGain ? colors.success : '#FF6B6B' }}
