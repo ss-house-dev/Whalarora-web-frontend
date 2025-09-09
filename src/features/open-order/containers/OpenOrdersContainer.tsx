@@ -13,15 +13,12 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
-  const {
-    orders,
-    pagination,
-    setPage,
-  } = useOpenOrders();
+  const { orders, pagination, setPage } = useOpenOrders();
 
   // ใช้ pagination data จาก API แทนการคำนวณเอง
   const currentPage = pagination?.page || 1;
-  const totalPages = pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
+  const totalPages =
+    pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
 
   return (
@@ -78,7 +75,9 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
               disabled={currentPage === 1 || totalPages === 0}
               onClick={() => setPage(Math.max(1, currentPage - 1))}
               className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                currentPage === 1 || totalPages === 0 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
+                currentPage === 1 || totalPages === 0
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-slate-300 hover:text-white'
               }`}
               style={{ backgroundColor: '#212121' }}
             >

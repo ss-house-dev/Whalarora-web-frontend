@@ -77,9 +77,7 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <span
                   className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    order.side === 'BUY'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                    order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}
                 >
                   {order.side === 'BUY' ? 'ซื้อ' : 'ขาย'}
@@ -152,9 +150,7 @@ export const OpenOrdersPagination: React.FC<OpenOrdersPaginationProps> = ({
             </option>
           ))}
         </select>
-        <span className="text-sm text-gray-700">
-          จาก {total} รายการ
-        </span>
+        <span className="text-sm text-gray-700">จาก {total} รายการ</span>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -165,11 +161,11 @@ export const OpenOrdersPagination: React.FC<OpenOrdersPaginationProps> = ({
         >
           ก่อนหน้า
         </button>
-        
+
         <span className="text-sm text-gray-700">
           หน้า {currentPage} จาก {totalPages}
         </span>
-        
+
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}

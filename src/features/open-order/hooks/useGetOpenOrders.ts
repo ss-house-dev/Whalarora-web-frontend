@@ -1,5 +1,8 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import getOpenOrders, { GetOpenOrdersResponse, GetOpenOrdersRequest } from '@/features/open-order/services/getOpenOrders';
+import getOpenOrders, {
+  GetOpenOrdersResponse,
+  GetOpenOrdersRequest,
+} from '@/features/open-order/services/getOpenOrders';
 import { TradeQueryKeys, REFETCH_INTERVALS } from '@/features/open-order/constants';
 
 interface UseGetOpenOrdersOptions
@@ -9,11 +12,11 @@ interface UseGetOpenOrdersOptions
   autoRefresh?: boolean;
 }
 
-export const useGetOpenOrders = ({ 
-  page = 1, 
-  limit = 10, 
+export const useGetOpenOrders = ({
+  page = 1,
+  limit = 10,
   autoRefresh = true,
-  ...options 
+  ...options
 }: UseGetOpenOrdersOptions = {}) => {
   return useQuery({
     queryKey: [TradeQueryKeys.GET_OPEN_ORDERS, { page, limit }],

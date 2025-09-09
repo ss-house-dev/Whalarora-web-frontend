@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { createContext, useContext, useCallback, useState } from 'react';
 import { useGetOpenOrders } from '../hooks/useGetOpenOrders';
 import { OpenOrder, OpenOrdersState } from '../types';
@@ -10,13 +10,13 @@ interface OpenOrdersContextValue {
   pagination: OpenOrdersState['pagination'];
   loading: boolean;
   error: string | null;
-  
+
   // Actions
   refreshOrders: () => void;
   setPage: (page: number) => void;
   setLimit: (limit: number) => void;
   toggleAutoRefresh: () => void;
-  
+
   // Settings
   autoRefresh: boolean;
 }
@@ -40,12 +40,7 @@ export const OpenOrdersProvider: React.FC<OpenOrdersProviderProps> = ({
   const [limit, setCurrentLimit] = useState(initialLimit);
   const [autoRefresh, setAutoRefresh] = useState(initialAutoRefresh);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useGetOpenOrders({
+  const { data, isLoading, error, refetch } = useGetOpenOrders({
     page,
     limit,
     autoRefresh,
@@ -65,7 +60,7 @@ export const OpenOrdersProvider: React.FC<OpenOrdersProviderProps> = ({
   }, [refetch]);
 
   const toggleAutoRefresh = useCallback(() => {
-    setAutoRefresh(prev => !prev);
+    setAutoRefresh((prev) => !prev);
   }, []);
 
   const value: OpenOrdersContextValue = {
@@ -79,22 +74,18 @@ export const OpenOrdersProvider: React.FC<OpenOrdersProviderProps> = ({
     },
     loading: isLoading,
     error: error?.message || null,
-    
+
     // Actions
     refreshOrders,
     setPage,
     setLimit,
     toggleAutoRefresh,
-    
+
     // Settings
     autoRefresh,
   };
 
-  return (
-    <OpenOrdersContext.Provider value={value}>
-      {children}
-    </OpenOrdersContext.Provider>
-  );
+  return <OpenOrdersContext.Provider value={value}>{children}</OpenOrdersContext.Provider>;
 };
 
 export const useOpenOrders = (): OpenOrdersContextValue => {

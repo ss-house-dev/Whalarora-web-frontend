@@ -28,12 +28,12 @@ export default function OrderCard({ order, onDelete }: Props) {
   const formatPrice = (price: string): string => {
     const numPrice = parseFloat(price);
     if (isNaN(numPrice)) return price;
-    
+
     const formattedNumber = numPrice.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
-    
+
     return `${formattedNumber} USD`;
   };
 
@@ -41,40 +41,40 @@ export default function OrderCard({ order, onDelete }: Props) {
   const formatAmount = (amount: string, pair: string): string => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount)) return amount;
-    
+
     // ดึงหน่วยจาก pair (ส่วนแรกของ pair เช่น BTC จาก BTC/USD)
     const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
-    
+
     const formattedNumber = numAmount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 8 // สำหรับ crypto ที่อาจมีทศนิยมเยอะ
+      maximumFractionDigits: 8, // สำหรับ crypto ที่อาจมีทศนิยมเยอะ
     });
-    
+
     return `${formattedNumber} ${baseCurrency}`;
   };
 
   // ฟังก์ชันสำหรับจัดรูปแบบจำนวน Filled ให้แสดงแค่ 10 หลักแรก (ไม่ปัดเศษ)
-   const formatFilledAmount = (amount: string | undefined, pair: string): string => {
+  const formatFilledAmount = (amount: string | undefined, pair: string): string => {
     if (!amount) return '0';
-    
+
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount)) return amount;
-    
+
     // ดึงหน่วยจาก pair
     const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
-    
+
     // แปลงเลขเป็น string แล้วนับจำนวนหลักทั้งหมด
     const numStr = numAmount.toString();
     let formattedNumber: string;
-    
+
     // นับจำนวนหลักทั้งหมด (รวมหน้าหลังจุดทศนิยม ไม่นับจุด)
     const totalDigits = numStr.replace('.', '').length;
-    
+
     if (totalDigits >= 10) {
       // ถ้ามีครบ 10 หลักแล้ว ให้ตัดเอาแค่ 10 หลักแรก
       const digitsOnly = numStr.replace('.', '');
       const decimalIndex = numStr.indexOf('.');
-      
+
       if (decimalIndex === -1) {
         // ไม่มีทศนิยม ให้เอาแค่ 10 หลักแรก
         formattedNumber = digitsOnly.substring(0, 10);
@@ -83,7 +83,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         const beforeDecimal = numStr.substring(0, decimalIndex);
         const afterDecimal = numStr.substring(decimalIndex + 1);
         const remainingDigits = 10 - beforeDecimal.length;
-        
+
         if (remainingDigits > 0) {
           formattedNumber = beforeDecimal + '.' + afterDecimal.substring(0, remainingDigits);
         } else {
@@ -93,7 +93,7 @@ export default function OrderCard({ order, onDelete }: Props) {
     } else {
       // ถ้ายังไม่ครب 10 หลัก ให้เติม 0 ข้างหลัง
       const digitsNeeded = 10 - totalDigits;
-      
+
       if (numStr.includes('.')) {
         // มีทศนิยมอยู่แล้ว ให้เติม 0 ข้างหลัง
         formattedNumber = numStr + '0'.repeat(digitsNeeded);
@@ -102,7 +102,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         formattedNumber = numStr + '.' + '0'.repeat(digitsNeeded);
       }
     }
-    
+
     return `${formattedNumber} ${baseCurrency}`;
   };
   const MetaLeft = () => (
@@ -130,7 +130,9 @@ export default function OrderCard({ order, onDelete }: Props) {
         </div>
         <div className="flex items-center w-[213px] justify-between gap-2 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Amount</span>
-          <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
+          <span className="text-[12px] font-medium text-white">
+            {formatAmount(order.amount, order.pair)}
+          </span>
         </div>
       </div>
       {onDelete ? (
@@ -163,11 +165,15 @@ export default function OrderCard({ order, onDelete }: Props) {
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
               <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
-                <span className="text-[12px] font-medium text-white">{formatPrice(order.price)}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {formatPrice(order.price)}
+                </span>
               </div>
               <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[12px] font-medium text-white">{formatAmount(order.amount, order.pair)}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {formatAmount(order.amount, order.pair)}
+                </span>
               </div>
             </div>
 
