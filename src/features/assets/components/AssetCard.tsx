@@ -2,7 +2,30 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
-import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice'; // Import your existing hook
+
+// Mock hook for demonstration - replace with your actual hook
+const useMarketPrice = (symbol: string) => {
+  const [marketPrice, setMarketPrice] = React.useState<string>('');
+  const [isPriceLoading, setIsPriceLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!symbol) return;
+    
+    setIsPriceLoading(true);
+    // Mock API call with random price updates
+    const interval = setInterval(() => {
+      const basePrice = symbol === 'BTC' ? 50000 : symbol === 'ETH' ? 3000 : symbol === 'ADA' ? 0.5 : 8.5;
+      const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
+      const newPrice = basePrice * (1 + variation);
+      setMarketPrice(newPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setIsPriceLoading(false);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [symbol]);
+
+  return { marketPrice, isPriceLoading };
+};
 
 // Color palette from the brief (using Tailwind arbitrary values)
 const colors = {
@@ -141,10 +164,10 @@ export function AssetCard(props: AssetCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[1248px] h-[80px] px-4 py-3 border border-[#666] rounded-[12px] flex items-center"
+      className="w-full max-w-[1248px] h-[80px] pl-4 pr-4 py-3 border border-[#666] rounded-[12px] flex items-center"
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div
           className="w-[280px] flex-none pr-4 lg:pr-6 lg:border-r"
@@ -191,40 +214,43 @@ export function AssetCard(props: AssetCardProps) {
           <Stat 
             label="Current price" 
             value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
+            isLoading={enableRealTimePrice && isPriceLoading}
           />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat 
             label="Value" 
             value={`$ ${fmtMoney(realTimeValue)}`} 
-           
+            isLoading={enableRealTimePrice && isPriceLoading}
           />
-          <div className="w-56 shrink-0 inline-flex flex-col justify-center items-start gap-1">
+          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
 
- <div
-  className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
-  style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
->
-  <>
-    ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
-    {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
-    {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-  </>
-</div>
-
+            <div
+              className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
+              style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
+            >
+              {enableRealTimePrice && isPriceLoading ? (
+                <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
+              ) : (
+                <>
+                  ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
+                  {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
+                  {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                </>
+              )}
+            </div>
           </div>
         </div>
         
-        {/* Right: CTA */}
+        {/* Right: CTA with 16px margin from right edge */}
           <button
             onClick={onBuySell}
-            className="w-[128px] h-[32px] px-6 mr-[16px] rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
+            className="w-[128px] h-[32px] px-6 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
           >
             Buy/Sell
           </button>
-
       </div>
     </motion.div>
   );
