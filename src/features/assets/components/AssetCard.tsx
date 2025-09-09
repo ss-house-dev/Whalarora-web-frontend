@@ -1,7 +1,8 @@
 'use client';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice'; // Import your existing hook
 
 // Color palette from the brief (using Tailwind arbitrary values)
 const colors = {
@@ -23,8 +24,8 @@ export type AssetCardProps = {
   amount: number | string;
   /** e.g. BTC */
   unit?: string;
-  /** $ current price of 1 unit */
-  currentPrice: number;
+  /** $ current price of 1 unit - will be replaced by real-time price */
+  currentPrice?: number;
   /** $ average cost basis of 1 unit */
   averageCost: number;
   /** $ total position value */
@@ -39,6 +40,8 @@ export type AssetCardProps = {
   icon?: React.ReactNode;
   /** optional className passthrough */
   className?: string;
+  /** Enable real-time price updates (default: true) */
+  enableRealTimePrice?: boolean;
 };
 
 function fmtMoney(n: number) {
@@ -74,14 +77,22 @@ function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
 }
 /* -------------------------------------------------------------------------------------- */
 
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+function Stat({ label, value, isLoading = false }: { 
+  label: string; 
+  value: React.ReactNode; 
+  isLoading?: boolean;
+}) {
   return (
     <div className="w-36 shrink-0 h-11 inline-flex flex-col justify-center items-start rounded-xl gap-1">
       <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
-      <div className="text-base leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis">
-        {value}
+      <div className="text-base leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
+        {isLoading ? (
+          <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
+        ) : (
+          value
+        )}
       </div>
     </div>
   );
@@ -93,16 +104,38 @@ export function AssetCard(props: AssetCardProps) {
     name,
     amount,
     unit = symbol,
-    currentPrice,
+    currentPrice = 0,
     averageCost,
     value,
     pnlAbs,
     pnlPct,
     onBuySell,
     icon,
+    enableRealTimePrice = true,
   } = props;
 
-  const isGain = pnlAbs >= 0;
+  // Use real-time price if enabled
+  const { marketPrice, isPriceLoading } = useMarketPrice(enableRealTimePrice ? symbol : '');
+  
+  // Determine which price to display
+  const displayPrice = enableRealTimePrice && marketPrice 
+    ? parseFloat(marketPrice.replace(/,/g, ''))
+    : currentPrice;
+
+  // Calculate real-time PnL if we have market price
+  const realTimePnlAbs = enableRealTimePrice && marketPrice && typeof amount === 'number'
+    ? (displayPrice - averageCost) * amount
+    : pnlAbs;
+
+  const realTimePnlPct = enableRealTimePrice && marketPrice && averageCost > 0
+    ? (displayPrice - averageCost) / averageCost
+    : pnlPct;
+
+  const realTimeValue = enableRealTimePrice && marketPrice && typeof amount === 'number'
+    ? displayPrice * amount
+    : value;
+
+  const isRealTimeGain = realTimePnlAbs >= 0;
 
   return (
     <motion.div
@@ -112,7 +145,7 @@ export function AssetCard(props: AssetCardProps) {
       style={{ outlineColor: colors.gray500 }}
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12">
-        {/* Left: Ticker + amount (fixed width so all rows align) */}{' '}
+        {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div
           className="w-[280px] flex-none pr-4 lg:pr-6 lg:border-r"
           style={{ borderColor: colors.gray600 }}
@@ -152,11 +185,20 @@ export function AssetCard(props: AssetCardProps) {
             </div>
           </div>
         </div>
+        
         {/* Middle: stats */}
         <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
-          <Stat label="Current price" value={`$ ${fmtMoney(currentPrice)}`} />
+          <Stat 
+            label="Current price" 
+            value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
+            isLoading={enableRealTimePrice && isPriceLoading}
+          />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
-          <Stat label="Value" value={`$ ${fmtMoney(value)}`} />
+          <Stat 
+            label="Value" 
+            value={`$ ${fmtMoney(realTimeValue)}`} 
+            isLoading={enableRealTimePrice && isPriceLoading}
+          />
           <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
@@ -164,14 +206,21 @@ export function AssetCard(props: AssetCardProps) {
 
             <div
               className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
-              style={{ color: isGain ? colors.success : '#FF6B6B' }}
+              style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
             >
-              ${fmtMoney(Math.abs(pnlAbs))} ({isGain ? '+' : '-'}
-              {(Math.abs(pnlPct) * 100).toFixed(2)}%)
-              {isGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+              {enableRealTimePrice && isPriceLoading ? (
+                <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
+              ) : (
+                <>
+                  ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
+                  {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
+                  {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                </>
+              )}
             </div>
           </div>
         </div>
+        
         {/* Right: CTA */}
         <button
           onClick={onBuySell}
@@ -184,7 +233,7 @@ export function AssetCard(props: AssetCardProps) {
   );
 }
 
-/* --- Demo wrapper (unchanged; เขียนเผื่อไว้ ค่อยลบออกตอนเทสเสร็จ) --- */
+/* --- Demo wrapper with real-time prices --- */
 export default function Demo() {
   return (
     <div
@@ -192,20 +241,55 @@ export default function Demo() {
       style={{ backgroundColor: colors.surface, color: colors.white }}
     >
       <div className="max-w-5xl mx-auto p-4 space-y-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <AssetCard
-            key={i}
-            symbol="BTC"
-            name="Bitcoin"
-            amount={0.5}
-            currentPrice={115200}
-            averageCost={115200}
-            value={14285.63}
-            pnlAbs={14285.63}
-            pnlPct={0.02}
-            onBuySell={() => alert('Buy/Sell clicked')}
-          />
-        ))}
+        <AssetCard
+          symbol="BTC"
+          name="Bitcoin"
+          amount={0.5}
+          currentPrice={50000} // fallback price
+          averageCost={48000}
+          value={25000}
+          pnlAbs={1000}
+          pnlPct={0.0416}
+          onBuySell={() => alert('Buy/Sell BTC clicked')}
+          enableRealTimePrice={true}
+        />
+        <AssetCard
+          symbol="ETH"
+          name="Ethereum"
+          amount={2.5}
+          currentPrice={3000} // fallback price
+          averageCost={2800}
+          value={7500}
+          pnlAbs={500}
+          pnlPct={0.0714}
+          onBuySell={() => alert('Buy/Sell ETH clicked')}
+          enableRealTimePrice={true}
+        />
+        <AssetCard
+          symbol="ADA"
+          name="Cardano"
+          amount={1000}
+          currentPrice={0.5} // fallback price
+          averageCost={0.45}
+          value={500}
+          pnlAbs={50}
+          pnlPct={0.111}
+          onBuySell={() => alert('Buy/Sell ADA clicked')}
+          enableRealTimePrice={true}
+        />
+        {/* Example with real-time disabled */}
+        <AssetCard
+          symbol="DOT"
+          name="Polkadot"
+          amount={100}
+          currentPrice={8.5}
+          averageCost={8.0}
+          value={850}
+          pnlAbs={50}
+          pnlPct={0.0625}
+          onBuySell={() => alert('Buy/Sell DOT clicked')}
+          enableRealTimePrice={false} // Static price
+        />
       </div>
     </div>
   );
