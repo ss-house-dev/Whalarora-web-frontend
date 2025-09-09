@@ -1,16 +1,16 @@
-"use client";
-import { useEffect, useRef, useState } from "react";
+'use client';
+import { useEffect, useRef, useState } from 'react';
 
 interface AlertBoxProps {
   message: string;
-  type?: "success" | "info" | "error";
+  type?: 'success' | 'info' | 'error';
   onClose?: () => void;
   duration?: number;
 }
 
 export default function AlertBox({
   message,
-  type = "success",
+  type = 'success',
   onClose,
   duration = 3000,
 }: AlertBoxProps) {
@@ -60,15 +60,15 @@ export default function AlertBox({
 
   if (!show) return null;
 
-  const barWidth = progress > 2 ? `${progress}%` : "8px";
+  const barWidth = progress > 2 ? `${progress}%` : '8px';
 
   // กำหนดสีและไอคอนตาม type
   const getTypeConfig = () => {
     switch (type) {
-      case "success":
+      case 'success':
         return {
-          titleColor: "text-[#47CD89]",
-          title: "Order Placed",
+          titleColor: 'text-[#47CD89]',
+          title: 'Order Placed',
           icon: (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -86,9 +86,9 @@ export default function AlertBox({
         };
       default:
         return {
-          sidebarColor: "bg-blue-400",
-          titleColor: "text-blue-400",
-          title: "Information",
+          sidebarColor: 'bg-blue-400',
+          titleColor: 'text-blue-400',
+          title: 'Information',
           icon: (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -120,9 +120,7 @@ export default function AlertBox({
         <div className="pl-8 pr-8 space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex gap-[10px] items-center">
-              <div
-                className={`text-[14px] font-[500] ${typeConfig.titleColor}`}
-              >
+              <div className={`text-[14px] font-[500] ${typeConfig.titleColor}`}>
                 {typeConfig.title}
               </div>
               {typeConfig.icon}
@@ -146,9 +144,7 @@ export default function AlertBox({
           </div>
 
           {/* Dynamic message */}
-          <div className="text-white text-[14px] font-[400] whitespace-pre-line">
-            {message}
-          </div>
+          <div className="text-white text-[14px] font-[400] whitespace-pre-line">{message}</div>
 
           {/* Gradient bar - ระยะห่างซ้ายขวาเท่ากัน */}
           <div className="ml-1 -mr-2 flex items-center h-[7px] relative">
@@ -156,15 +152,14 @@ export default function AlertBox({
               className="h-[7px] transition-all duration-200"
               style={{
                 width: barWidth,
-                borderRadius: progress > 2 ? "999px" : "50%",
-                minWidth: "8px",
-                maxWidth: "100%",
-                boxShadow:
-                  progress <= 2 ? "0 0 6px 0 rgba(0,0,0,0.10)" : undefined,
+                borderRadius: progress > 2 ? '999px' : '50%',
+                minWidth: '8px',
+                maxWidth: '100%',
+                boxShadow: progress <= 2 ? '0 0 6px 0 rgba(0,0,0,0.10)' : undefined,
                 background:
-                  type === "info"
-                    ? "linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%), linear-gradient(90deg, #2563EB -1.46%, #60A5FA 99.99%)"
-                    : "linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%), linear-gradient(90deg, #1F4293 -1.46%, #26F6BA 99.99%)",
+                  type === 'info'
+                    ? 'linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%), linear-gradient(90deg, #2563EB -1.46%, #60A5FA 99.99%)'
+                    : 'linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.20) 100%), linear-gradient(90deg, #1F4293 -1.46%, #26F6BA 99.99%)',
               }}
             />
           </div>

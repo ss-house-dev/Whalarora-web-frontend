@@ -1,13 +1,9 @@
-import {
-  useQuery,
-  UseQueryOptions,
-} from "@tanstack/react-query";
-import getCoin, { 
-  GetCoinResponse 
-} from "@/features/trading/services/getCoin";
-import { TradeQueryKeys } from "@/features/trading/constants";
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import getCoin, { GetCoinResponse } from '@/features/trading/services/getCoin';
+import { TradeQueryKeys } from '@/features/trading/constants';
 
-interface UseGetCoinOptions extends Omit<UseQueryOptions<GetCoinResponse, Error>, 'queryKey' | 'queryFn'> {
+interface UseGetCoinOptions
+  extends Omit<UseQueryOptions<GetCoinResponse, Error>, 'queryKey' | 'queryFn'> {
   symbol: string;
 }
 

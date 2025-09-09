@@ -1,8 +1,8 @@
-"use client";
-import React, { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { SignInForm } from "@/features/auth/components/SignInForm";
+'use client';
+import React, { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { SignInForm } from '@/features/auth/components/SignInForm';
 
 interface SignInData {
   username: string;
@@ -14,11 +14,11 @@ const SignInContainer = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<SignInData>({
-    username: "",
-    password: "",
+    username: '',
+    password: '',
     rememberMe: false,
   });
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
   /**
@@ -32,17 +32,14 @@ const SignInContainer = () => {
    * Handles input changes for the sign-in form
    * @param field - The field being updated
    * @param value - The new value for the field
-   */ 
-  const handleInputChange = (
-    field: keyof SignInData,
-    value: string | boolean
-  ) => {
+   */
+  const handleInputChange = (field: keyof SignInData, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
     // Clear error when user starts typing
-    if (error) setError("");
+    if (error) setError('');
   };
 
   /**
@@ -50,40 +47,40 @@ const SignInContainer = () => {
    */
   const handleSignIn = async () => {
     try {
-      setError("");
+      setError('');
       setIsLoading(true);
 
       // Validate form
       if (!formData.username || !formData.password) {
-        setError("Please fill in all required fields");
+        setError('Please fill in all required fields');
         return;
       }
 
       // Use NextAuth signIn function
-      const result = await signIn("credentials", {
+      const result = await signIn('credentials', {
         userName: formData.username,
         password: formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid username or password. Please try again.");
+        setError('Invalid username or password. Please try again.');
       } else if (result?.ok) {
-        window.location.href = "/main/trading";
+        window.location.href = '/main/trading';
       }
     } catch {
-      setError("Sign in failed. Please try again.");
+      setError('Sign in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    router.push("/auth/forgot-password");
+    router.push('/auth/forgot-password');
   };
 
   const handleSignUp = () => {
-    router.push("/auth/sign-up");
+    router.push('/auth/sign-up');
   };
 
   const handleGoBack = () => {

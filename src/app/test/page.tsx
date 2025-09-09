@@ -1,7 +1,7 @@
-"use client";
-import React, { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
-import { SymbolInfo } from "@/types/symbol-types";
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import { SymbolInfo } from '@/types/symbol-types';
 
 interface USDTPair {
   symbol: string;
@@ -19,7 +19,7 @@ interface CoinGeckoResponse {
 const BinanceUSDTPairs: React.FC = () => {
   const [pairs, setPairs] = useState<USDTPair[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [coinIcons, setCoinIcons] = useState<Map<string, string>>(new Map());
 
   // ฟังก์ชันดึงไอคอนจาก CoinGecko
@@ -31,7 +31,7 @@ const BinanceUSDTPairs: React.FC = () => {
 
       for (let i = 0; i < symbols.length; i += batchSize) {
         const batch = symbols.slice(i, i + batchSize);
-        const symbolsQuery = batch.join(",").toLowerCase();
+        const symbolsQuery = batch.join(',').toLowerCase();
 
         try {
           const response = await fetch(
@@ -56,7 +56,7 @@ const BinanceUSDTPairs: React.FC = () => {
 
       setCoinIcons(iconMap);
     } catch (error) {
-      console.error("Error fetching coin icons:", error);
+      console.error('Error fetching coin icons:', error);
     }
   }, []);
 
@@ -64,16 +64,11 @@ const BinanceUSDTPairs: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://api.binance.com/api/v3/exchangeInfo"
-      );
+      const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
       const data = await response.json();
 
       const usdtPairs: USDTPair[] = (data.symbols as SymbolInfo[])
-        .filter(
-          (symbol) =>
-            symbol.quoteAsset === "USDT" && symbol.status === "TRADING"
-        )
+        .filter((symbol) => symbol.quoteAsset === 'USDT' && symbol.status === 'TRADING')
         .map((symbol) => ({
           symbol: symbol.symbol,
           baseAsset: symbol.baseAsset,
@@ -83,12 +78,10 @@ const BinanceUSDTPairs: React.FC = () => {
       setPairs(usdtPairs);
 
       // ดึงไอคอนของเหรียญทั้งหมด
-      const uniqueSymbols = [
-        ...new Set(usdtPairs.map((pair) => pair.baseAsset)),
-      ];
+      const uniqueSymbols = [...new Set(usdtPairs.map((pair) => pair.baseAsset))];
       await fetchCoinIcons(uniqueSymbols);
     } catch (err) {
-      console.error("Error:", err);
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
@@ -121,7 +114,7 @@ const BinanceUSDTPairs: React.FC = () => {
           disabled={loading}
           className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? "กำลังโหลด..." : "รีเฟรช"}
+          {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
         </button>
       </div>
 
@@ -141,15 +134,12 @@ const BinanceUSDTPairs: React.FC = () => {
           </thead>
           <tbody>
             {filteredPairs.map((pair, index) => (
-              <tr
-                key={pair.symbol}
-                className="border-t hover:bg-gray-500 hover:text-white"
-              >
+              <tr key={pair.symbol} className="border-t hover:bg-gray-500 hover:text-white">
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">
                   {coinIcons.get(pair.baseAsset) ? (
                     <Image
-                      src={coinIcons.get(pair.baseAsset) || ""}
+                      src={coinIcons.get(pair.baseAsset) || ''}
                       alt={`${pair.baseAsset} icon`}
                       width={24}
                       height={24}
@@ -158,12 +148,11 @@ const BinanceUSDTPairs: React.FC = () => {
                       onError={(e) => {
                         // แสดงตัวอักษรแรกถ้าโหลดรูปไม่ได้
                         const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                        const fallback =
-                          target.nextElementSibling as HTMLDivElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLDivElement;
                         if (fallback) {
-                          fallback.classList.remove("hidden");
-                          fallback.style.display = "flex";
+                          fallback.classList.remove('hidden');
+                          fallback.style.display = 'flex';
                         }
                       }}
                     />

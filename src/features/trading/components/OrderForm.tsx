@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/Button";
-import React from "react";
-import Image from "next/image";
-import DiscreteSlider from "@/features/trading/components/DiscreteSlider";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import React from 'react';
+import Image from 'next/image';
+import DiscreteSlider from '@/features/trading/components/DiscreteSlider';
 
 interface OrderFormProps {
-  type: "buy" | "sell";
+  type: 'buy' | 'sell';
   inputRef: React.RefObject<HTMLInputElement | null>;
   amountInputRef: React.RefObject<HTMLInputElement | null>;
   priceLabel: string;
@@ -60,7 +60,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   receiveCurrency, // เพิ่มใน props
   isSubmitting,
   isAuthenticated = false,
-  amountErrorMessage = "Insufficient balance",
+  amountErrorMessage = 'Insufficient balance',
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -85,21 +85,21 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   const getButtonText = () => {
     if (!isAuthenticated) {
-      return "Login";
+      return 'Login';
     }
-    return type === "buy" ? "Buy" : "Sell";
+    return type === 'buy' ? 'Buy' : 'Sell';
   };
 
   // Handle price changes - track if user is entering custom price
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHasUserPrice(e.target.value.trim() !== ""); // Mark as user price if not empty
+    setHasUserPrice(e.target.value.trim() !== ''); // Mark as user price if not empty
     onPriceChange(e);
   };
 
   // Handle price input blur - only switch to market if user hasn't entered a custom price
   const handlePriceBlur = () => {
     onPriceBlur(); // Call the original blur handler
-    
+
     // Only auto-switch to market price if user hasn't entered a custom price
     if (!hasUserPrice) {
       onMarketClick();
@@ -114,7 +114,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   // Reset user price flag when switching between limit and market modes
   React.useEffect(() => {
-    if (priceLabel === "Price") {
+    if (priceLabel === 'Price') {
       // When switching to limit mode, don't reset the flag
       // User should be able to keep their custom price
     } else {
@@ -127,9 +127,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
     <div className="space-y-7">
       {/* Price input */}
       <div className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7]">
-        <span className="text-[12px] font-normal text-[#5775B7]">
-          {priceLabel}
-        </span>
+        <span className="text-[12px] font-normal text-[#5775B7]">{priceLabel}</span>
 
         <div className="flex items-center gap-2">
           <Input
@@ -166,9 +164,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <Button
             onClick={handleMarketClick} // Updated to use our new handler
             className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
-              priceLabel === "Price"
-                ? "bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]"
-                : "bg-[#1F4293] hover:bg-[#1F4293]"
+              priceLabel === 'Price'
+                ? 'bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]'
+                : 'bg-[#1F4293] hover:bg-[#1F4293]'
             }`}
           >
             <span className="text-[10px] font-normal">Market</span>
@@ -203,13 +201,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div
             className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
               !isAmountValid
-                ? "bg-[#17306B] border-[#D84C4C]"
-                : "bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]"
+                ? 'bg-[#17306B] border-[#D84C4C]'
+                : 'bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]'
             }`}
           >
-            <span className="text-[12px] font-normal text-[#5775B7]">
-              Amount
-            </span>
+            <span className="text-[12px] font-normal text-[#5775B7]">Amount</span>
             <div className="flex items-center gap-2 text-[16px]">
               <Input
                 ref={amountInputRef}
@@ -222,7 +218,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               />
               <span
                 className={`text-[14px] font-normal ${
-                  amount || isAmountFocused ? "text-white" : "text-[#5775B7]"
+                  amount || isAmountFocused ? 'text-white' : 'text-[#5775B7]'
                 }`}
               >
                 {balanceCurrency}
@@ -255,9 +251,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             />
           </div>
           <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">
-              Amount
-            </span>
+            <span className="text-[#92CAFE] text-[12px] font-normal">Amount</span>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -265,21 +259,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 value={amount}
                 readOnly
               />
-              <span className="text-[16px] font-normal text-[#92CAFE]">
-                {balanceCurrency}
-              </span>
+              <span className="text-[16px] font-normal text-[#92CAFE]">{balanceCurrency}</span>
             </div>
           </div>
         </div>
 
         {/* arrow */}
         <div className="flex justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
             <path
               d="M7.00003 13.6355L13.207 7.4285L11.793 6.0145L7.00003 10.8075L2.20703 6.0145L0.79303 7.4285L7.00003 13.6355ZM7.00003 7.9855L13.207 1.7785L11.793 0.364502L7.00003 5.1575L2.20703 0.364502L0.79303 1.7785L7.00003 7.9855Z"
               fill="#49B6AE"
@@ -292,16 +279,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="absolute z-10">
             <Image
               src={receiveIcon}
-              alt={`${receiveCurrency || (type === "buy" ? "Coin" : "USD")} Icon`}
+              alt={`${receiveCurrency || (type === 'buy' ? 'Coin' : 'USD')} Icon`}
               width={60}
               height={60}
               className="rounded-full object-cover"
             />
           </div>
           <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">
-              Receive
-            </span>
+            <span className="text-[#92CAFE] text-[12px] font-normal">Receive</span>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -310,7 +295,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 readOnly
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
-                {type === "buy" ? receiveCurrency || "Coin" : "USD"}
+                {type === 'buy' ? receiveCurrency || 'Coin' : 'USD'}
               </span>
             </div>
           </div>
@@ -321,7 +306,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       <div className="mt-8 w-full">
         <Button
           className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           onClick={handleButtonClick}
           disabled={isSubmitting}

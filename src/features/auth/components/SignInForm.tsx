@@ -1,10 +1,10 @@
-import React from "react";
-import Image from "next/image";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import FormInputIcon from "@/components/ui/FormItemInput";
-import { Button } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import React from 'react';
+import Image from 'next/image';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import FormInputIcon from '@/components/ui/FormItemInput';
+import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface SignInData {
   username: string;
@@ -38,7 +38,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
   onGoBack,
 }) => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isLoading) {
+    if (e.key === 'Enter' && !isLoading) {
       onSignIn();
     }
   };
@@ -88,7 +88,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 <FormInputIcon
                   label="Username"
                   value={formData.username}
-                  onChange={(e) => onInputChange("username", e.target.value)}
+                  onChange={(e) => onInputChange('username', e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
                   hasError={hasError}
@@ -108,9 +108,9 @@ export const SignInForm: React.FC<SignInFormProps> = ({
               <div className="flex flex-col">
                 <FormInputIcon
                   label="Password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
-                  onChange={(e) => onInputChange("password", e.target.value)}
+                  onChange={(e) => onInputChange('password', e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
                   hasError={hasError}
@@ -138,16 +138,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                     id="remember-me"
                     checked={formData.rememberMe}
                     disabled={isLoading}
-                    onCheckedChange={(checked) =>
-                      onInputChange("rememberMe", checked as boolean)
-                    }
+                    onCheckedChange={(checked) => onInputChange('rememberMe', checked as boolean)}
                     className="border-gray-300 bg-white data-[state=checked]:bg-white data-[state=checked]:text-[#1F4293] data-[state=checked]:border-gray-300 cursor-pointer disabled:opacity-50"
                   />
                   <Label
                     htmlFor="remember-me"
-                    className={`cursor-pointer ${
-                      isLoading ? "opacity-50" : ""
-                    }`}
+                    className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}
                   >
                     Remember me
                   </Label>
@@ -155,7 +151,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 <div>
                   <p
                     className={`text-[14px] underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity ${
-                      isLoading ? "opacity-50 pointer-events-none" : ""
+                      isLoading ? 'opacity-50 pointer-events-none' : ''
                     }`}
                     onClick={onForgotPassword}
                   >
@@ -206,7 +202,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                     Signing in...
                   </>
                 ) : (
-                  "Log in"
+                  'Log in'
                 )}
               </Button>
             </div>
@@ -215,7 +211,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
               <p className="mr-2">Don&apos;t have an account ?</p>
               <p
                 className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
-                  isLoading ? "opacity-50 pointer-events-none" : ""
+                  isLoading ? 'opacity-50 pointer-events-none' : ''
                 }`}
                 onClick={onSignUp}
               >

@@ -1,6 +1,6 @@
-import NextAuth from "next-auth/next";
-import CredentialsProvider from "next-auth/providers/credentials";
-import axios from "axios";
+import NextAuth from 'next-auth/next';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import axios from 'axios';
 
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
@@ -9,23 +9,23 @@ const handler = NextAuth({
      * Credentials provider for username/password authentication
      */
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        userName: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" },
+        userName: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         // Authentication with axios
         try {
           const response = await axios.post(
-            "http://141.11.156.52:3001/auth/login",
+            'http://141.11.156.52:3001/auth/login',
             {
               userName: credentials?.userName,
               password: credentials?.password,
             },
             {
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
               },
               timeout: 10000, // 10 second timeout
             }
@@ -43,7 +43,7 @@ const handler = NextAuth({
 
           return null;
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error('Auth error:', error);
           return null;
         }
       },
@@ -67,7 +67,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: "/auth/sign-in",
+    signIn: '/auth/sign-in',
   },
 });
 
