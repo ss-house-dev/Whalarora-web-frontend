@@ -50,7 +50,7 @@ function truncateCode(s: string, max = 4) {
   return s.length <= max ? s : s.slice(0, max) + '...';
 }
 
-/* ----------------------  เพิ่ม: ฟอร์แมตจำนวนให้รวมได้ 10 หลัก  ---------------------- */
+/* ----------------------  ฟอร์แมตจำนวนให้รวมได้ 10 หลัก  ---------------------- */
 const MAX_AMOUNT_DIGITS = 10;
 function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
   const num = typeof value === 'string' ? Number(value.replace(/,/g, '')) : Number(value);
@@ -80,7 +80,6 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
       <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
-      {/* เพิ่ม: + nowrap เพื่อคุมความสูง/ความกว้างตัวเลข */}
       <div className="text-base leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis">
         {value}
       </div>
@@ -133,7 +132,6 @@ export function AssetCard(props: AssetCardProps) {
             </div>
 
             <div className="flex flex-col gap-1">
-              {/* จำกัดความกว้าง + ตัดปลายบรรทัดป้องกันดันเลย์เอาต์ */}
               <div className="text-white text-sm leading-tight max-w-[200px] truncate">
                 {truncateCode(symbol)} ({name})
               </div>
@@ -141,11 +139,10 @@ export function AssetCard(props: AssetCardProps) {
                 className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5"
                 style={{ backgroundColor: '#1E1E1E' }}
               >
-                {/* เปลี่ยนเฉพาะบรรทัดนี้: ใช้ formatAmount10 + คุมไม่ให้ขึ้นบรรทัด */}
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
                   {formatAmount10(amount, 10)}
                 </div>
-                {/* unit ยาวเกิน 4 ก็ย่อลง */}
+                {/* unit ยาวเกิน 4 ย่อเป็นตัวที่ 5 จะเป็น... */}
                 <div className="text-base leading-normal text-white whitespace-nowrap">
                   {truncateCode(unit, 4)}
                 </div>
@@ -162,7 +159,7 @@ export function AssetCard(props: AssetCardProps) {
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
-            {/* เพิ่ม: nowrap ป้องกันขึ้นบรรทัด */}
+      
             <div
               className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: isGain ? colors.success : '#FF6B6B' }}
@@ -185,7 +182,7 @@ export function AssetCard(props: AssetCardProps) {
   );
 }
 
-/* --- Demo wrapper (unchanged; ลบออกได้ในโปรดักชัน) --- */
+/* --- Demo wrapper (unchanged; เขียนเผื่อไว้ ค่อยลบออกตอนเทสเสร็จ) --- */
 export default function Demo() {
   return (
     <div
