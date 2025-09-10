@@ -389,11 +389,7 @@ function Stat({
         {label}
       </div>
       <div className="text-[16px] leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
-        {isLoading ? (
-          <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
-        ) : (
-          value
-        )}
+        {isLoading ? '0.00' : value}
       </div>
     </div>
   );
@@ -425,14 +421,18 @@ export function AssetCard(props: AssetCardProps) {
   const displayPrice =
     enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
 
-  // Calculate real-time PnL if we have market price
+  // Calculate real-time PnL if we have market price - แต่ถ้า loading ให้เป็น 0
   const realTimePnlAbs =
-    enableRealTimePrice && marketPrice && typeof amount === 'number'
+    isPriceLoading
+      ? 0 // ถ้า loading ให้เป็น 0
+      : enableRealTimePrice && marketPrice && typeof amount === 'number'
       ? (displayPrice - averageCost) * amount
       : pnlAbs;
 
   const realTimePnlPct =
-    enableRealTimePrice && marketPrice && averageCost > 0
+    isPriceLoading
+      ? 0 // ถ้า loading ให้เป็น 0
+      : enableRealTimePrice && marketPrice && averageCost > 0
       ? (displayPrice - averageCost) / averageCost
       : pnlPct;
 
@@ -508,6 +508,7 @@ export function AssetCard(props: AssetCardProps) {
           <Stat
             label="Current price"
             value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
+            isLoading={isPriceLoading}
           />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
           <Stat label="Value" value={`$ ${fmtMoney(realTimeValue)}`} />
@@ -518,13 +519,19 @@ export function AssetCard(props: AssetCardProps) {
 
             <div
               className="w-full text-[16px] leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
-              style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
+              style={{ color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B' }}
             >
-              <>
-                ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
-                {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
-                {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-              </>
+              {isPriceLoading ? (
+                <div className="flex items-center gap-2">
+                  <span>$0.00 (0.00%)</span>
+                </div>
+              ) : (
+                <>
+                  ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
+                  {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
+                  {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                </>
+              )}
             </div>
           </div>
         </div>
