@@ -194,13 +194,6 @@ export default function HoldingAssetsContainer({
   let loadingState: string | undefined = undefined;
   let errorMessage: string | undefined = undefined;
 
-  if (isLoading) {
-    loadingState = 'Loading assets...';
-  } else if (error) {
-    errorMessage = error.message;
-  } else if (isProcessing || Object.keys(coinNames).length === 0) {
-    loadingState = 'Loading coin information...';
-  }
 
   // ส่งทุกสถานะไปยัง HoldingAssetsSection
   return (
