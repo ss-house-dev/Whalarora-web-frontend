@@ -1,21 +1,20 @@
-'use client';
-
 import { Alexandria } from 'next/font/google';
+import type { Metadata } from 'next';
 import NavbarContainer from '@/features/wallet/containers/NavbarContainer';
 import { CoinProvider } from '@/features/trading/contexts/CoinContext';
 import Sidebar from '@/components/Sidebar';
-import { useEffect } from 'react';
 
 const alexandria = Alexandria({
   subsets: ['latin'],
 });
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
-  // Debug: ตรวจสอบว่า layout load หรือไม่
-  useEffect(() => {
-    console.log('🟢 Main Layout mounted with CoinProvider');
-  }, []);
+export const metadata: Metadata = {
+  title: 'Whalalora | Assets',
+  description: 'My assets page',
+};
 
+
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`min-h-screen overflow-x-hidden ${alexandria.className}`}>
       {/* CoinProvider ครอบทุกหน้าใน /main */}
