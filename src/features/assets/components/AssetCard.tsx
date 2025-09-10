@@ -1,9 +1,11 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
-import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice'; // Import your existing hook
+import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext'; // เพิ่ม import
 
 // Color palette from the brief (using Tailwind arbitrary values)
 const colors = {
@@ -126,6 +128,190 @@ const getCoinIcon = (symbol: string) => {
   }
 };
 
+// ฟังก์ชันสร้าง Coin object สำหรับ CoinContext
+const createCoinObject = (symbol: string) => {
+  const upperSymbol = symbol.toUpperCase();
+  
+  // Icon สำหรับขนาด 28px (หลัก)
+  const getMainIcon = (sym: string) => {
+    switch (sym) {
+      case 'BTC':
+        return (
+          <Image
+            src="/currency-icons/bitcoin-icon.svg"
+            alt="Bitcoin"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'ETH':
+        return (
+          <Image
+            src="/currency-icons/ethereum-icon.svg"
+            alt="Ethereum"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'BNB':
+        return (
+          <Image
+            src="/currency-icons/bnb-coin.svg"
+            alt="BNB"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'SOL':
+        return (
+          <Image
+            src="/currency-icons/solana-icon.svg"
+            alt="Solana"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'XRP':
+        return (
+          <Image
+            src="/currency-icons/xrp-coin.svg"
+            alt="XRP"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'ADA':
+        return (
+          <Image
+            src="/currency-icons/ada-coin.svg"
+            alt="Cardano"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      case 'DOGE':
+        return (
+          <Image
+            src="/currency-icons/doge-coin.svg"
+            alt="Dogecoin"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+      default:
+        return (
+          <Image
+            src="/currency-icons/default-coin.svg"
+            alt="Default Coin"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+        );
+    }
+  };
+
+  // Icon สำหรับขนาด 20px (popover)
+  const getPopoverIcon = (sym: string) => {
+    switch (sym) {
+      case 'BTC':
+        return (
+          <Image
+            src="/currency-icons/bitcoin-icon.svg"
+            alt="Bitcoin"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'ETH':
+        return (
+          <Image
+            src="/currency-icons/ethereum-icon.svg"
+            alt="Ethereum"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'BNB':
+        return (
+          <Image
+            src="/currency-icons/bnb-coin.svg"
+            alt="BNB"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'SOL':
+        return (
+          <Image
+            src="/currency-icons/solana-icon.svg"
+            alt="Solana"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'XRP':
+        return (
+          <Image
+            src="/currency-icons/xrp-coin.svg"
+            alt="XRP"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'ADA':
+        return (
+          <Image
+            src="/currency-icons/ada-coin.svg"
+            alt="Cardano"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      case 'DOGE':
+        return (
+          <Image
+            src="/currency-icons/doge-coin.svg"
+            alt="Dogecoin"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+      default:
+        return (
+          <Image
+            src="/currency-icons/default-coin.svg"
+            alt="Default Coin"
+            width={20}
+            height={20}
+            className="rounded-full"
+          />
+        );
+    }
+  };
+
+  return {
+    value: `BINANCE:${upperSymbol}USDT`,
+    label: `${upperSymbol}/USDT`,
+    icon: getMainIcon(upperSymbol),
+    popoverIcon: getPopoverIcon(upperSymbol),
+  };
+};
+
 export type AssetCardProps = {
   /** e.g. BTC */
   symbol: string;
@@ -210,6 +396,9 @@ function Stat({ label, value, isLoading = false }: {
 }
 
 export function AssetCard(props: AssetCardProps) {
+  const router = useRouter();
+  const { setSelectedCoin } = useCoinContext(); // เพิ่ม hook นี้
+
   const {
     symbol,
     name,
@@ -220,9 +409,9 @@ export function AssetCard(props: AssetCardProps) {
     value,
     pnlAbs,
     pnlPct,
-    onBuySell,
     icon,
     enableRealTimePrice = true,
+    onBuySell, // เก็บ onBuySell prop ไว้เผื่อมีการใช้งานพิเศษ
   } = props;
 
   // Use real-time price if enabled
@@ -250,6 +439,23 @@ export function AssetCard(props: AssetCardProps) {
 
   // Use provided icon or get coin icon based on symbol (always 40px)
   const displayIcon = icon || getCoinIcon(symbol);
+
+  // Handle Buy/Sell button click
+  const handleBuySell = () => {
+    // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
+    if (onBuySell) {
+      onBuySell();
+    }
+    
+    // สร้าง Coin object สำหรับ CoinContext
+    const coinObject = createCoinObject(symbol);
+    
+    // อัปเดต selected coin ใน CoinContext
+    setSelectedCoin(coinObject);
+    
+    // Navigate to trading page พร้อมส่ง symbol ไปด้วย
+    router.push(`/main/trading?symbol=${symbol.toLowerCase()}`);
+  };
 
   return (
     <motion.div
@@ -321,12 +527,12 @@ export function AssetCard(props: AssetCardProps) {
         </div>
         
         {/* Right: CTA with 16px margin from right edge */}
-          <button
-            onClick={onBuySell}
-            className="w-[128px] h-[32px] px-6 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
-          >
-            Buy/Sell
-          </button>
+        <button
+          onClick={handleBuySell}
+          className="w-[128px] h-[32px] px-6 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
+        >
+          Buy/Sell
+        </button>
       </div>
     </motion.div>
   );
