@@ -102,20 +102,36 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
     }).format(truncated);
   };
 
+  // ในฟังก์ชัน handleSignOut ของ NavbarUI
+  const enhancedHandleSignOut = () => {
+    // Clear CoinContext localStorage
+    localStorage.removeItem('selectedCoin');
+    console.log('🟢 Cleared selectedCoin from localStorage on sign out');
+
+    // เรียก handleSignOut เดิม
+    handleSignOut();
+  };
+
   return (
     <>
-      <div className="bg-[rgba(255,255,255,0.10)] h-14 flex justify-between items-center mx-[120px] rounded-b-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] px-6 py-3">
+      <div className="bg-[#16171D] h-14 flex justify-between items-center rounded-b-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] px-6 py-3">
         {/* Left Side - Logo and Navigation */}
-        <div className="flex flex-row items-center gap-10">
+        <div className="flex flex-row items-center gap-5">
           <Image
             onClick={handleLogoClick}
-            src="/assets/whalarora-logo.png"
+            src="/assets/whalarora-logo.svg"
             alt="Whalarora Logo"
-            width={45}
-            height={45}
+            width={40}
+            height={40}
             className="rounded-full cursor-pointer"
           />
-          <div className="text-lg cursor-pointer">Trade</div>
+          <Image
+            src="/assets/whalarora-text-logo.svg"
+            alt="Whalarora Text Logo"
+            width={120}
+            height={120}
+            className="cursor-pointer"
+          />
         </div>
 
         {/* Right Side - Balance and User Menu */}
@@ -270,10 +286,10 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
               {userMenuOpen && (
                 <div className="absolute right-0 mt-2 w-[160px] bg-[#1F4293] rounded-lg shadow-lg overflow-hidden z-50">
                   <button
-                    onClick={handleSignOut}
+                    onClick={enhancedHandleSignOut} // เปลี่ยนจาก handleSignOut
                     className="w-full h-10 px-4 flex items-center justify-between hover:bg-[#17306B] text-base cursor-pointer group"
                   >
-                    <span>Sign Out</span>
+                    <span>Log Out</span>
                     <LogOut className="h-4 w-4 text-white group-hover:text-[#2FACA2]" />
                   </button>
                 </div>
