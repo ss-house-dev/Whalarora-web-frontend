@@ -1,13 +1,13 @@
 // src/features/wallet/services/buildHoldingRows.ts
-import type { ApiAsset, HoldingRow } from "../types";
+import type { ApiAsset, HoldingRow } from '../types';
 
 const SYMBOL_NAME: Record<string, string> = {
-  BTC: "Bitcoin",
-  ETH: "Ethereum",
-  ADA: "Cardano",
-  BNB: "Binance Coin",
-  DOGE: "Dogecoin",
-  CASH: "Cash",
+  BTC: 'Bitcoin',
+  ETH: 'Ethereum',
+  ADA: 'Cardano',
+  BNB: 'Binance Coin',
+  DOGE: 'Dogecoin',
+  CASH: 'Cash',
 };
 
 // Fallback ถ้าราคา live ยังไม่มา
@@ -22,18 +22,18 @@ const PRICE_MAP: Partial<Record<string, number>> = {
 
 export function buildHoldingRows(
   api: ApiAsset[],
-  live: Partial<Record<string, number>> = {}   //  <-- เพิ่มพารามิเตอร์ที่ 2 (optional)
+  live: Partial<Record<string, number>> = {} //  <-- เพิ่มพารามิเตอร์ที่ 2 (optional)
 ): HoldingRow[] {
   return api
-    .filter(a => a.symbol !== "CASH")
-    .map(a => {
+    .filter((a) => a.symbol !== 'CASH')
+    .map((a) => {
       const symbol = a.symbol;
       const amount = a.amount ?? 0;
 
       const currentPrice = live[symbol] ?? PRICE_MAP[symbol] ?? 0;
-      const averageCost  = a.avgPrice ?? 0;
+      const averageCost = a.avgPrice ?? 0;
 
-      const value  = amount * currentPrice;
+      const value = amount * currentPrice;
       const pnlAbs = (currentPrice - averageCost) * amount;
       const pnlPct = averageCost > 0 ? currentPrice / averageCost - 1 : 0;
 

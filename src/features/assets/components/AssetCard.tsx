@@ -102,7 +102,7 @@ const DefaultIcon = () => (
 // Function to get coin icon based on symbol - Always returns 40px icons
 const getCoinIcon = (symbol: string) => {
   const upperSymbol = symbol.toUpperCase();
-  
+
   switch (upperSymbol) {
     case 'BTC':
     case 'BITCOIN':
@@ -131,7 +131,7 @@ const getCoinIcon = (symbol: string) => {
 // ฟังก์ชันสร้าง Coin object สำหรับ CoinContext
 const createCoinObject = (symbol: string) => {
   const upperSymbol = symbol.toUpperCase();
-  
+
   // Icon สำหรับขนาด 28px (หลัก)
   const getMainIcon = (sym: string) => {
     switch (sym) {
@@ -374,9 +374,13 @@ function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
 }
 /* -------------------------------------------------------------------------------------- */
 
-function Stat({ label, value, isLoading = false }: { 
-  label: string; 
-  value: React.ReactNode; 
+function Stat({
+  label,
+  value,
+  isLoading = false,
+}: {
+  label: string;
+  value: React.ReactNode;
   isLoading?: boolean;
 }) {
   return (
@@ -416,52 +420,52 @@ export function AssetCard(props: AssetCardProps) {
 
   // Use real-time price if enabled
   const { marketPrice, isPriceLoading } = useMarketPrice(enableRealTimePrice ? symbol : '');
-  
+
   // Determine which price to display
-  const displayPrice = enableRealTimePrice && marketPrice 
-    ? parseFloat(marketPrice.replace(/,/g, ''))
-    : currentPrice;
+  const displayPrice =
+    enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
 
   // Calculate real-time PnL if we have market price
-  const realTimePnlAbs = enableRealTimePrice && marketPrice && typeof amount === 'number'
-    ? (displayPrice - averageCost) * amount
-    : pnlAbs;
+  const realTimePnlAbs =
+    enableRealTimePrice && marketPrice && typeof amount === 'number'
+      ? (displayPrice - averageCost) * amount
+      : pnlAbs;
 
-  const realTimePnlPct = enableRealTimePrice && marketPrice && averageCost > 0
-    ? (displayPrice - averageCost) / averageCost
-    : pnlPct;
+  const realTimePnlPct =
+    enableRealTimePrice && marketPrice && averageCost > 0
+      ? (displayPrice - averageCost) / averageCost
+      : pnlPct;
 
-  const realTimeValue = enableRealTimePrice && marketPrice && typeof amount === 'number'
-    ? displayPrice * amount
-    : value;
+  const realTimeValue =
+    enableRealTimePrice && marketPrice && typeof amount === 'number'
+      ? displayPrice * amount
+      : value;
 
   const isRealTimeGain = realTimePnlAbs >= 0;
 
   // Use provided icon or get coin icon based on symbol (always 40px)
   const displayIcon = icon || getCoinIcon(symbol);
 
-const handleBuySell = () => {
-  
-  // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
-  if (onBuySell) {
-    onBuySell();
-  }
-  
-  // สร้าง Coin object สำหรับ CoinContext
-  const coinObject = createCoinObject(symbol);
-  try {
-    // อัปเดต selected coin ใน CoinContext
-    setSelectedCoin(coinObject);
-    
-    // เพิ่ม delay เล็กน้อยก่อน navigate
-    setTimeout(() => {
+  const handleBuySell = () => {
+    // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
+    if (onBuySell) {
+      onBuySell();
+    }
+
+    // สร้าง Coin object สำหรับ CoinContext
+    const coinObject = createCoinObject(symbol);
+    try {
+      // อัปเดต selected coin ใน CoinContext
+      setSelectedCoin(coinObject);
+
+      // เพิ่ม delay เล็กน้อยก่อน navigate
+      setTimeout(() => {
+        router.push('/main/trading');
+      }, 100);
+    } catch (error) {
       router.push('/main/trading');
-    }, 100);
-    
-  } catch (error) {
-    router.push('/main/trading');
-  }
-};
+    }
+  };
 
   return (
     <motion.div
@@ -472,9 +476,7 @@ const handleBuySell = () => {
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
-        <div
-          className="w-[252px] flex-none pr-[16px] lg:border-r border-[#828282]"
-        >
+        <div className="w-[252px] flex-none pr-[16px] lg:border-r border-[#828282]">
           <div className="flex items-center gap-4">
             {/* Token icon - Fixed at 40px (w-10 h-10) */}
             <div className="w-10 h-10 relative flex items-center justify-center shrink-0">
@@ -488,9 +490,7 @@ const handleBuySell = () => {
               >
                 {symbol} ({name})
               </div>
-              <div
-                className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5 bg-[#1F2029]"
-              >
+              <div className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5 bg-[#1F2029]">
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
                   {formatAmount10(amount, 10)}
                 </div>
@@ -502,24 +502,21 @@ const handleBuySell = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Middle: stats */}
         <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
-          <Stat 
-            label="Current price" 
+          <Stat
+            label="Current price"
             value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
           />
           <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
-          <Stat 
-            label="Value" 
-            value={`$ ${fmtMoney(realTimeValue)}`} 
-          />
+          <Stat label="Value" value={`$ ${fmtMoney(realTimeValue)}`} />
           <div className="shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
 
-             <div
+            <div
               className="w-full text-[16px] leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
             >
@@ -531,7 +528,7 @@ const handleBuySell = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Right: CTA with 16px margin from right edge */}
         <button
           onClick={handleBuySell}

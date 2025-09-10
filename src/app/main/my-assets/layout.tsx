@@ -1,20 +1,16 @@
 'use client';
 
-import { Alexandria } from "next/font/google";
-import NavbarContainer from "@/features/wallet/containers/NavbarContainer";
-import { CoinProvider } from "@/features/trading/contexts/CoinContext";
-import Sidebar from "@/components/Sidebar";
-import { useEffect } from "react";
+import { Alexandria } from 'next/font/google';
+import NavbarContainer from '@/features/wallet/containers/NavbarContainer';
+import { CoinProvider } from '@/features/trading/contexts/CoinContext';
+import Sidebar from '@/components/Sidebar';
+import { useEffect } from 'react';
 
 const alexandria = Alexandria({
-  subsets: ["latin"],
+  subsets: ['latin'],
 });
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   // Debug: ตรวจสอบว่า layout load หรือไม่
   useEffect(() => {
     console.log('🟢 Main Layout mounted with CoinProvider');
@@ -30,12 +26,10 @@ export default function MainLayout({
         </div>
 
         <div className="pt-14 flex">
-          <Sidebar /> 
+          <Sidebar />
 
           {/* Main Content */}
-          <div className="ml-[84px] flex-1 overflow-x-hidden">
-            {children}
-          </div>
+          <div className="ml-[84px] flex-1 overflow-x-hidden">{children}</div>
         </div>
       </CoinProvider>
     </div>

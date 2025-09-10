@@ -53,7 +53,9 @@ export default function HoldingAssetsSection({
             value={r.value}
             pnlAbs={r.pnlAbs}
             pnlPct={r.pnlPct}
-            onBuySell={() => {/* open trade modal */}}
+            onBuySell={() => {
+              /* open trade modal */
+            }}
             className="mx-auto lg:w-[1220px] h-20 px-4 py-3  rounded-xl"
           />
         ))}

@@ -33,10 +33,15 @@ export default function HoldingAssetsTable({
 
   const trio = useMemo(() => {
     if (totalPages <= 3) {
-      return { slots: Array.from({ length: totalPages }, (_, i) => i + 1), activeIndex: page - 1, fixed: false };
+      return {
+        slots: Array.from({ length: totalPages }, (_, i) => i + 1),
+        activeIndex: page - 1,
+        fixed: false,
+      };
     }
     if (page === 1) return { slots: [1, 2, 3], activeIndex: 0, fixed: true };
-    if (page === totalPages) return { slots: [totalPages - 2, totalPages - 1, totalPages], activeIndex: 2, fixed: true };
+    if (page === totalPages)
+      return { slots: [totalPages - 2, totalPages - 1, totalPages], activeIndex: 2, fixed: true };
     return { slots: [page - 1, page, page + 1], activeIndex: 1, fixed: true };
   }, [page, totalPages]);
 
@@ -89,37 +94,41 @@ export default function HoldingAssetsTable({
             </button>
 
             {/* Numbered pages (3 ช่องคงที่) */}
-            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map((keyOrPage, i) => {
-              const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
-              const active = trio.fixed ? i === trio.activeIndex : p === page;
-              const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
-              const isSingle = totalPages === 1;
-              return (
-                <button
-                  key={stableKey}
-                  onClick={() => !isSingle && changePage(p)}
-                  disabled={isSingle}
-                  aria-disabled={isSingle}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
-                    active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: '#16171D',
-                    borderColor: active ? '#225FED' : 'transparent',
-                  }}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {p}
-                </button>
-              );
-            })}
+            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map(
+              (keyOrPage, i) => {
+                const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
+                const active = trio.fixed ? i === trio.activeIndex : p === page;
+                const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
+                const isSingle = totalPages === 1;
+                return (
+                  <button
+                    key={stableKey}
+                    onClick={() => !isSingle && changePage(p)}
+                    disabled={isSingle}
+                    aria-disabled={isSingle}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                      active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                    }`}
+                    style={{
+                      backgroundColor: '#16171D',
+                      borderColor: active ? '#225FED' : 'transparent',
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                );
+              }
+            )}
 
             {/* Next */}
             <button
               disabled={page === totalPages}
               onClick={() => changePage(page + 1)}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                page === totalPages ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
+                page === totalPages
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-slate-300 hover:text-white'
               }`}
               style={{ backgroundColor: '#16171D' }}
               aria-label="Next page"

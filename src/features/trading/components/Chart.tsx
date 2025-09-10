@@ -16,7 +16,7 @@ const AdvancedChart = () => {
   // Force re-render เมื่อ selectedCoin เปลี่ยน
   useEffect(() => {
     console.log('Chart symbol changed to:', selectedCoin.value);
-    setChartKey(prev => prev + 1); // เปลี่ยน key เพื่อ force re-mount
+    setChartKey((prev) => prev + 1); // เปลี่ยน key เพื่อ force re-mount
   }, [selectedCoin.value]);
 
   return (

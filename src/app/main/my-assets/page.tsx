@@ -2,8 +2,8 @@ import HoldingAssetsContainer from '@/features/assets/containers/HoldingAssetsCo
 
 export default function MyAssetsPage() {
   return (
-      <div>
-        <HoldingAssetsContainer pageSize={10} />
-      </div>
+    <div>
+      <HoldingAssetsContainer pageSize={10} />
+    </div>
   );
 }

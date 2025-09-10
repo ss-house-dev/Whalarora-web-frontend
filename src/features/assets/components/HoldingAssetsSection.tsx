@@ -64,18 +64,14 @@ export default function HoldingAssetsSection({
         {/* Loading state */}
         {isLoadingData && (
           <div className="flex justify-center items-center h-64">
-            <div className="text-slate-300 text-sm">
-              {loadingMessage || 'Loading...'}
-            </div>
+            <div className="text-slate-300 text-sm">{loadingMessage || 'Loading...'}</div>
           </div>
         )}
 
         {/* Error state */}
         {hasError && (
           <div className="flex justify-center items-center h-64">
-            <div className="text-red-400 text-sm">
-              Error: {error}
-            </div>
+            <div className="text-red-400 text-sm">Error: {error}</div>
           </div>
         )}
 

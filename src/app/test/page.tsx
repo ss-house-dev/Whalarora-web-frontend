@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import HoldingAssetsSection from '@/features/trading/containers/HoldingAssetsSection';
-import { useHoldingRows } from "@/features/wallet/hooks/useHoldingRows";
+import { useHoldingRows } from '@/features/wallet/hooks/useHoldingRows';
 
 export default function TestPage() {
   const { data: rows, isLoading, isError, refetch } = useHoldingRows();
@@ -10,11 +10,13 @@ export default function TestPage() {
   if (isError || !rows) {
     return (
       <div className="p-6 text-red-400">
-        Load failed. <button className="underline" onClick={() => refetch()}>Retry</button>
+        Load failed.{' '}
+        <button className="underline" onClick={() => refetch()}>
+          Retry
+        </button>
       </div>
     );
   }
 
   return <HoldingAssetsSection rows={rows} pageSize={10} />;
 }
-

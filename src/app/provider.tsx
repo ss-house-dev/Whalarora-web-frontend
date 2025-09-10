@@ -10,9 +10,7 @@ export function CustomProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
-      <QueryClientProvider client={qc}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     </SessionProvider>
   );
 }

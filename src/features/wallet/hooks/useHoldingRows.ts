@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getAssets } from "../services/getAssets";
-import { buildHoldingRows } from "../services/buildHoldingRows";
-import { useBinanceTicker } from "./useBinanceTicker";
-import type { HoldingRow } from "../types";
+import { useMemo } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { getAssets } from '../services/getAssets';
+import { buildHoldingRows } from '../services/buildHoldingRows';
+import { useBinanceTicker } from './useBinanceTicker';
+import type { HoldingRow } from '../types';
 
 export function useHoldingRows() {
   // 1) ดึงสินทรัพย์ที่ผู้ใช้ถือ (คงค่าเดิมไว้ระหว่าง refetch)
   const assetsQ = useQuery({
-    queryKey: ["trade-assets"],
+    queryKey: ['trade-assets'],
     queryFn: getAssets,
-    staleTime: 60_000,                 // ข้อมูลไม่ stale ภายใน 1 นาที
-    gcTime: 30 * 60 * 1000,            // เก็บ cache 30 นาที (กลับหน้าไปมาไม่กระพริบ)
+    staleTime: 60_000, // ข้อมูลไม่ stale ภายใน 1 นาที
+    gcTime: 30 * 60 * 1000, // เก็บ cache 30 นาที (กลับหน้าไปมาไม่กระพริบ)
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
@@ -22,10 +22,7 @@ export function useHoldingRows() {
 
   // 2) สร้างรายการสัญลักษณ์ที่ต้องติดตาม (ตัด CASH ออก)
   const symbols = useMemo(
-    () =>
-      (assetsQ.data ?? [])
-        .map((a) => a.symbol)
-        .filter((s): s is string => !!s && s !== "CASH"),
+    () => (assetsQ.data ?? []).map((a) => a.symbol).filter((s): s is string => !!s && s !== 'CASH'),
     [assetsQ.data]
   );
 

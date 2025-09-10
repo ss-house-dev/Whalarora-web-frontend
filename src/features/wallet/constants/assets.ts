@@ -1,10 +1,10 @@
 export const SYMBOL_NAME: Record<string, string> = {
-  BTC: "Bitcoin",
-  ETH: "Ethereum",
-  ADA: "Cardano",
-  BNB: "Binance Coin",
-  DOGE: "Dogecoin",
-  CASH: "Cash",
+  BTC: 'Bitcoin',
+  ETH: 'Ethereum',
+  ADA: 'Cardano',
+  BNB: 'Binance Coin',
+  DOGE: 'Dogecoin',
+  CASH: 'Cash',
 };
 
 // TEMP ไว้เทสก่อน มี price feed จริงค่อยเปลี่ยน

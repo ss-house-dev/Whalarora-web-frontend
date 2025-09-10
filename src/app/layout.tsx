@@ -14,9 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`min-h-screen ${alexandria.className}`}>
-        <CustomProviders>
-          {children}
-        </CustomProviders>
+        <CustomProviders>{children}</CustomProviders>
       </body>
     </html>
   );

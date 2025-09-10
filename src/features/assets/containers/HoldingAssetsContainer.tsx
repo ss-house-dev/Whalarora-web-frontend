@@ -19,7 +19,7 @@ const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>
 
     // สร้าง symbol list สำหรับ query
     const symbolList = symbols.join(',');
-    
+
     // Option 1: ใช้ CoinGecko API (ฟรี) with timeout และ error handling
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -29,7 +29,7 @@ const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>
       {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         signal: controller.signal,
       }
@@ -61,7 +61,7 @@ const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>
     return nameMap;
   } catch (error) {
     console.error('Error fetching coin names from CoinGecko:', error);
-    
+
     // ไม่พยายาม fallback API เพราะอาจมีปัญหา CORS เหมือนกัน
     // แค่ return empty object และให้ใช้ basic mapping
     return {};
@@ -90,13 +90,13 @@ const getBasicAssetName = (symbol: string): string => {
     ATOM: 'Cosmos',
     // เพิ่มเหรียญยอดนิยมอื่นๆ ตามต้องการ
   };
-  
+
   return basicNameMap[symbol.toUpperCase()] || symbol;
 };
 
 const getBasicAssetMapping = (symbols: string[]): Record<string, string> => {
   const mapping: Record<string, string> = {};
-  symbols.forEach(symbol => {
+  symbols.forEach((symbol) => {
     mapping[symbol.toUpperCase()] = getBasicAssetName(symbol);
   });
   return mapping;
@@ -106,13 +106,15 @@ interface HoldingAssetsContainerProps {
   pageSize?: number;
 }
 
-export default function HoldingAssetsContainer({ 
-  pageSize = 10 
-}: HoldingAssetsContainerProps) {
-  const { data: assets, isLoading, error } = useGetAllAssets({
+export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsContainerProps) {
+  const {
+    data: assets,
+    isLoading,
+    error,
+  } = useGetAllAssets({
     enabled: true,
   });
-    
+
   const [rows, setRows] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [coinNames, setCoinNames] = useState<Record<string, string>>({});
@@ -120,7 +122,7 @@ export default function HoldingAssetsContainer({
   // กรอง CASH และเตรียมข้อมูลพื้นฐาน
   const tradableAssets = useMemo(() => {
     if (!assets || assets.length === 0) return [];
-    return assets.filter(asset => asset.symbol !== 'CASH');
+    return assets.filter((asset) => asset.symbol !== 'CASH');
   }, [assets]);
 
   // ดึงชื่อเหรียญจาก API
@@ -129,17 +131,15 @@ export default function HoldingAssetsContainer({
       if (tradableAssets.length === 0) return;
 
       try {
-        const symbols = tradableAssets.map(asset => asset.symbol);
+        const symbols = tradableAssets.map((asset) => asset.symbol);
         const uniqueSymbols = [...new Set(symbols)]; // Remove duplicates
-        
+
         const nameMap = await fetchCoinNames(uniqueSymbols);
         setCoinNames(nameMap);
       } catch (error) {
         console.error('Failed to load coin names:', error);
         // ใช้ basic mapping เป็น fallback
-        const fallbackMap = getBasicAssetMapping(
-          tradableAssets.map(asset => asset.symbol)
-        );
+        const fallbackMap = getBasicAssetMapping(tradableAssets.map((asset) => asset.symbol));
         setCoinNames(fallbackMap);
       }
     };
@@ -158,9 +158,9 @@ export default function HoldingAssetsContainer({
 
       setIsProcessing(true);
       try {
-        const processedData = tradableAssets.map(asset => {
+        const processedData = tradableAssets.map((asset) => {
           // กำหนดราคาสินทรัพย์โดยตรงที่นี่
-          const currentPrice = 0.00; // ตัวอย่างราคา
+          const currentPrice = 0.0; // ตัวอย่างราคา
           const value = asset.amount * currentPrice;
           const pnlAbs = value - asset.total;
           const pnlPct = asset.total > 0 ? pnlAbs / asset.total : 0;
@@ -194,11 +194,10 @@ export default function HoldingAssetsContainer({
   let loadingState: string | undefined = undefined;
   let errorMessage: string | undefined = undefined;
 
-
   // ส่งทุกสถานะไปยัง HoldingAssetsSection
   return (
-    <HoldingAssetsSection 
-      rows={rows} 
+    <HoldingAssetsSection
+      rows={rows}
       pageSize={pageSize}
       isLoading={!!loadingState}
       loadingMessage={loadingState}

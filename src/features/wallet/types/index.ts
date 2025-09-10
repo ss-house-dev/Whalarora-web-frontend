@@ -33,4 +33,3 @@ export type HoldingRow = {
   pnlAbs: number;
   pnlPct: number; // 0.02 = +2%
 };
-

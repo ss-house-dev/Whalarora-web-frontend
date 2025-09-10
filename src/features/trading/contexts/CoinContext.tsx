@@ -66,7 +66,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (stored) {
             const storedData = JSON.parse(stored);
             console.log('🟢 Loaded from localStorage:', storedData);
-            
+
             // สร้าง coin object จาก stored data
             if (storedData.symbol) {
               const coinObject = createCoinObject(storedData.symbol);
@@ -94,30 +94,36 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [session, status]); // เพิ่ม dependency
 
   // Enhanced setSelectedCoin with localStorage backup
-  const setSelectedCoin = useCallback((coin: Coin) => {
-    console.log('🟢 CoinContext setSelectedCoin called with:', coin.label);
-    
-    try {
-      setSelectedCoinState(coin);
-      
-      // Save to localStorage เฉพาะเมื่อ login
-      if (session) {
-        const symbol = coin.value.replace('BINANCE:', '').replace('USDT', '');
-        localStorage.setItem('selectedCoin', JSON.stringify({
-          value: coin.value,
-          label: coin.label,
-          symbol: symbol
-        }));
-        console.log('🟢 Saved to localStorage for authenticated user');
-      } else {
-        console.log('🟢 Not saving to localStorage (not authenticated)');
+  const setSelectedCoin = useCallback(
+    (coin: Coin) => {
+      console.log('🟢 CoinContext setSelectedCoin called with:', coin.label);
+
+      try {
+        setSelectedCoinState(coin);
+
+        // Save to localStorage เฉพาะเมื่อ login
+        if (session) {
+          const symbol = coin.value.replace('BINANCE:', '').replace('USDT', '');
+          localStorage.setItem(
+            'selectedCoin',
+            JSON.stringify({
+              value: coin.value,
+              label: coin.label,
+              symbol: symbol,
+            })
+          );
+          console.log('🟢 Saved to localStorage for authenticated user');
+        } else {
+          console.log('🟢 Not saving to localStorage (not authenticated)');
+        }
+
+        console.log('🟢 Successfully updated selectedCoin to:', coin.label);
+      } catch (error) {
+        console.error('❌ Error in setSelectedCoin:', error);
       }
-      
-      console.log('🟢 Successfully updated selectedCoin to:', coin.label);
-    } catch (error) {
-      console.error('❌ Error in setSelectedCoin:', error);
-    }
-  }, [session]);
+    },
+    [session]
+  );
 
   const fetchMarketPrice = useCallback(async () => {
     try {
@@ -148,14 +154,14 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
 // Helper function ใน context (copy จาก AssetCard)
 const createCoinObject = (symbol: string): Coin => {
   const upperSymbol = symbol.toUpperCase();
-  
+
   const getIcon = (sym: string, size: number = 28) => {
-    const iconProps = { 
-      width: size, 
-      height: size, 
-      className: "rounded-full" 
+    const iconProps = {
+      width: size,
+      height: size,
+      className: 'rounded-full',
     };
-    
+
     switch (sym) {
       case 'BTC':
         return <Image src="/currency-icons/bitcoin-icon.svg" alt="Bitcoin" {...iconProps} />;

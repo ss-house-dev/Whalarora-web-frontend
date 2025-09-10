@@ -22,6 +22,6 @@ axiosInstance.interceptors.request.use(
 export default axiosInstance;
 
 export const axiosNext = axios.create({
-  baseURL: "/api", // เรียก proxy route 
-  headers: { accept: "application/json" },
+  baseURL: '/api', // เรียก proxy route
+  headers: { accept: 'application/json' },
 });
