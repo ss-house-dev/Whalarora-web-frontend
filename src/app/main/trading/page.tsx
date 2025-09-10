@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
-import { CombinedCombobox } from '@/components/ui/combobox';
+import { CombinedCombobox } from '@/components/combobox';
 import OrderTableContainer from '@/features/open-order/components/OrderTableContainer';
 
 type OrderTabType = 'open' | 'history';

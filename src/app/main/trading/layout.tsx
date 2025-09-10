@@ -1,8 +1,8 @@
-import { Alexandria } from "next/font/google";
-import type { Metadata } from "next";
-import NavbarContainer from "@/features/wallet/containers/NavbarContainer";
-import { CoinProvider } from "@/features/trading/contexts/CoinContext";
-import Sidebar from "@/components/Sidebar";  // Import Sidebar component
+import { Alexandria } from 'next/font/google';
+import type { Metadata } from 'next';
+import NavbarContainer from '@/features/wallet/containers/NavbarContainer';
+import { CoinProvider } from '@/features/trading/contexts/CoinContext';
+import Sidebar from '@/components/Sidebar'; // Import Sidebar component
 
 const alexandria = Alexandria({
   subsets: ['latin'],
@@ -23,12 +23,10 @@ export default function TradingLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="pt-14 flex">
-          <Sidebar /> 
+          <Sidebar />
 
           {/* Main Content */}
-          <div className="ml-[84px] flex-1 overflow-x-hidden">
-            {children}
-          </div>
+          <div className="ml-[84px] flex-1 overflow-x-hidden">{children}</div>
         </div>
       </CoinProvider>
     </div>

@@ -1,11 +1,9 @@
-import MarketOrderContainer from "@/features/trading/containers/OrderContainer";
-import AdvancedChart from "@/features/trading/components/Chart";
-import { CombinedCombobox } from "@/components/ui/combobox";
+import HoldingAssetsContainer from '@/features/assets/containers/HoldingAssetsContainer';
 
-export default function MarketOrderPage() {
+export default function MyAssetsPage() {
   return (
-    <div className="mx-[36px] mt-[24px] space-y-[24px] min-h-screen">
-    <h1>My assets</h1>
+    <div>
+      <HoldingAssetsContainer pageSize={10} />
     </div>
   );
 }
