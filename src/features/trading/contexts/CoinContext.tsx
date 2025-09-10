@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react'; // เพิ่ม import
 
 interface Coin {
   value: string; // e.g., "BINANCE:BTCUSDT"
@@ -44,30 +45,53 @@ const defaultCoin: Coin = {
 export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCoin, setSelectedCoinState] = useState<Coin>(defaultCoin);
   const [marketPrice, setMarketPrice] = useState<string>('');
+  const { data: session, status } = useSession(); // เพิ่ม useSession
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (เฉพาะเมื่อ authenticated)
   useEffect(() => {
     const loadFromStorage = () => {
       try {
-        const stored = localStorage.getItem('selectedCoin');
-        if (stored) {
-          const storedData = JSON.parse(stored);
-          console.log('🟢 Loaded from localStorage:', storedData);
-          
-          // สร้าง coin object จาก stored data
-          if (storedData.symbol) {
-            const coinObject = createCoinObject(storedData.symbol);
-            setSelectedCoinState(coinObject);
-            console.log('🟢 Set coin from localStorage:', coinObject.label);
+        // ถ้าไม่ได้ login ให้ใช้ BTC default เสมอ
+        if (status === 'unauthenticated' || !session) {
+          console.log('🟢 Not authenticated, using BTC default');
+          setSelectedCoinState(defaultCoin);
+          // Clear localStorage เพื่อไม่ให้มี data เก่าค้างอยู่
+          localStorage.removeItem('selectedCoin');
+          return;
+        }
+
+        // ถ้า login แล้วให้ load จาก localStorage หรือใช้ BTC default
+        if (status === 'authenticated') {
+          const stored = localStorage.getItem('selectedCoin');
+          if (stored) {
+            const storedData = JSON.parse(stored);
+            console.log('🟢 Loaded from localStorage:', storedData);
+            
+            // สร้าง coin object จาก stored data
+            if (storedData.symbol) {
+              const coinObject = createCoinObject(storedData.symbol);
+              setSelectedCoinState(coinObject);
+              console.log('🟢 Set coin from localStorage:', coinObject.label);
+            } else {
+              console.log('🟢 No valid stored data, using BTC default');
+              setSelectedCoinState(defaultCoin);
+            }
+          } else {
+            console.log('🟢 No stored data, using BTC default for authenticated user');
+            setSelectedCoinState(defaultCoin);
           }
         }
       } catch (error) {
         console.error('❌ Error loading from localStorage:', error);
+        setSelectedCoinState(defaultCoin);
       }
     };
 
-    loadFromStorage();
-  }, []);
+    // เรียกใช้เมื่อ session status เปลี่ยน
+    if (status !== 'loading') {
+      loadFromStorage();
+    }
+  }, [session, status]); // เพิ่ม dependency
 
   // Enhanced setSelectedCoin with localStorage backup
   const setSelectedCoin = useCallback((coin: Coin) => {
@@ -76,19 +100,24 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setSelectedCoinState(coin);
       
-      // Save to localStorage
-      const symbol = coin.value.replace('BINANCE:', '').replace('USDT', '');
-      localStorage.setItem('selectedCoin', JSON.stringify({
-        value: coin.value,
-        label: coin.label,
-        symbol: symbol
-      }));
+      // Save to localStorage เฉพาะเมื่อ login
+      if (session) {
+        const symbol = coin.value.replace('BINANCE:', '').replace('USDT', '');
+        localStorage.setItem('selectedCoin', JSON.stringify({
+          value: coin.value,
+          label: coin.label,
+          symbol: symbol
+        }));
+        console.log('🟢 Saved to localStorage for authenticated user');
+      } else {
+        console.log('🟢 Not saving to localStorage (not authenticated)');
+      }
       
       console.log('🟢 Successfully updated selectedCoin to:', coin.label);
     } catch (error) {
       console.error('❌ Error in setSelectedCoin:', error);
     }
-  }, []);
+  }, [session]);
 
   const fetchMarketPrice = useCallback(async () => {
     try {
