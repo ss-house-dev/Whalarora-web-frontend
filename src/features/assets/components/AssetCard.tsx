@@ -16,113 +16,113 @@ const colors = {
   white: '#FFFFFF',
 };
 
-// Coin icon components
-const BTCIcon = ({ size = 40 }: { size?: number }) => (
+// Coin icon components - Fixed at 40px always
+const BTCIcon = () => (
   <Image
     src="/currency-icons/bitcoin-icon.svg"
     alt="Bitcoin"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const ETHIcon = ({ size = 40 }: { size?: number }) => (
+const ETHIcon = () => (
   <Image
     src="/currency-icons/ethereum-icon.svg"
     alt="Ethereum"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const BNBIcon = ({ size = 40 }: { size?: number }) => (
+const BNBIcon = () => (
   <Image
     src="/currency-icons/bnb-coin.svg"
     alt="BNB"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const SOLIcon = ({ size = 40 }: { size?: number }) => (
+const SOLIcon = () => (
   <Image
     src="/currency-icons/solana-icon.svg"
     alt="Solana"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const XRPIcon = ({ size = 40 }: { size?: number }) => (
+const XRPIcon = () => (
   <Image
     src="/currency-icons/xrp-coin.svg"
     alt="XRP"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const ADAIcon = ({ size = 40 }: { size?: number }) => (
+const ADAIcon = () => (
   <Image
     src="/currency-icons/ada-coin.svg"
     alt="Cardano"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const DOGEIcon = ({ size = 40 }: { size?: number }) => (
+const DOGEIcon = () => (
   <Image
     src="/currency-icons/doge-coin.svg"
     alt="Dogecoin"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-const DefaultIcon = ({ size = 40 }: { size?: number }) => (
+const DefaultIcon = () => (
   <Image
     src="/currency-icons/default-coin.svg"
     alt="Default Coin"
-    width={size}
-    height={size}
-    className="rounded-full"
+    width={40}
+    height={40}
+    className="rounded-full w-10 h-10 object-cover"
   />
 );
 
-// Function to get coin icon based on symbol
-const getCoinIcon = (symbol: string, size: number = 40) => {
+// Function to get coin icon based on symbol - Always returns 40px icons
+const getCoinIcon = (symbol: string) => {
   const upperSymbol = symbol.toUpperCase();
   
   switch (upperSymbol) {
     case 'BTC':
     case 'BITCOIN':
-      return <BTCIcon size={size} />;
+      return <BTCIcon />;
     case 'ETH':
     case 'ETHEREUM':
-      return <ETHIcon size={size} />;
+      return <ETHIcon />;
     case 'BNB':
-      return <BNBIcon size={size} />;
+      return <BNBIcon />;
     case 'SOL':
     case 'SOLANA':
-      return <SOLIcon size={size} />;
+      return <SOLIcon />;
     case 'XRP':
-      return <XRPIcon size={size} />;
+      return <XRPIcon />;
     case 'ADA':
     case 'CARDANO':
-      return <ADAIcon size={size} />;
+      return <ADAIcon />;
     case 'DOGE':
     case 'DOGECOIN':
-      return <DOGEIcon size={size} />;
+      return <DOGEIcon />;
     default:
-      return <DefaultIcon size={size} />;
+      return <DefaultIcon />;
   }
 };
 
@@ -248,8 +248,8 @@ export function AssetCard(props: AssetCardProps) {
 
   const isRealTimeGain = realTimePnlAbs >= 0;
 
-  // Use provided icon or get coin icon based on symbol
-  const displayIcon = icon || getCoinIcon(symbol, 40);
+  // Use provided icon or get coin icon based on symbol (always 40px)
+  const displayIcon = icon || getCoinIcon(symbol);
 
   return (
     <motion.div
@@ -261,12 +261,11 @@ export function AssetCard(props: AssetCardProps) {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div
-          className="w-[252px] flex-none pr-4 lg:pr-6 lg:border-r"
-          style={{ borderColor: colors.gray600 }}
+          className="w-[252px] flex-none pr-[16px] lg:border-r border-[#828282]"
         >
           <div className="flex items-center gap-4">
-            {/* Token icon */}
-            <div className="w-10 h-10 relative">
+            {/* Token icon - Fixed at 40px (w-10 h-10) */}
+            <div className="w-10 h-10 relative flex items-center justify-center shrink-0">
               {displayIcon}
             </div>
 
