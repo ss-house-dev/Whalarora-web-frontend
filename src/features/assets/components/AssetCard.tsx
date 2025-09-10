@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice'; // Import your existing hook
@@ -13,6 +14,116 @@ const colors = {
   gray700: '#A4A4A4',
   btc: '#F7931A',
   white: '#FFFFFF',
+};
+
+// Coin icon components
+const BTCIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/bitcoin-icon.svg"
+    alt="Bitcoin"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const ETHIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/ethereum-icon.svg"
+    alt="Ethereum"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const BNBIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/bnb-coin.svg"
+    alt="BNB"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const SOLIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/solana-icon.svg"
+    alt="Solana"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const XRPIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/xrp-coin.svg"
+    alt="XRP"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const ADAIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/ada-coin.svg"
+    alt="Cardano"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const DOGEIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/doge-coin.svg"
+    alt="Dogecoin"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+const DefaultIcon = ({ size = 40 }: { size?: number }) => (
+  <Image
+    src="/currency-icons/default-coin.svg"
+    alt="Default Coin"
+    width={size}
+    height={size}
+    className="rounded-full"
+  />
+);
+
+// Function to get coin icon based on symbol
+const getCoinIcon = (symbol: string, size: number = 40) => {
+  const upperSymbol = symbol.toUpperCase();
+  
+  switch (upperSymbol) {
+    case 'BTC':
+    case 'BITCOIN':
+      return <BTCIcon size={size} />;
+    case 'ETH':
+    case 'ETHEREUM':
+      return <ETHIcon size={size} />;
+    case 'BNB':
+      return <BNBIcon size={size} />;
+    case 'SOL':
+    case 'SOLANA':
+      return <SOLIcon size={size} />;
+    case 'XRP':
+      return <XRPIcon size={size} />;
+    case 'ADA':
+    case 'CARDANO':
+      return <ADAIcon size={size} />;
+    case 'DOGE':
+    case 'DOGECOIN':
+      return <DOGEIcon size={size} />;
+    default:
+      return <DefaultIcon size={size} />;
+  }
 };
 
 export type AssetCardProps = {
@@ -83,11 +194,11 @@ function Stat({ label, value, isLoading = false }: {
   isLoading?: boolean;
 }) {
   return (
-    <div className="w-36 shrink-0 inline-flex flex-col justify-center items-start rounded-xl gap-1">
-      <div className="w-24 text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
+    <div className="w-[144px] shrink-0 inline-flex flex-col justify-center items-start rounded-xl gap-1">
+      <div className="w-24 text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
         {label}
       </div>
-      <div className="text-base leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
+      <div className="text-[16px] leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
         {isLoading ? (
           <Loader2 size={14} className="animate-spin" style={{ color: colors.gray600 }} />
         ) : (
@@ -137,6 +248,9 @@ export function AssetCard(props: AssetCardProps) {
 
   const isRealTimeGain = realTimePnlAbs >= 0;
 
+  // Use provided icon or get coin icon based on symbol
+  const displayIcon = icon || getCoinIcon(symbol, 40);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -147,20 +261,13 @@ export function AssetCard(props: AssetCardProps) {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div
-          className="w-[280px] flex-none pr-4 lg:pr-6 lg:border-r"
+          className="w-[252px] flex-none pr-4 lg:pr-6 lg:border-r"
           style={{ borderColor: colors.gray600 }}
         >
           <div className="flex items-center gap-4">
             {/* Token icon */}
             <div className="w-10 h-10 relative">
-              {icon ?? (
-                <div
-                  className="w-10 h-10 rounded-full grid place-items-center"
-                  style={{ backgroundColor: colors.btc }}
-                >
-                  <span className="text-black font-semibold">₿</span>
-                </div>
-              )}
+              {displayIcon}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -171,8 +278,7 @@ export function AssetCard(props: AssetCardProps) {
                 {symbol} ({name})
               </div>
               <div
-                className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5"
-                style={{ backgroundColor: '#1E1E1E' }}
+                className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5 bg-[#1F2029]"
               >
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
                   {formatAmount10(amount, 10)}
@@ -197,13 +303,13 @@ export function AssetCard(props: AssetCardProps) {
             label="Value" 
             value={`$ ${fmtMoney(realTimeValue)}`} 
           />
-          <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
-            <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
+          <div className="shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
+            <div className="text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
 
              <div
-              className="w-full text-base leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
+              className="w-full text-[16px] leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: isRealTimeGain ? colors.success : '#FF6B6B' }}
             >
               <>
@@ -216,14 +322,12 @@ export function AssetCard(props: AssetCardProps) {
         </div>
         
         {/* Right: CTA with 16px margin from right edge */}
-        <div className="mr-4">
           <button
             onClick={onBuySell}
             className="w-[128px] h-[32px] px-6 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
           >
             Buy/Sell
           </button>
-        </div>
       </div>
     </motion.div>
   );

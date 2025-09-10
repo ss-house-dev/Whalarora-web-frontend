@@ -12,7 +12,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { SelectCoin } from './select-coin';
+import { SelectCoin } from './ui/select-coin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 interface USDTPair {

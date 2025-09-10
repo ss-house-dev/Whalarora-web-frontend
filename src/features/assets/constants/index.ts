@@ -1,3 +1,3 @@
 export const enum TradeQueryKeys {
-  GET_ALL_ASSETS = 'TRADE/GET_ALL_ASSETS', // เพิ่มใหม่
+  GET_ALL_ASSETS = 'TRADE/GET_ALL_ASSETS', 
 }
