@@ -69,11 +69,11 @@ export default function HoldingAssetsTable({
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - แสดงเสมอไม่ว่า totalAssets จะเป็น 0 หรือไม่ */}
       <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
         <span>Total : {totalAssets} Assets</span>
 
-        {showPagination && totalAssets > 0 && (
+        {showPagination && (
           <div className="flex items-center gap-1 text-xs">
             {/* Prev */}
             <button

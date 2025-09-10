@@ -54,11 +54,11 @@ export default function HoldingAssetsSection({
   return (
     <HoldingAssetsTable
       title="My holding assets"
-      totalAssets={hasData ? rows.length : 0}
-      totalPages={hasData ? totalPages : 1}
+      totalAssets={rows.length} // ส่งจำนวนจริงเสมอ
+      totalPages={totalPages} // ส่ง totalPages จริงเสมอ
       initialPage={1}
       onPageChange={setPage}
-      showPagination={hasData}
+      showPagination={true} // แสดง pagination เสมอ
     >
       <div className="flex flex-col space-y-[16px]">
         {/* Loading state */}
