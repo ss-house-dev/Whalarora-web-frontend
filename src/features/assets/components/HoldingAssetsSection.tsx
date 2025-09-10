@@ -18,11 +18,17 @@ type Row = {
 interface HoldingAssetsSectionProps {
   rows: Row[];
   pageSize?: number;
+  isLoading?: boolean;
+  loadingMessage?: string;
+  error?: string;
 }
 
 export default function HoldingAssetsSection({
   rows,
   pageSize = 10,
+  isLoading = false,
+  loadingMessage,
+  error,
 }: HoldingAssetsSectionProps) {
   const [page, setPage] = useState(1);
 
@@ -39,35 +45,66 @@ export default function HoldingAssetsSection({
     // TODO: Implement trade modal logic
   };
 
+  // กำหนดสถานะสำหรับการแสดงผล
+  const hasError = !!error;
+  const isLoadingData = isLoading;
+  const hasData = !isLoadingData && !hasError && rows.length > 0;
+  const hasNoData = !isLoadingData && !hasError && rows.length === 0;
+
   return (
     <HoldingAssetsTable
       title="My holding assets"
-      totalAssets={rows.length}
-      totalPages={totalPages}
+      totalAssets={hasData ? rows.length : 0}
+      totalPages={hasData ? totalPages : 1}
       initialPage={1}
       onPageChange={setPage}
+      showPagination={hasData}
     >
       <div className="flex flex-col space-y-[16px]">
-        {pagedRows.length === 0 ? (
-          <div className="flex justify-center items-center h-32">
-            <p className="text-slate-400">No holding assets found.</p>
+        {/* Loading state */}
+        {isLoadingData && (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-slate-300 text-sm">
+              {loadingMessage || 'Loading...'}
+            </div>
           </div>
-        ) : (
-          pagedRows.map((row) => (
-            <AssetCard
-              key={row.id}
-              symbol={row.symbol}
-              name={row.name}
-              amount={row.amount}
-              currentPrice={row.currentPrice}
-              averageCost={row.averageCost}
-              value={row.value}
-              pnlAbs={row.pnlAbs}
-              pnlPct={row.pnlPct}
-              onBuySell={() => handleTradeClick(row.symbol)}
-              className="mx-auto lg:w-[1220px] h-20 px-4 py-3 rounded-xl"
-            />
-          ))
+        )}
+
+        {/* Error state */}
+        {hasError && (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-red-400 text-sm">
+              Error: {error}
+            </div>
+          </div>
+        )}
+
+        {/* No data state */}
+        {hasNoData && (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-slate-300 text-sm">No holding asset.</p>
+          </div>
+        )}
+
+        {/* Data state */}
+        {hasData && (
+          <>
+            {pagedRows.map((row) => (
+              <AssetCard
+                key={row.id}
+                symbol={row.symbol}
+                name={row.name}
+                amount={row.amount}
+                currentPrice={row.currentPrice}
+                averageCost={row.averageCost}
+                value={row.value}
+                pnlAbs={row.pnlAbs}
+                pnlPct={row.pnlPct}
+                onBuySell={() => handleTradeClick(row.symbol)}
+                className="mx-auto lg:w-[1220px] h-20 px-4 py-3 rounded-xl"
+              />
+            ))}
+          </>
         )}
       </div>
     </HoldingAssetsTable>

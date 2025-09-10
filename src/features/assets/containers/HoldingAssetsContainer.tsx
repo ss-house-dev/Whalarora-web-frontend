@@ -20,55 +20,51 @@ const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>
     // สร้าง symbol list สำหรับ query
     const symbolList = symbols.join(',');
     
-    // Option 1: ใช้ CoinGecko API (ฟรี)
+    // Option 1: ใช้ CoinGecko API (ฟรี) with timeout และ error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&symbols=${symbolList}&order=market_cap_desc&per_page=250&page=1&sparkline=false`
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&symbols=${symbolList}&order=market_cap_desc&per_page=250&page=1&sparkline=false`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      }
     );
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error(`CoinGecko API error: ${response.status}`);
+      throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     const nameMap: Record<string, string> = {};
 
-    data.forEach((coin: any) => {
-      nameMap[coin.symbol.toUpperCase()] = coin.name;
-    });
+    if (Array.isArray(data)) {
+      data.forEach((coin: any) => {
+        if (coin.symbol && coin.name) {
+          nameMap[coin.symbol.toUpperCase()] = coin.name;
+        }
+      });
+    }
 
-    // อัพเดท cache
-    coinNameCache = { ...coinNameCache, ...nameMap };
-    cacheTimestamp = now;
+    // อัพเดท cache เฉพาะเมื่อได้ข้อมูล
+    if (Object.keys(nameMap).length > 0) {
+      coinNameCache = { ...coinNameCache, ...nameMap };
+      cacheTimestamp = now;
+    }
 
     return nameMap;
   } catch (error) {
     console.error('Error fetching coin names from CoinGecko:', error);
     
-    // Fallback to CoinMarketCap-style API (หากมี API key)
-    try {
-      const binanceResponse = await fetch(
-        'https://api.binance.com/api/v3/exchangeInfo'
-      );
-      
-      if (binanceResponse.ok) {
-        const binanceData = await binanceResponse.json();
-        const fallbackMap: Record<string, string> = {};
-        
-        // ดึงข้อมูลจาก Binance (จำกัดแต่เชื่อถือได้)
-        binanceData.symbols?.forEach((symbol: any) => {
-          const baseAsset = symbol.baseAsset;
-          // ใช้ mapping พื้นฐานสำหรับ fallback
-          fallbackMap[baseAsset] = getBasicAssetName(baseAsset);
-        });
-        
-        return fallbackMap;
-      }
-    } catch (fallbackError) {
-      console.error('Error fetching from fallback APIs:', fallbackError);
-    }
-    
-    // หากทุก API ล้มเหลว ใช้ mapping พื้นฐาน
-    return getBasicAssetMapping(symbols);
+    // ไม่พยายาม fallback API เพราะอาจมีปัญหา CORS เหมือนกัน
+    // แค่ return empty object และให้ใช้ basic mapping
+    return {};
   }
 };
 
@@ -194,33 +190,26 @@ export default function HoldingAssetsContainer({
     processData();
   }, [tradableAssets, coinNames]);
 
-  // Loading state
+  // กำหนดสถานะสำหรับส่งไปยัง HoldingAssetsSection
+  let loadingState: string | undefined = undefined;
+  let errorMessage: string | undefined = undefined;
+
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-white">Loading assets...</div>
-      </div>
-    );
+    loadingState = 'Loading assets...';
+  } else if (error) {
+    errorMessage = error.message;
+  } else if (isProcessing || Object.keys(coinNames).length === 0) {
+    loadingState = 'Loading coin information...';
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Error: {error.message}</div>
-      </div>
-    );
-  }
-
-  // Processing state
-  if (isProcessing || Object.keys(coinNames).length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-white">Loading coin information...</div>
-      </div>
-    );
-  }
-
-  // Render main component
-  return <HoldingAssetsSection rows={rows} pageSize={pageSize} />;
+  // ส่งทุกสถานะไปยัง HoldingAssetsSection
+  return (
+    <HoldingAssetsSection 
+      rows={rows} 
+      pageSize={pageSize}
+      isLoading={!!loadingState}
+      loadingMessage={loadingState}
+      error={errorMessage}
+    />
+  );
 }
