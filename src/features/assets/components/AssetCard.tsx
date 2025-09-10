@@ -440,22 +440,28 @@ export function AssetCard(props: AssetCardProps) {
   // Use provided icon or get coin icon based on symbol (always 40px)
   const displayIcon = icon || getCoinIcon(symbol);
 
-  // Handle Buy/Sell button click - ไม่ส่ง symbol ใน URL
-  const handleBuySell = () => {
-    // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
-    if (onBuySell) {
-      onBuySell();
-    }
-    
-    // สร้าง Coin object สำหรับ CoinContext
-    const coinObject = createCoinObject(symbol);
-    
+const handleBuySell = () => {
+  
+  // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
+  if (onBuySell) {
+    onBuySell();
+  }
+  
+  // สร้าง Coin object สำหรับ CoinContext
+  const coinObject = createCoinObject(symbol);
+  try {
     // อัปเดต selected coin ใน CoinContext
     setSelectedCoin(coinObject);
     
-    // Navigate to trading page โดยไม่ส่ง symbol parameter
+    // เพิ่ม delay เล็กน้อยก่อน navigate
+    setTimeout(() => {
+      router.push('/main/trading');
+    }, 100);
+    
+  } catch (error) {
     router.push('/main/trading');
-  };
+  }
+};
 
   return (
     <motion.div
