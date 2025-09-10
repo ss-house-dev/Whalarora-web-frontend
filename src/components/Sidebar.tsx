@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -7,17 +7,17 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const getInitialTab = () => {
+  const getInitialTab = useCallback(() => {
     if (pathname.includes('/main/my-assets')) return 'assets';
     if (pathname.includes('/main/my-wallet')) return 'wallet';
     return 'trade';
-  };
+  }, [pathname]);
 
   const [activeTab, setActiveTab] = useState(getInitialTab);
 
   useEffect(() => {
     setActiveTab(getInitialTab());
-  }, [pathname]);
+  }, [getInitialTab]);
 
   const menuItems = [
     {
@@ -89,31 +89,6 @@ export default function Sidebar() {
       ),
       route: '/main/my-assets',
     },
-    // {
-    //   id: "wallet",
-    //   label: "My Wallet",
-    //   icon: (
-    //     <svg
-    //       width="20"
-    //       height="20"
-    //       viewBox="0 0 22 22"
-    //       fill="none"
-    //       xmlns="http://www.w3.org/2000/svg"
-    //       className="mx-auto cursor-pointer"
-    //     >
-    //       <path
-    //         d="M16.8428 0.191895C18.0003 0.192147 18.947 1.12304 18.9473 2.26025V4.61865C19.5682 4.98055 19.9999 5.63185 20 6.39697V12.6021C20 13.3673 19.5683 14.0194 18.9473 14.3813V16.7388C18.9473 17.8762 18.0005 18.8069 16.8428 18.8071H2.10547C0.937034 18.8071 0 17.8763 0 16.7388V2.26025C0.000244876 1.12288 0.937187 0.191895 2.10547 0.191895H16.8428ZM2.10547 2.26025V16.7388H16.8428V14.6704H10.5264C9.36849 14.6704 8.4209 13.7396 8.4209 12.6021V6.39697C8.4211 5.25959 9.36861 4.32865 10.5264 4.32861H16.8428V2.26025H2.10547ZM10.5264 6.39697V12.6021H17.8945V6.39697H10.5264ZM15.6768 8.62061C16.3535 8.62061 16.9021 9.15989 16.9023 9.82471C16.9023 10.4897 16.3536 11.0288 15.6768 11.0288C14.9999 11.0288 14.4512 10.4897 14.4512 9.82471C14.4514 9.15992 15 8.62065 15.6768 8.62061Z"
-    //         fill="currentColor"
-    //         className={`transition-colors duration-200 ${
-    //           activeTab === "wallet"
-    //             ? "text-[#225FED]"
-    //             : "text-white group-hover:text-[#225FED]"
-    //         }`}
-    //       />
-    //     </svg>
-    //   ),
-    //   route: "/main/my-wallet",
-    // },
   ];
 
   const handleTabClick = (id: string, route: string) => {

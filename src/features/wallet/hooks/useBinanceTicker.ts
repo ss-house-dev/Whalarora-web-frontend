@@ -1,4 +1,3 @@
-// src/features/wallet/hooks/useBinanceTicker.ts
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -25,7 +24,6 @@ export function useBinanceTicker(baseSymbols: string[]) {
     enabled: symbols.length > 0,
     staleTime: 5_000,
     refetchOnWindowFocus: false,
-    // ให้วิ่งแม้แท็บไม่โฟกัส (กันกรณีไม่มี WS)
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
   });
@@ -89,7 +87,7 @@ export function useBinanceTicker(baseSymbols: string[]) {
       } catch {}
       wsRef.current = null;
     };
-  }, [pairsQ.data, symbols.join(',')]);
+  }, [pairsQ.data, symbols]); // Update the dependency array to include 'symbols'
 
   const map = useMemo(() => ({ ...(snapQ.data ?? {}), ...(live ?? {}) }), [snapQ.data, live]);
 

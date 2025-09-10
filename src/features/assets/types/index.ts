@@ -11,4 +11,4 @@ export interface Asset {
   __v: number;
 }
 
-export interface GetAllAssetsResponse extends Array<Asset> {}
+export type GetAllAssetsResponse = Asset[];
