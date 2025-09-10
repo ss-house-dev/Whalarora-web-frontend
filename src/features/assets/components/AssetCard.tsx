@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext'; // เพิ่ม import
 
@@ -460,7 +460,7 @@ export function AssetCard(props: AssetCardProps) {
       setTimeout(() => {
         router.push('/main/trading');
       }, 100);
-    } catch (error) {
+    } catch {
       router.push('/main/trading');
     }
   };
