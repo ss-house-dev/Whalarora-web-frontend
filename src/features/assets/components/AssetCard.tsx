@@ -440,7 +440,7 @@ export function AssetCard(props: AssetCardProps) {
   // Use provided icon or get coin icon based on symbol (always 40px)
   const displayIcon = icon || getCoinIcon(symbol);
 
-  // Handle Buy/Sell button click
+  // Handle Buy/Sell button click - ไม่ส่ง symbol ใน URL
   const handleBuySell = () => {
     // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
     if (onBuySell) {
@@ -453,8 +453,8 @@ export function AssetCard(props: AssetCardProps) {
     // อัปเดต selected coin ใน CoinContext
     setSelectedCoin(coinObject);
     
-    // Navigate to trading page พร้อมส่ง symbol ไปด้วย
-    router.push(`/main/trading?symbol=${symbol.toLowerCase()}`);
+    // Navigate to trading page โดยไม่ส่ง symbol parameter
+    router.push('/main/trading');
   };
 
   return (
