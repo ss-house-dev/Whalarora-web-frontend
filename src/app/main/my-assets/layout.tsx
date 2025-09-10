@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   description: 'My assets page',
 };
 
-
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`min-h-screen overflow-x-hidden ${alexandria.className}`}>

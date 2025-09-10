@@ -422,17 +422,15 @@ export function AssetCard(props: AssetCardProps) {
     enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
 
   // Calculate real-time PnL if we have market price - แต่ถ้า loading ให้เป็น 0
-  const realTimePnlAbs =
-    isPriceLoading
-      ? 0 // ถ้า loading ให้เป็น 0
-      : enableRealTimePrice && marketPrice && typeof amount === 'number'
+  const realTimePnlAbs = isPriceLoading
+    ? 0 // ถ้า loading ให้เป็น 0
+    : enableRealTimePrice && marketPrice && typeof amount === 'number'
       ? (displayPrice - averageCost) * amount
       : pnlAbs;
 
-  const realTimePnlPct =
-    isPriceLoading
-      ? 0 // ถ้า loading ให้เป็น 0
-      : enableRealTimePrice && marketPrice && averageCost > 0
+  const realTimePnlPct = isPriceLoading
+    ? 0 // ถ้า loading ให้เป็น 0
+    : enableRealTimePrice && marketPrice && averageCost > 0
       ? (displayPrice - averageCost) / averageCost
       : pnlPct;
 
@@ -519,7 +517,9 @@ export function AssetCard(props: AssetCardProps) {
 
             <div
               className="w-full text-[16px] leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
-              style={{ color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B' }}
+              style={{
+                color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+              }}
             >
               {isPriceLoading ? (
                 <div className="flex items-center gap-2">
