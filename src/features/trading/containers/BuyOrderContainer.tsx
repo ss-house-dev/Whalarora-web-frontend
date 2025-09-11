@@ -205,7 +205,22 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
-  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก
+  // ฟังก์ชันสำหรับจัดรูปแบบเลขแบบเดิมโดยไม่จำกัดทศนิยม สำหรับ price
+  const formatPriceWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  }, []);
+
+  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก สำหรับ amount
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -231,6 +246,13 @@ export default function BuyOrderContainer() {
     [formatNumberWithComma]
   );
 
+  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ price (ไม่จำกัดทศนิยม)
+  const isValidPriceFormat = useCallback((value: string): boolean => {
+    const numericValue = value.replace(/,/g, '');
+    return /^\d*\.?\d*$/.test(numericValue);
+  }, []);
+
+  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ amount (จำกัด 2 ทศนิยม)
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,2}$/.test(numericValue);
@@ -297,7 +319,8 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
+    // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
+    const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
     setPrice(formattedMarketPrice);
     setLimitPrice(formattedMarketPrice);
     setIsInputFocused(false);
@@ -306,8 +329,9 @@ export default function BuyOrderContainer() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    if (inputValue === '' || isValidNumberFormat(inputValue)) {
-      const formattedValue = formatNumberWithComma(inputValue);
+    // ใช้ฟังก์ชันตรวจสอบแบบไม่จำกัดทศนิยม
+    if (inputValue === '' || isValidPriceFormat(inputValue)) {
+      const formattedValue = formatPriceWithComma(inputValue);
       setLimitPrice(formattedValue);
       setPrice(formattedValue);
     }
@@ -315,11 +339,13 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = formatToTwoDecimalsWithComma(price);
+      // ไม่ต้องจำกัดทศนิยมเมื่อ blur
+      const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
     } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
+      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
+      const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
     }
@@ -433,7 +459,8 @@ export default function BuyOrderContainer() {
       `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
     if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedPrice = formatNumberWithComma(marketPrice);
+      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
+      const formattedPrice = formatPriceWithComma(marketPrice);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
       console.log(
@@ -444,7 +471,7 @@ export default function BuyOrderContainer() {
       setLimitPrice('0.00');
       console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
+  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatPriceWithComma]);
 
   useEffect(() => {
     const currentPrice =
@@ -455,7 +482,8 @@ export default function BuyOrderContainer() {
 
   useEffect(() => {
     if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
+      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
+      const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
       setPrice(formattedMarketPrice);
       setLimitPrice(formattedMarketPrice);
       console.log(
@@ -472,7 +500,7 @@ export default function BuyOrderContainer() {
     isInputFocused,
     isPriceLoading,
     selectedCoin.label,
-    formatToTwoDecimalsWithComma,
+    formatPriceWithComma,
   ]);
 
   useEffect(() => {

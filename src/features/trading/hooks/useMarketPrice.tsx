@@ -6,15 +6,28 @@ export function useMarketPrice(symbol: string) {
   const currentSymbolRef = useRef<string>('');
   const priceCache = useRef<{ [key: string]: string }>({});
 
-  // ฟังก์ชันสำหรับตัดทิ้งตัวเลขทศนิยมเกิน 2 ตำแหน่งและเพิ่ม comma
-  const truncateToTwoDecimalsWithComma = useCallback((value: number): string => {
+  // ฟังก์ชันสำหรับจัดรูปแบบราคาแบบ original โดยเพิ่ม comma และรักษาทศนิยม
+  const formatOriginalPrice = useCallback((value: number): string => {
     if (isNaN(value)) return '0.00';
-    const factor = Math.pow(10, 2);
-    const truncated = Math.floor(value * factor) / factor;
+    
+    // แปลงเป็น string เพื่อตรวจสอบจำนวนทศนิยม
+    const valueStr = value.toString();
+    const decimalIndex = valueStr.indexOf('.');
+    
+    // ถ้าเป็นจำนวนเต็ม ให้แสดง .00
+    if (decimalIndex === -1) {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    }
+    
+    // ถ้ามีทศนิยม ให้รักษาทศนิยมทั้งหมดแต่ขั้นต่ำ 2 หลัก
+    const decimalPlaces = valueStr.length - decimalIndex - 1;
     return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(truncated);
+      minimumFractionDigits: Math.max(2, decimalPlaces),
+      maximumFractionDigits: Math.max(2, decimalPlaces),
+    }).format(value);
   }, []);
 
   useEffect(() => {
@@ -51,7 +64,7 @@ export function useMarketPrice(symbol: string) {
       try {
         const data = JSON.parse(event.data);
         if (currentSymbolRef.current === symbol) {
-          const price = truncateToTwoDecimalsWithComma(parseFloat(data.p));
+          const price = formatOriginalPrice(parseFloat(data.p));
           priceCache.current[symbol] = price;
           setMarketPrice(price);
           setIsPriceLoading(false);
@@ -79,7 +92,7 @@ export function useMarketPrice(symbol: string) {
           );
           const data = await response.json();
           if (currentSymbolRef.current === symbol) {
-            const price = truncateToTwoDecimalsWithComma(parseFloat(data.price));
+            const price = formatOriginalPrice(data.price); // ใช้ raw string จาก API
             priceCache.current[symbol] = price;
             setMarketPrice(price);
             setIsPriceLoading(false);
@@ -97,7 +110,7 @@ export function useMarketPrice(symbol: string) {
       clearTimeout(fallbackTimeout);
       ws.close();
     };
-  }, [symbol, truncateToTwoDecimalsWithComma]);
+  }, [symbol, formatOriginalPrice]);
 
   return { marketPrice, isPriceLoading };
 }
