@@ -217,10 +217,11 @@ export default function BuyOrderContainer() {
 
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
+    // เก็บทศนิยมเดิมไว้ทุกหลัก (ไม่ตัดทิ้ง)
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก สำหรับ amount
+  // ฟังก์ชันสำหรับ amount
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -319,10 +320,9 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
-    const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
-    setPrice(formattedMarketPrice);
-    setLimitPrice(formattedMarketPrice);
+    // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+    setPrice(marketPrice);
+    setLimitPrice(marketPrice);
     setIsInputFocused(false);
   };
 
@@ -339,15 +339,16 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      // ไม่ต้องจำกัดทศนิยมเมื่อ blur
+      // ใช้ formatPriceWithComma สำหรับ user input เท่านั้น
       const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
-      const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
+      console.log(`BuyOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
+    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading && marketPrice !== '0.00') {
+      // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+      setPrice(marketPrice);
+      setLimitPrice(marketPrice);
+      console.log(`BuyOrderContainer: Price blur - set market price: "${marketPrice}"`);
     }
     setIsInputFocused(false);
   };
@@ -454,54 +455,27 @@ export default function BuyOrderContainer() {
     setAmountErrorMessage('');
   };
 
+  // ลบ useEffect ที่ซ้ำซ้อน และใช้เพียงตัวเดียว
   useEffect(() => {
     console.log(
       `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
-    if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
-      const formattedPrice = formatPriceWithComma(marketPrice);
-      setPrice(formattedPrice);
-      setLimitPrice(formattedPrice);
-      console.log(
-        `BuyOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`
-      );
-    } else if (isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
+    
+    if (priceLabel === 'Price' && !isInputFocused) {
+      if (marketPrice && !isPriceLoading) {
+        // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+        setPrice(marketPrice);
+        setLimitPrice(marketPrice);
+        console.log(
+          `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+        );
+      } else if (isPriceLoading) {
+        setPrice('0.00');
+        setLimitPrice('0.00');
+        console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
+      }
     }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatPriceWithComma]);
-
-  useEffect(() => {
-    const currentPrice =
-      priceLabel === 'Price' ? (isPriceLoading ? '0.00' : marketPrice) : limitPrice;
-    const coinAmount = calculateReceiveCoin(amount, currentPrice);
-    setReceiveCoin(coinAmount);
-  }, [amount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveCoin]);
-
-  useEffect(() => {
-    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
-      // ใช้ราคาแบบเดิมโดยไม่จำกัดทศนิยม
-      const formattedMarketPrice = formatPriceWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
-      console.log(
-        `BuyOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`
-      );
-    } else if (priceLabel === 'Price' && isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
-    }
-  }, [
-    marketPrice,
-    priceLabel,
-    isInputFocused,
-    isPriceLoading,
-    selectedCoin.label,
-    formatPriceWithComma,
-  ]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
@@ -515,6 +489,12 @@ export default function BuyOrderContainer() {
       }
     }
   }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
+
+  // ส่วนคำนวณ receiveCoin
+  useEffect(() => {
+    const calculatedReceiveCoin = calculateReceiveCoin(amount, price);
+    setReceiveCoin(calculatedReceiveCoin);
+  }, [amount, price, calculateReceiveCoin]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
