@@ -457,23 +457,25 @@ export default function BuyOrderContainer() {
 
   // ลบ useEffect ที่ซ้ำซ้อน และใช้เพียงตัวเดียว
   useEffect(() => {
-  console.log(
-    `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
-  );
-  if (priceLabel === 'Price' && !isInputFocused) {
-    if (marketPrice && !isPriceLoading && marketPrice !== '0.00') {
-      setPrice(marketPrice);
-      setLimitPrice(marketPrice);
-      console.log(
-        `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
-      );
-    } else if (isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
+    console.log(
+      `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
+    );
+    if (priceLabel === 'Price' && !isInputFocused) {
+      if (marketPrice && !isPriceLoading && marketPrice !== '0.00') {
+        setPrice(marketPrice);
+        setLimitPrice(marketPrice);
+        console.log(
+          `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+        );
+      } else if (isPriceLoading) {
+        setPrice('0.00');
+        setLimitPrice('0.00');
+        console.log(
+          `BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+        );
+      }
     }
-  }
-}, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
