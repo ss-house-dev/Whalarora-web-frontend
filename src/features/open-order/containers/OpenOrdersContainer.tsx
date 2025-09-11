@@ -68,58 +68,123 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
           {/* Total */}
           <span>Total : {totalItems} Items</span>
 
-          {/* Pagination - แสดงเสมอ */}
+          {/* Pagination - แบบภาพที่ 2 */}
           <div className="flex items-center gap-1">
             {/* Prev */}
             <button
               disabled={currentPage === 1 || totalPages === 0}
               onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                 currentPage === 1 || totalPages === 0
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
-              style={{ backgroundColor: '#212121' }}
+              style={{ backgroundColor: '#16171D' }}
             >
               ‹
             </button>
 
-            {/* Page numbers - แสดงทุกหน้า หรืออย่างน้อย 1 หน้า */}
-            {totalPages > 0 ? (
-              Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                    currentPage === pageNum ? 'text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: currentPage === pageNum ? '#1F4293' : 'transparent',
-                  }}
-                >
-                  {pageNum}
-                </button>
-              ))
-            ) : (
-              <button
-                disabled
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 cursor-not-allowed"
-                style={{ backgroundColor: 'transparent' }}
-              >
-                1
-              </button>
-            )}
+            {/* Trio numbered pages */}
+            {(() => {
+              if (totalPages <= 3) {
+                return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      }`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              // ถ้ามากกว่า 3 หน้า → ใช้ logic trio
+              if (currentPage === 1) {
+                return [1, 2, 3].map((p, i) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      }`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              if (currentPage === totalPages) {
+                return [totalPages - 2, totalPages - 1, totalPages].map((p) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      }`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              // กรณีทั่วไป
+              return [currentPage - 1, currentPage, currentPage + 1].map((p) => {
+                const active = p === currentPage;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                      active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                    }`}
+                    style={{
+                      backgroundColor: '#16171D',
+                      borderColor: active ? '#225FED' : 'transparent',
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                );
+              });
+            })()}
 
             {/* Next */}
             <button
               disabled={currentPage === totalPages || totalPages === 0}
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                 currentPage === totalPages || totalPages === 0
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
-              style={{ backgroundColor: '#212121' }}
+              style={{ backgroundColor: '#16171D' }}
             >
               ›
             </button>
