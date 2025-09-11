@@ -76,10 +76,8 @@ export default function OrderCard({ order, onDelete }: Props) {
       const decimalIndex = numStr.indexOf('.');
 
       if (decimalIndex === -1) {
-        // ไม่มีทศนิยม ให้เอาแค่ 10 หลักแรก
         formattedNumber = digitsOnly.substring(0, 10);
       } else {
-        // มีทศนิยม ให้จัดรูปแบบใหม่
         const beforeDecimal = numStr.substring(0, decimalIndex);
         const afterDecimal = numStr.substring(decimalIndex + 1);
         const remainingDigits = 10 - beforeDecimal.length;
@@ -91,20 +89,37 @@ export default function OrderCard({ order, onDelete }: Props) {
         }
       }
     } else {
-      // ถ้ายังไม่ครب 10 หลัก ให้เติม 0 ข้างหลัง
       const digitsNeeded = 10 - totalDigits;
 
       if (numStr.includes('.')) {
-        // มีทศนิยมอยู่แล้ว ให้เติม 0 ข้างหลัง
         formattedNumber = numStr + '0'.repeat(digitsNeeded);
       } else {
-        // ไม่มีทศนิยม ให้เติมจุดทศนิยมและ 0
         formattedNumber = numStr + '.' + '0'.repeat(digitsNeeded);
       }
     }
 
     return `${formattedNumber} ${baseCurrency}`;
   };
+
+  // ปุ่มลบ (มีกรอบ)
+  const DeleteButton = ({ onClick }: { onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      aria-label="Delete order"
+      className="
+        grid place-items-center
+        h-8 w-8 shrink-0
+        rounded-md border border-[#3A3B44]
+        bg-[#1F2029] text-slate-300
+        transition-colors
+        hover:bg-[#24252F] hover:border-[#7E7E7E] hover:text-white
+        focus:outline-none focus:ring-2 focus:ring-[#2E3039]
+      "
+    >
+      <Trash2 className="w-4 h-4" />
+    </button>
+  );
+
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
@@ -135,19 +150,7 @@ export default function OrderCard({ order, onDelete }: Props) {
           </span>
         </div>
       </div>
-      {onDelete ? (
-        <button
-          onClick={() => onDelete(order.id)}
-          className="p-1.5 rounded-md justify-self-end transition-colors 
-               bg-transparent text-slate-400
-               hover:bg-[#2A2A2A] hover:text-blue-500"
-          aria-label="Delete order"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      ) : (
-        <div />
-      )}
+      {onDelete ? <DeleteButton onClick={() => onDelete(order.id)} /> : <div />}
     </div>
   );
 
@@ -159,7 +162,6 @@ export default function OrderCard({ order, onDelete }: Props) {
 
         {/* แถวบน-ขวา */}
         {order.status === 'partial' ? (
-          // เฉพาะ partial เท่านั้นที่จะมี progress bar
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
@@ -177,19 +179,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               </div>
             </div>
 
-            {onDelete ? (
-              <button
-                onClick={() => onDelete(order.id)}
-                className="p-1.5 rounded-md justify-self-end transition-colors 
-               bg-transparent text-slate-400
-               hover:bg-[#2A2A2A] hover:text-blue-500"
-                aria-label="Delete order"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            ) : (
-              <div />
-            )}
+            {onDelete ? <DeleteButton onClick={() => onDelete(order.id)} /> : <div />}
 
             {/* progress bar - แสดงเฉพาะ partial */}
             <div className="col-start-1 mt-3 flex-1 ml-[32px]">
@@ -201,11 +191,10 @@ export default function OrderCard({ order, onDelete }: Props) {
             <div />
           </div>
         ) : (
-          // สถานะอื่นๆ ใช้ TopRight ปกติ
           <TopRight />
         )}
 
-        {/* แถวล่าง (สถานะ) - แสดงเฉพาะ Partially Filled และ Pending */}
+        {/* แถวล่าง (สถานะ) */}
         {order.status === 'partial' && (
           <div className="flex items-center text-yellow-400 text-xs mt-1 ml-2">
             <span className="w-2 h-2 rounded-full bg-yellow-400 mr-2" />
@@ -213,7 +202,6 @@ export default function OrderCard({ order, onDelete }: Props) {
           </div>
         )}
 
-        {/* แสดง Pending สำหรับทุกสถานะที่ไม่ใช่ partial */}
         {order.status !== 'partial' && (
           <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[2px]">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
