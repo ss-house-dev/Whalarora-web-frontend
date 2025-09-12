@@ -13,19 +13,32 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
-  const { orders, pagination, setPage } = useOpenOrders();
+  const { orders, pagination, loading, setPage } = useOpenOrders();
+  const [prevPagination, setPrevPagination] = React.useState(pagination);
 
-  // ใช้ pagination data จาก API แทนการคำนวณเอง
-  const currentPage = pagination?.page || 1;
+  // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
+  React.useEffect(() => {
+    if (!loading && pagination) {
+      setPrevPagination(pagination);
+    }
+  }, [loading, pagination]);
+
+  // ใช้ pagination data จาก API หรือค่าก่อนหน้าถ้ากำลัง loading
+  const displayPagination = loading && prevPagination ? prevPagination : pagination;
+  const currentPage = displayPagination?.page || 1;
   const totalPages =
-    pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
-  const totalItems = pagination?.total || orders.length;
+    displayPagination?.totalPages || Math.ceil((displayPagination?.total || 0) / (displayPagination?.limit || 10)) || (loading ? 1 : 0);
+  const totalItems = displayPagination?.total || (loading ? 0 : orders.length);
 
   return (
     <div className="flex flex-col h-full">
       {/* Order list */}
       <div className="flex-1 overflow-y-auto pr-2">
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
@@ -68,58 +81,127 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
           {/* Total */}
           <span>Total : {totalItems} Items</span>
 
-          {/* Pagination - แสดงเสมอ */}
+          {/* Pagination - แบบภาพที่ 2 */}
           <div className="flex items-center gap-1">
             {/* Prev */}
             <button
-              disabled={currentPage === 1 || totalPages === 0}
+              disabled={currentPage === 1 || totalPages === 0 || loading}
               onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                currentPage === 1 || totalPages === 0
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                currentPage === 1 || totalPages === 0 || loading
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
-              style={{ backgroundColor: '#212121' }}
+              style={{ backgroundColor: '#16171D' }}
             >
               ‹
             </button>
 
-            {/* Page numbers - แสดงทุกหน้า หรืออย่างน้อย 1 หน้า */}
-            {totalPages > 0 ? (
-              Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                    currentPage === pageNum ? 'text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: currentPage === pageNum ? '#1F4293' : 'transparent',
-                  }}
-                >
-                  {pageNum}
-                </button>
-              ))
-            ) : (
-              <button
-                disabled
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 cursor-not-allowed"
-                style={{ backgroundColor: 'transparent' }}
-              >
-                1
-              </button>
-            )}
+            {/* Trio numbered pages */}
+            {(() => {
+              if (totalPages <= 3) {
+                return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      disabled={loading}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              // ถ้ามากกว่า 3 หน้า → ใช้ logic trio
+              if (currentPage === 1) {
+                return [1, 2, 3].map((p, i) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      disabled={loading}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              if (currentPage === totalPages) {
+                return [totalPages - 2, totalPages - 1, totalPages].map((p) => {
+                  const active = p === currentPage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      disabled={loading}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
+                      style={{
+                        backgroundColor: '#16171D',
+                        borderColor: active ? '#225FED' : 'transparent',
+                      }}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              }
+
+              // กรณีทั่วไป
+              return [currentPage - 1, currentPage, currentPage + 1].map((p) => {
+                const active = p === currentPage;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    disabled={loading}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+                      active ? 'text-white border' : 'text-slate-400 hover:text-white'
+                    } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
+                    style={{
+                      backgroundColor: '#16171D',
+                      borderColor: active ? '#225FED' : 'transparent',
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                );
+              });
+            })()}
 
             {/* Next */}
             <button
-              disabled={currentPage === totalPages || totalPages === 0}
+              disabled={currentPage === totalPages || totalPages === 0 || loading}
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                currentPage === totalPages || totalPages === 0
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                currentPage === totalPages || totalPages === 0 || loading
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
-              style={{ backgroundColor: '#212121' }}
+              style={{ backgroundColor: '#16171D' }}
             >
               ›
             </button>
