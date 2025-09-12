@@ -8,7 +8,7 @@ import { useRef, useState } from 'react';
 interface OrderTableContainerProps {
   activeTab: 'open' | 'history';
   setActiveTab: Dispatch<SetStateAction<'open' | 'history'>>;
-  onCancelOrder?: (orderId: string) => void;
+  onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
 export default function OrderTableContainer({

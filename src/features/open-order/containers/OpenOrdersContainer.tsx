@@ -6,7 +6,7 @@ interface OpenOrdersContainerProps {
   className?: string;
   showPagination?: boolean;
   showRefreshButton?: boolean;
-  onCancelOrder?: (orderId: string) => void;
+  onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
 const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> = ({
@@ -55,7 +55,11 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
               <OrderCard
                 key={order._id}
                 order={mappedOrder}
-                onDelete={onCancelOrder ? () => onCancelOrder(order._id) : undefined}
+                onDelete={
+                  onCancelOrder
+                    ? () => onCancelOrder({ orderRef: order.orderRef, side: order.side })
+                    : undefined
+                }
               />
             );
           })
