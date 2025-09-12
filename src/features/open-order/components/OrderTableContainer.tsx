@@ -36,7 +36,7 @@ export default function OrderTableContainer({
   return (
     <div className="w-[900px] h-[540px] bg-[#16171D] rounded-xl px-5 pt-3 pb-3 flex flex-col">
       {/* Tabs */}
-      <div className="relative flex border-b pb-3 gap-3 pl-4 border-[#828282]">
+      <div className="relative flex border-b pb-3 gap-3 pl-4 border-[#ffffff]/5">
         <button
           ref={openRef}
           onClick={() => setActiveTab('open')}
