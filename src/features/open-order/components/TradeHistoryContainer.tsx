@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PaginationFooter from '@/components/ui/PaginationFooter';
 
 // Order type definition
 export interface Order {
@@ -41,68 +42,14 @@ export default function TradeHistoryContainer() {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-        {/* Total */}
-        <span>Total : {orders.length} Items</span>
-
-        {/* Pagination */}
-        <div className="flex items-center gap-1">
-          {/* Prev */}
-          <button
-            disabled={page === 1 || totalPages === 0}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              page === 1 || totalPages === 0
-                ? 'text-slate-500 cursor-not-allowed'
-                : 'text-slate-300 hover:text-white'
-            }`}
-            style={{ backgroundColor: '#212121' }}
-          >
-            ‹
-          </button>
-
-          {/* Visible pages */}
-          {totalPages > 0 ? (
-            Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                  page === p ? 'text-white' : 'text-slate-400 hover:text-white'
-                }`}
-                style={{
-                  backgroundColor: page === p ? '#1F4293' : 'transparent',
-                }}
-              >
-                {p}
-              </button>
-            ))
-          ) : (
-            <button
-              disabled
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 cursor-not-allowed"
-              style={{ backgroundColor: 'transparent' }}
-            >
-              1
-            </button>
-          )}
-
-          {/* Next */}
-          <button
-            disabled={page === totalPages || totalPages === 0}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              page === totalPages || totalPages === 0
-                ? 'text-slate-500 cursor-not-allowed'
-                : 'text-slate-300 hover:text-white'
-            }`}
-            style={{ backgroundColor: '#212121' }}
-          >
-            ›
-          </button>
-        </div>
-      </div>
+      {/* Footer - unified pagination */}
+      <PaginationFooter
+        page={page}
+        totalPages={totalPages || 1}
+        totalCount={orders.length}
+        label="Items"
+        onPageChange={(p) => setPage(p)}
+      />
     </div>
   );
 }
