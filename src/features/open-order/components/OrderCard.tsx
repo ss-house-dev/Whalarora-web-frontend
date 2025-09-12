@@ -155,7 +155,7 @@ export default function OrderCard({ order, onDelete }: Props) {
   );
 
   return (
-    <div className="w-full rounded-xl border border-[#666] bg-[#16171D] px-4 py-3 mb-3">
+    <div className="w-full rounded-xl h-[100px] border border-[#666] bg-[#16171D] px-4 py-3 mb-3">
       <div className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2 items-start">
         {/* แถวบน-ซ้าย */}
         <MetaLeft />
@@ -203,7 +203,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         )}
 
         {order.status !== 'partial' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs -translate-y-[2px]">
+          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs mt-2">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
             <span className="leading-none">Pending</span>
           </div>

@@ -13,19 +13,32 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
-  const { orders, pagination, setPage } = useOpenOrders();
+  const { orders, pagination, loading, setPage } = useOpenOrders();
+  const [prevPagination, setPrevPagination] = React.useState(pagination);
 
-  // ใช้ pagination data จาก API แทนการคำนวณเอง
-  const currentPage = pagination?.page || 1;
+  // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
+  React.useEffect(() => {
+    if (!loading && pagination) {
+      setPrevPagination(pagination);
+    }
+  }, [loading, pagination]);
+
+  // ใช้ pagination data จาก API หรือค่าก่อนหน้าถ้ากำลัง loading
+  const displayPagination = loading && prevPagination ? prevPagination : pagination;
+  const currentPage = displayPagination?.page || 1;
   const totalPages =
-    pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
-  const totalItems = pagination?.total || orders.length;
+    displayPagination?.totalPages || Math.ceil((displayPagination?.total || 0) / (displayPagination?.limit || 10)) || (loading ? 1 : 0);
+  const totalItems = displayPagination?.total || (loading ? 0 : orders.length);
 
   return (
     <div className="flex flex-col h-full">
       {/* Order list */}
       <div className="flex-1 overflow-y-auto pr-2">
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
@@ -72,10 +85,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
           <div className="flex items-center gap-1">
             {/* Prev */}
             <button
-              disabled={currentPage === 1 || totalPages === 0}
+              disabled={currentPage === 1 || totalPages === 0 || loading}
               onClick={() => setPage(Math.max(1, currentPage - 1))}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                currentPage === 1 || totalPages === 0
+                currentPage === 1 || totalPages === 0 || loading
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
@@ -93,9 +106,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                     <button
                       key={p}
                       onClick={() => setPage(p)}
+                      disabled={loading}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                         active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      }`}
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{
                         backgroundColor: '#16171D',
                         borderColor: active ? '#225FED' : 'transparent',
@@ -116,9 +130,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                     <button
                       key={p}
                       onClick={() => setPage(p)}
+                      disabled={loading}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                         active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      }`}
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{
                         backgroundColor: '#16171D',
                         borderColor: active ? '#225FED' : 'transparent',
@@ -138,9 +153,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                     <button
                       key={p}
                       onClick={() => setPage(p)}
+                      disabled={loading}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                         active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      }`}
+                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{
                         backgroundColor: '#16171D',
                         borderColor: active ? '#225FED' : 'transparent',
@@ -160,9 +176,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                   <button
                     key={p}
                     onClick={() => setPage(p)}
+                    disabled={loading}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                       active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                    }`}
+                    } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                     style={{
                       backgroundColor: '#16171D',
                       borderColor: active ? '#225FED' : 'transparent',
@@ -177,10 +194,10 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
 
             {/* Next */}
             <button
-              disabled={currentPage === totalPages || totalPages === 0}
+              disabled={currentPage === totalPages || totalPages === 0 || loading}
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                currentPage === totalPages || totalPages === 0
+                currentPage === totalPages || totalPages === 0 || loading
                   ? 'text-slate-500 cursor-not-allowed'
                   : 'text-slate-300 hover:text-white'
               }`}
