@@ -205,7 +205,23 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
-  // เปลี่ยนฟังก์ชันนี้ให้เหมือนโค้ดแรก
+  // ฟังก์ชันสำหรับจัดรูปแบบเลขแบบเดิมโดยไม่จำกัดทศนิยม สำหรับ price
+  const formatPriceWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // เก็บทศนิยมเดิมไว้ทุกหลัก (ไม่ตัดทิ้ง)
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  }, []);
+
+  // ฟังก์ชันสำหรับ amount
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -220,17 +236,13 @@ export default function BuyOrderContainer() {
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  const formatToTwoDecimalsWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return '';
-      return formatNumberWithComma(num.toFixed(2));
-    },
-    [formatNumberWithComma]
-  );
+  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ price (ไม่จำกัดทศนิยม)
+  const isValidPriceFormat = useCallback((value: string): boolean => {
+    const numericValue = value.replace(/,/g, '');
+    return /^\d*\.?\d*$/.test(numericValue);
+  }, []);
 
+  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ amount (จำกัด 2 ทศนิยม)
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,2}$/.test(numericValue);
@@ -297,17 +309,18 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-    setPrice(formattedMarketPrice);
-    setLimitPrice(formattedMarketPrice);
+    // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+    setPrice(marketPrice);
+    setLimitPrice(marketPrice);
     setIsInputFocused(false);
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    if (inputValue === '' || isValidNumberFormat(inputValue)) {
-      const formattedValue = formatNumberWithComma(inputValue);
+    // ใช้ฟังก์ชันตรวจสอบแบบไม่จำกัดทศนิยม
+    if (inputValue === '' || isValidPriceFormat(inputValue)) {
+      const formattedValue = formatPriceWithComma(inputValue);
       setLimitPrice(formattedValue);
       setPrice(formattedValue);
     }
@@ -315,13 +328,16 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = formatToTwoDecimalsWithComma(price);
+      // ใช้ formatPriceWithComma สำหรับ user input เท่านั้น
+      const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
-    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
+      console.log(`BuyOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
+    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading && marketPrice !== '0.00') {
+      // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+      setPrice(marketPrice);
+      setLimitPrice(marketPrice);
+      console.log(`BuyOrderContainer: Price blur - set market price: "${marketPrice}"`);
     }
     setIsInputFocused(false);
   };
@@ -428,52 +444,27 @@ export default function BuyOrderContainer() {
     setAmountErrorMessage('');
   };
 
+  // ลบ useEffect ที่ซ้ำซ้อน และใช้เพียงตัวเดียว
   useEffect(() => {
     console.log(
       `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
-    if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedPrice = formatNumberWithComma(marketPrice);
-      setPrice(formattedPrice);
-      setLimitPrice(formattedPrice);
-      console.log(
-        `BuyOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`
-      );
-    } else if (isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
+    if (priceLabel === 'Price' && !isInputFocused) {
+      if (marketPrice && !isPriceLoading && marketPrice !== '0.00') {
+        setPrice(marketPrice);
+        setLimitPrice(marketPrice);
+        console.log(
+          `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+        );
+      } else if (isPriceLoading) {
+        setPrice('0.00');
+        setLimitPrice('0.00');
+        console.log(
+          `BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+        );
+      }
     }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
-
-  useEffect(() => {
-    const currentPrice =
-      priceLabel === 'Price' ? (isPriceLoading ? '0.00' : marketPrice) : limitPrice;
-    const coinAmount = calculateReceiveCoin(amount, currentPrice);
-    setReceiveCoin(coinAmount);
-  }, [amount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveCoin]);
-
-  useEffect(() => {
-    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
-      console.log(
-        `BuyOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`
-      );
-    } else if (priceLabel === 'Price' && isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
-    }
-  }, [
-    marketPrice,
-    priceLabel,
-    isInputFocused,
-    isPriceLoading,
-    selectedCoin.label,
-    formatToTwoDecimalsWithComma,
-  ]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label]);
 
   useEffect(() => {
     if (amount && !isAmountFocused) {
@@ -487,6 +478,12 @@ export default function BuyOrderContainer() {
       }
     }
   }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
+
+  // ส่วนคำนวณ receiveCoin
+  useEffect(() => {
+    const calculatedReceiveCoin = calculateReceiveCoin(amount, price);
+    setReceiveCoin(calculatedReceiveCoin);
+  }, [amount, price, calculateReceiveCoin]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
