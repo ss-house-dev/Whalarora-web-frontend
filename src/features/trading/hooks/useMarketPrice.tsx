@@ -1,5 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+interface PriceFilter {
+  filterType: string;
+  tickSize: string;
+}
+
+interface SymbolInfo {
+  symbol: string;
+  filters: PriceFilter[];
+}
+
+interface ExchangeInfoResponse {
+  symbols: SymbolInfo[];
+}
+
 export function useMarketPrice(symbol: string) {
   const [marketPrice, setMarketPrice] = useState<string>('');
   const [isPriceLoading, setIsPriceLoading] = useState<boolean>(true);
@@ -48,11 +62,13 @@ export function useMarketPrice(symbol: string) {
       try {
         const apiSymbol = `${coinSymbol}USDT`;
         const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-        const data = await response.json();
-        const symInfo = data.symbols.find((s: any) => s.symbol === apiSymbol);
+        const data: ExchangeInfoResponse = await response.json();
+        const symInfo = data.symbols.find((s: SymbolInfo) => s.symbol === apiSymbol);
 
         if (symInfo) {
-          const priceFilter = symInfo.filters.find((f: any) => f.filterType === 'PRICE_FILTER');
+          const priceFilter = symInfo.filters.find(
+            (f: PriceFilter) => f.filterType === 'PRICE_FILTER'
+          );
           if (priceFilter && priceFilter.tickSize) {
             const tickSize = parseFloat(priceFilter.tickSize);
             if (!isNaN(tickSize) && tickSize > 0) {

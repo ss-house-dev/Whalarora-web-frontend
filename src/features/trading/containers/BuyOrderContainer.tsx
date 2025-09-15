@@ -182,7 +182,6 @@ export default function BuyOrderContainer() {
 
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [limitPrice, setLimitPrice] = useState<string>('');
   const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
   const [amount, setAmount] = useState<string>('');
   const [isAmountFocused, setIsAmountFocused] = useState(false);
@@ -303,13 +302,11 @@ export default function BuyOrderContainer() {
     setPriceLabel('Limit price');
     setIsInputFocused(true);
     setPrice('');
-    setLimitPrice('');
   };
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
     setPrice(marketPrice);
-    setLimitPrice(marketPrice);
     setIsInputFocused(false);
   };
 
@@ -317,7 +314,6 @@ export default function BuyOrderContainer() {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = formatPriceWithComma(inputValue);
-      setLimitPrice(formattedValue);
       setPrice(formattedValue);
     }
   };
@@ -326,11 +322,9 @@ export default function BuyOrderContainer() {
     if (price) {
       const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
-      setLimitPrice(formattedPrice);
       console.log(`BuyOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
     } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
       setPrice(marketPrice);
-      setLimitPrice(marketPrice);
       console.log(`BuyOrderContainer: Price blur - set market price: "${marketPrice}"`);
     }
     setIsInputFocused(false);
@@ -439,13 +433,11 @@ export default function BuyOrderContainer() {
     if (priceLabel === 'Price' && !isInputFocused) {
       if (marketPrice && !isPriceLoading) {
         setPrice(marketPrice);
-        setLimitPrice(marketPrice);
         console.log(
           `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
         );
       } else if (isPriceLoading) {
         setPrice('0.' + '0'.repeat(priceDecimalPlaces));
-        setLimitPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
           `BuyOrderContainer: Set price to 0.${'0'.repeat(
             priceDecimalPlaces
