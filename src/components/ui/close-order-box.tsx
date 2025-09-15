@@ -35,13 +35,33 @@ export function CloseOrderBox({
     if (n < 1000) {
       return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     } else if (n < 1_000_000) {
-      return t2(n / 1_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'K';
+      return (
+        t2(n / 1_000).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'K'
+      );
     } else if (n < 1_000_000_000) {
-      return t2(n / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M';
+      return (
+        t2(n / 1_000_000).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'M'
+      );
     } else if (n < 1_000_000_000_000) {
-      return t2(n / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'B';
+      return (
+        t2(n / 1_000_000_000).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'B'
+      );
     } else if (n < 1_000_000_000_000_000) {
-      return t2(n / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'T';
+      return (
+        t2(n / 1_000_000_000_000).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'T'
+      );
     }
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };

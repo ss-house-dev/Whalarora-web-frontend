@@ -79,7 +79,10 @@ export default function PaginationFooter({
               className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
                 active ? 'text-white border' : 'text-slate-400 hover:text-white'
               }`}
-              style={{ backgroundColor: '#16171D', borderColor: active ? '#225FED' : 'transparent' }}
+              style={{
+                backgroundColor: '#16171D',
+                borderColor: active ? '#225FED' : 'transparent',
+              }}
               aria-current={active ? 'page' : undefined}
             >
               {p}

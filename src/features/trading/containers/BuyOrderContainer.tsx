@@ -215,7 +215,9 @@ export default function BuyOrderContainer() {
       const integerPart = parts[0];
       const decimalPart = parts[1] || '';
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const paddedDecimal = decimalPart.padEnd(priceDecimalPlaces, '0').slice(0, priceDecimalPlaces);
+      const paddedDecimal = decimalPart
+        .padEnd(priceDecimalPlaces, '0')
+        .slice(0, priceDecimalPlaces);
       return `${formattedInteger}.${paddedDecimal}`;
     },
     [priceDecimalPlaces]
@@ -451,7 +453,14 @@ export default function BuyOrderContainer() {
         );
       }
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, priceDecimalPlaces]);
+  }, [
+    marketPrice,
+    priceLabel,
+    isInputFocused,
+    isPriceLoading,
+    selectedCoin.label,
+    priceDecimalPlaces,
+  ]);
 
   useEffect(() => {
     const calculatedReceiveCoin = calculateReceiveCoin(amount, price);
