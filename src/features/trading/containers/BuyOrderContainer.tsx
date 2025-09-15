@@ -45,7 +45,7 @@ export default function BuyOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { selectedCoin } = useCoinContext();
-  const { marketPrice, isPriceLoading } = useMarketPrice(selectedCoin.label);
+  const { marketPrice, isPriceLoading, priceDecimalPlaces } = useMarketPrice(selectedCoin.label);
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -183,7 +183,7 @@ export default function BuyOrderContainer() {
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>('');
-  const [price, setPrice] = useState<string>('0.00');
+  const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
   const [amount, setAmount] = useState<string>('');
   const [isAmountFocused, setIsAmountFocused] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(true);
@@ -205,23 +205,22 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
-  // ฟังก์ชันสำหรับจัดรูปแบบเลขแบบเดิมโดยไม่จำกัดทศนิยม สำหรับ price
-  const formatPriceWithComma = useCallback((value: string): string => {
-    if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+  const formatPriceWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      const numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    const parts = numericValue.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1];
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1] || '';
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const paddedDecimal = decimalPart.padEnd(priceDecimalPlaces, '0').slice(0, priceDecimalPlaces);
+      return `${formattedInteger}.${paddedDecimal}`;
+    },
+    [priceDecimalPlaces]
+  );
 
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-    // เก็บทศนิยมเดิมไว้ทุกหลัก (ไม่ตัดทิ้ง)
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-  }, []);
-
-  // ฟังก์ชันสำหรับ amount
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -236,13 +235,11 @@ export default function BuyOrderContainer() {
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ price (ไม่จำกัดทศนิยม)
   const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
-  // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ amount (จำกัด 2 ทศนิยม)
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,2}$/.test(numericValue);
@@ -309,7 +306,6 @@ export default function BuyOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    // ใช้ marketPrice โดยตรง ไม่ format ใหม่
     setPrice(marketPrice);
     setLimitPrice(marketPrice);
     setIsInputFocused(false);
@@ -317,8 +313,6 @@ export default function BuyOrderContainer() {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
-    // ใช้ฟังก์ชันตรวจสอบแบบไม่จำกัดทศนิยม
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = formatPriceWithComma(inputValue);
       setLimitPrice(formattedValue);
@@ -328,13 +322,11 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      // ใช้ formatPriceWithComma สำหรับ user input เท่านั้น
       const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
       console.log(`BuyOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
-    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading && marketPrice !== '0.00') {
-      // ใช้ marketPrice โดยตรง ไม่ format ใหม่
+    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
       setPrice(marketPrice);
       setLimitPrice(marketPrice);
       console.log(`BuyOrderContainer: Price blur - set market price: "${marketPrice}"`);
@@ -344,28 +336,22 @@ export default function BuyOrderContainer() {
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
     if (inputValue === '' || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
       setAmount(formattedValue);
-
       const numericValue = inputValue.replace(/,/g, '');
       const num = parseFloat(numericValue);
       const availableBalance = getAvailableBalance();
 
-      // Check validation immediately
       if (inputValue === '' || num === 0 || isNaN(num)) {
-        // Empty or zero - reset to valid state but don't show error yet
         setIsAmountValid(true);
         setAmountErrorMessage('');
         setSliderValue(0);
       } else if (num > availableBalance) {
-        // Amount exceeds balance - show error immediately
         setIsAmountValid(false);
         setAmountErrorMessage('Insufficient balance');
         setSliderValue(0);
       } else {
-        // Valid amount
         setIsAmountValid(true);
         setAmountErrorMessage('');
         const sliderPercentage = calculateSliderPercentage(inputValue);
@@ -444,42 +430,29 @@ export default function BuyOrderContainer() {
     setAmountErrorMessage('');
   };
 
-  // ลบ useEffect ที่ซ้ำซ้อน และใช้เพียงตัวเดียว
   useEffect(() => {
     console.log(
       `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
     if (priceLabel === 'Price' && !isInputFocused) {
-      if (marketPrice && !isPriceLoading && marketPrice !== '0.00') {
+      if (marketPrice && !isPriceLoading) {
         setPrice(marketPrice);
         setLimitPrice(marketPrice);
         console.log(
           `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
         );
       } else if (isPriceLoading) {
-        setPrice('0.00');
-        setLimitPrice('0.00');
+        setPrice('0.' + '0'.repeat(priceDecimalPlaces));
+        setLimitPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
-          `BuyOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+          `BuyOrderContainer: Set price to 0.${'0'.repeat(
+            priceDecimalPlaces
+          )} due to loading for ${selectedCoin.label}`
         );
       }
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label]);
+  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, priceDecimalPlaces]);
 
-  useEffect(() => {
-    if (amount && !isAmountFocused) {
-      const numericValue = amount.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      const availableBalance = getAvailableBalance();
-      const isValid = !isNaN(num) && num <= availableBalance;
-      if (isValid) {
-        const sliderPercentage = calculateSliderPercentage(numericValue);
-        setSliderValue(sliderPercentage);
-      }
-    }
-  }, [amount, isAmountFocused, getAvailableBalance, calculateSliderPercentage]);
-
-  // ส่วนคำนวณ receiveCoin
   useEffect(() => {
     const calculatedReceiveCoin = calculateReceiveCoin(amount, price);
     setReceiveCoin(calculatedReceiveCoin);

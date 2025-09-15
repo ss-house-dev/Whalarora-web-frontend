@@ -8,7 +8,6 @@ export function useMarketPrice(symbol: string) {
   const priceCache = useRef<{ [key: string]: string }>({});
   const precisionCache = useRef<{ [key: string]: number }>({});
 
-  // ฟังก์ชันสำหรับจัดรูปแบบราคาโดยรักษา trailing zeros ตาม tickSize
   const formatOriginalPrice = useCallback(
     (value: number): string => {
       if (isNaN(value) || value <= 0) return '0.' + '0'.repeat(priceDecimalPlaces);
