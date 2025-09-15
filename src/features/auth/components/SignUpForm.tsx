@@ -7,6 +7,7 @@ import { Button } from '@/components/button-sign-up';
 interface SignInData {
   username: string;
   password: string;
+  confirmPassword: string; // Added confirmPassword field
   rememberMe: boolean;
 }
 
@@ -23,6 +24,41 @@ interface SignInFormProps {
   onGoBack: () => void;
 }
 
+// Password strength requirements
+const passwordRequirements = [
+  { regex: /.{8,}/, text: 'At least 8 characters' },
+  { regex: /\d/, text: 'At least 1 number' },
+  { regex: /[a-z]/, text: 'At least 1 lowercase letter' },
+  { regex: /[A-Z]/, text: 'At least 1 uppercase letter' },
+];
+
+// Calculate password strength score and status
+const checkPasswordStrength = (password: string) => {
+  const strength = passwordRequirements.map((req) => ({
+    met: req.regex.test(password),
+    text: req.text,
+  }));
+  const score = strength.filter((req) => req.met).length;
+  let color: string;
+  let text: string;
+
+  if (score === 0) {
+    color = 'bg-gray-500';
+    text = 'Enter a password';
+  } else if (score <= 2) {
+    color = 'bg-red-500';
+    text = 'Weak password';
+  } else if (score === 3) {
+    color = 'bg-yellow-500';
+    text = 'Medium password';
+  } else {
+    color = 'bg-green-500';
+    text = 'Strong password';
+  }
+
+  return { strength, score, color, text };
+};
+
 export const SignUpForm: React.FC<SignInFormProps> = ({
   showPassword,
   formData,
@@ -31,7 +67,6 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
   onTogglePasswordVisibility,
   onInputChange,
   onSignIn,
-  onForgotPassword,
   onSignUp,
   onGoBack,
 }) => {
@@ -42,10 +77,11 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
   };
 
   const hasError = Boolean(error);
+  const { strength } = checkPasswordStrength(formData.password);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-[464px] h-[640px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
+      <div className="w-[464px] h-[720px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
         <div className="flex flex-col space-y-4 text-white">
           <div className="space-y-4">
             {/* Back Button */}
@@ -76,7 +112,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
 
             <div className="flex flex-col justify-center items-center space-y-4 mb-0">
               {/* Username */}
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full">
                 <FormInputIcon
                   label="Username"
                   value={formData.username}
@@ -97,7 +133,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
               </div>
 
               {/* Password */}
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full">
                 <FormInputIcon
                   label="Password"
                   type={showPassword ? 'text' : 'password'}
@@ -121,15 +157,49 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                     </button>
                   }
                 />
+                {/* Password Strength Indicator */}
+                <div className="mt-2">
+                  <ul className="mt-1 space-y-1" aria-label="Password requirements">
+                    {strength.map((req, index) => (
+                      <li
+                        key={index}
+                        className={`flex items-center gap-1 text-xs ${
+                          req.met ? 'text-green-500' : 'text-gray-400'
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="shrink-0"
+                        >
+                          {req.met ? (
+                            <path d="M20 6L9 17l-5-5" />
+                          ) : (
+                            <path d="M18 6l-12 12M6 6l12 12" />
+                          )}
+                        </svg>
+                        <span>{req.text}</span>
+                        <span className="sr-only">
+                          {req.met ? ' - Requirement met' : ' - Requirement not met'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
 
               {/* Confirm Password */}
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full">
                 <FormInputIcon
                   label="Confirm Password"
                   type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => onInputChange('password', e.target.value)}
+                  value={formData.confirmPassword}
+                  onChange={(e) => onInputChange('confirmPassword', e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
                   hasError={hasError}
@@ -155,7 +225,6 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
             <div className="w-[400px] h-[48px] flex items-center justify-center mb-[10px]">
               {error && (
                 <div className="w-full h-full border border-[#D84C4C] rounded-[12px] flex items-center px-2 py-3">
-                  {/* Error Icon */}
                   <div className="flex-shrink-0 mr-2 mx-2">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +239,6 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       />
                     </svg>
                   </div>
-                  {/* Error Message */}
                   <div className="flex-1">
                     <p className="text-[#D84C4C] text-[12px]">{error}</p>
                   </div>
@@ -178,7 +246,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
               )}
             </div>
 
-            {/* Button Login */}
+            {/* Button Sign Up */}
             <div className="flex justify-center">
               <Button
                 className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
@@ -197,7 +265,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
             </div>
 
             <div className="text-[12px] font-[400px] flex items-center justify-center">
-              <p className="mr-2">Already have an account ?</p>
+              <p className="mr-2">Already have an account?</p>
               <p
                 className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
                   isLoading ? 'opacity-50 pointer-events-none' : ''

@@ -7,15 +7,17 @@ import { SignUpForm } from '@/features/auth/components/SignUpForm';
 interface SignInData {
   username: string;
   password: string;
+  confirmPassword: string;
   rememberMe: boolean;
 }
 
-const SignInContainer = () => {
+const SignUpContainer = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<SignInData>({
     username: '',
     password: '',
+    confirmPassword: '',
     rememberMe: false,
   });
   const [error, setError] = useState<string>('');
@@ -29,7 +31,7 @@ const SignInContainer = () => {
   };
 
   /**
-   * Handles input changes for the sign-in form
+   * Handles input changes for the sign-up form
    * @param field - The field being updated
    * @param value - The new value for the field
    */
@@ -43,7 +45,7 @@ const SignInContainer = () => {
   };
 
   /**
-   * Handles the sign-in process
+   * Handles the sign-up process
    */
   const handleSignIn = async () => {
     try {
@@ -51,8 +53,14 @@ const SignInContainer = () => {
       setIsLoading(true);
 
       // Validate form
-      if (!formData.username || !formData.password) {
+      if (!formData.username || !formData.password || !formData.confirmPassword) {
         setError('Please fill in all required fields');
+        return;
+      }
+
+      // Validate password match
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
         return;
       }
 
@@ -69,7 +77,7 @@ const SignInContainer = () => {
         window.location.href = '/main/trading';
       }
     } catch {
-      setError('Sign in failed. Please try again.');
+      setError('Sign up failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +88,7 @@ const SignInContainer = () => {
   };
 
   const handleSignUp = () => {
-    router.push('/auth/sign-up');
+    router.push('/auth/sign-in');
   };
 
   const handleGoBack = () => {
@@ -103,4 +111,4 @@ const SignInContainer = () => {
   );
 };
 
-export default SignInContainer;
+export default SignUpContainer;
