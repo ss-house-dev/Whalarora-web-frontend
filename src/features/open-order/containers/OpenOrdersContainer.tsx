@@ -14,11 +14,21 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
+  
   const { orders, pagination, setPage, loading } = useOpenOrders();
 
-  // ใช้ pagination data จาก API แทนการคำนวณเอง
-  const currentPage = pagination?.page || 1;
+  // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
+  React.useEffect(() => {
+    if (!loading && pagination) {
+      setPrevPagination(pagination);
+    }
+  }, [loading, pagination]);
+
+  // ใช้ pagination data จาก API หรือค่าก่อนหน้าถ้ากำลัง loading
+  const displayPagination = loading && prevPagination ? prevPagination : pagination;
+  const currentPage = displayPagination?.page || 1;
   const totalPages =
+
     pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
   
@@ -33,6 +43,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   return (
     <div className="flex flex-col h-full">
       {/* Order list */}
+
       <div
         className={`relative flex-1 overflow-y-auto pr-2 transition-opacity duration-300 ${
           loading ? 'opacity-60' : 'opacity-100'
@@ -40,6 +51,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
       >
         {/* Orders list (kept mounted so pagination stays stable during loading) */}
         {!loading && orders.length === 0 ? (
+
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
