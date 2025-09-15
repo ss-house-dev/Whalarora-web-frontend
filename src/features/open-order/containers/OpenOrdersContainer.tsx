@@ -2,6 +2,7 @@ import React from 'react';
 import { OpenOrdersProvider, useOpenOrders } from '../contexts/OpenOrdersContext';
 import OrderCard, { Order } from '../components/OrderCard';
 import PaginationFooter from '@/components/ui/PaginationFooter';
+import { OpenOrdersState } from '../types';
 
 interface OpenOrdersContainerProps {
   className?: string;
@@ -18,6 +19,11 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const { orders, pagination, setPage, loading } = useOpenOrders();
 
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
+  const [prevPagination, setPrevPagination] = React.useState<OpenOrdersState['pagination'] | null>(
+    null
+  );
+
+  // อัปเดตค่าก่อนหน้าเมื่อโหลดเสร็จและมีข้อมูลใหม่
   React.useEffect(() => {
     if (!loading && pagination) {
       setPrevPagination(pagination);
