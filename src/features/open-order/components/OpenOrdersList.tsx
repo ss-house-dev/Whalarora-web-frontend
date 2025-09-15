@@ -4,7 +4,7 @@ import { OpenOrder } from '../types';
 interface OpenOrdersListProps {
   orders: OpenOrder[];
   loading?: boolean;
-  onCancelOrder?: (orderId: string) => void;
+  onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
 export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
@@ -100,7 +100,7 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {onCancelOrder && (
                   <button
-                    onClick={() => onCancelOrder(order._id)}
+                    onClick={() => onCancelOrder({ orderRef: order.orderRef, side: order.side })}
                     className="text-red-600 hover:text-red-900 font-medium"
                   >
                     ยกเลิก

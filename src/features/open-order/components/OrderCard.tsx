@@ -1,5 +1,14 @@
 import { Trash2 } from 'lucide-react';
 import ProgressBar from './ProgressBar';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogCancel,
+  AlertDialogAction,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from '@/components/ui/alert-dialog-close-order';
 
 export interface Order {
   id: string;
@@ -18,7 +27,7 @@ export interface Order {
 
 interface Props {
   order: Order;
-  onDelete?: (id: string) => void;
+  onDelete?: () => void;
 }
 
 export default function OrderCard({ order, onDelete }: Props) {
@@ -37,20 +46,82 @@ export default function OrderCard({ order, onDelete }: Props) {
     return `${formattedNumber} USD`;
   };
 
-  // ฟังก์ชันสำหรับจัดรูปแบบจำนวนพร้อมหน่วยตาม pair
-  const formatAmount = (amount: string, pair: string): string => {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return amount;
+  // ฟังก์ชันจัดรูปแบบจำนวนสำหรับป๊อปอัป Close Order ตามกติกา AC3–AC7
+  const formatCloseAmount = (amount: string): string => {
+    const n = parseFloat(amount);
+    if (!isFinite(n)) return amount;
 
-    // ดึงหน่วยจาก pair (ส่วนแรกของ pair เช่น BTC จาก BTC/USD)
-    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    // ปัดทิ้ง (truncate) ให้ 2 ตำแหน่ง เพื่อไม่ให้ข้ามขอบบน (เช่น 999.999k -> 1000.00k)
+    const truncate2 = (value: number) => Math.trunc(value * 100) / 100;
 
-    const formattedNumber = numAmount.toLocaleString('en-US', {
+    if (n < 1000) {
+      // 0 – 999
+      return n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } else if (n < 1_000_000) {
+      // 1,000 – 999,999 => K
+      const v = truncate2(n / 1_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'K';
+    } else if (n < 1_000_000_000) {
+      // 1,000,000 – 999,999,999 => M
+      const v = truncate2(n / 1_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'M';
+    } else if (n < 1_000_000_000_000) {
+      // 1,000,000,000 – 999,999,999,999 => B
+      const v = truncate2(n / 1_000_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'B';
+    } else if (n < 1_000_000_000_000_000) {
+      // 1,000,000,000,000 – 999,999,999,999,999 => T
+      const v = truncate2(n / 1_000_000_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'T';
+    }
+
+    // เกินช่วงที่กำหนด: แสดงเป็นตัวเลขเต็ม 2 ตำแหน่งเพื่อความปลอดภัย
+    return n.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 8, // สำหรับ crypto ที่อาจมีทศนิยมเยอะ
+      maximumFractionDigits: 2,
     });
+  };
 
-    return `${formattedNumber} ${baseCurrency}`;
+  // ฟังก์ชันสำหรับจัดรูปแบบจำนวนพร้อมหน่วยตาม pair (รวมได้สูงสุด 10 หลัก รวมทศนิยม)
+  const formatAmount = (amount: string, pair: string): string => {
+    const n = parseFloat(amount);
+    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    if (!isFinite(n)) return `${amount} ${baseCurrency}`;
+
+    const maxDigits = 10;
+    const negative = n < 0;
+    const abs = Math.abs(n);
+    const intStr = Math.floor(abs).toString();
+    const intDigits = Math.max(1, intStr.length);
+
+    let out: string;
+    if (intDigits >= maxDigits) {
+      // ส่วนจำนวนเต็มยาวแล้ว ไม่แสดงทศนิยม
+      out = Number(intStr).toLocaleString('en-US');
+    } else {
+      const fracDigits = maxDigits - intDigits; // อนุญาตปัดเศษ
+      const fixed = abs.toFixed(fracDigits);
+      const [i, f] = fixed.split('.');
+      const iWithComma = Number(i).toLocaleString('en-US');
+      out = f && fracDigits > 0 ? `${iWithComma}.${f}` : iWithComma;
+    }
+
+    return `${negative ? '-' : ''}${out} ${baseCurrency}`;
   };
 
   // ฟังก์ชันสำหรับจัดรูปแบบจำนวน Filled ให้แสดงแค่ 10 หลักแรก (ไม่ปัดเศษ)
@@ -120,6 +191,78 @@ export default function OrderCard({ order, onDelete }: Props) {
     </button>
   );
 
+  const baseCurrency = order.pair.split('/')[0] || order.pair.split('-')[0] || '';
+  const quoteCurrency = order.pair.split('/')[1] || order.pair.split('-')[1] || '';
+
+  const ConfirmCloseDialog = () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        {/* Trigger with existing delete button styling */}
+        <span>
+          <DeleteButton onClick={() => {}} />
+        </span>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent>
+        {/* Required accessible title/description for Radix */}
+        <AlertDialogTitle className="sr-only">Close order</AlertDialogTitle>
+        <AlertDialogDescription className="sr-only">
+          Confirm closing the selected order
+        </AlertDialogDescription>
+        {/* Header */}
+        <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
+          <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
+            <Trash2 size={20} strokeWidth={2} />
+          </div>
+          <div className="flex flex-col">
+            <div className="text-white text-base font-normal leading-normal">Close order</div>
+            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">
+              Do you want to close this order ?
+            </div>
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="w-full grid grid-cols-2 gap-y-4 gap-x-4">
+          <div className="flex items-center gap-3">
+            <div
+              className={`text-sm font-normal leading-tight ${
+                isBuy ? 'text-[#2FACA2]' : 'text-[#C22727]'
+              }`}
+            >
+              {isBuy ? 'Buy' : 'Sell'}
+            </div>
+            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">
+              {formatCloseAmount(order.amount)} {baseCurrency}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-start gap-2">
+            <div className="text-[#A4A4A4] text-sm font-normal leading-tight">at</div>
+            <div className="text-[#A4A4A4] text-sm font-normal leading-tight">Price</div>
+            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">{order.price}</div>
+            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">{quoteCurrency}</div>
+          </div>
+
+          <div className="flex items-center justify-start">
+            <AlertDialogCancel className="w-32 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-white text-sm leading-tight hover:bg-gray-700 transition">
+              Keep Open
+            </AlertDialogCancel>
+          </div>
+
+          <div className="flex items-center justify-start">
+            <AlertDialogAction
+              onClick={() => onDelete?.()}
+              className="w-32 h-8 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] flex items-center justify-center text-neutral-100 text-sm leading-tight transition"
+            >
+              Confirm
+            </AlertDialogAction>
+          </div>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   const MetaLeft = () => (
     <div className="flex items-center gap-3 ">
       <div
@@ -150,7 +293,7 @@ export default function OrderCard({ order, onDelete }: Props) {
           </span>
         </div>
       </div>
-      {onDelete ? <DeleteButton onClick={() => onDelete(order.id)} /> : <div />}
+      {onDelete ? <ConfirmCloseDialog /> : <div />}
     </div>
   );
 
@@ -179,7 +322,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               </div>
             </div>
 
-            {onDelete ? <DeleteButton onClick={() => onDelete(order.id)} /> : <div />}
+            {onDelete ? <ConfirmCloseDialog /> : <div />}
 
             {/* progress bar - แสดงเฉพาะ partial */}
             <div className="col-start-1 mt-3 flex-1 ml-[32px]">
