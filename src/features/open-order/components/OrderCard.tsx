@@ -46,20 +46,82 @@ export default function OrderCard({ order, onDelete }: Props) {
     return `${formattedNumber} USD`;
   };
 
-  // ฟังก์ชันสำหรับจัดรูปแบบจำนวนพร้อมหน่วยตาม pair
-  const formatAmount = (amount: string, pair: string): string => {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return amount;
+  // ฟังก์ชันจัดรูปแบบจำนวนสำหรับป๊อปอัป Close Order ตามกติกา AC3–AC7
+  const formatCloseAmount = (amount: string): string => {
+    const n = parseFloat(amount);
+    if (!isFinite(n)) return amount;
 
-    // ดึงหน่วยจาก pair (ส่วนแรกของ pair เช่น BTC จาก BTC/USD)
-    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    // ปัดทิ้ง (truncate) ให้ 2 ตำแหน่ง เพื่อไม่ให้ข้ามขอบบน (เช่น 999.999k -> 1000.00k)
+    const truncate2 = (value: number) => Math.trunc(value * 100) / 100;
 
-    const formattedNumber = numAmount.toLocaleString('en-US', {
+    if (n < 1000) {
+      // 0 – 999
+      return n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } else if (n < 1_000_000) {
+      // 1,000 – 999,999 => K
+      const v = truncate2(n / 1_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'K';
+    } else if (n < 1_000_000_000) {
+      // 1,000,000 – 999,999,999 => M
+      const v = truncate2(n / 1_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'M';
+    } else if (n < 1_000_000_000_000) {
+      // 1,000,000,000 – 999,999,999,999 => B
+      const v = truncate2(n / 1_000_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'B';
+    } else if (n < 1_000_000_000_000_000) {
+      // 1,000,000,000,000 – 999,999,999,999,999 => T
+      const v = truncate2(n / 1_000_000_000_000);
+      return v.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + 'T';
+    }
+
+    // เกินช่วงที่กำหนด: แสดงเป็นตัวเลขเต็ม 2 ตำแหน่งเพื่อความปลอดภัย
+    return n.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 8, // สำหรับ crypto ที่อาจมีทศนิยมเยอะ
+      maximumFractionDigits: 2,
     });
+  };
 
-    return `${formattedNumber} ${baseCurrency}`;
+  // ฟังก์ชันสำหรับจัดรูปแบบจำนวนพร้อมหน่วยตาม pair (รวมได้สูงสุด 10 หลัก รวมทศนิยม)
+  const formatAmount = (amount: string, pair: string): string => {
+    const n = parseFloat(amount);
+    const baseCurrency = pair.split('/')[0] || pair.split('-')[0] || '';
+    if (!isFinite(n)) return `${amount} ${baseCurrency}`;
+
+    const maxDigits = 10;
+    const negative = n < 0;
+    const abs = Math.abs(n);
+    const intStr = Math.floor(abs).toString();
+    const intDigits = Math.max(1, intStr.length);
+
+    let out: string;
+    if (intDigits >= maxDigits) {
+      // ส่วนจำนวนเต็มยาวแล้ว ไม่แสดงทศนิยม
+      out = Number(intStr).toLocaleString('en-US');
+    } else {
+      const fracDigits = maxDigits - intDigits; // อนุญาตปัดเศษ
+      const fixed = abs.toFixed(fracDigits);
+      const [i, f] = fixed.split('.');
+      const iWithComma = Number(i).toLocaleString('en-US');
+      out = f && fracDigits > 0 ? `${iWithComma}.${f}` : iWithComma;
+    }
+
+    return `${negative ? '-' : ''}${out} ${baseCurrency}`;
   };
 
   // ฟังก์ชันสำหรับจัดรูปแบบจำนวน Filled ให้แสดงแค่ 10 หลักแรก (ไม่ปัดเศษ)
@@ -171,7 +233,7 @@ export default function OrderCard({ order, onDelete }: Props) {
               {isBuy ? 'Buy' : 'Sell'}
             </div>
             <div className="text-[#E9E9E9] text-sm font-normal leading-tight">
-              {order.amount} {baseCurrency}
+              {formatCloseAmount(order.amount)} {baseCurrency}
             </div>
           </div>
 

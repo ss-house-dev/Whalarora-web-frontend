@@ -27,6 +27,24 @@ export function CloseOrderBox({
   price,
   currency,
 }: CloseOrderBoxProps) {
+  // จัดรูปแบบจำนวนตาม AC3–AC7: 0–999, k, M, B, T (2 ตำแหน่ง, truncate)
+  const formatCloseAmount = (value: string): string => {
+    const n = parseFloat(value);
+    if (!isFinite(n)) return value;
+    const t2 = (v: number) => Math.trunc(v * 100) / 100;
+    if (n < 1000) {
+      return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } else if (n < 1_000_000) {
+      return t2(n / 1_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'K';
+    } else if (n < 1_000_000_000) {
+      return t2(n / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M';
+    } else if (n < 1_000_000_000_000) {
+      return t2(n / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'B';
+    } else if (n < 1_000_000_000_000_000) {
+      return t2(n / 1_000_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'T';
+    }
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
   return (
     <AlertDialog>
       {/* ปุ่ม trigger */}
@@ -63,7 +81,7 @@ export function CloseOrderBox({
               {side}
             </div>
             <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-              {amount} {token}
+              {formatCloseAmount(amount)} {token}
             </div>
           </div>
 
