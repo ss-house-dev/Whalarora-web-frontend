@@ -1,20 +1,21 @@
 import React from 'react';
 import { OpenOrdersProvider, useOpenOrders } from '../contexts/OpenOrdersContext';
 import OrderCard, { Order } from '../components/OrderCard';
+import PaginationFooter from '@/components/ui/PaginationFooter';
 
 interface OpenOrdersContainerProps {
   className?: string;
   showPagination?: boolean;
   showRefreshButton?: boolean;
-  onCancelOrder?: (orderId: string) => void;
+  onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
 const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> = ({
   showPagination = true,
   onCancelOrder,
 }) => {
-  const { orders, pagination, loading, setPage } = useOpenOrders();
-  const [prevPagination, setPrevPagination] = React.useState(pagination);
+  
+  const { orders, pagination, setPage, loading } = useOpenOrders();
 
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
   React.useEffect(() => {
@@ -27,23 +28,40 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const displayPagination = loading && prevPagination ? prevPagination : pagination;
   const currentPage = displayPagination?.page || 1;
   const totalPages =
-    displayPagination?.totalPages || Math.ceil((displayPagination?.total || 0) / (displayPagination?.limit || 10)) || (loading ? 1 : 0);
-  const totalItems = displayPagination?.total || (loading ? 0 : orders.length);
+
+    pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
+  const totalItems = pagination?.total || orders.length;
+  
+  // Fade-in animation on every page switch
+  const [pageMounted, setPageMounted] = React.useState(false);
+  React.useEffect(() => {
+    setPageMounted(false);
+    const id = requestAnimationFrame(() => setPageMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, [currentPage]);
 
   return (
     <div className="flex flex-col h-full">
       {/* Order list */}
-      <div className="flex-1 overflow-y-auto pr-2">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : orders.length === 0 ? (
+
+      <div
+        className={`relative flex-1 overflow-y-auto pr-2 transition-opacity duration-300 ${
+          loading ? 'opacity-60' : 'opacity-100'
+        }`}
+      >
+        {/* Orders list (kept mounted so pagination stays stable during loading) */}
+        {!loading && orders.length === 0 ? (
+
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
         ) : (
-          orders.map((order) => {
+          <div
+            className={`transition-opacity duration-300 ease-out ${
+              pageMounted ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {orders.map((order, idx) => {
             // Type assertion with fallback values
             const remainingAmount = order.amount; // amount คือจำนวนที่เหลือ
             const originalAmount = order.originalAmount; // originalAmount คือจำนวนเดิม
@@ -65,148 +83,44 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
               createdAt: order.createdAt,
             };
             return (
-              <OrderCard
+              <div
                 key={order._id}
-                order={mappedOrder}
-                onDelete={onCancelOrder ? () => onCancelOrder(order._id) : undefined}
-              />
+                className={`transform transition-all duration-300 ease-out ${
+                  pageMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                }`}
+                style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : '0ms' }}
+              >
+                <OrderCard
+                  order={mappedOrder}
+                  onDelete={
+                    onCancelOrder
+                      ? () => onCancelOrder({ orderRef: order.orderRef, side: order.side })
+                      : undefined
+                  }
+                />
+              </div>
             );
-          })
+          })}
+          </div>
+        )}
+
+        {/* Loading overlay */}
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-transparent transition-opacity duration-200">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         )}
       </div>
 
       {/* Footer - แสดงเสมอ */}
       {showPagination && (
-        <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-          {/* Total */}
-          <span>Total : {totalItems} Items</span>
-
-          {/* Pagination - แบบภาพที่ 2 */}
-          <div className="flex items-center gap-1">
-            {/* Prev */}
-            <button
-              disabled={currentPage === 1 || totalPages === 0 || loading}
-              onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                currentPage === 1 || totalPages === 0 || loading
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              style={{ backgroundColor: '#16171D' }}
-            >
-              ‹
-            </button>
-
-            {/* Trio numbered pages */}
-            {(() => {
-              if (totalPages <= 3) {
-                return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
-                  const active = p === currentPage;
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      disabled={loading}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
-                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
-                      style={{
-                        backgroundColor: '#16171D',
-                        borderColor: active ? '#225FED' : 'transparent',
-                      }}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {p}
-                    </button>
-                  );
-                });
-              }
-
-              // ถ้ามากกว่า 3 หน้า → ใช้ logic trio
-              if (currentPage === 1) {
-                return [1, 2, 3].map((p, i) => {
-                  const active = p === currentPage;
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      disabled={loading}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
-                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
-                      style={{
-                        backgroundColor: '#16171D',
-                        borderColor: active ? '#225FED' : 'transparent',
-                      }}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {p}
-                    </button>
-                  );
-                });
-              }
-
-              if (currentPage === totalPages) {
-                return [totalPages - 2, totalPages - 1, totalPages].map((p) => {
-                  const active = p === currentPage;
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      disabled={loading}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
-                        active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                      } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
-                      style={{
-                        backgroundColor: '#16171D',
-                        borderColor: active ? '#225FED' : 'transparent',
-                      }}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {p}
-                    </button>
-                  );
-                });
-              }
-
-              // กรณีทั่วไป
-              return [currentPage - 1, currentPage, currentPage + 1].map((p) => {
-                const active = p === currentPage;
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    disabled={loading}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
-                      active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                    } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
-                    style={{
-                      backgroundColor: '#16171D',
-                      borderColor: active ? '#225FED' : 'transparent',
-                    }}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {p}
-                  </button>
-                );
-              });
-            })()}
-
-            {/* Next */}
-            <button
-              disabled={currentPage === totalPages || totalPages === 0 || loading}
-              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                currentPage === totalPages || totalPages === 0 || loading
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              style={{ backgroundColor: '#16171D' }}
-            >
-              ›
-            </button>
-          </div>
-        </div>
+        <PaginationFooter
+          page={currentPage}
+          totalPages={totalPages}
+          totalCount={totalItems}
+          label="Items"
+          onPageChange={(p) => setPage(p)}
+        />
       )}
     </div>
   );

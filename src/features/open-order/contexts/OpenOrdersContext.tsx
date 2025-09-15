@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useCallback, useState } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { useGetOpenOrders } from '../hooks/useGetOpenOrders';
 import { OpenOrder, OpenOrdersState } from '../types';
 import { DEFAULT_PAGINATION } from '../constants';
@@ -46,6 +46,16 @@ export const OpenOrdersProvider: React.FC<OpenOrdersProviderProps> = ({
     autoRefresh,
   });
 
+  // Persist last-known pagination meta so the UI (pagination) doesn't collapse during loading
+  const [lastKnownMeta, setLastKnownMeta] = useState({ total: 0, totalPages: 1 });
+
+  useEffect(() => {
+    if (data && typeof data.totalPages === 'number' && data.totalPages > 0) {
+      setLastKnownMeta({ total: data.total ?? lastKnownMeta.total, totalPages: data.totalPages });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.totalPages, data?.total]);
+
   const setPage = useCallback((newPage: number) => {
     setCurrentPage(newPage);
   }, []);
@@ -67,10 +77,11 @@ export const OpenOrdersProvider: React.FC<OpenOrdersProviderProps> = ({
     // State
     orders: data?.formattedOrders || [],
     pagination: {
-      page: data?.page || page,
-      limit: data?.limit || limit,
-      total: data?.total || 0,
-      totalPages: data?.totalPages || 0,
+      // Prefer local state for current intented page, so pagination UI reflects target page while data keeps previous snapshot
+      page: page,
+      limit: limit,
+      total: data?.total ?? lastKnownMeta.total,
+      totalPages: data?.totalPages ?? lastKnownMeta.totalPages,
     },
     loading: isLoading,
     error: error?.message || null,

@@ -5,16 +5,17 @@ import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
 import { CombinedCombobox } from '@/components/combobox';
 import OrderTableContainer from '@/features/open-order/components/OrderTableContainer';
+import { useCancelOrder } from '@/features/open-order/hooks/useCancelOrder';
 
 type OrderTabType = 'open' | 'history';
 
 export default function MarketOrderPage() {
   const [activeTab, setActiveTab] = useState<OrderTabType>('open');
+  const cancelMutation = useCancelOrder();
 
-  const handleCancelOrder = async (orderId: string) => {
+  const handleCancelOrder = async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
     try {
-      console.log('Cancelling order:', orderId);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await cancelMutation.mutateAsync(payload);
     } catch (error) {
       console.error('Cancel order error:', error);
     }
