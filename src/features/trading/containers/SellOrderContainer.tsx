@@ -96,7 +96,9 @@ export default function SellOrderContainer() {
       const decimalPart = parts[1] || '';
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       // เติม trailing zeros ให้ครบตาม priceDecimalPlaces
-      const paddedDecimal = decimalPart.padEnd(priceDecimalPlaces, '0').slice(0, priceDecimalPlaces);
+      const paddedDecimal = decimalPart
+        .padEnd(priceDecimalPlaces, '0')
+        .slice(0, priceDecimalPlaces);
       return `${formattedInteger}.${paddedDecimal}`;
     },
     [priceDecimalPlaces]
@@ -129,33 +131,16 @@ export default function SellOrderContainer() {
     return formatToMaxDigits(balance, 10);
   }, [getAvailableCoinBalance, formatToMaxDigits]);
 
-  const formatNumberWithComma = useCallback((value: string): string => {
+  const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-
-    const parts = numericValue.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1];
-
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    const num = parseFloat(numericValue);
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
   }, []);
-
-  const formatToTwoDecimalsWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return '';
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(num);
-    },
-    []
-  );
 
   const formatCoinNumber = useCallback((value: string): string => {
     if (!value) return '';
@@ -172,13 +157,10 @@ export default function SellOrderContainer() {
     return numericValue;
   }, []);
 
-  const isValidPriceFormat = useCallback(
-    (value: string): boolean => {
-      const numericValue = value.replace(/,/g, '');
-      return /^\d*\.?\d*$/.test(numericValue);
-    },
-    []
-  );
+  const isValidPriceFormat = useCallback((value: string): boolean => {
+    const numericValue = value.replace(/,/g, '');
+    return /^\d*\.?\d*$/.test(numericValue);
+  }, []);
 
   const isValidCoinFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
@@ -382,20 +364,42 @@ export default function SellOrderContainer() {
     if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
       setPrice(marketPrice);
       setLimitPrice(marketPrice);
-      console.log(`SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`);
+      console.log(
+        `SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+      );
     } else if (isPriceLoading) {
       setPrice('0.' + '0'.repeat(priceDecimalPlaces));
       setLimitPrice('0.' + '0'.repeat(priceDecimalPlaces));
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
-  }, [marketPrice, priceLabel, isInputFocused, isPriceLoading, selectedCoin.label, priceDecimalPlaces]);
+  }, [
+    marketPrice,
+    priceLabel,
+    isInputFocused,
+    isPriceLoading,
+    selectedCoin.label,
+    priceDecimalPlaces,
+  ]);
 
   useEffect(() => {
     const currentPrice =
-      priceLabel === 'Price' ? (isPriceLoading ? '0.' + '0'.repeat(priceDecimalPlaces) : marketPrice) : limitPrice;
+      priceLabel === 'Price'
+        ? isPriceLoading
+          ? '0.' + '0'.repeat(priceDecimalPlaces)
+          : marketPrice
+        : limitPrice;
     const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
     setReceiveUSD(usdAmount);
-  }, [sellAmount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, priceDecimalPlaces, calculateReceiveUSD]);
+  }, [
+    sellAmount,
+    price,
+    limitPrice,
+    marketPrice,
+    priceLabel,
+    isPriceLoading,
+    priceDecimalPlaces,
+    calculateReceiveUSD,
+  ]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',

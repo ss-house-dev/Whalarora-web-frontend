@@ -236,17 +236,6 @@ export default function BuyOrderContainer() {
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  const formatToTwoDecimalsWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return '';
-      return formatNumberWithComma(num.toFixed(2));
-    },
-    [formatNumberWithComma]
-  );
-
   // ฟังก์ชันตรวจสอบรูปแบบเลขสำหรับ price (ไม่จำกัดทศนิยม)
   const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
