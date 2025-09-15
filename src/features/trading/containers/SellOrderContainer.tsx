@@ -22,7 +22,7 @@ export default function SellOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { selectedCoin } = useCoinContext();
-  const { marketPrice, isPriceLoading } = useMarketPrice(selectedCoin.label);
+  const { marketPrice, isPriceLoading, priceDecimalPlaces } = useMarketPrice(selectedCoin.label);
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -76,13 +76,33 @@ export default function SellOrderContainer() {
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [limitPrice, setLimitPrice] = useState<string>('');
-  const [price, setPrice] = useState<string>('0.00');
+  const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
   const [sellAmount, setSellAmount] = useState<string>('');
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
   const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState('');
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
+
+  // ฟังก์ชันสำหรับจัดรูปแบบราคาโดยรักษา trailing zeros ตาม priceDecimalPlaces
+  const formatPriceWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      const numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1] || '';
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      // เติม trailing zeros ให้ครบตาม priceDecimalPlaces
+      const paddedDecimal = decimalPart
+        .padEnd(priceDecimalPlaces, '0')
+        .slice(0, priceDecimalPlaces);
+      return `${formattedInteger}.${paddedDecimal}`;
+    },
+    [priceDecimalPlaces]
+  );
 
   const formatToMaxDigits = useCallback((value: number, maxDigits: number = 10): string => {
     if (typeof value !== 'number' || isNaN(value)) return '0';
@@ -111,33 +131,17 @@ export default function SellOrderContainer() {
     return formatToMaxDigits(balance, 10);
   }, [getAvailableCoinBalance, formatToMaxDigits]);
 
-  // แก้ไขฟังก์ชัน formatNumberWithComma ให้เหมือนโค้ดแรก
-  const formatNumberWithComma = useCallback((value: string): string => {
+  const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-
-    const parts = numericValue.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1];
-
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    const num = parseFloat(numericValue);
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
   }, []);
 
-  const formatToTwoDecimalsWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return '';
-      return formatNumberWithComma(num.toFixed(2));
-    },
-    [formatNumberWithComma]
-  );
-
-  // แก้ไขให้ support ทศนิยม 9 ตำแหน่งสำหรับ coin
   const formatCoinNumber = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -146,17 +150,16 @@ export default function SellOrderContainer() {
     const parts = numericValue.split('.');
     const decimalPart = parts[1];
 
-    // ถ้ามีทศนิยม จำกัดไม่เกิน 9 ตำแหน่ง
     if (decimalPart !== undefined && decimalPart.length > 9) {
-      return value; // ไม่อนุญาตให้เกิน 9 ตำแหน่ง
+      return value;
     }
 
     return numericValue;
   }, []);
 
-  const isValidNumberFormat = useCallback((value: string): boolean => {
+  const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,2}$/.test(numericValue);
+    return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
   const isValidCoinFormat = useCallback((value: string): boolean => {
@@ -228,17 +231,15 @@ export default function SellOrderContainer() {
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-    setPrice(formattedMarketPrice);
-    setLimitPrice(formattedMarketPrice);
+    setPrice(marketPrice);
+    setLimitPrice(marketPrice);
     setIsInputFocused(false);
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
-    if (inputValue === '' || isValidNumberFormat(inputValue)) {
-      const formattedValue = formatNumberWithComma(inputValue);
+    if (inputValue === '' || isValidPriceFormat(inputValue)) {
+      const formattedValue = formatPriceWithComma(inputValue);
       setLimitPrice(formattedValue);
       setPrice(formattedValue);
     }
@@ -246,20 +247,20 @@ export default function SellOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = formatToTwoDecimalsWithComma(price);
+      const formattedPrice = formatPriceWithComma(price);
       setPrice(formattedPrice);
       setLimitPrice(formattedPrice);
+      console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
     } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
+      setPrice(marketPrice);
+      setLimitPrice(marketPrice);
+      console.log(`SellOrderContainer: Price blur - set market price: "${marketPrice}"`);
     }
     setIsInputFocused(false);
   };
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
     if (inputValue === '' || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
       setSellAmount(formattedValue);
@@ -360,38 +361,15 @@ export default function SellOrderContainer() {
     console.log(
       `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
-    if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      const formattedPrice = formatNumberWithComma(marketPrice);
-      setPrice(formattedPrice);
-      setLimitPrice(formattedPrice);
+    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
+      setPrice(marketPrice);
+      setLimitPrice(marketPrice);
       console.log(
-        `SellOrderContainer: Updated price to ${formattedPrice} for ${selectedCoin.label}`
+        `SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
       );
     } else if (isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
-      console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
-    }
-  }, [marketPrice, priceLabel, isPriceLoading, selectedCoin.label, formatNumberWithComma]);
-
-  useEffect(() => {
-    const currentPrice =
-      priceLabel === 'Price' ? (isPriceLoading ? '0.00' : marketPrice) : limitPrice;
-    const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
-    setReceiveUSD(usdAmount);
-  }, [sellAmount, price, limitPrice, marketPrice, priceLabel, isPriceLoading, calculateReceiveUSD]);
-
-  useEffect(() => {
-    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
-      const formattedMarketPrice = formatToTwoDecimalsWithComma(marketPrice.replace(/,/g, ''));
-      setPrice(formattedMarketPrice);
-      setLimitPrice(formattedMarketPrice);
-      console.log(
-        `SellOrderContainer: Set market price to ${formattedMarketPrice} for ${selectedCoin.label}`
-      );
-    } else if (priceLabel === 'Price' && isPriceLoading) {
-      setPrice('0.00');
-      setLimitPrice('0.00');
+      setPrice('0.' + '0'.repeat(priceDecimalPlaces));
+      setLimitPrice('0.' + '0'.repeat(priceDecimalPlaces));
       console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
     }
   }, [
@@ -400,7 +378,27 @@ export default function SellOrderContainer() {
     isInputFocused,
     isPriceLoading,
     selectedCoin.label,
-    formatToTwoDecimalsWithComma,
+    priceDecimalPlaces,
+  ]);
+
+  useEffect(() => {
+    const currentPrice =
+      priceLabel === 'Price'
+        ? isPriceLoading
+          ? '0.' + '0'.repeat(priceDecimalPlaces)
+          : marketPrice
+        : limitPrice;
+    const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
+    setReceiveUSD(usdAmount);
+  }, [
+    sellAmount,
+    price,
+    limitPrice,
+    marketPrice,
+    priceLabel,
+    isPriceLoading,
+    priceDecimalPlaces,
+    calculateReceiveUSD,
   ]);
 
   const coinSymbolMap: { [key: string]: string } = {
