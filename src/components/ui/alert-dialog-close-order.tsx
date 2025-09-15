@@ -42,7 +42,7 @@ function AlertDialogContent({
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         className={cn(
-          'fixed top-[49px] left-1/2 z-50 flex w-[492px] translate-x-[-50%] flex-col items-center gap-6 rounded-xl border border-[#474747] bg-[#16171D] p-4 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out',
+          'fixed left-1/2 top-1/2 z-50 flex w-[492px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-6 rounded-xl border border-[#474747] bg-[#16171D] p-4 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out',
           className
         )}
         {...props}
