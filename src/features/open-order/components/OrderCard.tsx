@@ -63,31 +63,39 @@ export default function OrderCard({ order, onDelete }: Props) {
     } else if (n < 1_000_000) {
       // 1,000 – 999,999 => K
       const v = truncate2(n / 1_000);
-      return v.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + 'K';
+      return (
+        v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'K'
+      );
     } else if (n < 1_000_000_000) {
       // 1,000,000 – 999,999,999 => M
       const v = truncate2(n / 1_000_000);
-      return v.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + 'M';
+      return (
+        v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'M'
+      );
     } else if (n < 1_000_000_000_000) {
       // 1,000,000,000 – 999,999,999,999 => B
       const v = truncate2(n / 1_000_000_000);
-      return v.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + 'B';
+      return (
+        v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'B'
+      );
     } else if (n < 1_000_000_000_000_000) {
       // 1,000,000,000,000 – 999,999,999,999,999 => T
       const v = truncate2(n / 1_000_000_000_000);
-      return v.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + 'T';
+      return (
+        v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + 'T'
+      );
     }
 
     // เกินช่วงที่กำหนด: แสดงเป็นตัวเลขเต็ม 2 ตำแหน่งเพื่อความปลอดภัย

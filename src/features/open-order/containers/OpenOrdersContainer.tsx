@@ -15,7 +15,6 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
-  
   const { orders, pagination, setPage, loading } = useOpenOrders();
 
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
@@ -34,10 +33,9 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const displayPagination = loading && prevPagination ? prevPagination : pagination;
   const currentPage = displayPagination?.page || 1;
   const totalPages =
-
     pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
-  
+
   // Fade-in animation on every page switch
   const [pageMounted, setPageMounted] = React.useState(false);
   React.useEffect(() => {
@@ -57,7 +55,6 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
       >
         {/* Orders list (kept mounted so pagination stays stable during loading) */}
         {!loading && orders.length === 0 ? (
-
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No open order
           </div>
@@ -68,45 +65,49 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
             }`}
           >
             {orders.map((order, idx) => {
-            // Type assertion with fallback values
-            const remainingAmount = order.amount; // amount คือจำนวนที่เหลือ
-            const originalAmount = order.originalAmount; // originalAmount คือจำนวนเดิม
-            const filledAmount = originalAmount - remainingAmount; // จำนวนที่ fill แล้ว
-            const filledPercent = originalAmount > 0 ? (filledAmount / originalAmount) * 100 : 0;
+              // Type assertion with fallback values
+              const remainingAmount = order.amount; // amount คือจำนวนที่เหลือ
+              const originalAmount = order.originalAmount; // originalAmount คือจำนวนเดิม
+              const filledAmount = originalAmount - remainingAmount; // จำนวนที่ fill แล้ว
+              const filledPercent = originalAmount > 0 ? (filledAmount / originalAmount) * 100 : 0;
 
-            const mappedOrder: Order = {
-              id: order._id,
-              side: order.side.toLowerCase() as 'buy' | 'sell',
-              pair: `${order.symbol}/USDT`,
-              datetime: order.createdAt || '',
-              price: order.price.toString(),
-              amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
-              status: order.status.toLowerCase() as 'pending' | 'partial' | 'filled' | 'cancelled',
-              filledAmount: filledAmount.toString(), // Filled ใช้ originalAmount - amount
-              filledPercent: filledPercent, // คำนวณเปอร์เซ็นต์จาก (originalAmount - amount) / originalAmount
-              _id: order._id,
-              symbol: order.symbol,
-              createdAt: order.createdAt,
-            };
-            return (
-              <div
-                key={order._id}
-                className={`transform transition-all duration-300 ease-out ${
-                  pageMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                }`}
-                style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : '0ms' }}
-              >
-                <OrderCard
-                  order={mappedOrder}
-                  onDelete={
-                    onCancelOrder
-                      ? () => onCancelOrder({ orderRef: order.orderRef, side: order.side })
-                      : undefined
-                  }
-                />
-              </div>
-            );
-          })}
+              const mappedOrder: Order = {
+                id: order._id,
+                side: order.side.toLowerCase() as 'buy' | 'sell',
+                pair: `${order.symbol}/USDT`,
+                datetime: order.createdAt || '',
+                price: order.price.toString(),
+                amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
+                status: order.status.toLowerCase() as
+                  | 'pending'
+                  | 'partial'
+                  | 'filled'
+                  | 'cancelled',
+                filledAmount: filledAmount.toString(), // Filled ใช้ originalAmount - amount
+                filledPercent: filledPercent, // คำนวณเปอร์เซ็นต์จาก (originalAmount - amount) / originalAmount
+                _id: order._id,
+                symbol: order.symbol,
+                createdAt: order.createdAt,
+              };
+              return (
+                <div
+                  key={order._id}
+                  className={`transform transition-all duration-300 ease-out ${
+                    pageMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                  }`}
+                  style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : '0ms' }}
+                >
+                  <OrderCard
+                    order={mappedOrder}
+                    onDelete={
+                      onCancelOrder
+                        ? () => onCancelOrder({ orderRef: order.orderRef, side: order.side })
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 
