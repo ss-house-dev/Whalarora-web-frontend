@@ -88,7 +88,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   });
 
   const passwordValue = watch('password', '');
-  const { strength } = checkPasswordStrength(passwordValue);
+  const { strength, score } = checkPasswordStrength(passwordValue);
+
+  // Check if password has requirements not met (when password is not empty but not all requirements are met)
+  const hasPasswordRequirementsNotMet =
+    passwordValue.length > 0 && score < passwordRequirements.length;
 
   const onSubmit = (data: SignUpFormData) => {
     onSignUp(data);
@@ -173,7 +177,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                       }
                     }}
                     disabled={isLoading}
-                    hasError={!!errors.password}
+                    hasError={!!errors.password || hasPasswordRequirementsNotMet}
+                    errorMessage={
+                      hasPasswordRequirementsNotMet ? 'Password requirements not met.' : undefined
+                    }
                     suffixIcon={
                       <button
                         type="button"
@@ -255,7 +262,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                         onClick={toggleConfirmPasswordVisibility}
                         disabled={isLoading}
                         className="focus:outline-none disabled:opacity-50 p-1"
-                      ></button>
+                      >
+                        {showConfirmPassword ? (
+                          <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
+                        ) : (
+                          <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
+                        )}
+                      </button>
                     }
                   />
                 </div>
