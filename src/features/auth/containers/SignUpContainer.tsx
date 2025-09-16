@@ -26,22 +26,22 @@ const SignUpContainer = () => {
   const handleSignUp = async (formData: SignUpFormData) => {
     try {
       setIsLoading(true);
-      setErrorMessage(''); // รีเซ็ต error message
+      setErrorMessage(''); // Reset error message
 
       // Step 1: Create user account via Next.js API route
       const createUserResponse = await axios.post(
         '/api/auth/signup',
         {
-          username: formData.username.trim(), // ลบช่องว่าง
+          username: formData.username.trim(), // Remove whitespace
           password: formData.password,
           fName: formData.username.trim(),
-          lName: 'User', // ใส่ default value แทน empty string
+          lName: 'User', // Default value instead of empty string
         },
         {
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 30000, // เพิ่ม timeout เป็น 30 วินาที
+          timeout: 30000, // Increase timeout to 30 seconds
         }
       );
 
@@ -56,8 +56,10 @@ const SignUpContainer = () => {
 
       if (signInResult?.error) {
         console.error('Sign in error after signup:', signInResult.error);
-        setErrorMessage('สร้างบัญชีสำเร็จแต่เข้าสู่ระบบไม่ได้ กรุณาเข้าสู่ระบบด้วยตนเอง');
-        // ให้ผู้ใช้ไปหน้า sign in
+        setErrorMessage(
+          'Account created successfully but failed to sign in. Please sign in manually.'
+        );
+        // Redirect user to sign in page
         setTimeout(() => {
           router.push('/auth/sign-in');
         }, 2000);
@@ -66,12 +68,12 @@ const SignUpContainer = () => {
         // Step 3: Redirect to main page
         window.location.href = '/main/trading';
       } else {
-        setErrorMessage('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่');
+        setErrorMessage('Sign in failed. Please try again.');
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
 
-      let errorMessage = 'เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง';
+      let errorMessage = 'Registration failed. Please try again.';
 
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -82,34 +84,34 @@ const SignUpContainer = () => {
 
           switch (status) {
             case 400:
-              // จัดการ validation errors
+              // Handle validation errors
               if (data?.error && Array.isArray(data.error)) {
-                errorMessage = `ข้อมูลไม่ถูกต้อง: ${data.error.join(', ')}`;
+                errorMessage = `Invalid data: ${data.error.join(', ')}`;
               } else if (data?.details?.error && Array.isArray(data.details.error)) {
-                errorMessage = `ข้อมูลไม่ถูกต้อง: ${data.details.error.join(', ')}`;
+                errorMessage = `Invalid data: ${data.details.error.join(', ')}`;
               } else if (data?.error) {
                 errorMessage = data.error;
               } else if (data?.message) {
                 errorMessage = data.message;
               } else {
-                errorMessage = 'ข้อมูลที่กรอกไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่';
+                errorMessage = 'Invalid data. Please check your input and try again.';
               }
               break;
 
             case 409:
-              errorMessage = 'ชื่อผู้ใช้นี้ถูกใช้แล้ว กรุณาเลือกชื่อผู้ใช้อื่น';
+              errorMessage = 'Username already exists. Please choose a different username.';
               break;
 
             case 422:
-              errorMessage = 'ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่';
+              errorMessage = 'Invalid or incomplete data. Please check your input and try again.';
               break;
 
             case 500:
-              errorMessage = 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่ในภายหลัง';
+              errorMessage = 'Server error occurred. Please try again later.';
               break;
 
             case 503:
-              errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่ในภายหลัง';
+              errorMessage = 'Cannot connect to server. Please try again later.';
               break;
 
             default:
@@ -121,7 +123,7 @@ const SignUpContainer = () => {
           }
         } else if (error.request) {
           // Network error
-          errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต';
+          errorMessage = 'Cannot connect to server. Please check your internet connection.';
         }
       } else if (error.message) {
         errorMessage = error.message;
@@ -150,12 +152,12 @@ const SignUpContainer = () => {
         onSignIn={handleGoToSignIn}
       />
 
-      {/* แสดง Error Message */}
+      {/* Display Error Message */}
       {errorMessage && (
         <div className="fixed top-4 right-4 max-w-md bg-red-500 text-white p-4 rounded-lg shadow-lg z-50">
           <div className="flex justify-between items-start">
             <div className="pr-2">
-              <p className="text-sm font-medium">เกิดข้อผิดพลาด</p>
+              <p className="text-sm font-medium">Error</p>
               <p className="text-sm mt-1">{errorMessage}</p>
             </div>
             <button

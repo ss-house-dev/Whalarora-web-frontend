@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Request body received:', { ...body, password: '***' });
 
-    // ตรวจสอบ required fields
+    // Check required fields
     if (!body.username || !body.password) {
       return NextResponse.json(
         {
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ตรวจสอบความยาวของ username
+    // Check username length
     if (body.username.length < 3) {
       return NextResponse.json(
         { error: 'Username must be at least 3 characters long' },
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ตรวจสอบความยาวของ password
+    // Check password length
     if (body.password.length < 8) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters long' },
@@ -36,17 +36,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // เตรียม payload ตาม backend API requirements
+    // Prepare payload according to backend API requirements
     const payload = {
       userName: body.username.trim(),
       password: body.password,
       fName: body.fName?.trim() || body.username.trim(),
-      lName: body.lName?.trim() || 'User', // ใส่ default value แทน empty string
+      lName: body.lName?.trim() || 'User', // Set default value instead of empty string
     };
 
     console.log('Sending payload to backend:', { ...payload, password: '***' });
 
-    // เรียก backend API
+    // Call backend API
     const response = await axios.post('http://141.11.156.52:3001/users', payload, {
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     console.log('Backend response status:', response.status);
     console.log('Backend response data:', response.data);
 
-    // ส่ง response กลับ
+    // Send response back
     return NextResponse.json(
       {
         success: true,
@@ -85,17 +85,17 @@ export async function POST(request: NextRequest) {
       });
 
       if (error.response) {
-        // Backend ตอบกลับด้วย error status
+        // Backend responded with error status
         const status = error.response.status;
         const responseData = error.response.data;
 
-        let errorMessage = 'เกิดข้อผิดพลาดจาก server';
+        let errorMessage = 'Server error occurred';
         let errorDetails = responseData;
 
-        // จัดการ error ตาม status code
+        // Handle errors by status code
         switch (status) {
           case 400:
-            errorMessage = 'ข้อมูลที่ส่งไม่ถูกต้อง';
+            errorMessage = 'Invalid data provided';
             if (responseData?.message) {
               errorMessage = responseData.message;
             } else if (responseData?.error) {
@@ -108,18 +108,18 @@ export async function POST(request: NextRequest) {
             break;
 
           case 409:
-            errorMessage = 'ชื่อผู้ใช้นี้ถูกใช้แล้ว กรุณาเลือกชื่อผู้ใช้อื่น';
+            errorMessage = 'This username is already taken. Please choose a different username';
             break;
 
           case 422:
-            errorMessage = 'ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง';
+            errorMessage = 'Data is incomplete or invalid';
             if (responseData?.message) {
               errorMessage = responseData.message;
             }
             break;
 
           case 500:
-            errorMessage = 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่ในภายหลัง';
+            errorMessage = 'System error occurred. Please try again later';
             break;
 
           default:
@@ -142,12 +142,12 @@ export async function POST(request: NextRequest) {
           { status: status }
         );
       } else if (error.request) {
-        // Network error - ไม่ได้รับ response
+        // Network error - no response received
         console.error('Network error - no response received');
         return NextResponse.json(
           {
             success: false,
-            error: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อและลองใหม่',
+            error: 'Unable to connect to server. Please check your connection and try again',
             details: {
               type: 'NETWORK_ERROR',
               message: 'No response from server',
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ: ' + error.message,
+        error: 'An unknown error occurred: ' + error.message,
         details: {
           type: 'UNKNOWN_ERROR',
           message: error.message,
