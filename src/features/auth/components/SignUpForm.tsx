@@ -35,7 +35,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 interface SignUpFormProps {
   isLoading?: boolean;
   onSignUp: (data: SignUpFormData) => void;
-  onGoToSignIn?: () => void; // Optional, as we’ll use router
+  onGoToSignIn?: () => void;
   onSignIn: () => void;
   onGoBack: () => void;
 }
@@ -64,8 +64,6 @@ const checkPasswordStrength = (password: string) => {
 export const SignUpForm: React.FC<SignUpFormProps> = ({
   isLoading = false,
   onSignUp,
-  onSignIn,
-  onGoToSignIn,
   onGoBack,
 }) => {
   const router = useRouter();
@@ -73,12 +71,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const {
-    register,
     handleSubmit,
     watch,
     setValue,
     clearErrors,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: 'onSubmit',
@@ -104,15 +101,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
-
-  const getFirstError = () => {
-    if (errors.username) return errors.username.message;
-    if (errors.password) return errors.password.message;
-    if (errors.confirmPassword) return errors.confirmPassword.message;
-    return '';
-  };
-
-  const firstError = getFirstError();
 
   return (
     <div className="flex items-center justify-center min-h-screen">
