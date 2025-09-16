@@ -274,9 +274,13 @@ export default function SellOrderContainer() {
       const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
       console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
-    } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
-      setPrice(marketPrice);
-      console.log(`SellOrderContainer: Price blur - set market price: "${marketPrice}"`);
+    } else {
+      // ถ้าไม่มีราคาที่กรอก ให้กลับไปใช้ market price และเปลี่ยน label กลับเป็น "Price"
+      if (marketPrice && !isPriceLoading) {
+        setPrice(marketPrice);
+        setPriceLabel('Price');
+        console.log(`SellOrderContainer: Price blur - reset to market price: "${marketPrice}"`);
+      }
     }
     setIsInputFocused(false);
   };
