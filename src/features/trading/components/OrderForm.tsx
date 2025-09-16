@@ -142,13 +142,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
         className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7] cursor-text"
         onClick={handlePriceContainerClick}
       >
-        <span className="text-[12px] font-normal text-[#5775B7]">{priceLabel}</span>
+        <span className="text-[12px] w-[100px] font-normal text-[#5775B7]">{priceLabel}</span>
 
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}
             type="text"
-            className="w-[100px] text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
+            className="text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
             onFocus={onPriceFocus}
             onBlur={handlePriceBlur}
             value={price}
