@@ -7,7 +7,7 @@ import { Button } from '@/components/button-sign-up';
 interface SignInData {
   username: string;
   password: string;
-  confirmPassword: string; // Added confirmPassword field
+  confirmPassword: string;
   rememberMe: boolean;
 }
 
@@ -19,17 +19,18 @@ interface SignInFormProps {
   onTogglePasswordVisibility: () => void;
   onInputChange: (field: keyof SignInData, value: string | boolean) => void;
   onSignIn: () => void;
-  onForgotPassword: () => void;
   onSignUp: () => void;
   onGoBack: () => void;
 }
 
 // Password strength requirements
 const passwordRequirements = [
-  { regex: /.{8,}/, text: 'At least 8 characters' },
-  { regex: /\d/, text: 'At least 1 number' },
-  { regex: /[a-z]/, text: 'At least 1 lowercase letter' },
-  { regex: /[A-Z]/, text: 'At least 1 uppercase letter' },
+  { regex: /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/, text: 'English only' },
+  { regex: /[A-Z]/, text: 'At least one uppercase letter (A–Z)' },
+  { regex: /[a-z]/, text: 'At least one lowercase letter (a–z)' },
+  { regex: /\d/, text: 'At least one number (0–9)' },
+  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, text: 'At least one symbol' },
+  { regex: /.{8,}/, text: 'At least 8 characters long' },
 ];
 
 // Calculate password strength score and status
@@ -39,24 +40,8 @@ const checkPasswordStrength = (password: string) => {
     text: req.text,
   }));
   const score = strength.filter((req) => req.met).length;
-  let color: string;
-  let text: string;
 
-  if (score === 0) {
-    color = 'bg-gray-500';
-    text = 'Enter a password';
-  } else if (score <= 2) {
-    color = 'bg-red-500';
-    text = 'Weak password';
-  } else if (score === 3) {
-    color = 'bg-yellow-500';
-    text = 'Medium password';
-  } else {
-    color = 'bg-green-500';
-    text = 'Strong password';
-  }
-
-  return { strength, score, color, text };
+  return { strength, score };
 };
 
 export const SignUpForm: React.FC<SignInFormProps> = ({
@@ -158,31 +143,41 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                   }
                 />
                 {/* Password Strength Indicator */}
-                <div className="mt-2">
+                <div className="mt-[16px]">
                   <ul className="mt-1 space-y-1" aria-label="Password requirements">
                     {strength.map((req, index) => (
                       <li
                         key={index}
                         className={`flex items-center gap-1 text-xs ${
-                          req.met ? 'text-green-500' : 'text-gray-400'
+                          req.met ? 'text-[#2FACA2]' : 'text-[#797979]'
                         }`}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="shrink-0"
-                        >
-                          {req.met ? (
-                            <path d="M20 6L9 17l-5-5" />
-                          ) : (
-                            <path d="M18 6l-12 12M6 6l12 12" />
-                          )}
-                        </svg>
+                        {req.met ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            className="shrink-0"
+                          >
+                            <path
+                              d="M6 12C9.3138 12 12 9.3138 12 6C12 2.6862 9.3138 0 6 0C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
+                              fill="#2FACA2"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="4"
+                            height="4"
+                            viewBox="0 0 4 4"
+                            fill="none"
+                            className="shrink-0"
+                          >
+                            <circle cx="2" cy="2" r="2" fill="#797979" />
+                          </svg>
+                        )}
                         <span>{req.text}</span>
                         <span className="sr-only">
                           {req.met ? ' - Requirement met' : ' - Requirement not met'}
@@ -197,7 +192,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
               <div className="flex flex-col w-full">
                 <FormInputIcon
                   label="Confirm Password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => onInputChange('confirmPassword', e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -209,13 +204,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       onClick={onTogglePasswordVisibility}
                       disabled={isLoading}
                       className="focus:outline-none disabled:opacity-50"
-                    >
-                      {showPassword ? (
-                        <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
-                      ) : (
-                        <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
-                      )}
-                    </button>
+                    ></button>
                   }
                 />
               </div>

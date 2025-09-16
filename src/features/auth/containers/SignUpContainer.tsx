@@ -104,7 +104,6 @@ const SignUpContainer = () => {
       onTogglePasswordVisibility={togglePasswordVisibility}
       onInputChange={handleInputChange}
       onSignIn={handleSignIn}
-      onForgotPassword={handleForgotPassword}
       onSignUp={handleSignUp}
       onGoBack={handleGoBack}
     />
