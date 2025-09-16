@@ -118,6 +118,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
     onPriceFocus();
   };
 
+  // Handle click on amount container - focus the amount input
+  const handleAmountContainerClick = () => {
+    amountInputRef.current?.focus();
+    onAmountFocus();
+  };
+
   // Reset user price flag when switching between limit and market modes
   React.useEffect(() => {
     if (priceLabel === 'Price') {
@@ -215,13 +221,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
         {/* Amount */}
         <div className="relative">
           <div
-            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
+            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] cursor-text ${
               !isAmountValid
                 ? 'bg-[#17306B] border-[#D84C4C]'
                 : 'bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]'
             }`}
+            onClick={handleAmountContainerClick}
           >
-            <span className="text-[12px] font-normal text-[#5775B7]">Amount</span>
+            <span className="text-[12px] font-normal text-[#5775B7] cursor-text">Amount</span>
             <div className="flex items-center gap-2 text-[16px]">
               <Input
                 ref={amountInputRef}
@@ -231,11 +238,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 onChange={onAmountChange}
                 onFocus={onAmountFocus}
                 onBlur={onAmountBlur}
+                onClick={(e) => e.stopPropagation()} // Prevent double handling
               />
               <span
-                className={`text-[14px] font-normal ${
+                className={`text-[14px] font-normal cursor-text ${
                   amount || isAmountFocused ? 'text-white' : 'text-[#5775B7]'
                 }`}
+                onClick={handleAmountContainerClick}
               >
                 {balanceCurrency}
               </span>
