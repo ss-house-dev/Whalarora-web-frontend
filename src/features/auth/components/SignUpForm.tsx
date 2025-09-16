@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import FormInputIcon from '@/components/FormItemInput';
 import { Button } from '@/components/button-sign-up';
 
@@ -34,7 +35,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 interface SignUpFormProps {
   isLoading?: boolean;
   onSignUp: (data: SignUpFormData) => void;
-  onGoToSignIn: () => void;
+  onGoToSignIn?: () => void; // Optional, as we’ll use router
   onSignIn: () => void;
   onGoBack: () => void;
 }
@@ -67,6 +68,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onGoToSignIn,
   onGoBack,
 }) => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
@@ -80,7 +82,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: 'onSubmit',
-    reValidateMode: 'onSubmit', // เพิ่ม reValidateMode
+    reValidateMode: 'onSubmit',
     defaultValues: {
       username: '',
       password: '',
@@ -103,7 +105,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  // Get the first error message to display
   const getFirstError = () => {
     if (errors.username) return errors.username.message;
     if (errors.password) return errors.password.message;
@@ -305,7 +306,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                   className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
                     isLoading ? 'opacity-50 pointer-events-none' : ''
                   }`}
-                  onClick={onGoToSignIn}
+                  onClick={() => router.push('/auth/sign-in')}
                 >
                   Log in
                 </p>
