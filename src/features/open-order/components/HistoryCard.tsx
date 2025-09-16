@@ -41,12 +41,12 @@ export default function HistoryCard({
 
   return (
     <div
-      className="w-[840px] p-3 bg-[#16171D] rounded-lg outline outline-offset-[-1px]"
+      className="w-[840px] h-[68px] p-3 bg-[#16171D] rounded-lg outline outline-offset-[-1px] flex items-center"
       style={{ outlineColor: '#474747' }}
     >
-      <div className="w-full inline-flex justify-center items-center gap-10">
+      <div className="w-full grid grid-cols-[220px_80px_1fr_256px] items-center gap-6">
         {/* Left: status + datetime */}
-        <div className="self-stretch inline-flex flex-col justify-center items-start gap-6">
+        <div className="flex flex-col justify-center items-start gap-2">
           <div className="self-stretch inline-flex justify-start items-center gap-6">
             <div className="w-24 self-stretch p-2 rounded-lg flex justify-start items-center gap-2.5">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
@@ -68,9 +68,9 @@ export default function HistoryCard({
         </div>
 
         {/* Side pill */}
-        <div className="w-12 inline-flex flex-col justify-start items-start gap-2.5">
+        <div className="flex items-center justify-center">
           <div
-            className={`self-stretch h-7 px-3 rounded-lg inline-flex justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
+            className={`w-[47px] h-7 px-3 rounded-lg inline-flex justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
           >
             <span className="text-white text-xs font-normal font-[Alexandria] leading-none">
               {isBuy ? 'Buy' : 'Sell'}
@@ -79,13 +79,17 @@ export default function HistoryCard({
         </div>
 
         {/* Pair + order id */}
-        <div className="flex-1 h-10 inline-flex flex-col justify-center items-start gap-1">
+        <div className="h-10 flex flex-col justify-center items-start gap-1">
           <div className="w-20 text-white text-sm font-medium font-[Alexandria] leading-tight">
             {pair}
           </div>
           <div className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="text-[#A4A4A4] text-xs font-normal font-[Alexandria] leading-none">Order ID :</span>
-            <span className="text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none">{shortenId(orderId)}</span>
+            <span className="text-[#A4A4A4] text-xs font-normal font-[Alexandria] leading-none">
+              Order ID :
+            </span>
+            <span className="text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none">
+              {shortenId(orderId)}
+            </span>
           </div>
         </div>
 

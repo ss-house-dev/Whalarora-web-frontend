@@ -1,24 +1,55 @@
-export type TradeStatusApi = 'CLOSED' | 'COMPLETE';
+export type TradeHistoryRange = 'all' | 'day' | 'month' | 'year';
+
+export type TradeHistoryStatusApi = 'MATCHED' | 'CANCELLED' | 'COMPLETE' | 'CLOSED';
 export type TradeSideApi = 'BUY' | 'SELL';
 
 export interface TradeHistoryItemApi {
-  id: string; // unique id
-  orderRef: string; // order reference string
-  side: TradeSideApi; // BUY | SELL
-  symbol: string; // e.g., BTC
-  baseSymbol?: string; // e.g., BTC (optional; fallback to symbol)
-  quoteSymbol?: string; // e.g., USDT (optional; default USDT if missing)
-  matchedAmount: number; // amount matched/filled
-  price: number; // execution price
-  currency?: string; // e.g., USD
-  status: TradeStatusApi; // CLOSED | COMPLETE
-  createdAt: string; // ISO string timestamp
+  _id: string;
+  tradeRef: string;
+  symbol: string;
+  side: TradeSideApi;
+  status: TradeHistoryStatusApi | string;
+  price?: number;
+  amount?: number;
+  matchedAmountTotal?: number;
+  currency?: string;
+  baseSymbol?: string;
+  quoteSymbol?: string;
+  buyOrderRef?: string;
+  sellOrderRef?: string;
+  matchedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GetTradeHistoryResponseApi {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  range: TradeHistoryRange;
+  histories: TradeHistoryItemApi[];
+}
+
+export interface TradeHistoryItem {
+  id: string;
+  tradeRef: string;
+  symbol: string;
+  side: TradeSideApi;
+  status: TradeHistoryStatusApi | string;
+  amount: number;
+  price: number;
+  currency: string;
+  baseSymbol: string;
+  quoteSymbol: string;
+  matchedAt?: string;
+  createdAt?: string;
 }
 
 export interface GetTradeHistoryRequest {
   page?: number;
   limit?: number;
-  range?: 'all' | 'today' | 'month' | 'year';
+  range?: TradeHistoryRange;
 }
 
 export interface GetTradeHistoryResponse {
@@ -26,6 +57,6 @@ export interface GetTradeHistoryResponse {
   limit: number;
   total: number;
   totalPages: number;
-  items: TradeHistoryItemApi[];
+  range: TradeHistoryRange;
+  items: TradeHistoryItem[];
 }
-

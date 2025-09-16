@@ -5,6 +5,8 @@ import { CloseOrderBox } from '@/components/ui/close-order-box';
 import OrderBookWidget from '@/features/open-order/components/OrderBookWidget';
 import HistoryCard from '@/features/open-order/components/HistoryCard';
 import HistoryListPreview from '@/features/open-order/components/HistoryListPreview';
+import TradeHistoryContainer from '@/features/open-order/components/TradeHistoryContainer';
+import HistoryApiPreview from '@/features/open-order/components/HistoryApiPreview';
 
 const ORDER_BOOK_SCENARIOS = [
   {
@@ -193,6 +195,18 @@ export default function TestPage() {
 
         <div className="rounded-xl border border-[#2F2F2F] p-6">
           <HistoryListPreview />
+        </div>
+      </section>
+
+      <section className="flex w-full max-w-3xl flex-col gap-4">
+        <h2 className="text-lg font-semibold text-white">History API payload (raw)</h2>
+        <HistoryApiPreview />
+      </section>
+
+      <section className="flex w-full max-w-3xl flex-col gap-4">
+        <h2 className="text-lg font-semibold text-white">Trade history container (API)</h2>
+        <div className="flex justify-center rounded-xl border border-[#2F2F2F] bg-[#16171D] p-6">
+          <TradeHistoryContainer />
         </div>
       </section>
     </div>
