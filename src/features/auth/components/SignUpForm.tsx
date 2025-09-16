@@ -23,7 +23,7 @@ const signUpSchema = z
         /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/,
         'Password must contain English characters only'
       ),
-    confirmPassword: z.string().min(1, 'Required'), // เปลี่ยนข้อความเป็น 'Required'
+    confirmPassword: z.string().min(1, 'Required'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -68,7 +68,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 }) => {
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const {
     handleSubmit,
@@ -100,10 +99,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   // ฟังก์ชันสำหรับสร้าง suffixIcon ตามเงื่อนไข
@@ -158,22 +153,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </button>
       );
     }
-    if (field === 'confirmPassword') {
-      return (
-        <button
-          type="button"
-          onClick={toggleConfirmPasswordVisibility}
-          disabled={isLoading}
-          className="focus:outline-none disabled:opacity-50 p-1"
-        >
-          {showConfirmPassword ? (
-            <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
-          ) : (
-            <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
-          )}
-        </button>
-      );
-    }
+    // ไม่มี suffixIcon สำหรับ confirmPassword เมื่อไม่มี error
+    return null;
   };
 
   return (
@@ -245,7 +226,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     }
                     suffixIcon={getSuffixIcon('password')}
                   />
-
                   {/* Password Strength Indicator */}
                   <div className="mt-[16px]">
                     <ul className="mt-1 space-y-1" aria-label="Password requirements">
@@ -296,7 +276,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 <div className="flex flex-col w-full">
                   <FormInputIcon
                     label="Confirm Password"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type="password" // ล็อกเป็น password เสมอ
                     value={confirmPasswordValue}
                     onChange={(e) => {
                       setValue('confirmPassword', e.target.value);
