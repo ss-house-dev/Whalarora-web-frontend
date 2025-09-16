@@ -16,6 +16,22 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
+/* ซ่อน scrollbar ทั้งหมด */
+/* Chrome, Safari, Edge, Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Internet Explorer และ Edge (legacy) */
+body {
+  -ms-overflow-style: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
