@@ -26,7 +26,7 @@ const signUpSchema = z
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
 
@@ -88,6 +88,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   });
 
   const passwordValue = watch('password', '');
+  const confirmPasswordValue = watch('confirmPassword', '');
   const { strength, score } = checkPasswordStrength(passwordValue);
 
   // Check if password has requirements not met (when password is not empty but not all requirements are met)
@@ -179,7 +180,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     disabled={isLoading}
                     hasError={!!errors.password || hasPasswordRequirementsNotMet}
                     errorMessage={
-                      hasPasswordRequirementsNotMet ? 'Password requirements not met.' : undefined
+                      hasPasswordRequirementsNotMet ? 'Password requirements not met' : undefined
                     }
                     suffixIcon={
                       <button
@@ -216,7 +217,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                                 fill="none"
                               >
                                 <path
-                                  d="M6 12C9.3138 12 12 9.3138 12 6C12 2.6862 9.3138 0 6 0C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
+                                  d="M6 12C9.3138 12 12 9.3138 12 6C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
                                   fill="#2FACA2"
                                 />
                               </svg>
@@ -247,7 +248,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                   <FormInputIcon
                     label="Confirm Password"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    value={watch('confirmPassword') || ''}
+                    value={confirmPasswordValue}
                     onChange={(e) => {
                       setValue('confirmPassword', e.target.value);
                       if (errors.confirmPassword) {
@@ -256,6 +257,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     }}
                     disabled={isLoading}
                     hasError={!!errors.confirmPassword}
+                    errorMessage={errors.confirmPassword?.message}
                     suffixIcon={
                       <button
                         type="button"
