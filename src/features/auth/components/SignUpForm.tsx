@@ -11,10 +11,10 @@ import { Button } from '@/components/button-sign-up';
 // Zod validation schema
 const signUpSchema = z
   .object({
-    username: z.string().min(1, 'Username is required'),
+    username: z.string().min(1, 'Required'),
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters long')
+      .min(8, 'Required')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/\d/, 'Password must contain at least one number')
@@ -23,7 +23,7 @@ const signUpSchema = z
         /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/,
         'Password must contain English characters only'
       ),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, 'Required'), // เปลี่ยนข้อความเป็น 'Required'
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -91,7 +91,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const confirmPasswordValue = watch('confirmPassword', '');
   const { strength, score } = checkPasswordStrength(passwordValue);
 
-  // Check if password has requirements not met (when password is not empty but not all requirements are met)
   const hasPasswordRequirementsNotMet =
     passwordValue.length > 0 && score < passwordRequirements.length;
 
@@ -105,6 +104,76 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  // ฟังก์ชันสำหรับสร้าง suffixIcon ตามเงื่อนไข
+  const getSuffixIcon = (field: 'username' | 'password' | 'confirmPassword') => {
+    if (field === 'username' && errors.username) {
+      return (
+        <Image
+          src="/assets/error-message.svg"
+          alt="Error Icon"
+          width={6}
+          height={6}
+          className="h-6 w-6 text-gray-400"
+        />
+      );
+    }
+    if (field === 'confirmPassword' && errors.confirmPassword) {
+      return (
+        <Image
+          src="/assets/error-message.svg"
+          alt="Error Icon"
+          width={6}
+          height={6}
+          className="h-6 w-6 text-gray-400"
+        />
+      );
+    }
+
+    if (field === 'username') {
+      return (
+        <Image
+          src="/assets/username.svg"
+          alt="Username Icon"
+          width={6}
+          height={6}
+          className="h-6 w-6 text-gray-400 p-1"
+        />
+      );
+    }
+    if (field === 'password') {
+      return (
+        <button
+          type="button"
+          onClick={togglePasswordVisibility}
+          disabled={isLoading}
+          className="focus:outline-none disabled:opacity-50 p-1"
+        >
+          {showPassword ? (
+            <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
+          ) : (
+            <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
+          )}
+        </button>
+      );
+    }
+    if (field === 'confirmPassword') {
+      return (
+        <button
+          type="button"
+          onClick={toggleConfirmPasswordVisibility}
+          disabled={isLoading}
+          className="focus:outline-none disabled:opacity-50 p-1"
+        >
+          {showConfirmPassword ? (
+            <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
+          ) : (
+            <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
+          )}
+        </button>
+      );
+    }
   };
 
   return (
@@ -153,15 +222,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     }}
                     disabled={isLoading}
                     hasError={!!errors.username}
-                    suffixIcon={
-                      <Image
-                        src="/assets/username.svg"
-                        alt="Username Icon"
-                        width={6}
-                        height={6}
-                        className="h-6 w-6 text-gray-400 p-1"
-                      />
-                    }
+                    suffixIcon={getSuffixIcon('username')}
                   />
                 </div>
 
@@ -182,21 +243,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     errorMessage={
                       hasPasswordRequirementsNotMet ? 'Password requirements not met' : undefined
                     }
-                    suffixIcon={
-                      <button
-                        type="button"
-                        onClick={togglePasswordVisibility}
-                        disabled={isLoading}
-                        className="focus:outline-none disabled:opacity-50 p-1"
-                      >
-                        {showPassword ? (
-                          <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
-                        ) : (
-                          <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
-                        )}
-                      </button>
-                    }
+                    suffixIcon={getSuffixIcon('password')}
                   />
+
                   {/* Password Strength Indicator */}
                   <div className="mt-[16px]">
                     <ul className="mt-1 space-y-1" aria-label="Password requirements">
@@ -217,7 +266,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                                 fill="none"
                               >
                                 <path
-                                  d="M6 12C9.3138 12 12 9.3138 12 6C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
+                                  d="M6 12C9.3138 12 12 9.3138 12 6C12 2.6862 9.3138 0 6 0C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
                                   fill="#2FACA2"
                                 />
                               </svg>
@@ -258,14 +307,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     disabled={isLoading}
                     hasError={!!errors.confirmPassword}
                     errorMessage={errors.confirmPassword?.message}
-                    suffixIcon={
-                      <button
-                        type="button"
-                        onClick={toggleConfirmPasswordVisibility}
-                        disabled={isLoading}
-                        className="focus:outline-none disabled:opacity-50 p-1"
-                      ></button>
-                    }
+                    suffixIcon={getSuffixIcon('confirmPassword')}
                   />
                 </div>
               </div>
