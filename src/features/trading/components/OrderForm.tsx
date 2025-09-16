@@ -112,6 +112,18 @@ const OrderForm: React.FC<OrderFormProps> = ({
     onMarketClick();
   };
 
+  // Handle click on price container or USD label - focus the input
+  const handlePriceContainerClick = () => {
+    inputRef.current?.focus();
+    onPriceFocus();
+  };
+
+  // Handle click on amount container - focus the amount input
+  const handleAmountContainerClick = () => {
+    amountInputRef.current?.focus();
+    onAmountFocus();
+  };
+
   // Reset user price flag when switching between limit and market modes
   React.useEffect(() => {
     if (priceLabel === 'Price') {
@@ -126,20 +138,26 @@ const OrderForm: React.FC<OrderFormProps> = ({
   return (
     <div className="space-y-7">
       {/* Price input */}
-      <div className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7]">
-        <span className="text-[12px] font-normal text-[#5775B7]">{priceLabel}</span>
+      <div
+        className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7] cursor-text"
+        onClick={handlePriceContainerClick}
+      >
+        <span className="text-[12px] w-[100px] font-normal text-[#5775B7]">{priceLabel}</span>
 
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}
             type="text"
-            className="w-[100px] text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
+            className="text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
             onFocus={onPriceFocus}
             onBlur={handlePriceBlur}
             value={price}
             onChange={handlePriceChange} // Updated to use our new handler
+            onClick={(e) => e.stopPropagation()} // Prevent double handling
           />
-          <span className="text-sm font-normal">USD</span>
+          <span className="text-sm font-normal cursor-text" onClick={handlePriceContainerClick}>
+            USD
+          </span>
 
           {!isInputFocused && (
             <svg
@@ -149,7 +167,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
               viewBox="0 0 14 16"
               fill="none"
               className="h-4 w-4 shrink-0 cursor-pointer text-[#3A8AF7]"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent double handling
                 inputRef.current?.focus();
                 onPriceFocus();
               }}
@@ -162,7 +181,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
           )}
 
           <Button
-            onClick={handleMarketClick} // Updated to use our new handler
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent container click
+              handleMarketClick();
+            }}
             className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
               priceLabel === 'Price'
                 ? 'bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]'
@@ -199,13 +221,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
         {/* Amount */}
         <div className="relative">
           <div
-            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] ${
+            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] cursor-text ${
               !isAmountValid
                 ? 'bg-[#17306B] border-[#D84C4C]'
                 : 'bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]'
             }`}
+            onClick={handleAmountContainerClick}
           >
-            <span className="text-[12px] font-normal text-[#5775B7]">Amount</span>
+            <span className="text-[12px] font-normal text-[#5775B7] cursor-text">Amount</span>
             <div className="flex items-center gap-2 text-[16px]">
               <Input
                 ref={amountInputRef}
@@ -215,11 +238,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 onChange={onAmountChange}
                 onFocus={onAmountFocus}
                 onBlur={onAmountBlur}
+                onClick={(e) => e.stopPropagation()} // Prevent double handling
               />
               <span
-                className={`text-[14px] font-normal ${
+                className={`text-[14px] font-normal cursor-text ${
                   amount || isAmountFocused ? 'text-white' : 'text-[#5775B7]'
                 }`}
+                onClick={handleAmountContainerClick}
               >
                 {balanceCurrency}
               </span>
