@@ -75,7 +75,6 @@ export default function SellOrderContainer() {
 
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [limitPrice, setLimitPrice] = useState<string>('');
   const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
   const [sellAmount, setSellAmount] = useState<string>('');
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
@@ -84,25 +83,45 @@ export default function SellOrderContainer() {
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
 
-  // ฟังก์ชันสำหรับจัดรูปแบบราคาโดยรักษา trailing zeros ตาม priceDecimalPlaces
-  const formatPriceWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+  // ฟังก์ชันสำหรับการจัดรูปแบบราคาขณะพิมพ์ - อนุญาตให้พิมพ์ทศนิยมได้อย่างอิสระ
+  const formatPriceWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-      const parts = numericValue.split('.');
-      const integerPart = parts[0];
-      const decimalPart = parts[1] || '';
-      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      // เติม trailing zeros ให้ครบตาม priceDecimalPlaces
-      const paddedDecimal = decimalPart
-        .padEnd(priceDecimalPlaces, '0')
-        .slice(0, priceDecimalPlaces);
-      return `${formattedInteger}.${paddedDecimal}`;
-    },
-    [priceDecimalPlaces]
-  );
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // เพิ่มคอมม่าให้กับจำนวนเต็ม
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // คืนค่าตามที่ผู้ใช้พิมพ์ โดยไม่เติมหรือตัดทศนิยม
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  }, []);
+
+  // ฟังก์ชันสำหรับจัดรูปแบบราคาเมื่อเสร็จสิ้นการแก้ไข (onBlur)
+  const formatPriceForDisplay = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    const num = parseFloat(numericValue);
+    if (isNaN(num)) return '';
+
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // เพิ่มคอมม่าให้กับจำนวนเต็ม
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // ถ้าไม่มีทศนิยมหรือเป็นจำนวนเต็ม ให้เติม .00
+    if (!decimalPart) {
+      return `${formattedInteger}.00`;
+    }
+
+    // ถ้ามีทศนิยมแล้ว ให้คงไว้ตามที่ผู้ใช้ป้อน (ไม่เติม 0 ข้างหลัง)
+    return `${formattedInteger}.${decimalPart}`;
+  }, []);
 
   const formatToMaxDigits = useCallback((value: number, maxDigits: number = 10): string => {
     if (typeof value !== 'number' || isNaN(value)) return '0';
@@ -169,9 +188,16 @@ export default function SellOrderContainer() {
 
   const calculateReceiveUSD = useCallback(
     (coinAmount: string, priceValue: string): string => {
-      if (!coinAmount || !priceValue || priceValue.replace(/,/g, '') === '0.00') return '';
+      if (!coinAmount || !priceValue) return '';
+      const cleanPrice = priceValue.replace(/,/g, '');
+      if (
+        cleanPrice === '0' ||
+        (cleanPrice.startsWith('0.0') && cleanPrice.replace(/[0.]/g, '') === '')
+      )
+        return '';
+
       const numCoin = parseFloat(coinAmount);
-      const numPrice = parseFloat(priceValue.replace(/,/g, ''));
+      const numPrice = parseFloat(cleanPrice);
       if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
       const usdAmount = numCoin * numPrice;
       return formatToTwoDecimalsWithComma(usdAmount.toString());
@@ -226,13 +252,11 @@ export default function SellOrderContainer() {
     setPriceLabel('Limit price');
     setIsInputFocused(true);
     setPrice('');
-    setLimitPrice('');
   };
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
     setPrice(marketPrice);
-    setLimitPrice(marketPrice);
     setIsInputFocused(false);
   };
 
@@ -240,20 +264,18 @@ export default function SellOrderContainer() {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = formatPriceWithComma(inputValue);
-      setLimitPrice(formattedValue);
       setPrice(formattedValue);
     }
   };
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = formatPriceWithComma(price);
+      // ใช้ฟังก์ชัน formatPriceForDisplay เมื่อเสร็จสิ้นการแก้ไข
+      const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
-      setLimitPrice(formattedPrice);
       console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
     } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
       setPrice(marketPrice);
-      setLimitPrice(marketPrice);
       console.log(`SellOrderContainer: Price blur - set market price: "${marketPrice}"`);
     }
     setIsInputFocused(false);
@@ -361,16 +383,18 @@ export default function SellOrderContainer() {
     console.log(
       `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
     );
-    if (priceLabel === 'Price' && !isInputFocused && marketPrice && !isPriceLoading) {
-      setPrice(marketPrice);
-      setLimitPrice(marketPrice);
-      console.log(
-        `SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
-      );
-    } else if (isPriceLoading) {
-      setPrice('0.' + '0'.repeat(priceDecimalPlaces));
-      setLimitPrice('0.' + '0'.repeat(priceDecimalPlaces));
-      console.log(`SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`);
+    if (priceLabel === 'Price' && !isInputFocused) {
+      if (marketPrice && !isPriceLoading) {
+        setPrice(marketPrice);
+        console.log(
+          `SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+        );
+      } else if (isPriceLoading) {
+        setPrice('0.' + '0'.repeat(priceDecimalPlaces));
+        console.log(
+          `SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+        );
+      }
     }
   }, [
     marketPrice,
@@ -382,24 +406,9 @@ export default function SellOrderContainer() {
   ]);
 
   useEffect(() => {
-    const currentPrice =
-      priceLabel === 'Price'
-        ? isPriceLoading
-          ? '0.' + '0'.repeat(priceDecimalPlaces)
-          : marketPrice
-        : limitPrice;
-    const usdAmount = calculateReceiveUSD(sellAmount, currentPrice);
-    setReceiveUSD(usdAmount);
-  }, [
-    sellAmount,
-    price,
-    limitPrice,
-    marketPrice,
-    priceLabel,
-    isPriceLoading,
-    priceDecimalPlaces,
-    calculateReceiveUSD,
-  ]);
+    const calculatedReceiveUSD = calculateReceiveUSD(sellAmount, price);
+    setReceiveUSD(calculatedReceiveUSD);
+  }, [sellAmount, price, calculateReceiveUSD]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',

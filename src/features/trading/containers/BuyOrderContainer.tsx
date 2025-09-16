@@ -204,23 +204,45 @@ export default function BuyOrderContainer() {
     }).format(balance);
   }, [getAvailableBalance]);
 
-  const formatPriceWithComma = useCallback(
-    (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+  // ฟังก์ชันสำหรับการจัดรูปแบบราคาขณะพิมพ์ - อนุญาตให้พิมพ์ทศนิยมได้อย่างอิสระ
+  const formatPriceWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-      const parts = numericValue.split('.');
-      const integerPart = parts[0];
-      const decimalPart = parts[1] || '';
-      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const paddedDecimal = decimalPart
-        .padEnd(priceDecimalPlaces, '0')
-        .slice(0, priceDecimalPlaces);
-      return `${formattedInteger}.${paddedDecimal}`;
-    },
-    [priceDecimalPlaces]
-  );
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // เพิ่มคอมม่าให้กับจำนวนเต็ม
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // คืนค่าตามที่ผู้ใช้พิมพ์ โดยไม่เติมหรือตัดทศนิยม
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  }, []);
+
+  // ฟังก์ชันสำหรับจัดรูปแบบราคาเมื่อเสร็จสิ้นการแก้ไข (onBlur)
+  const formatPriceForDisplay = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    const num = parseFloat(numericValue);
+    if (isNaN(num)) return '';
+
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // เพิ่มคอมม่าให้กับจำนวนเต็ม
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // ถ้าไม่มีทศนิยมหรือเป็นจำนวนเต็ม ให้เติม .00
+    if (!decimalPart) {
+      return `${formattedInteger}.00`;
+    }
+
+    // ถ้ามีทศนิยมแล้ว ให้คงไว้ตามที่ผู้ใช้ป้อน (ไม่เติม 0 ข้างหลัง)
+    return `${formattedInteger}.${decimalPart}`;
+  }, []);
 
   const formatNumberWithComma = useCallback((value: string): string => {
     if (!value) return '';
@@ -247,9 +269,16 @@ export default function BuyOrderContainer() {
   }, []);
 
   const calculateReceiveCoin = useCallback((amountValue: string, priceValue: string): string => {
-    if (!amountValue || !priceValue || priceValue.replace(/,/g, '') === '0.00') return '';
+    if (!amountValue || !priceValue) return '';
+    const cleanPrice = priceValue.replace(/,/g, '');
+    if (
+      cleanPrice === '0' ||
+      (cleanPrice.startsWith('0.0') && cleanPrice.replace(/[0.]/g, '') === '')
+    )
+      return '';
+
     const numAmount = parseFloat(amountValue.replace(/,/g, ''));
-    const numPrice = parseFloat(priceValue.replace(/,/g, ''));
+    const numPrice = parseFloat(cleanPrice);
     if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return '';
     const coinAmount = numAmount / numPrice;
     return coinAmount.toFixed(9);
@@ -310,6 +339,7 @@ export default function BuyOrderContainer() {
     setIsInputFocused(false);
   };
 
+  // เปลี่ยนการจัดการ price change ให้ใช้ formatPriceWithComma
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
@@ -320,7 +350,8 @@ export default function BuyOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      const formattedPrice = formatPriceWithComma(price);
+      // ใช้ฟังก์ชัน formatPriceForDisplay เมื่อเสร็จสิ้นการแก้ไข
+      const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
       console.log(`BuyOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
     } else if (priceLabel === 'Price' && marketPrice && !isPriceLoading) {
@@ -426,6 +457,7 @@ export default function BuyOrderContainer() {
     setAmountErrorMessage('');
   };
 
+  // ปรับปรุง useEffect สำหรับการตั้งค่าราคาเริ่มต้น
   useEffect(() => {
     console.log(
       `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
