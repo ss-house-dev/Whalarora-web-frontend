@@ -30,7 +30,7 @@ const FormItemInput = ({
   const isEmpty = value.trim() === ''; // Check if the input is empty
 
   // กำหนด error message ที่จะแสดง
-  const displayErrorMessage = errorMessage || (isEmpty && hasError ? 'Required' : '');
+  const displayErrorMessage = errorMessage || (isEmpty && hasError ? 'Required.' : '');
 
   return (
     <div className="relative">

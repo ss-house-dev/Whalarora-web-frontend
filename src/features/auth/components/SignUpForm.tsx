@@ -23,7 +23,7 @@ const signUpSchema = z
         /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/,
         'Password must contain English characters only'
       ),
-    confirmPassword: z.string().min(1, 'Required'),
+    confirmPassword: z.string().min(1, 'Required.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -114,7 +114,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         />
       );
     }
-    if (field === 'confirmPassword' && errors.confirmPassword) {
+    if (
+      field === 'confirmPassword' &&
+      errors.confirmPassword?.message === 'Passwords do not match'
+    ) {
       return (
         <Image
           src="/assets/error-message.svg"
@@ -133,7 +136,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           alt="Username Icon"
           width={6}
           height={6}
-          className="h-6 w-6 text-gray-400 p-1"
+          className="h-6 w-6 text-gray-400"
         />
       );
     }
@@ -153,7 +156,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </button>
       );
     }
-    // ไม่มี suffixIcon สำหรับ confirmPassword เมื่อไม่มี error
+    // ไม่มี suffixIcon สำหรับ confirmPassword เมื่อไม่มี error หรือ error เป็น "Required"
     return null;
   };
 
@@ -222,7 +225,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     disabled={isLoading}
                     hasError={!!errors.password || hasPasswordRequirementsNotMet}
                     errorMessage={
-                      hasPasswordRequirementsNotMet ? 'Password requirements not met' : undefined
+                      hasPasswordRequirementsNotMet ? 'Password requirements not met. ' : undefined
                     }
                     suffixIcon={getSuffixIcon('password')}
                   />
@@ -276,7 +279,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 <div className="flex flex-col w-full">
                   <FormInputIcon
                     label="Confirm Password"
-                    type="password" // ล็อกเป็น password เสมอ
+                    type="password"
                     value={confirmPasswordValue}
                     onChange={(e) => {
                       setValue('confirmPassword', e.target.value);
@@ -296,7 +299,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               <div className="w-[400px] h-[26px] mb-0 flex items-center justify-center"></div>
 
               {/* Button Sign Up */}
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center">
                 <Button
                   type="submit"
                   className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
@@ -313,7 +316,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 </Button>
               </div>
 
-              <div className="text-[12px] font-[400px] flex items-center justify-center mt-[24px]">
+              <div className="text-[12px] font-[400px] flex items-center justify-center">
                 <p className="mr-2">Already have an account?</p>
                 <p
                   className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
