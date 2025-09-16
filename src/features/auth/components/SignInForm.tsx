@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import FormInputIcon from '@/components/ui/FormItemInput';
+import FormInputIcon from '@/components/FormItemInput';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';

@@ -6,7 +6,7 @@ const alexandria = Alexandria({
 });
 
 export const metadata: Metadata = {
-  title: 'Whalalora | Login',
+  title: 'Whalalora | Sign up',
   description: 'Login page',
 };
 

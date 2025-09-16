@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import FormInputIcon from '@/components/ui/FormItemInput';
+import FormInputIcon from '@/components/FormItemInput';
 import { Button } from '@/components/button-sign-up';
 
 interface SignInData {
@@ -66,7 +66,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-[464px] h-[720px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
+      <div className="w-[464px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
         <div className="flex flex-col space-y-4 text-white">
           <div className="space-y-4">
             {/* Back Button */}
@@ -111,7 +111,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       alt="Username Icon"
                       width={6}
                       height={6}
-                      className="h-6 w-6 text-gray-400"
+                      className="h-6 w-6 text-gray-400 p-1"
                     />
                   }
                 />
@@ -132,7 +132,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       type="button"
                       onClick={onTogglePasswordVisibility}
                       disabled={isLoading}
-                      className="focus:outline-none disabled:opacity-50"
+                      className="focus:outline-none disabled:opacity-50 p-1"
                     >
                       {showPassword ? (
                         <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
@@ -152,32 +152,32 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                           req.met ? 'text-[#2FACA2]' : 'text-[#797979]'
                         }`}
                       >
-                        {req.met ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            className="shrink-0"
-                          >
-                            <path
-                              d="M6 12C9.3138 12 12 9.3138 12 6C12 2.6862 9.3138 0 6 0C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
-                              fill="#2FACA2"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="4"
-                            height="4"
-                            viewBox="0 0 4 4"
-                            fill="none"
-                            className="shrink-0"
-                          >
-                            <circle cx="2" cy="2" r="2" fill="#797979" />
-                          </svg>
-                        )}
+                        <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                          {req.met ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                            >
+                              <path
+                                d="M6 12C9.3138 12 12 9.3138 12 6C12 2.6862 9.3138 0 6 0C2.6862 0 0 2.6862 0 6C0 9.3138 2.6862 12 6 12ZM9.2742 4.4742L5.4 8.3484L2.8758 5.8242L3.7242 4.9758L5.4 6.6516L8.4258 3.6258L9.2742 4.4742Z"
+                                fill="#2FACA2"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="4"
+                              height="4"
+                              viewBox="0 0 4 4"
+                              fill="none"
+                            >
+                              <circle cx="2" cy="2" r="2" fill="#797979" />
+                            </svg>
+                          )}
+                        </div>
                         <span>{req.text}</span>
                         <span className="sr-only">
                           {req.met ? ' - Requirement met' : ' - Requirement not met'}
@@ -203,7 +203,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       type="button"
                       onClick={onTogglePasswordVisibility}
                       disabled={isLoading}
-                      className="focus:outline-none disabled:opacity-50"
+                      className="focus:outline-none disabled:opacity-50 p-1"
                     ></button>
                   }
                 />
@@ -221,6 +221,7 @@ export const SignUpForm: React.FC<SignInFormProps> = ({
                       height="20"
                       viewBox="0 0 24 24"
                       fill="none"
+                      className="p-1"
                     >
                       <path
                         d="M12 24C5.3724 24 0 18.6276 0 12C0 5.3724 5.3724 0 12 0C18.6276 0 24 5.3724 24 12C24 18.6276 18.6276 24 12 24ZM10.8 15.6V18H13.2V15.6H10.8ZM10.8 6V13.2H13.2V6H10.8Z"
