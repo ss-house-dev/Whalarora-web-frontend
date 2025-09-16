@@ -264,13 +264,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                         onClick={toggleConfirmPasswordVisibility}
                         disabled={isLoading}
                         className="focus:outline-none disabled:opacity-50 p-1"
-                      >
-                        {showConfirmPassword ? (
-                          <Eye className="h-6 w-6 text-gray-400 cursor-pointer" />
-                        ) : (
-                          <EyeOff className="h-6 w-6 text-gray-400 cursor-pointer" />
-                        )}
-                      </button>
+                      ></button>
                     }
                   />
                 </div>
