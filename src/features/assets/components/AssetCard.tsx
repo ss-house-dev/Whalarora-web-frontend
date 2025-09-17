@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
-import { useCoinContext } from '@/features/trading/contexts/CoinContext'; // เพิ่ม import
-import { useSymbolPrecisions, getSymbolPrecision, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatPriceWithTick,
+} from '@/features/trading/utils/symbolPrecision';
 import type { SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
 
 // Color palette from the brief (using Tailwind arbitrary values)
@@ -130,11 +134,11 @@ const getCoinIcon = (symbol: string) => {
   }
 };
 
-// เธเธฑเธเธเนเธเธฑเธเธชเธฃเนเธฒเธ Coin object เธชเธณเธซเธฃเธฑเธ CoinContext
+// สร้าง Coin object จากข้อมูลเหรียญที่เลือกใน CoinContext
 const createCoinObject = (symbol: string) => {
   const upperSymbol = symbol.toUpperCase();
 
-  // Icon เธชเธณเธซเธฃเธฑเธเธเธเธฒเธ” 28px (เธซเธฅเธฑเธ)
+  // Icon สำหรับแสดงใน AssetCard
   const getMainIcon = (sym: string) => {
     switch (sym) {
       case 'BTC':
@@ -220,7 +224,7 @@ const createCoinObject = (symbol: string) => {
     }
   };
 
-  // Icon เธชเธณเธซเธฃเธฑเธเธเธเธฒเธ” 20px (popover)
+  // Icon สำหรับแสดงใน Popover
   const getPopoverIcon = (sym: string) => {
     switch (sym) {
       case 'BTC':
@@ -352,7 +356,7 @@ function truncateCode(s: string, max = 4) {
   return s.length <= max ? s : s.slice(0, max) + '...';
 }
 
-/* ----------------------  เธเธญเธฃเนเนเธกเธ•เธเธณเธเธงเธเนเธซเนเธฃเธงเธกเนเธ”เน 10 เธซเธฅเธฑเธ  ---------------------- */
+/* ---  ฟังก์ชันสำหรับการจัดรูปแบบจำนวนเงิน --- */
 const MAX_AMOUNT_DIGITS = 10;
 type FormatAmountOptions = {
   precision?: SymbolPrecision | null;
@@ -385,7 +389,6 @@ function formatAmount10(value: number | string, options: FormatAmountOptions = {
 
   return negative ? `-${formatted}` : formatted;
 }
-/* -------------------------------------------------------------------------------------- */
 
 function Stat({
   label,
@@ -410,7 +413,7 @@ function Stat({
 
 export function AssetCard(props: AssetCardProps) {
   const router = useRouter();
-  const { setSelectedCoin } = useCoinContext(); // เน€เธเธดเนเธก hook เธเธตเน
+  const { setSelectedCoin } = useCoinContext(); // ใช้ useCoinContext เพื่อดึงฟังก์ชัน setSelectedCoin
 
   const {
     symbol,
@@ -424,7 +427,7 @@ export function AssetCard(props: AssetCardProps) {
     pnlPct,
     icon,
     enableRealTimePrice = true,
-    onBuySell, // เน€เธเนเธ onBuySell prop เนเธงเนเน€เธเธทเนเธญเธกเธตเธเธฒเธฃเนเธเนเธเธฒเธเธเธดเน€เธจเธฉ
+    onBuySell, // ใช้ onBuySell prop เพื่อเรียกใช้ฟังก์ชันที่กำหนดเอง
   } = props;
 
   const { data: precisionMap } = useSymbolPrecisions();
@@ -441,11 +444,13 @@ export function AssetCard(props: AssetCardProps) {
     enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
 
   const staticCurrentPriceDisplay = React.useMemo(
-    () => formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    () =>
+      formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
     [currentPrice, symbolPrecision]
   );
   const averageCostDisplay = React.useMemo(
-    () => formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    () =>
+      formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
     [averageCost, symbolPrecision]
   );
   const formattedCurrentPrice =
@@ -455,15 +460,15 @@ export function AssetCard(props: AssetCardProps) {
     [amount, symbolPrecision]
   );
 
-  // Calculate real-time PnL if we have market price - เนเธ•เนเธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
+  // Calculate real-time PnL if we have market price - หากกำลังโหลดอยู่ให้แสดง 0
   const realTimePnlAbs = isPriceLoading
-    ? 0 // เธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
+    ? 0
     : enableRealTimePrice && marketPrice && typeof amount === 'number'
       ? (displayPrice - averageCost) * amount
       : pnlAbs;
 
   const realTimePnlPct = isPriceLoading
-    ? 0 // เธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
+    ? 0 // หากกำลังโหลดอยู่ให้แสดง 0
     : enableRealTimePrice && marketPrice && averageCost > 0
       ? (displayPrice - averageCost) / averageCost
       : pnlPct;
@@ -479,18 +484,17 @@ export function AssetCard(props: AssetCardProps) {
   const displayIcon = icon || getCoinIcon(symbol);
 
   const handleBuySell = () => {
-    // เธ–เนเธฒเธกเธต onBuySell prop เนเธซเนเน€เธฃเธตเธขเธเนเธเนเธเนเธญเธ (เธชเธณเธซเธฃเธฑเธ custom logic)
     if (onBuySell) {
       onBuySell();
     }
 
-    // เธชเธฃเนเธฒเธ Coin object เธชเธณเธซเธฃเธฑเธ CoinContext
+    // Create Coin object from selected coin data
     const coinObject = createCoinObject(symbol);
     try {
-      // เธญเธฑเธเน€เธ”เธ• selected coin เนเธ CoinContext
+      // Set selected coin in CoinContext
       setSelectedCoin(coinObject);
 
-      // เน€เธเธดเนเธก delay เน€เธฅเนเธเธเนเธญเธขเธเนเธญเธ navigate
+      // Add delay before navigating
       setTimeout(() => {
         router.push('/main/trading');
       }, 100);
@@ -526,7 +530,7 @@ export function AssetCard(props: AssetCardProps) {
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
                   {amountDisplay}
                 </div>
-                {/* unit เธขเธฒเธงเน€เธเธดเธ 4 เธขเนเธญเน€เธเนเธเธ•เธฑเธงเธ—เธตเน 5 เธเธฐเน€เธเนเธ... */}
+
                 <div className="text-base leading-normal text-white whitespace-nowrap">
                   {truncateCode(unit, 4)}
                 </div>
@@ -581,26 +585,3 @@ export function AssetCard(props: AssetCardProps) {
     </motion.div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

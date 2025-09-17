@@ -4,7 +4,7 @@ import OrderCard, { Order } from './OrderCard';
 type ApiOrder = {
   id: string;
   side: 'buy' | 'sell';
-  symbol: string; // เน€เธเนเธ "BTC/USDT"
+  symbol: string; // เช่น "BTC/USDT"
   createdAt: string; // ISO string
   price: number; // 120000
   amount: number; // 0.02
@@ -17,7 +17,7 @@ type OrdersResponse = {
   data: ApiOrder[];
   page: number;
   perPage: number;
-  total: number; // เน€เธญเธฒเนเธงเนเธเธณเธเธงเธ“ totalPages
+  total: number; // จำนวนหน้าทั้งหมด
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -30,7 +30,7 @@ export default function OpenOrderContainer() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // เนเธเธฅเธเธเนเธญเธกเธนเธฅเธซเธฅเธฑเธเธเนเธฒเธเนเธซเนเน€เธเนเธฒเธเธฑเธschema Order เธเธญเธ UI เน€เธ”เธดเธก
+  // แปลงข้อมูลจาก API เป็นรูปแบบที่ใช้ใน UI
   const mapToOrder = (o: ApiOrder): Order => ({
     id: o.id,
     side: o.side,
@@ -40,12 +40,11 @@ export default function OpenOrderContainer() {
     amount: o.amount.toString(),
     status: o.status,
     filledAmount:
-      o.status === 'partial' && o.filledAmount != null
-        ? o.filledAmount.toString() : undefined,
+      o.status === 'partial' && o.filledAmount != null ? o.filledAmount.toString() : undefined,
     filledPercent: o.status === 'partial' ? (o.filledPercent ?? 0) : undefined,
   });
 
-  // เธ”เธถเธเธเนเธญเธกเธนเธฅเน€เธกเธทเนเธญ page เน€เธเธฅเธตเนเธขเธ
+  // ดึงข้อมูลคำสั่งซื้อจาก API ตาม page ที่กำหนด
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -79,19 +78,17 @@ export default function OpenOrderContainer() {
     try {
       const res = await fetch(`${API_BASE}/orders/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
-      // เธฅเธเธชเธณเน€เธฃเนเธ โ€” เนเธกเนเธกเธตเธญเธฐเนเธฃเน€เธเธดเนเธก เธซเธฃเธทเธญเธญเธฒเธเธเธฐเธกเธตเนเธเนเธเน€เธ•เธทเธญเธเธงเนเธฒเธเธ”เธฅเธ เนเธกเนเธฃเธนเน
-      // เธญเธฒเธ refetch เธซเธเนเธฒเธเธตเนเธญเธตเธเธเธฃเธฑเนเธ เน€เธเธทเนเธญเธซเธฅเธฑเธเธเนเธฒเธเน€เธเธฅเธตเนเธขเธ total
       setTotal((t) => Math.max(0, t - 1));
     } catch {
-      // rollback เธ–เนเธฒเธฅเธเนเธกเนเธเนเธฒเธ
+      // rollback การลบคำสั่งซื้อ
       setOrders(prev);
-      alert('เธฅเธเธเธณเธชเธฑเนเธเนเธกเนเธชเธณเน€เธฃเนเธ');
+      alert('ไม่สามารถลบคำสั่งซื้อได้');
     }
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* เน€เธเธทเนเธญเธซเธฒ container */}
+      {/* คอนเทนเนอร์สำหรับแสดงรายการคำสั่งซื้อ */}
       <div className="flex-1 overflow-y-auto pr-2">
         {loading ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-full">
@@ -158,7 +155,7 @@ export default function OpenOrderContainer() {
 
 /** ===== helpers ===== */
 function formatDateTime(iso: string) {
-  // เน€เธงเธฅเธฒเนเธเธเน€เธ”เธดเธก"13-08-2025 14:30"
+  // แปลง ISO date string เป็นรูปแบบ "13-08-2025 14:30"
   const d = new Date(iso);
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -167,8 +164,3 @@ function formatDateTime(iso: string) {
   const min = String(d.getMinutes()).padStart(2, '0');
   return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
 }
-
-
-
-
-
