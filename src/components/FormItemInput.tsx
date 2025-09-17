@@ -47,7 +47,7 @@ const FormItemInput = ({
           onChange={onChange}
           onKeyPress={onKeyPress}
           disabled={disabled}
-          className={`rounded-md w-[400px] h-[44px] bg-[#1F2029] p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+          className={`rounded-[8px] w-[400px] h-[44px] bg-[#1F2029] p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
             hasError ? 'border-[#D84C4C]' : 'focus:border-[#225FED]'
           } focus:outline-none ${
             type === 'password'

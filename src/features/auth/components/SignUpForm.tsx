@@ -11,7 +11,13 @@ import { Button } from '@/components/button-sign-up';
 // Zod validation schema
 const signUpSchema = z
   .object({
-    username: z.string().min(1, 'Required'),
+    username: z
+      .string()
+      .min(1, 'Required.')
+      .regex(
+        /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/,
+        'Username must not contain spaces'
+      ),
     password: z
       .string()
       .min(8, 'Required')
@@ -21,26 +27,17 @@ const signUpSchema = z
       .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, 'Password must contain at least one symbol')
       .regex(
         /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/,
-        'Password must contain English characters only'
+        'Password must not contain spaces'
       ),
     confirmPassword: z.string().min(1, 'Required.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'Passwords do not match.',
     path: ['confirmPassword'],
   });
 
+// Type inference from schema
 type SignUpFormData = z.infer<typeof signUpSchema>;
-
-interface SignUpFormProps {
-  isLoading?: boolean;
-  onSignUp: (data: SignUpFormData) => void;
-  onGoToSignIn?: () => void;
-  onSignIn: () => void;
-  onGoBack: () => void;
-  usernameError?: string; // Username error from parent after submit
-  onUsernameChange?: () => void; // Callback when username changes
-}
 
 // Password strength requirements
 const passwordRequirements = [
@@ -51,6 +48,17 @@ const passwordRequirements = [
   { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, text: 'At least one symbol' },
   { regex: /.{8,}/, text: 'At least 8 characters long' },
 ];
+
+// Interface for component props
+interface SignUpFormProps {
+  isLoading?: boolean;
+  onSignUp: (data: SignUpFormData) => void;
+  onGoToSignIn?: () => void;
+  onSignIn: () => void;
+  onGoBack: () => void;
+  usernameError?: string; // Username error from parent after submit
+  onUsernameChange?: () => void; // Callback when username changes
+}
 
 // Calculate password strength score and status
 const checkPasswordStrength = (password: string) => {
@@ -220,7 +228,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     label="Username"
                     value={usernameValue}
                     onChange={(e) => {
-                      setValue('username', e.target.value);
+                      // กรอง space ออกจาก username
+                      const valueWithoutSpaces = e.target.value.replace(/\s/g, '');
+                      setValue('username', valueWithoutSpaces);
                       if (errors.username) {
                         clearErrors('username');
                       }
@@ -243,7 +253,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     type={showPassword ? 'text' : 'password'}
                     value={passwordValue}
                     onChange={(e) => {
-                      setValue('password', e.target.value);
+                      // กรอง space ออกจาก password
+                      const valueWithoutSpaces = e.target.value.replace(/\s/g, '');
+                      setValue('password', valueWithoutSpaces);
                       if (errors.password) {
                         clearErrors('password');
                       }
@@ -308,7 +320,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     type="password"
                     value={confirmPasswordValue}
                     onChange={(e) => {
-                      setValue('confirmPassword', e.target.value);
+                      // กรอง space ออกจาก confirm password
+                      const valueWithoutSpaces = e.target.value.replace(/\s/g, '');
+                      setValue('confirmPassword', valueWithoutSpaces);
                       if (errors.confirmPassword) {
                         clearErrors('confirmPassword');
                       }
@@ -328,7 +342,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               <div className="flex justify-center">
                 <Button
                   type="submit"
-                  className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
+                  className="w-[400px] h-[48px] rounded-[8px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -343,7 +357,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               </div>
 
               <div className="text-[12px] font-[400px] flex items-center justify-center">
-                <p className="mr-2">Already have an account?</p>
+                <p className="mr-2">Already have an account ?</p>
                 <p
                   className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
                     isLoading ? 'opacity-50 pointer-events-none' : ''
