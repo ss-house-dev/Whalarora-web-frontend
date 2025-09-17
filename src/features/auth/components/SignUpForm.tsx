@@ -32,7 +32,7 @@ const signUpSchema = z
     confirmPassword: z.string().min(1, 'Required.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match.',
+    message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
 
@@ -41,7 +41,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 // Password strength requirements
 const passwordRequirements = [
-  { regex: /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/, text: 'English only' },
+  { regex: /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/, text: 'English only (no spaces)' },
   { regex: /[A-Z]/, text: 'At least one uppercase letter (A–Z)' },
   { regex: /[a-z]/, text: 'At least one lowercase letter (a–z)' },
   { regex: /\d/, text: 'At least one number (0–9)' },
@@ -142,19 +142,21 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       );
     }
 
-    if (
-      field === 'confirmPassword' &&
-      errors.confirmPassword?.message === 'Passwords do not match'
-    ) {
-      return (
-        <Image
-          src="/assets/error-message.svg"
-          alt="Error Icon"
-          width={6}
-          height={6}
-          className="h-6 w-6 text-gray-400"
-        />
-      );
+    if (field === 'confirmPassword') {
+      // Show error icon only if there's an error AND it's not just "Required"
+      if (errors.confirmPassword && errors.confirmPassword.message !== 'Required.') {
+        return (
+          <Image
+            src="/assets/error-message.svg"
+            alt="Error Icon"
+            width={6}
+            height={6}
+            className="h-6 w-6 text-red-400"
+          />
+        );
+      }
+      // No icon when no error or when error is just "Required"
+      return null;
     }
 
     if (field === 'password') {
@@ -174,7 +176,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       );
     }
 
-    // ไม่มี suffixIcon สำหรับ confirmPassword เมื่อไม่มี error หรือ error เป็น "Required"
     return null;
   };
 
@@ -342,7 +343,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               <div className="flex justify-center">
                 <Button
                   type="submit"
-                  className="w-[400px] h-[48px] rounded-[8px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
+                  className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -357,7 +358,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               </div>
 
               <div className="text-[12px] font-[400px] flex items-center justify-center">
-                <p className="mr-2">Already have an account ?</p>
+                <p className="mr-2">Already have an account?</p>
                 <p
                   className={`text-[#3A8AF7] text-[16px] cursor-pointer hover:opacity-80 transition-opacity ${
                     isLoading ? 'opacity-50 pointer-events-none' : ''
