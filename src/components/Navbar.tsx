@@ -114,7 +114,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
   return (
     <>
-      <div className="bg-[#16171D] h-14 flex justify-between items-center rounded-b-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] px-6 py-3">
+      <div className="bg-[#16171D] h-14 flex justify-between items-center rounded-b-2xl px-6 py-3">
         {/* Left Side - Logo and Navigation */}
         <div className="flex flex-row items-center gap-5">
           <Image
