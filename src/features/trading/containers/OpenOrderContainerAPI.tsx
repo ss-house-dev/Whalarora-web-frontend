@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import OrderCard, { Order } from './OrderCard';
 
 type ApiOrder = {
   id: string;
   side: 'buy' | 'sell';
-  symbol: string; // เช่น "BTC/USDT"
+  symbol: string; // เน€เธเนเธ "BTC/USDT"
   createdAt: string; // ISO string
   price: number; // 120000
   amount: number; // 0.02
@@ -17,7 +17,7 @@ type OrdersResponse = {
   data: ApiOrder[];
   page: number;
   perPage: number;
-  total: number; // เอาไว้คำนวณ totalPages
+  total: number; // เน€เธญเธฒเนเธงเนเธเธณเธเธงเธ“ totalPages
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -30,23 +30,22 @@ export default function OpenOrderContainer() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // แปลงข้อมูลหลังบ้านให้เข้ากับschema Order ของ UI เดิม
+  // เนเธเธฅเธเธเนเธญเธกเธนเธฅเธซเธฅเธฑเธเธเนเธฒเธเนเธซเนเน€เธเนเธฒเธเธฑเธschema Order เธเธญเธ UI เน€เธ”เธดเธก
   const mapToOrder = (o: ApiOrder): Order => ({
     id: o.id,
     side: o.side,
     pair: o.symbol,
     datetime: formatDateTime(o.createdAt),
-    price: formatPrice(o.price),
-    amount: formatAmount(o.amount, o.symbol),
+    price: o.price.toString(),
+    amount: o.amount.toString(),
     status: o.status,
     filledAmount:
       o.status === 'partial' && o.filledAmount != null
-        ? formatAmount(o.filledAmount, o.symbol)
-        : undefined,
+        ? o.filledAmount.toString() : undefined,
     filledPercent: o.status === 'partial' ? (o.filledPercent ?? 0) : undefined,
   });
 
-  // ดึงข้อมูลเมื่อ page เปลี่ยน
+  // เธ”เธถเธเธเนเธญเธกเธนเธฅเน€เธกเธทเนเธญ page เน€เธเธฅเธตเนเธขเธ
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -80,19 +79,19 @@ export default function OpenOrderContainer() {
     try {
       const res = await fetch(`${API_BASE}/orders/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
-      // ลบสำเร็จ — ไม่มีอะไรเพิ่ม หรืออาจจะมีแจ้งเตือนว่ากดลบ ไม่รู้
-      // อาจ refetch หน้านี้อีกครั้ง เผื่อหลังบ้านเปลี่ยน total
+      // เธฅเธเธชเธณเน€เธฃเนเธ โ€” เนเธกเนเธกเธตเธญเธฐเนเธฃเน€เธเธดเนเธก เธซเธฃเธทเธญเธญเธฒเธเธเธฐเธกเธตเนเธเนเธเน€เธ•เธทเธญเธเธงเนเธฒเธเธ”เธฅเธ เนเธกเนเธฃเธนเน
+      // เธญเธฒเธ refetch เธซเธเนเธฒเธเธตเนเธญเธตเธเธเธฃเธฑเนเธ เน€เธเธทเนเธญเธซเธฅเธฑเธเธเนเธฒเธเน€เธเธฅเธตเนเธขเธ total
       setTotal((t) => Math.max(0, t - 1));
     } catch {
-      // rollback ถ้าลบไม่ผ่าน
+      // rollback เธ–เนเธฒเธฅเธเนเธกเนเธเนเธฒเธ
       setOrders(prev);
-      alert('ลบคำสั่งไม่สำเร็จ');
+      alert('เธฅเธเธเธณเธชเธฑเนเธเนเธกเนเธชเธณเน€เธฃเนเธ');
     }
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* เนื้อหา container */}
+      {/* เน€เธเธทเนเธญเธซเธฒ container */}
       <div className="flex-1 overflow-y-auto pr-2">
         {loading ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-full">
@@ -121,7 +120,7 @@ export default function OpenOrderContainer() {
             }`}
             style={{ backgroundColor: '#212121' }}
           >
-            ‹
+            โ€น
           </button>
 
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
@@ -149,7 +148,7 @@ export default function OpenOrderContainer() {
             }`}
             style={{ backgroundColor: '#212121' }}
           >
-            ›
+            โ€บ
           </button>
         </div>
       </div>
@@ -158,15 +157,8 @@ export default function OpenOrderContainer() {
 }
 
 /** ===== helpers ===== */
-function formatPrice(n: number) {
-  return `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
-}
-function formatAmount(n: number, symbol: string) {
-  const base = symbol.split('/')[0]; // "BTC/USDT" -> "BTC"
-  return `${n.toFixed(9)} ${base}`;
-}
 function formatDateTime(iso: string) {
-  // เวลาแบบเดิม"13-08-2025 14:30"
+  // เน€เธงเธฅเธฒเนเธเธเน€เธ”เธดเธก"13-08-2025 14:30"
   const d = new Date(iso);
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -175,3 +167,8 @@ function formatDateTime(iso: string) {
   const min = String(d.getMinutes()).padStart(2, '0');
   return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
 }
+
+
+
+
+

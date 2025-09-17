@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext'; // เพิ่ม import
+import { useSymbolPrecisions, getSymbolPrecision, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
+import type { SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
 
 // Color palette from the brief (using Tailwind arbitrary values)
 const colors = {
@@ -128,11 +130,11 @@ const getCoinIcon = (symbol: string) => {
   }
 };
 
-// ฟังก์ชันสร้าง Coin object สำหรับ CoinContext
+// เธเธฑเธเธเนเธเธฑเธเธชเธฃเนเธฒเธ Coin object เธชเธณเธซเธฃเธฑเธ CoinContext
 const createCoinObject = (symbol: string) => {
   const upperSymbol = symbol.toUpperCase();
 
-  // Icon สำหรับขนาด 28px (หลัก)
+  // Icon เธชเธณเธซเธฃเธฑเธเธเธเธฒเธ” 28px (เธซเธฅเธฑเธ)
   const getMainIcon = (sym: string) => {
     switch (sym) {
       case 'BTC':
@@ -218,7 +220,7 @@ const createCoinObject = (symbol: string) => {
     }
   };
 
-  // Icon สำหรับขนาด 20px (popover)
+  // Icon เธชเธณเธซเธฃเธฑเธเธเธเธฒเธ” 20px (popover)
   const getPopoverIcon = (sym: string) => {
     switch (sym) {
       case 'BTC':
@@ -350,27 +352,38 @@ function truncateCode(s: string, max = 4) {
   return s.length <= max ? s : s.slice(0, max) + '...';
 }
 
-/* ----------------------  ฟอร์แมตจำนวนให้รวมได้ 10 หลัก  ---------------------- */
+/* ----------------------  เธเธญเธฃเนเนเธกเธ•เธเธณเธเธงเธเนเธซเนเธฃเธงเธกเนเธ”เน 10 เธซเธฅเธฑเธ  ---------------------- */
 const MAX_AMOUNT_DIGITS = 10;
-function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
+type FormatAmountOptions = {
+  precision?: SymbolPrecision | null;
+  maxDigits?: number;
+  locale?: string;
+};
+
+function formatAmount10(value: number | string, options: FormatAmountOptions = {}) {
+  const { precision = null, maxDigits = MAX_AMOUNT_DIGITS, locale = 'en-US' } = options;
   const num = typeof value === 'string' ? Number(value.replace(/,/g, '')) : Number(value);
-  if (!Number.isFinite(num)) return String(value);
+  if (!Number.isFinite(num)) return String(value ?? '');
 
   const negative = num < 0;
   const abs = Math.abs(num);
-  const intStr = Math.floor(abs).toString(); // ส่วนจำนวนเต็ม (ไม่มีคอมมา)
-  const intDigits = Math.max(1, intStr.length); // 0.x => อย่างน้อย 1 หลัก
+  const intDigits = Math.max(1, Math.floor(abs).toString().length);
 
-  // ถ้าส่วนจำนวนเต็มยาวเกินหรือเท่ากับ maxDigits → ไม่แสดงทศนิยม
   if (intDigits >= maxDigits) {
-    return (negative ? '-' : '') + intStr;
+    const intPart = Math.floor(abs).toLocaleString(locale);
+    return negative ? `-${intPart}` : intPart;
   }
 
-  const fracDigits = maxDigits - intDigits; // จำนวนหลักทศนิยมที่เหลือให้ใช้
-  const fixed = abs.toFixed(fracDigits); // เติมศูนย์ให้ครบ
-  const [i, f] = fixed.split('.');
-  const out = f && fracDigits > 0 ? `${i}.${f}` : i;
-  return (negative ? '-' : '') + out;
+  const availableDecimals = Math.max(0, maxDigits - intDigits);
+  const precisionDecimals = precision?.quantityPrecision ?? availableDecimals;
+  const decimals = Math.min(precisionDecimals, availableDecimals);
+
+  const formatted = abs.toLocaleString(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  return negative ? `-${formatted}` : formatted;
 }
 /* -------------------------------------------------------------------------------------- */
 
@@ -397,7 +410,7 @@ function Stat({
 
 export function AssetCard(props: AssetCardProps) {
   const router = useRouter();
-  const { setSelectedCoin } = useCoinContext(); // เพิ่ม hook นี้
+  const { setSelectedCoin } = useCoinContext(); // เน€เธเธดเนเธก hook เธเธตเน
 
   const {
     symbol,
@@ -411,8 +424,14 @@ export function AssetCard(props: AssetCardProps) {
     pnlPct,
     icon,
     enableRealTimePrice = true,
-    onBuySell, // เก็บ onBuySell prop ไว้เผื่อมีการใช้งานพิเศษ
+    onBuySell, // เน€เธเนเธ onBuySell prop เนเธงเนเน€เธเธทเนเธญเธกเธตเธเธฒเธฃเนเธเนเธเธฒเธเธเธดเน€เธจเธฉ
   } = props;
+
+  const { data: precisionMap } = useSymbolPrecisions();
+  const symbolPrecision = React.useMemo(
+    () => getSymbolPrecision(precisionMap, symbol, 'USDT'),
+    [precisionMap, symbol]
+  );
 
   // Use real-time price if enabled
   const { marketPrice, isPriceLoading } = useMarketPrice(enableRealTimePrice ? symbol : '');
@@ -421,15 +440,30 @@ export function AssetCard(props: AssetCardProps) {
   const displayPrice =
     enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
 
-  // Calculate real-time PnL if we have market price - แต่ถ้า loading ให้เป็น 0
+  const staticCurrentPriceDisplay = React.useMemo(
+    () => formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    [currentPrice, symbolPrecision]
+  );
+  const averageCostDisplay = React.useMemo(
+    () => formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    [averageCost, symbolPrecision]
+  );
+  const formattedCurrentPrice =
+    enableRealTimePrice && marketPrice ? marketPrice : staticCurrentPriceDisplay;
+  const amountDisplay = React.useMemo(
+    () => formatAmount10(amount, { precision: symbolPrecision, maxDigits: 10 }),
+    [amount, symbolPrecision]
+  );
+
+  // Calculate real-time PnL if we have market price - เนเธ•เนเธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
   const realTimePnlAbs = isPriceLoading
-    ? 0 // ถ้า loading ให้เป็น 0
+    ? 0 // เธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
     : enableRealTimePrice && marketPrice && typeof amount === 'number'
       ? (displayPrice - averageCost) * amount
       : pnlAbs;
 
   const realTimePnlPct = isPriceLoading
-    ? 0 // ถ้า loading ให้เป็น 0
+    ? 0 // เธ–เนเธฒ loading เนเธซเนเน€เธเนเธ 0
     : enableRealTimePrice && marketPrice && averageCost > 0
       ? (displayPrice - averageCost) / averageCost
       : pnlPct;
@@ -445,18 +479,18 @@ export function AssetCard(props: AssetCardProps) {
   const displayIcon = icon || getCoinIcon(symbol);
 
   const handleBuySell = () => {
-    // ถ้ามี onBuySell prop ให้เรียกใช้ก่อน (สำหรับ custom logic)
+    // เธ–เนเธฒเธกเธต onBuySell prop เนเธซเนเน€เธฃเธตเธขเธเนเธเนเธเนเธญเธ (เธชเธณเธซเธฃเธฑเธ custom logic)
     if (onBuySell) {
       onBuySell();
     }
 
-    // สร้าง Coin object สำหรับ CoinContext
+    // เธชเธฃเนเธฒเธ Coin object เธชเธณเธซเธฃเธฑเธ CoinContext
     const coinObject = createCoinObject(symbol);
     try {
-      // อัปเดต selected coin ใน CoinContext
+      // เธญเธฑเธเน€เธ”เธ• selected coin เนเธ CoinContext
       setSelectedCoin(coinObject);
 
-      // เพิ่ม delay เล็กน้อยก่อน navigate
+      // เน€เธเธดเนเธก delay เน€เธฅเนเธเธเนเธญเธขเธเนเธญเธ navigate
       setTimeout(() => {
         router.push('/main/trading');
       }, 100);
@@ -490,9 +524,9 @@ export function AssetCard(props: AssetCardProps) {
               </div>
               <div className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5 bg-[#1F2029]">
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
-                  {formatAmount10(amount, 10)}
+                  {amountDisplay}
                 </div>
-                {/* unit ยาวเกิน 4 ย่อเป็นตัวที่ 5 จะเป็น... */}
+                {/* unit เธขเธฒเธงเน€เธเธดเธ 4 เธขเนเธญเน€เธเนเธเธ•เธฑเธงเธ—เธตเน 5 เธเธฐเน€เธเนเธ... */}
                 <div className="text-base leading-normal text-white whitespace-nowrap">
                   {truncateCode(unit, 4)}
                 </div>
@@ -505,10 +539,10 @@ export function AssetCard(props: AssetCardProps) {
         <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
           <Stat
             label="Current price"
-            value={`$ ${enableRealTimePrice && marketPrice ? marketPrice : fmtMoney(currentPrice)}`}
+            value={`$ ${formattedCurrentPrice}`}
             isLoading={isPriceLoading}
           />
-          <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
+          <Stat label="Average cost" value={`$ ${averageCostDisplay}`} />
           <Stat label="Value" value={`$ ${fmtMoney(realTimeValue)}`} />
           <div className="shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
@@ -547,3 +581,26 @@ export function AssetCard(props: AssetCardProps) {
     </motion.div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

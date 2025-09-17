@@ -1,10 +1,16 @@
-'use client';
+﻿"use client";
 
 import { useMemo, useState, useEffect, useRef } from 'react';
 import PaginationFooter from '@/components/ui/PaginationFooter';
 import HistoryCard from './HistoryCard';
 import { useGetTradeHistory } from '../hooks/useGetTradeHistory';
 import type { TradeHistoryRange } from '../types/history';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  formatPriceWithTick,
+} from '@/features/trading/utils/symbolPrecision';
 
 type FilterKey = TradeHistoryRange;
 
@@ -36,8 +42,9 @@ export default function TradeHistoryContainer() {
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range: filter });
+  const { data: precisionMap } = useSymbolPrecisions();
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
@@ -137,6 +144,20 @@ export default function TradeHistoryContainer() {
                 const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? '');
                 const status = typeof it.status === 'string' ? it.status.toUpperCase() : '';
                 const cardStatus = status === 'MATCHED' ? 'complete' : 'closed';
+                const baseSymbol = it.baseSymbol ?? it.symbol;
+                const quoteSymbol = it.quoteSymbol ?? 'USDT';
+                const precision = precisionMap
+                  ? getSymbolPrecision(precisionMap, baseSymbol, quoteSymbol)
+                  : undefined;
+                const formattedAmount = formatAmountWithStep(it.amount, precision, {
+                  locale: 'en-US',
+                  fallbackDecimals: 6,
+                });
+                const formattedPrice = formatPriceWithTick(it.price, precision, {
+                  locale: 'en-US',
+                  fallbackDecimals: 2,
+                });
+
                 return (
                   <div
                     key={it.id}
@@ -148,16 +169,13 @@ export default function TradeHistoryContainer() {
                     <HistoryCard
                       status={cardStatus}
                       side={it.side.toLowerCase() as 'buy' | 'sell'}
-                      pair={`${it.symbol}/${it.quoteSymbol}`}
+                      pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}
                       orderId={it.tradeRef}
-                      amount={it.amount.toFixed(9)}
-                      baseSymbol={it.baseSymbol}
-                      price={it.price.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      amount={formattedAmount}
+                      baseSymbol={baseSymbol}
+                      price={formattedPrice}
                       currency={it.currency}
                     />
                   </div>
@@ -185,3 +203,4 @@ export default function TradeHistoryContainer() {
     </div>
   );
 }
+

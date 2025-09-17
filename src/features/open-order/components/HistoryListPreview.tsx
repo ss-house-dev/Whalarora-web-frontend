@@ -1,9 +1,15 @@
-"use client";
+﻿"use client";
 import React from "react";
 import { useGetTradeHistory } from "../hooks/useGetTradeHistory";
 import HistoryCard from "./HistoryCard";
 import PaginationFooter from "@/components/ui/PaginationFooter";
 import type { TradeHistoryRange } from "../types/history";
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  formatPriceWithTick,
+} from "@/features/trading/utils/symbolPrecision";
 
 type FilterKey = TradeHistoryRange;
 
@@ -13,8 +19,9 @@ export default function HistoryListPreview() {
   const [range, setRange] = React.useState<FilterKey>("all");
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range });
+  const { data: precisionMap } = useSymbolPrecisions();
 
-  const items = data?.items ?? [];
+  const items = React.useMemo(() => data?.items ?? [], [data?.items]);
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
 
@@ -117,6 +124,20 @@ export default function HistoryListPreview() {
                 const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? "");
                 const status = typeof it.status === "string" ? it.status.toUpperCase() : "";
                 const cardStatus = status === "MATCHED" ? "complete" : "closed";
+                const baseSymbol = it.baseSymbol ?? it.symbol;
+                const quoteSymbol = it.quoteSymbol ?? "USDT";
+                const precision = precisionMap
+                  ? getSymbolPrecision(precisionMap, baseSymbol, quoteSymbol)
+                  : undefined;
+                const formattedAmount = formatAmountWithStep(it.amount, precision, {
+                  locale: "en-US",
+                  fallbackDecimals: 6,
+                });
+                const formattedPrice = formatPriceWithTick(it.price, precision, {
+                  locale: "en-US",
+                  fallbackDecimals: 2,
+                });
+
                 return (
                   <div
                     key={it.id}
@@ -128,16 +149,13 @@ export default function HistoryListPreview() {
                     <HistoryCard
                       status={cardStatus}
                       side={it.side.toLowerCase() as "buy" | "sell"}
-                      pair={`${it.symbol}/${it.quoteSymbol}`}
+                      pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}
                       orderId={it.tradeRef}
-                      amount={it.amount.toFixed(9)}
-                      baseSymbol={it.baseSymbol}
-                      price={it.price.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      amount={formattedAmount}
+                      baseSymbol={baseSymbol}
+                      price={formattedPrice}
                       currency={it.currency}
                     />
                   </div>
@@ -164,6 +182,4 @@ export default function HistoryListPreview() {
     </div>
   );
 }
-
-
 
