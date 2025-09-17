@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+﻿import { useQuery, keepPreviousData, type UseQueryOptions } from '@tanstack/react-query';
 import getAllAssets, { GetAllAssetsResponse } from '@/features/assets/services/getAllAssets';
 import { TradeQueryKeys } from '@/features/assets/constants';
 
@@ -8,8 +8,9 @@ export const useGetAllAssets = (
   return useQuery({
     queryKey: [TradeQueryKeys.GET_ALL_ASSETS],
     queryFn: getAllAssets,
-    staleTime: 30000, // 30 วินาที
-    refetchInterval: 60000, // refetch ทุก 1 นาที
+    staleTime: 30_000, // 30 วินาที
+    refetchInterval: 60_000, // refetch ทุก 1 นาที
+    placeholderData: keepPreviousData,
     ...options,
   });
 };
