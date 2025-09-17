@@ -1,20 +1,34 @@
 'use client';
-
+import { useState } from 'react';
 import { Button } from '../../../components/button-sign-up';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 export default function Welcome() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Get username from session or URL params
   const username = session?.user?.name || searchParams.get('username') || 'User';
+
   const handleGoBack = () => {
     // ใช้ browser history API แทน Next.js router
     if (typeof window !== 'undefined') {
       window.history.back();
+    }
+  };
+
+  const handleGetStarted = async () => {
+    setIsNavigating(true);
+    try {
+      await router.push('/main/trading');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setIsNavigating(false);
     }
   };
 
@@ -61,8 +75,19 @@ export default function Welcome() {
               Get $10,000 in your demo account now and start trading with no risk free!
             </div>
 
-            <Button className="w-[428px] h-[48px] rounded-[12px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]">
-              Get start
+            <Button
+              className="w-[428px] h-[48px] rounded-[12px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED] flex items-center justify-center"
+              onClick={handleGetStarted}
+              disabled={isNavigating}
+            >
+              {isNavigating ? (
+                <>
+                  <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Get start'
+              )}
             </Button>
           </div>
         </div>
