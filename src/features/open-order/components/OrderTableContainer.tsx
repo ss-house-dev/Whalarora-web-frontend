@@ -68,7 +68,7 @@ export default function OrderTableContainer({
       </div>
 
       {/* Content (fixed frame + scroll inside) */}
-      <div className="flex-1 overflow-hidden mt-4">
+      <div className={`flex-1 overflow-hidden ${activeTab === 'history' ? 'mt-3' : 'mt-4'}`}>
         {activeTab === 'open' ? (
           <OpenOrdersContainer
             onCancelOrder={onCancelOrder}
