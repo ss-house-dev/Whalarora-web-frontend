@@ -68,7 +68,7 @@ const SignUpContainer = () => {
       } else if (signInResult?.ok) {
         console.log('Sign in successful, redirecting to welcome page...');
         // Step 3: Redirect to Welcome page first (instead of directly to trading)
-        router.push('/welcome');
+        router.push('/auth/welcome');
       } else {
         setErrorMessage('Sign in failed. Please try again.');
       }
