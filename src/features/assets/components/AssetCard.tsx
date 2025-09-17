@@ -474,7 +474,7 @@ export function AssetCard(props: AssetCardProps) {
     >
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
-        <div className="w-[252px] flex-none pr-[16px] lg:border-r border-[#828282]">
+        <div className="w-[272px] flex-none pr-[16px] lg:border-r border-[#828282]">
           <div className="flex items-center gap-4">
             {/* Token icon - Fixed at 40px (w-10 h-10) */}
             <div className="w-10 h-10 relative flex items-center justify-center shrink-0">
