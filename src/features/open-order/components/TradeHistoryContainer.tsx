@@ -1,52 +1,184 @@
-import { useState } from 'react';
+'use client';
+
+import { useMemo, useState, useEffect, useRef } from 'react';
 import PaginationFooter from '@/components/ui/PaginationFooter';
+import HistoryCard from './HistoryCard';
+import { useGetTradeHistory } from '../hooks/useGetTradeHistory';
+import type { TradeHistoryRange } from '../types/history';
 
-// Order type definition
-export interface Order {
-  id: string;
-  side: 'buy' | 'sell';
-  pair: string;
-  datetime: string;
-  price: string;
-  amount: string;
-  status: 'filled' | 'cancelled';
+type FilterKey = TradeHistoryRange;
+
+const filters: { key: FilterKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'day', label: 'Day' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+];
+
+function toCardDate(input?: string) {
+  if (!input) return { date: '', time: '' };
+  if (/^\d{2}-\d{2}-\d{4}/.test(input)) {
+    const [datePart, timePart = ''] = input.split(' ');
+    return { date: datePart, time: timePart };
+  }
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return { date: '', time: '' };
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    date: `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
+  };
 }
-
-// OrderCard component with proper typing
-const OrderCard = ({ order }: { order: Order }) => (
-  <div className="p-3 border-b border-slate-700">
-    <div className="text-sm text-white">{order.pair}</div>
-  </div>
-);
 
 export default function TradeHistoryContainer() {
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const [limit] = useState(10);
+  const [filter, setFilter] = useState<FilterKey>('all');
 
-  // เปลี่ยนจากการสร้างข้อมูลตัวอย่างเป็น array ว่าง
-  const [orders] = useState<Order[]>([]);
+  const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range: filter });
 
-  const totalPages = Math.ceil(orders.length / perPage);
-  const currentOrders = orders.slice((page - 1) * perPage, page * perPage);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
+  const itemsKey = useMemo(() => items.map((item) => item.id).join('|'), [items]);
+  const [pageMounted, setPageMounted] = useState(false);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setPageMounted(false);
+  }, [page, filter]);
+
+  useEffect(() => {
+    if (isFetching) {
+      setPageMounted(false);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    if (items.length === 0) {
+      return;
+    }
+
+    animationFrameRef.current = requestAnimationFrame(() => {
+      setPageMounted(true);
+      animationFrameRef.current = null;
+    });
+  }, [isFetching, itemsKey, items.length, page, filter]);
+
+  const isInitialLoading = isLoading && items.length === 0;
+  const isRefetching = isFetching && !isInitialLoading;
+
+  const handleSetFilter = (key: FilterKey) => {
+    setFilter(key);
+    setPage(1);
+  };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Filters */}
+      <div className="mt-0 mb-2 pl-1">
+        <div className="w-72 py-1 rounded-xl inline-flex justify-start items-start gap-2.5">
+          {filters.map(({ key, label }) => {
+            const isActive = filter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => handleSetFilter(key)}
+                className={`${
+                  isActive ? 'outline outline-1 outline-offset-[-1px] outline-[#474747]' : ''
+                } w-16 h-6 px-2 py-1 rounded-3xl flex justify-center items-center`}
+                aria-pressed={isActive}
+              >
+                <span
+                  className={`${
+                    isActive ? 'text-white' : 'text-[#A4A4A4]'
+                  } text-sm font-normal font-[Alexandria] leading-tight`}
+                >
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Order list */}
-      <div className="flex-1 overflow-y-auto pr-2">
-        {currentOrders.length === 0 ? (
+      <div className="relative flex-1 overflow-y-auto pr-2">
+        {isInitialLoading || (isRefetching && items.length === 0) ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        ) : items.length === 0 ? (
           <div className="text-slate-400 text-sm flex justify-center items-center h-8">
             No trade history
           </div>
         ) : (
-          currentOrders.map((order) => <OrderCard key={order.id} order={order} />)
+          <div
+            className={`transition-opacity duration-300 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}
+          >
+            <div
+              className={`flex flex-col gap-3.5 transition-opacity duration-300 ease-out ${
+                pageMounted ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {items.map((it, idx) => {
+                const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? '');
+                const status = typeof it.status === 'string' ? it.status.toUpperCase() : '';
+                const cardStatus = status === 'MATCHED' ? 'complete' : 'closed';
+                return (
+                  <div
+                    key={it.id}
+                    className={`transform transition-all duration-300 ease-out ${
+                      pageMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                    }`}
+                    style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : '0ms' }}
+                  >
+                    <HistoryCard
+                      status={cardStatus}
+                      side={it.side.toLowerCase() as 'buy' | 'sell'}
+                      pair={`${it.symbol}/${it.quoteSymbol}`}
+                      date={date}
+                      time={time}
+                      orderId={it.tradeRef}
+                      amount={it.amount.toFixed(9)}
+                      baseSymbol={it.baseSymbol}
+                      price={it.price.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      currency={it.currency}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {isRefetching && items.length > 0 && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
         )}
       </div>
 
-      {/* Footer - unified pagination */}
+      {/* Footer */}
       <PaginationFooter
         page={page}
-        totalPages={totalPages || 1}
-        totalCount={orders.length}
+        totalPages={totalPages}
+        totalCount={total}
         label="Items"
         onPageChange={(p) => setPage(p)}
       />

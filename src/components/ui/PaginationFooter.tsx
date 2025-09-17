@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type PaginationFooterProps = {
   page: number;
@@ -52,15 +53,15 @@ export default function PaginationFooter({
         <button
           disabled={page === 1 || safeTotalPages === 0}
           onClick={() => changePage(page - 1)}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus:ring-0 ${
             page === 1 || totalPages === 0
               ? 'text-slate-500 cursor-not-allowed'
               : 'text-slate-300 hover:text-white'
           }`}
-          style={{ backgroundColor: '#16171D' }}
+          style={{ backgroundColor: '#1F2029', borderColor: '#3A3B44' }}
           aria-label="Previous page"
         >
-          ‹
+          <ChevronLeft size={12} />
         </button>
 
         {/* Numbered trio */}
@@ -76,7 +77,7 @@ export default function PaginationFooter({
               onClick={() => !isSingle && changePage(p)}
               disabled={isSingle}
               aria-disabled={isSingle}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors focus:outline-none focus:ring-0 ${
                 active ? 'text-white border' : 'text-slate-400 hover:text-white'
               }`}
               style={{
@@ -94,15 +95,15 @@ export default function PaginationFooter({
         <button
           disabled={page === safeTotalPages || safeTotalPages === 0}
           onClick={() => changePage(page + 1)}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus:ring-0 ${
             page === safeTotalPages || safeTotalPages === 0
               ? 'text-slate-500 cursor-not-allowed'
               : 'text-slate-300 hover:text-white'
           }`}
-          style={{ backgroundColor: '#16171D' }}
+          style={{ backgroundColor: '#1F2029', borderColor: '#3A3B44' }}
           aria-label="Next page"
         >
-          ›
+          <ChevronRight size={12} />
         </button>
       </div>
     </div>
