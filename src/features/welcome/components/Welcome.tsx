@@ -2,8 +2,15 @@
 
 import { Button } from '../../../components/button-sign-up';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 
 export default function Welcome() {
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+
+  // Get username from session or URL params
+  const username = session?.user?.name || searchParams.get('username') || 'User';
   const handleGoBack = () => {
     // ใช้ browser history API แทน Next.js router
     if (typeof window !== 'undefined') {
@@ -45,7 +52,7 @@ export default function Welcome() {
 
             <div className="space-y-[10px]">
               <div className="text-[30px] text-[#EDEDED] font-[600]">Welcome to Whalarora !</div>
-              <div className="text-[30px] font-[600] text-[#225FED]">Steward2543</div>
+              <div className="text-[30px] font-[600] text-[#225FED]">{username}</div>
             </div>
           </div>
           <div className="space-y-[47px]">
