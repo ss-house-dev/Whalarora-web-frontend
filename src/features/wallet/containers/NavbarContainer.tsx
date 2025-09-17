@@ -1,5 +1,5 @@
 'use client';
-import { NavbarUI } from '@/components/ui/Navbar';
+import { NavbarUI } from '@/components/Navbar';
 import { useNavbar } from '@/features/wallet/hooks/useNavbar';
 
 export default function NavbarContainer() {
