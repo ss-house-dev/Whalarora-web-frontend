@@ -20,14 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check username length
-    if (body.username.length < 3) {
-      return NextResponse.json(
-        { error: 'Username must be at least 3 characters long' },
-        { status: 400 }
-      );
-    }
-
     // Check password length
     if (body.password.length < 8) {
       return NextResponse.json(

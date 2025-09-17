@@ -22,7 +22,7 @@ const SignUpContainer = () => {
    * Handles the sign-up process
    * 1. Create user via API
    * 2. Automatically sign in the user
-   * 3. Redirect to main page
+   * 3. Redirect to Welcome page first
    */
   const handleSignUp = async (formData: SignUpFormData) => {
     try {
@@ -66,9 +66,9 @@ const SignUpContainer = () => {
           router.push('/auth/sign-in');
         }, 2000);
       } else if (signInResult?.ok) {
-        console.log('Sign in successful, redirecting...');
-        // Step 3: Redirect to main page
-        window.location.href = '/main/trading';
+        console.log('Sign in successful, redirecting to welcome page...');
+        // Step 3: Redirect to Welcome page first (instead of directly to trading)
+        router.push('/welcome');
       } else {
         setErrorMessage('Sign in failed. Please try again.');
       }
