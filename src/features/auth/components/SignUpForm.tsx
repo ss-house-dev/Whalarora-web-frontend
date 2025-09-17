@@ -38,6 +38,8 @@ interface SignUpFormProps {
   onGoToSignIn?: () => void;
   onSignIn: () => void;
   onGoBack: () => void;
+  usernameError?: string; // Username error from parent after submit
+  onUsernameChange?: () => void; // Callback when username changes
 }
 
 // Password strength requirements
@@ -65,6 +67,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   isLoading = false,
   onSignUp,
   onGoBack,
+  usernameError,
+  onUsernameChange,
 }) => {
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
@@ -88,6 +92,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const passwordValue = watch('password', '');
   const confirmPasswordValue = watch('confirmPassword', '');
+  const usernameValue = watch('username', '');
   const { strength, score } = checkPasswordStrength(passwordValue);
 
   const hasPasswordRequirementsNotMet =
@@ -103,17 +108,32 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   // ฟังก์ชันสำหรับสร้าง suffixIcon ตามเงื่อนไข
   const getSuffixIcon = (field: 'username' | 'password' | 'confirmPassword') => {
-    if (field === 'username' && errors.username) {
+    if (field === 'username') {
+      // Show error icon if there's username error or validation error
+      if (errors.username || usernameError) {
+        return (
+          <Image
+            src="/assets/error-message.svg"
+            alt="Error Icon"
+            width={6}
+            height={6}
+            className="h-6 w-6 text-red-400"
+          />
+        );
+      }
+
+      // Default username icon
       return (
         <Image
-          src="/assets/error-message.svg"
-          alt="Error Icon"
+          src="/assets/username.svg"
+          alt="Username Icon"
           width={6}
           height={6}
           className="h-6 w-6 text-gray-400"
         />
       );
     }
+
     if (
       field === 'confirmPassword' &&
       errors.confirmPassword?.message === 'Passwords do not match'
@@ -129,17 +149,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       );
     }
 
-    if (field === 'username') {
-      return (
-        <Image
-          src="/assets/username.svg"
-          alt="Username Icon"
-          width={6}
-          height={6}
-          className="h-6 w-6 text-gray-400"
-        />
-      );
-    }
     if (field === 'password') {
       return (
         <button
@@ -156,8 +165,20 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </button>
       );
     }
+
     // ไม่มี suffixIcon สำหรับ confirmPassword เมื่อไม่มี error หรือ error เป็น "Required"
     return null;
+  };
+
+  // Get username error message
+  const getUsernameErrorMessage = () => {
+    if (errors.username) {
+      return errors.username.message;
+    }
+    if (usernameError) {
+      return usernameError;
+    }
+    return undefined;
   };
 
   return (
@@ -197,15 +218,20 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 <div className="flex flex-col w-full">
                   <FormInputIcon
                     label="Username"
-                    value={watch('username') || ''}
+                    value={usernameValue}
                     onChange={(e) => {
                       setValue('username', e.target.value);
                       if (errors.username) {
                         clearErrors('username');
                       }
+                      // Call parent callback to clear username error
+                      if (onUsernameChange) {
+                        onUsernameChange();
+                      }
                     }}
                     disabled={isLoading}
-                    hasError={!!errors.username}
+                    hasError={!!errors.username || !!usernameError}
+                    errorMessage={getUsernameErrorMessage()}
                     suffixIcon={getSuffixIcon('username')}
                   />
                 </div>

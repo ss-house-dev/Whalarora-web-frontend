@@ -16,6 +16,7 @@ const SignUpContainer = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [usernameError, setUsernameError] = useState<string>(''); // Add username-specific error
 
   /**
    * Handles the sign-up process
@@ -27,6 +28,7 @@ const SignUpContainer = () => {
     try {
       setIsLoading(true);
       setErrorMessage(''); // Reset error message
+      setUsernameError(''); // Reset username error
 
       // Step 1: Create user account via Next.js API route
       const createUserResponse = await axios.post(
@@ -73,7 +75,8 @@ const SignUpContainer = () => {
     } catch (error: any) {
       console.error('Sign up error:', error);
 
-      let errorMessage = 'Registration failed. Please try again.';
+      let generalErrorMessage = 'Registration failed. Please try again.';
+      let specificUsernameError = '';
 
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -82,54 +85,72 @@ const SignUpContainer = () => {
 
           console.error('Error response data:', data);
 
-          switch (status) {
-            case 400:
-              // Handle validation errors
-              if (data?.error && Array.isArray(data.error)) {
-                errorMessage = `Invalid data: ${data.error.join(', ')}`;
-              } else if (data?.details?.error && Array.isArray(data.details.error)) {
-                errorMessage = `Invalid data: ${data.details.error.join(', ')}`;
-              } else if (data?.error) {
-                errorMessage = data.error;
-              } else if (data?.message) {
-                errorMessage = data.message;
-              } else {
-                errorMessage = 'Invalid data. Please check your input and try again.';
-              }
-              break;
+          // Check for username already exists error
+          const errorMessage = data?.message || data?.error || '';
+          const usernameConflictKeywords = [
+            'username is already in use',
+            'username already exists',
+            'username already taken',
+            'Already exist.',
+          ];
 
-            case 409:
-              errorMessage = 'Username already exists. Please choose a different username.';
-              break;
+          const isUsernameConflict = usernameConflictKeywords.some((keyword) =>
+            errorMessage.toLowerCase().includes(keyword.toLowerCase())
+          );
 
-            case 422:
-              errorMessage = 'Invalid or incomplete data. Please check your input and try again.';
-              break;
+          if (status === 409 || isUsernameConflict) {
+            // Username conflict - show error at username field
+            specificUsernameError = 'Already exist.';
+            generalErrorMessage = ''; // Don't show general error
+          } else {
+            // Other errors - show general error message
+            switch (status) {
+              case 400:
+                // Handle other validation errors
+                if (data?.error && Array.isArray(data.error)) {
+                  generalErrorMessage = `Invalid data: ${data.error.join(', ')}`;
+                } else if (data?.details?.error && Array.isArray(data.details.error)) {
+                  generalErrorMessage = `Invalid data: ${data.details.error.join(', ')}`;
+                } else if (data?.error && !isUsernameConflict) {
+                  generalErrorMessage = data.error;
+                } else if (data?.message && !isUsernameConflict) {
+                  generalErrorMessage = data.message;
+                } else if (!isUsernameConflict) {
+                  generalErrorMessage = 'Invalid data. Please check your input and try again.';
+                }
+                break;
 
-            case 500:
-              errorMessage = 'Server error occurred. Please try again later.';
-              break;
+              case 422:
+                generalErrorMessage =
+                  'Invalid or incomplete data. Please check your input and try again.';
+                break;
 
-            case 503:
-              errorMessage = 'Cannot connect to server. Please try again later.';
-              break;
+              case 500:
+                generalErrorMessage = 'Server error occurred. Please try again later.';
+                break;
 
-            default:
-              if (data?.error) {
-                errorMessage = data.error;
-              } else if (data?.message) {
-                errorMessage = data.message;
-              }
+              case 503:
+                generalErrorMessage = 'Cannot connect to server. Please try again later.';
+                break;
+
+              default:
+                if (data?.error && !isUsernameConflict) {
+                  generalErrorMessage = data.error;
+                } else if (data?.message && !isUsernameConflict) {
+                  generalErrorMessage = data.message;
+                }
+            }
           }
         } else if (error.request) {
           // Network error
-          errorMessage = 'Cannot connect to server. Please check your internet connection.';
+          generalErrorMessage = 'Cannot connect to server. Please check your internet connection.';
         }
       } else if (error.message) {
-        errorMessage = error.message;
+        generalErrorMessage = error.message;
       }
 
-      setErrorMessage(errorMessage);
+      setUsernameError(specificUsernameError);
+      setErrorMessage(generalErrorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -150,9 +171,16 @@ const SignUpContainer = () => {
         onSignUp={handleSignUp}
         onGoBack={handleGoBack}
         onSignIn={handleGoToSignIn}
+        usernameError={usernameError} // Pass username error to form
+        onUsernameChange={() => {
+          // Clear username error when user starts typing
+          if (usernameError) {
+            setUsernameError('');
+          }
+        }}
       />
 
-      {/* Display Error Message */}
+      {/* Display General Error Message */}
       {errorMessage && (
         <div className="fixed top-4 right-4 max-w-md bg-red-500 text-white p-4 rounded-lg shadow-lg z-50">
           <div className="flex justify-between items-start">
