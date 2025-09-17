@@ -1,7 +1,16 @@
+'use client';
+
 import { Button } from '../../../components/button-sign-up';
 import Image from 'next/image';
 
 export default function Welcome() {
+  const handleGoBack = () => {
+    // ใช้ browser history API แทน Next.js router
+    if (typeof window !== 'undefined') {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex justify-center mt-[28px] overflow-hidden">
       <div className="w-[492px] h-[560px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
@@ -14,6 +23,7 @@ export default function Welcome() {
               viewBox="0 0 12 20"
               fill="none"
               className="cursor-pointer"
+              onClick={handleGoBack}
             >
               <path
                 d="M4.36308 9.99921L10.9292 16.6862C11.5238 17.2917 11.5239 18.2619 10.9296 18.8677C10.3193 19.4896 9.31748 19.4897 8.70706 18.868L0 9.99921L8.7078 1.13111C9.3179 0.509782 10.319 0.509781 10.9291 1.13111C11.5237 1.73662 11.5237 2.70678 10.9291 3.31228L4.36308 9.99921Z"
