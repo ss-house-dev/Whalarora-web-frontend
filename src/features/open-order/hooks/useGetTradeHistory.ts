@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
 import type {
   GetTradeHistoryRequest,
@@ -106,5 +106,9 @@ export function useGetTradeHistory({ mock = false, enabled = true, ...params }: 
     enabled,
     queryFn: async () => (mock ? buildMock(params) : fetchTradeHistory(params)),
     staleTime: 5_000,
+    placeholderData: keepPreviousData,
   });
 }
+
+
+
