@@ -44,8 +44,8 @@ export default function HistoryCard({
       className="w-[840px] h-[68px] p-3 bg-[#16171D] rounded-lg outline outline-offset-[-1px] flex items-center"
       style={{ outlineColor: '#474747' }}
     >
-      <div className="w-full grid md:grid-cols-[108px_184px_78px_1fr_256px] grid-cols-[108px_184px_78px_1fr_256px] items-center gap-4">
-        <div className="w-[108px] flex items-center gap-2.5">
+      <div className="w-full grid md:grid-cols-[104px_176px_76px_1fr_256px] grid-cols-[104px_176px_76px_1fr_256px] items-center gap-3">
+        <div className="w-[104px] flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
           <span
             className={`text-xs font-normal font-[Alexandria] leading-none ${status === 'complete' ? 'text-[#4ED7B0]' : 'text-[#A4A4A4]'}`}
@@ -54,14 +54,14 @@ export default function HistoryCard({
           </span>
         </div>
 
-        <div className="w-[184px] flex items-center gap-2 text-white text-xs font-medium font-[Alexandria] leading-none whitespace-nowrap">
+        <div className="w-[176px] flex items-center gap-1.5 text-white text-xs font-medium font-[Alexandria] leading-none whitespace-nowrap">
           <span>{date}</span>
           <span>{time}</span>
         </div>
 
-        <div className="w-[78px] flex items-center justify-center -ml-12">
+        <div className="w-[76px] flex items-center justify-center">
           <div
-            className={`w-[47px] h-7 px-3 rounded-lg inline-flex justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
+            className={`w-[47px] h-7 px-3 rounded-lg inline-flex -ml-12 justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
           >
             <span className="text-white text-xs font-normal font-[Alexandria] leading-none">
               {isBuy ? 'Buy' : 'Sell'}
@@ -69,7 +69,7 @@ export default function HistoryCard({
           </div>
         </div>
 
-        <div className="min-w-0 flex flex-col justify-center items-start gap-1 -ml-10">
+        <div className="min-w-0 flex flex-col justify-center items-start gap-1">
           <div className="text-white text-sm font-medium font-[Alexandria] leading-tight truncate">
             {pair}
           </div>

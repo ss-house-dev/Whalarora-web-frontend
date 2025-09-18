@@ -127,9 +127,21 @@ export default function TradeHistoryContainer() {
               }`}
             >
               {items.map((it, idx) => {
-                const { date, time } = formatDateParts(it.matchedAt ?? it.createdAt ?? '', { includeSeconds: true });
-                const status = typeof it.status === 'string' ? it.status.toUpperCase() : '';
-                const cardStatus = status === 'MATCHED' ? 'complete' : 'closed';
+                const statusRaw = typeof it.status === 'string' ? it.status.toUpperCase() : '';
+                const cardStatus = statusRaw === 'MATCHED' ? 'complete' : 'closed';
+                const sideRaw = typeof it.side === 'string' ? it.side.toUpperCase() : '';
+                const timestampSource = it.createdAt ?? it.matchedAt ?? '';
+                const { date, time } = formatDateParts(timestampSource, { includeSeconds: true });
+                let displayOrderId = it.tradeRef;
+                if (statusRaw === 'MATCHED') {
+                  if (sideRaw === 'SELL' && it.sellOrderRef) {
+                    displayOrderId = it.sellOrderRef;
+                  } else if (sideRaw === 'BUY' && it.buyOrderRef) {
+                    displayOrderId = it.buyOrderRef;
+                  }
+                } else if (statusRaw === 'CANCELLED') {
+                  displayOrderId = it.tradeRef;
+                }
                 const baseSymbol = it.baseSymbol ?? it.symbol;
                 const quoteSymbol = it.quoteSymbol ?? 'USDT';
                 const precision = precisionMap
@@ -158,7 +170,7 @@ export default function TradeHistoryContainer() {
                       pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}
-                      orderId={it.tradeRef}
+                      orderId={displayOrderId}
                       amount={formattedAmount}
                       baseSymbol={baseSymbol}
                       price={formattedPrice}
@@ -189,5 +201,3 @@ export default function TradeHistoryContainer() {
     </div>
   );
 }
-
-

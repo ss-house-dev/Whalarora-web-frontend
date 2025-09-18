@@ -40,6 +40,8 @@ function mapHistoryItemApi(item: TradeHistoryItemApi): GetTradeHistoryResponse["
     currency,
     baseSymbol,
     quoteSymbol,
+    buyOrderRef: item.buyOrderRef,
+    sellOrderRef: item.sellOrderRef,
     matchedAt: item.matchedAt,
     createdAt: item.createdAt ?? item.matchedAt,
   };
@@ -109,6 +111,3 @@ export function useGetTradeHistory({ mock = false, enabled = true, ...params }: 
     placeholderData: keepPreviousData,
   });
 }
-
-
-
