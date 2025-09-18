@@ -1,5 +1,6 @@
 import React from 'react';
 import { OpenOrdersProvider, useOpenOrders } from '../contexts/OpenOrdersContext';
+import { formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 import OrderCard, { Order } from '../components/OrderCard';
 import PaginationFooter from '@/components/ui/PaginationFooter';
 import { OpenOrdersState } from '../types';
@@ -75,7 +76,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                 id: order._id,
                 side: order.side.toLowerCase() as 'buy' | 'sell',
                 pair: `${order.symbol}/USDT`,
-                datetime: order.createdAt || '',
+                datetime: formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: false }),
                 price: order.price.toString(),
                 amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
                 status: order.status.toLowerCase() as

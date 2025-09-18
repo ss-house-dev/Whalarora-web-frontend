@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { OpenOrder } from '../types';
 import {
   useSymbolPrecisions,
@@ -6,6 +6,7 @@ import {
   formatPriceWithTick,
   formatAmountWithStep,
 } from '@/features/trading/utils/symbolPrecision';
+import { formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 
 interface OpenOrdersListProps {
   orders: OpenOrder[];
@@ -104,7 +105,7 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
             return (
               <tr key={order._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {order.createdAt}
+                  {formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: true })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {pair.display}

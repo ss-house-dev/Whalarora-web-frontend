@@ -1,5 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import OrderCard, { Order } from './OrderCard';
+import { formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 
 type ApiOrder = {
   id: string;
@@ -35,7 +36,7 @@ export default function OpenOrderContainer() {
     id: o.id,
     side: o.side,
     pair: o.symbol,
-    datetime: formatDateTime(o.createdAt),
+    datetime: formatDateTimeWithMonthAbbr(o.createdAt, { includeSeconds: false }),
     price: o.price.toString(),
     amount: o.amount.toString(),
     status: o.status,
@@ -153,14 +154,3 @@ export default function OpenOrderContainer() {
   );
 }
 
-/** ===== helpers ===== */
-function formatDateTime(iso: string) {
-  // แปลง ISO date string เป็นรูปแบบ "13-08-2025 14:30"
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
-}

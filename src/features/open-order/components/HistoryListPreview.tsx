@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React from "react";
 import { useGetTradeHistory } from "../hooks/useGetTradeHistory";
 import HistoryCard from "./HistoryCard";
@@ -10,6 +10,7 @@ import {
   formatAmountWithStep,
   formatPriceWithTick,
 } from "@/features/trading/utils/symbolPrecision";
+import { formatDateParts } from "@/features/trading/utils/dateFormat";
 
 type FilterKey = TradeHistoryRange;
 
@@ -64,21 +65,6 @@ export default function HistoryListPreview() {
   const isInitialLoading = isLoading && items.length === 0;
   const isRefetching = isFetching && !isInitialLoading;
 
-  const toCardDate = (input?: string) => {
-    if (!input) return { date: "", time: "" };
-    if (/^\d{2}-\d{2}-\d{4}/.test(input)) {
-      const [datePart, timePart = ""] = input.split(" ");
-      return { date: datePart, time: timePart };
-    }
-    const d = new Date(input);
-    if (Number.isNaN(d.getTime())) return { date: "", time: "" };
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return {
-      date: `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`,
-      time: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
-    };
-  };
-
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: "All" },
     { key: "day", label: "Day" },
@@ -121,7 +107,7 @@ export default function HistoryListPreview() {
               }`}
             >
               {items.map((it, idx) => {
-                const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? "");
+                const { date, time } = formatDateParts(it.matchedAt ?? it.createdAt ?? "", { includeSeconds: true });
                 const status = typeof it.status === "string" ? it.status.toUpperCase() : "";
                 const cardStatus = status === "MATCHED" ? "complete" : "closed";
                 const baseSymbol = it.baseSymbol ?? it.symbol;
@@ -182,4 +168,3 @@ export default function HistoryListPreview() {
     </div>
   );
 }
-
