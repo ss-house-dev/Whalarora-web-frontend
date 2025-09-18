@@ -203,4 +203,3 @@ export function formatAmountWithStep(
   const locale = options.locale ?? 'en-US';
   return formatNumberWithDecimals(value, decimals, locale);
 }
-

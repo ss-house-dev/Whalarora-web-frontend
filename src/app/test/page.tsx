@@ -127,8 +127,8 @@ export default function TestPage() {
       <section className="flex w-full max-w-3xl flex-col items-center gap-4">
         <h2 className="text-lg font-semibold text-white">OrderBookWidget previews</h2>
         <p className="text-sm text-[#A4A4A4]">
-          Click bid / ask on the first widget to verify the active state. The following widgets cover
-          the AC6-AC10 amount ranges and include a long-symbol wrap example.
+          Click bid / ask on the first widget to verify the active state. The following widgets
+          cover the AC6-AC10 amount ranges and include a long-symbol wrap example.
         </p>
 
         <div className="flex flex-col items-center gap-4">
@@ -142,7 +142,9 @@ export default function TestPage() {
 
           {ORDER_BOOK_SCENARIOS.slice(1).map(({ id, label, bid, ask }) => (
             <div key={id} className="flex flex-col items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-[#A4A4A4]">{label}</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-[#A4A4A4]">
+                {label}
+              </span>
               <OrderBookWidget bid={bid} ask={ask} />
             </div>
           ))}
@@ -158,9 +160,27 @@ export default function TestPage() {
       <section className="flex w-full max-w-3xl flex-col items-center gap-4">
         <h2 className="text-lg font-semibold text-white">Close order dialog samples</h2>
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <CloseOrderBox side="Buy" amount="100,000.00" token="BTC" price="115,200.00" currency="USD" />
-          <CloseOrderBox side="Buy" amount="100,000" token="1MBABYDOGE" price="0.0012927" currency="USD" />
-          <CloseOrderBox side="Buy" amount="999.99K" token="1MBABYDOGE" price="9,999,999.99" currency="USD" />
+          <CloseOrderBox
+            side="Buy"
+            amount="100,000.00"
+            token="BTC"
+            price="115,200.00"
+            currency="USD"
+          />
+          <CloseOrderBox
+            side="Buy"
+            amount="100,000"
+            token="1MBABYDOGE"
+            price="0.0012927"
+            currency="USD"
+          />
+          <CloseOrderBox
+            side="Buy"
+            amount="999.99K"
+            token="1MBABYDOGE"
+            price="9,999,999.99"
+            currency="USD"
+          />
         </div>
       </section>
 

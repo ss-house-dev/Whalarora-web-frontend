@@ -1,4 +1,17 @@
-﻿const MONTH_ABBREVIATIONS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+﻿const MONTH_ABBREVIATIONS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
 
 type DateInput = string | number | Date | null | undefined;
 
@@ -12,7 +25,7 @@ const MONTH_INDEX_BY_ABBR: MonthIndexMap = MONTH_ABBREVIATIONS.reduce((acc, abbr
 }, {} as MonthIndexMap);
 
 function pad(value: number) {
-  return String(value).padStart(2, "0");
+  return String(value).padStart(2, '0');
 }
 
 function parseDateInput(input: DateInput): Date | null {
@@ -22,21 +35,23 @@ function parseDateInput(input: DateInput): Date | null {
     return Number.isNaN(input.getTime()) ? null : new Date(input.getTime());
   }
 
-  if (typeof input === "number") {
+  if (typeof input === 'number') {
     const dateFromNumber = new Date(input);
     return Number.isNaN(dateFromNumber.getTime()) ? null : dateFromNumber;
   }
 
-  if (typeof input !== "string") {
+  if (typeof input !== 'string') {
     return null;
   }
 
   const trimmed = input.trim();
   if (!trimmed) return null;
 
-  const numericMatch = trimmed.match(/^(\d{2})-(\d{2})-(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  const numericMatch = trimmed.match(
+    /^(\d{2})-(\d{2})-(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/
+  );
   if (numericMatch) {
-    const [, day, month, year, hours = "0", minutes = "0", seconds = "0"] = numericMatch;
+    const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = numericMatch;
     const dateFromNumeric = new Date(
       Number(year),
       Number(month) - 1,
@@ -48,9 +63,11 @@ function parseDateInput(input: DateInput): Date | null {
     return Number.isNaN(dateFromNumeric.getTime()) ? null : dateFromNumeric;
   }
 
-  const abbreviatedMatch = trimmed.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  const abbreviatedMatch = trimmed.match(
+    /^(\d{2})-([A-Za-z]{3})-(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/
+  );
   if (abbreviatedMatch) {
-    const [, day, rawMonth, year, hours = "0", minutes = "0", seconds = "0"] = abbreviatedMatch;
+    const [, day, rawMonth, year, hours = '0', minutes = '0', seconds = '0'] = abbreviatedMatch;
     const monthIndex = MONTH_INDEX_BY_ABBR[rawMonth.toUpperCase()];
     if (monthIndex !== undefined) {
       const dateFromAbbreviated = new Date(
@@ -73,7 +90,7 @@ function formatDateWithMonthAbbrFromDate(date: Date) {
   const day = pad(date.getDate());
   const month = MONTH_ABBREVIATIONS[date.getMonth()];
   const year = date.getFullYear();
-  return month ? `${day}-${month}-${year}` : "";
+  return month ? `${day}-${month}-${year}` : '';
 }
 
 interface FormatTimeOptions {
@@ -90,13 +107,13 @@ function formatTimeFromDate(date: Date, options?: FormatTimeOptions) {
 
 export function formatDateWithMonthAbbr(input: DateInput): string {
   const date = parseDateInput(input);
-  if (!date) return "";
+  if (!date) return '';
   return formatDateWithMonthAbbrFromDate(date);
 }
 
 export function formatDateTimeWithMonthAbbr(input: DateInput, options?: FormatTimeOptions): string {
   const date = parseDateInput(input);
-  if (!date) return "";
+  if (!date) return '';
   const datePart = formatDateWithMonthAbbrFromDate(date);
   const timePart = formatTimeFromDate(date, options);
   return timePart ? `${datePart} ${timePart}` : datePart;
@@ -105,7 +122,7 @@ export function formatDateTimeWithMonthAbbr(input: DateInput, options?: FormatTi
 export function formatDateParts(input: DateInput, options?: FormatTimeOptions) {
   const date = parseDateInput(input);
   if (!date) {
-    return { date: "", time: "" };
+    return { date: '', time: '' };
   }
 
   return {

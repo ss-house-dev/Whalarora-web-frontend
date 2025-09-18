@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import React from "react";
-import axiosInstance from "@/lib/axios";
-import type { GetTradeHistoryResponseApi, TradeHistoryRange } from "../types/history";
+import React from 'react';
+import axiosInstance from '@/lib/axios';
+import type { GetTradeHistoryResponseApi, TradeHistoryRange } from '../types/history';
 
 const DEFAULT_PARAMS: { range: TradeHistoryRange; limit: number; page: number } = {
-  range: "all",
+  range: 'all',
   limit: 10,
   page: 1,
 };
 
-const HISTORY_ENDPOINT = "/history";
-const HISTORY_PROXY_ENDPOINT = "/api/history";
+const HISTORY_ENDPOINT = '/history';
+const HISTORY_PROXY_ENDPOINT = '/api/history';
 
-type FetchStatus = "idle" | "loading" | "success" | "error";
+type FetchStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export default function HistoryApiPreview() {
-  const [status, setStatus] = React.useState<FetchStatus>("idle");
+  const [status, setStatus] = React.useState<FetchStatus>('idle');
   const [error, setError] = React.useState<string | null>(null);
   const [payload, setPayload] = React.useState<GetTradeHistoryResponseApi | null>(null);
 
   const fetchHistory = React.useCallback(async () => {
-    setStatus("loading");
+    setStatus('loading');
     setError(null);
     try {
       const hasBaseUrl = Boolean(axiosInstance.defaults.baseURL);
@@ -30,11 +30,11 @@ export default function HistoryApiPreview() {
         params: DEFAULT_PARAMS,
       });
       setPayload(data);
-      setStatus("success");
+      setStatus('success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unexpected error";
+      const message = err instanceof Error ? err.message : 'Unexpected error';
       setError(message);
-      setStatus("error");
+      setStatus('error');
     }
   }, []);
 
@@ -56,19 +56,17 @@ export default function HistoryApiPreview() {
       </div>
 
       <div className="text-xs text-[#A4A4A4]">
-        range: <span className="text-white">{DEFAULT_PARAMS.range}</span> | limit:{" "}
-        <span className="text-white">{DEFAULT_PARAMS.limit}</span> | page:{" "}
+        range: <span className="text-white">{DEFAULT_PARAMS.range}</span> | limit:{' '}
+        <span className="text-white">{DEFAULT_PARAMS.limit}</span> | page:{' '}
         <span className="text-white">{DEFAULT_PARAMS.page}</span>
       </div>
 
-      {status === "loading" ? (
+      {status === 'loading' ? (
         <div className="flex items-center justify-center py-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
         </div>
-      ) : status === "error" ? (
-        <div className="text-sm text-[#FF6B6B]">
-          Failed to load data{error ? `: ${error}` : ""}
-        </div>
+      ) : status === 'error' ? (
+        <div className="text-sm text-[#FF6B6B]">Failed to load data{error ? `: ${error}` : ''}</div>
       ) : payload ? (
         <pre className="max-h-96 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-[#E9E9E9]">
           {JSON.stringify(payload, null, 2)}

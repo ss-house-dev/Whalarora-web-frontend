@@ -1,7 +1,11 @@
 ﻿'use client';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useSymbolPrecisions, getSymbolPrecision, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatPriceWithTick,
+} from '@/features/trading/utils/symbolPrecision';
 import type { SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
@@ -122,11 +126,13 @@ export function AssetCard(props: AssetCardProps) {
   );
 
   const priceDisplay = React.useMemo(
-    () => formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    () =>
+      formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
     [currentPrice, symbolPrecision]
   );
   const averageCostDisplay = React.useMemo(
-    () => formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    () =>
+      formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
     [averageCost, symbolPrecision]
   );
   const amountDisplay = React.useMemo(
@@ -241,15 +247,3 @@ export default function Demo() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

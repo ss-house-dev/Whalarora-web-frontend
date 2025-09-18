@@ -176,7 +176,6 @@ export default function OrderCard({ order, onDelete }: Props) {
             </div>
           </div>
         </div>
-
         <div className="w-full grid grid-cols-2 gap-y-4 gap-x-4">
           <div className="flex items-center gap-3">
             <div
@@ -263,7 +262,9 @@ export default function OrderCard({ order, onDelete }: Props) {
               </div>
               <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[12px] font-medium text-white">{formatAmount(order.amount)}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {formatAmount(order.amount)}
+                </span>
               </div>
             </div>
 

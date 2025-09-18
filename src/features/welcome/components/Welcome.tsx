@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 export default function Welcome() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);

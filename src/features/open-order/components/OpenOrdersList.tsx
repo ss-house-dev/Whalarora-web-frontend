@@ -113,7 +113,9 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      order.side === 'BUY'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                     }`}
                   >
                     {order.side === 'BUY' ? 'ซื้อ' : 'ขาย'}

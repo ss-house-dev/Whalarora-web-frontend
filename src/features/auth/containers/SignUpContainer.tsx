@@ -72,7 +72,7 @@ const SignUpContainer = () => {
       } else {
         setErrorMessage('Sign in failed. Please try again.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign up error:', error);
 
       let generalErrorMessage = 'Registration failed. Please try again.';
@@ -145,7 +145,7 @@ const SignUpContainer = () => {
           // Network error
           generalErrorMessage = 'Cannot connect to server. Please check your internet connection.';
         }
-      } else if (error.message) {
+      } else if (error instanceof Error) {
         generalErrorMessage = error.message;
       }
 
