@@ -125,28 +125,31 @@ export default function OrderCard({ order, onDelete }: Props) {
 
   const formatFilledAmount = (amount?: string): string => formatBaseAmount(amount ?? '0');
 
-  const formatCloseAmount = (amount: string): string => {
-    const numeric = Number(amount);
-    if (!Number.isFinite(numeric)) return amount;
+  const formatCloseAmount = (value: string): string => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return value;
 
     const abs = Math.abs(numeric);
-    if (abs < 1000) {
-      return formatBaseAmount(numeric, false);
-    }
-
-    const truncate2 = (value: number) => Math.trunc(value * 100) / 100;
-    const formatScaled = (value: number, suffix: string) =>
-      `${truncate2(value).toLocaleString('en-US', {
+    const truncate2 = (input: number) => Math.trunc(input * 100) / 100;
+    const formatScaled = (input: number, suffix: string) =>
+      `${truncate2(input).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}${suffix}`;
+
+    if (abs < 1_000) {
+      return numeric.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
 
     if (abs < 1_000_000) return formatScaled(numeric / 1_000, 'K');
     if (abs < 1_000_000_000) return formatScaled(numeric / 1_000_000, 'M');
     if (abs < 1_000_000_000_000) return formatScaled(numeric / 1_000_000_000, 'B');
     if (abs < 1_000_000_000_000_000) return formatScaled(numeric / 1_000_000_000_000, 'T');
 
-    return truncate2(numeric).toLocaleString('en-US', {
+    return numeric.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -159,34 +162,43 @@ export default function OrderCard({ order, onDelete }: Props) {
           <Trash2 size={16} />
         </button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-[420px] bg-[#16171D] border border-[#2D2D2D] text-white">
-        <AlertDialogTitle className="text-[18px] font-semibold text-white">
-          Close Order
-        </AlertDialogTitle>
-        <AlertDialogDescription className="text-sm text-[#C0C0C0]">
-          Are you sure you want to close this order? This action cannot be undone.
-        </AlertDialogDescription>
-
-        <div className="mt-6 space-y-4 text-sm">
-          <div className="flex items-center justify-start gap-2">
-            <div className="w-12 h-7 px-2 rounded-lg inline-flex justify-center items-center bg-[#D32F2F]">
+      <AlertDialogContent className="items-stretch gap-6">
+        <AlertDialogTitle className="sr-only">Close order</AlertDialogTitle>
+        <AlertDialogDescription className="sr-only">Do you want to close this order ?</AlertDialogDescription>
+        <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
+          <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
+            <Trash2 size={20} strokeWidth={2} />
+          </div>
+          <div className="flex flex-col">
+            <div className="text-white text-base font-normal font-[Alexandria] leading-normal">Close order</div>
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+              Do you want to close this order ?
+            </div>
+          </div>
+        </div>
+        <div className="w-full grid grid-cols-2 gap-y-4 gap-x-4">
+          <div className="flex items-center gap-3">
+            <div
+              className={`text-sm font-normal font-[Alexandria] leading-tight ${
+                isBuy ? 'text-[#2FACA2]' : 'text-[#C22727]'
+              }`}
+            >
               {isBuy ? 'Buy' : 'Sell'}
             </div>
-            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">
-              {formatCloseAmount(order.amount)}
-              {baseCurrency ? ` ${baseCurrency}` : ''}
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+              {formatCloseAmount(order.amount)}{baseCurrency ? ` ${baseCurrency}` : ''}
             </div>
           </div>
 
           <div className="flex items-center justify-start gap-2">
-            <div className="text-[#A4A4A4] text-sm font-normal leading-tight">at</div>
-            <div className="text-[#A4A4A4] text-sm font-normal leading-tight">Price</div>
-            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">{priceValue}</div>
-            <div className="text-[#E9E9E9] text-sm font-normal leading-tight">{quoteCurrency}</div>
+            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">at</div>
+            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">Price</div>
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">{priceValue}</div>
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">{quoteCurrency}</div>
           </div>
 
           <div className="flex items-center justify-start">
-            <AlertDialogCancel className="w-32 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-white text-sm leading-tight hover:bg-gray-700 transition">
+            <AlertDialogCancel className="w-32 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-white text-sm font-normal font-[Alexandria] leading-tight hover:bg-gray-700 transition">
               Keep Open
             </AlertDialogCancel>
           </div>
@@ -194,7 +206,7 @@ export default function OrderCard({ order, onDelete }: Props) {
           <div className="flex items-center justify-start">
             <AlertDialogAction
               onClick={() => onDelete?.()}
-              className="w-32 h-8 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] flex items-center justify-center text-neutral-100 text-sm leading-tight transition"
+              className="w-32 h-8 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] flex items-center justify-center text-neutral-100 text-sm font-normal font-[Alexandria] leading-tight transition"
             >
               Confirm
             </AlertDialogAction>
