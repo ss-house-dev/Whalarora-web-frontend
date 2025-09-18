@@ -185,8 +185,18 @@ const AdvancedChart = () => {
       scaleMargins: { top: 0.8, bottom: 0 },
       visible: false,
     });
-    const sma = chart.addSeries(LineSeries, { color: '#e0c097', lineWidth: 2, visible: false, priceScaleId: 'right' });
-    const ema = chart.addSeries(LineSeries, { color: '#ff9800', lineWidth: 2, visible: false, priceScaleId: 'right' });
+    const sma = chart.addSeries(LineSeries, {
+      color: '#e0c097',
+      lineWidth: 2,
+      visible: false,
+      priceScaleId: 'right',
+    });
+    const ema = chart.addSeries(LineSeries, {
+      color: '#ff9800',
+      lineWidth: 2,
+      visible: false,
+      priceScaleId: 'right',
+    });
 
     chartRef.current = chart;
     candleRef.current = candle;
