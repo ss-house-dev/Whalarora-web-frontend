@@ -88,7 +88,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     clearErrors,
     formState: { errors },
   } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema as any),
+    resolver: zodResolver(signUpSchema),
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     defaultValues: {

@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('=== Signup API Error ===');
-    console.error('Error type:', error.constructor.name);
-    console.error('Error message:', error.message);
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
 
     if (axios.isAxiosError(error)) {
       console.error('Axios error details:');
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         const responseData = error.response.data;
 
         let errorMessage = 'Server error occurred';
-        let errorDetails = responseData;
+        const errorDetails = responseData; // Changed to const
 
         // Handle errors by status code
         switch (status) {
@@ -155,10 +155,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'An unknown error occurred: ' + error.message,
+        error:
+          'An unknown error occurred: ' +
+          (error instanceof Error ? error.message : 'Unknown error'),
         details: {
           type: 'UNKNOWN_ERROR',
-          message: error.message,
+          message: error instanceof Error ? error.message : 'Unknown error',
         },
       },
       { status: 500 }

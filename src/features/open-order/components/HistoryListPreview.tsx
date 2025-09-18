@@ -1,23 +1,23 @@
-"use client";
-import React from "react";
-import { useGetTradeHistory } from "../hooks/useGetTradeHistory";
-import HistoryCard from "./HistoryCard";
-import PaginationFooter from "@/components/ui/PaginationFooter";
-import type { TradeHistoryRange } from "../types/history";
+'use client';
+import React from 'react';
+import { useGetTradeHistory } from '../hooks/useGetTradeHistory';
+import HistoryCard from './HistoryCard';
+import PaginationFooter from '@/components/ui/PaginationFooter';
+import type { TradeHistoryRange } from '../types/history';
 import {
   useSymbolPrecisions,
   getSymbolPrecision,
   formatAmountWithStep,
   formatPriceWithTick,
-} from "@/features/trading/utils/symbolPrecision";
-import { formatDateParts } from "@/features/trading/utils/dateFormat";
+} from '@/features/trading/utils/symbolPrecision';
+import { formatDateParts } from '@/features/trading/utils/dateFormat';
 
 type FilterKey = TradeHistoryRange;
 
 export default function HistoryListPreview() {
   const [page, setPage] = React.useState(1);
   const [limit] = React.useState(10);
-  const [range, setRange] = React.useState<FilterKey>("all");
+  const [range, setRange] = React.useState<FilterKey>('all');
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range });
   const { data: precisionMap } = useSymbolPrecisions();
@@ -26,7 +26,7 @@ export default function HistoryListPreview() {
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
 
-  const itemsKey = React.useMemo(() => items.map((item) => item.id).join("|"), [items]);
+  const itemsKey = React.useMemo(() => items.map((item) => item.id).join('|'), [items]);
   const [pageMounted, setPageMounted] = React.useState(false);
   const animationFrameRef = React.useRef<number | null>(null);
 
@@ -66,10 +66,10 @@ export default function HistoryListPreview() {
   const isRefetching = isFetching && !isInitialLoading;
 
   const filters: { key: FilterKey; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "day", label: "Day" },
-    { key: "month", label: "Month" },
-    { key: "year", label: "Year" },
+    { key: 'all', label: 'All' },
+    { key: 'day', label: 'Day' },
+    { key: 'month', label: 'Month' },
+    { key: 'year', label: 'Year' },
   ];
 
   return (
@@ -84,10 +84,12 @@ export default function HistoryListPreview() {
               setPage(1);
             }}
             className={`${
-              range === key ? "outline outline-1 outline-offset-[-1px] outline-[#474747]" : ""
+              range === key ? 'outline outline-1 outline-offset-[-1px] outline-[#474747]' : ''
             } w-16 h-6 px-2 py-1 rounded-3xl flex justify-center items-center`}
           >
-            <span className={`${range === key ? "text-white" : "text-[#A4A4A4]"} text-sm`}>{label}</span>
+            <span className={`${range === key ? 'text-white' : 'text-[#A4A4A4]'} text-sm`}>
+              {label}
+            </span>
           </button>
         ))}
       </div>
@@ -100,39 +102,41 @@ export default function HistoryListPreview() {
         ) : items.length === 0 ? (
           <div className="text-slate-400 text-sm">No trade history</div>
         ) : (
-          <div className={`transition-opacity duration-300 ${isRefetching ? "opacity-60" : "opacity-100"}`}>
+          <div
+            className={`transition-opacity duration-300 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}
+          >
             <div
               className={`flex flex-col gap-2 transition-opacity duration-300 ease-out ${
-                pageMounted ? "opacity-100" : "opacity-0"
+                pageMounted ? 'opacity-100' : 'opacity-0'
               }`}
             >
               {items.map((it, idx) => {
-                const statusRaw = typeof it.status === "string" ? it.status.toUpperCase() : "";
-                const cardStatus = statusRaw === "MATCHED" ? "complete" : "closed";
-                const sideRaw = typeof it.side === "string" ? it.side.toUpperCase() : "";
-                const timestampSource = it.createdAt ?? it.matchedAt ?? "";
+                const statusRaw = typeof it.status === 'string' ? it.status.toUpperCase() : '';
+                const cardStatus = statusRaw === 'MATCHED' ? 'complete' : 'closed';
+                const sideRaw = typeof it.side === 'string' ? it.side.toUpperCase() : '';
+                const timestampSource = it.createdAt ?? it.matchedAt ?? '';
                 const { date, time } = formatDateParts(timestampSource, { includeSeconds: true });
                 let displayOrderId = it.tradeRef;
-                if (statusRaw === "MATCHED") {
-                  if (sideRaw === "SELL" && it.sellOrderRef) {
+                if (statusRaw === 'MATCHED') {
+                  if (sideRaw === 'SELL' && it.sellOrderRef) {
                     displayOrderId = it.sellOrderRef;
-                  } else if (sideRaw === "BUY" && it.buyOrderRef) {
+                  } else if (sideRaw === 'BUY' && it.buyOrderRef) {
                     displayOrderId = it.buyOrderRef;
                   }
-                } else if (statusRaw === "CANCELLED") {
+                } else if (statusRaw === 'CANCELLED') {
                   displayOrderId = it.tradeRef;
                 }
                 const baseSymbol = it.baseSymbol ?? it.symbol;
-                const quoteSymbol = it.quoteSymbol ?? "USDT";
+                const quoteSymbol = it.quoteSymbol ?? 'USDT';
                 const precision = precisionMap
                   ? getSymbolPrecision(precisionMap, baseSymbol, quoteSymbol)
                   : undefined;
                 const formattedAmount = formatAmountWithStep(it.amount, precision, {
-                  locale: "en-US",
+                  locale: 'en-US',
                   fallbackDecimals: 6,
                 });
                 const formattedPrice = formatPriceWithTick(it.price, precision, {
-                  locale: "en-US",
+                  locale: 'en-US',
                   fallbackDecimals: 2,
                 });
 
@@ -140,13 +144,13 @@ export default function HistoryListPreview() {
                   <div
                     key={it.id}
                     className={`transform transition-all duration-300 ease-out ${
-                      pageMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                      pageMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                     }`}
-                    style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : "0ms" }}
+                    style={{ transitionDelay: pageMounted ? `${idx * 40}ms` : '0ms' }}
                   >
                     <HistoryCard
                       status={cardStatus}
-                      side={it.side.toLowerCase() as "buy" | "sell"}
+                      side={it.side.toLowerCase() as 'buy' | 'sell'}
                       pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}

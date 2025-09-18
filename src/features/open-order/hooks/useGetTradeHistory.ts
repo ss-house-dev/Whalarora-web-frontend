@@ -1,30 +1,30 @@
-"use client";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import axiosInstance from "@/lib/axios";
+'use client';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import axiosInstance from '@/lib/axios';
 import type {
   GetTradeHistoryRequest,
   GetTradeHistoryResponse,
   GetTradeHistoryResponseApi,
   TradeHistoryItemApi,
-} from "../types/history";
+} from '../types/history';
 
 type Options = GetTradeHistoryRequest & {
   mock?: boolean; // use mocked data instead of calling API
   enabled?: boolean;
 };
 
-const DEFAULT_QUOTE_SYMBOL = "USDT";
-const DEFAULT_CURRENCY = "USD";
-const HISTORY_ENDPOINT = "/history";
-const HISTORY_PROXY_ENDPOINT = "/api/history";
+const DEFAULT_QUOTE_SYMBOL = 'USDT';
+const DEFAULT_CURRENCY = 'USD';
+const HISTORY_ENDPOINT = '/history';
+const HISTORY_PROXY_ENDPOINT = '/api/history';
 
-function mapHistoryItemApi(item: TradeHistoryItemApi): GetTradeHistoryResponse["items"][number] {
+function mapHistoryItemApi(item: TradeHistoryItemApi): GetTradeHistoryResponse['items'][number] {
   const amount =
-    typeof item.amount === "number"
+    typeof item.amount === 'number'
       ? item.amount
-      : typeof item.matchedAmountTotal === "number"
-      ? item.matchedAmountTotal
-      : 0;
+      : typeof item.matchedAmountTotal === 'number'
+        ? item.matchedAmountTotal
+        : 0;
   const baseSymbol = item.baseSymbol ?? item.symbol;
   const quoteSymbol = item.quoteSymbol ?? DEFAULT_QUOTE_SYMBOL;
   const currency = item.currency ?? DEFAULT_CURRENCY;
@@ -36,7 +36,7 @@ function mapHistoryItemApi(item: TradeHistoryItemApi): GetTradeHistoryResponse["
     side: item.side,
     status: item.status,
     amount,
-    price: typeof item.price === "number" ? item.price : 0,
+    price: typeof item.price === 'number' ? item.price : 0,
     currency,
     baseSymbol,
     quoteSymbol,
@@ -69,24 +69,24 @@ function buildMock(params: GetTradeHistoryRequest): GetTradeHistoryResponse {
   const iso = new Date().toISOString();
   const mockItems: TradeHistoryItemApi[] = [
     {
-      _id: "demo-1",
-      tradeRef: "88cbe33fabcd0da4e39",
-      side: "BUY",
-      status: "CANCELLED",
-      symbol: "BTC",
+      _id: 'demo-1',
+      tradeRef: '88cbe33fabcd0da4e39',
+      side: 'BUY',
+      status: 'CANCELLED',
+      symbol: 'BTC',
       matchedAmountTotal: 0,
       matchedAt: iso,
       createdAt: iso,
     },
     {
-      _id: "demo-2",
-      tradeRef: "11dbe33fabcd0da9a11",
-      side: "SELL",
-      status: "MATCHED",
-      symbol: "ETH",
+      _id: 'demo-2',
+      tradeRef: '11dbe33fabcd0da9a11',
+      side: 'SELL',
+      status: 'MATCHED',
+      symbol: 'ETH',
       amount: 0.02,
       price: 115200,
-      currency: "USD",
+      currency: 'USD',
       matchedAt: iso,
       createdAt: iso,
     },
@@ -97,14 +97,14 @@ function buildMock(params: GetTradeHistoryRequest): GetTradeHistoryResponse {
     limit: params.limit ?? 10,
     total: mockItems.length,
     totalPages: 1,
-    range: params.range ?? "all",
+    range: params.range ?? 'all',
     items: mockItems.map(mapHistoryItemApi),
   };
 }
 
 export function useGetTradeHistory({ mock = false, enabled = true, ...params }: Options) {
   return useQuery({
-    queryKey: ["trade-history", { ...params, mock }],
+    queryKey: ['trade-history', { ...params, mock }],
     enabled,
     queryFn: async () => (mock ? buildMock(params) : fetchTradeHistory(params)),
     staleTime: 5_000,

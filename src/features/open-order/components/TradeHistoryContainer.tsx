@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useMemo, useState, useEffect, useRef } from 'react';
 import PaginationFooter from '@/components/ui/PaginationFooter';

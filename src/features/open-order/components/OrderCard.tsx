@@ -160,7 +160,9 @@ export default function OrderCard({ order, onDelete }: Props) {
         </button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-[420px] bg-[#16171D] border border-[#2D2D2D] text-white">
-        <AlertDialogTitle className="text-[18px] font-semibold text-white">Close Order</AlertDialogTitle>
+        <AlertDialogTitle className="text-[18px] font-semibold text-white">
+          Close Order
+        </AlertDialogTitle>
         <AlertDialogDescription className="text-sm text-[#C0C0C0]">
           Are you sure you want to close this order? This action cannot be undone.
         </AlertDialogDescription>
@@ -171,7 +173,8 @@ export default function OrderCard({ order, onDelete }: Props) {
               {isBuy ? 'Buy' : 'Sell'}
             </div>
             <div className="text-[#E9E9E9] text-sm font-normal leading-tight">
-              {formatCloseAmount(order.amount)}{baseCurrency ? ` ${baseCurrency}` : ''}
+              {formatCloseAmount(order.amount)}
+              {baseCurrency ? ` ${baseCurrency}` : ''}
             </div>
           </div>
 
@@ -247,7 +250,9 @@ export default function OrderCard({ order, onDelete }: Props) {
               </div>
               <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
-                <span className="text-[12px] font-medium text-white">{formatAmount(order.amount)}</span>
+                <span className="text-[12px] font-medium text-white">
+                  {formatAmount(order.amount)}
+                </span>
               </div>
             </div>
 
