@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
 import { useMemo, useState, useEffect, useRef } from 'react';
 import PaginationFooter from '@/components/ui/PaginationFooter';
 import HistoryCard from './HistoryCard';
 import { useGetTradeHistory } from '../hooks/useGetTradeHistory';
 import type { TradeHistoryRange } from '../types/history';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  formatPriceWithTick,
+} from '@/features/trading/utils/symbolPrecision';
+import { formatDateParts } from '@/features/trading/utils/dateFormat';
 
 type FilterKey = TradeHistoryRange;
 
@@ -15,29 +22,15 @@ const filters: { key: FilterKey; label: string }[] = [
   { key: 'year', label: 'Year' },
 ];
 
-function toCardDate(input?: string) {
-  if (!input) return { date: '', time: '' };
-  if (/^\d{2}-\d{2}-\d{4}/.test(input)) {
-    const [datePart, timePart = ''] = input.split(' ');
-    return { date: datePart, time: timePart };
-  }
-  const d = new Date(input);
-  if (Number.isNaN(d.getTime())) return { date: '', time: '' };
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return {
-    date: `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`,
-    time: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
-  };
-}
-
 export default function TradeHistoryContainer() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range: filter });
+  const { data: precisionMap } = useSymbolPrecisions();
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
@@ -134,9 +127,35 @@ export default function TradeHistoryContainer() {
               }`}
             >
               {items.map((it, idx) => {
-                const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? '');
-                const status = typeof it.status === 'string' ? it.status.toUpperCase() : '';
-                const cardStatus = status === 'MATCHED' ? 'complete' : 'closed';
+                const statusRaw = typeof it.status === 'string' ? it.status.toUpperCase() : '';
+                const cardStatus = statusRaw === 'MATCHED' ? 'complete' : 'closed';
+                const sideRaw = typeof it.side === 'string' ? it.side.toUpperCase() : '';
+                const timestampSource = it.createdAt ?? it.matchedAt ?? '';
+                const { date, time } = formatDateParts(timestampSource, { includeSeconds: true });
+                let displayOrderId = it.tradeRef;
+                if (statusRaw === 'MATCHED') {
+                  if (sideRaw === 'SELL' && it.sellOrderRef) {
+                    displayOrderId = it.sellOrderRef;
+                  } else if (sideRaw === 'BUY' && it.buyOrderRef) {
+                    displayOrderId = it.buyOrderRef;
+                  }
+                } else if (statusRaw === 'CANCELLED') {
+                  displayOrderId = it.tradeRef;
+                }
+                const baseSymbol = it.baseSymbol ?? it.symbol;
+                const quoteSymbol = it.quoteSymbol ?? 'USDT';
+                const precision = precisionMap
+                  ? getSymbolPrecision(precisionMap, baseSymbol, quoteSymbol)
+                  : undefined;
+                const formattedAmount = formatAmountWithStep(it.amount, precision, {
+                  locale: 'en-US',
+                  fallbackDecimals: 6,
+                });
+                const formattedPrice = formatPriceWithTick(it.price, precision, {
+                  locale: 'en-US',
+                  fallbackDecimals: 2,
+                });
+
                 return (
                   <div
                     key={it.id}
@@ -148,16 +167,13 @@ export default function TradeHistoryContainer() {
                     <HistoryCard
                       status={cardStatus}
                       side={it.side.toLowerCase() as 'buy' | 'sell'}
-                      pair={`${it.symbol}/${it.quoteSymbol}`}
+                      pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}
-                      orderId={it.tradeRef}
-                      amount={it.amount.toFixed(9)}
-                      baseSymbol={it.baseSymbol}
-                      price={it.price.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      orderId={displayOrderId}
+                      amount={formattedAmount}
+                      baseSymbol={baseSymbol}
+                      price={formattedPrice}
                       currency={it.currency}
                     />
                   </div>

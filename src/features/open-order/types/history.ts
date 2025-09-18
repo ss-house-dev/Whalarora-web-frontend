@@ -41,6 +41,8 @@ export interface TradeHistoryItem {
   price: number;
   currency: string;
   baseSymbol: string;
+  buyOrderRef?: string;
+  sellOrderRef?: string;
   quoteSymbol: string;
   matchedAt?: string;
   createdAt?: string;

@@ -4,24 +4,28 @@ import { useSession, signIn } from 'next-auth/react';
 import Image from 'next/image';
 
 export default function Header() {
-  const Router = useRouter();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const handleGetStartClick = () => {
     if (session) {
-      Router.push('/main/trading');
+      router.push('/main/trading');
     } else {
       signIn();
     }
   };
 
   const handleLogoClick = () => {
-    Router.push('/');
+    router.push('/');
   };
 
   const handleTradeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    Router.push('/main/trading');
+    router.push('/main/trading');
+  };
+
+  const handleSignUpClick = () => {
+    router.push('/auth/sign-up');
   };
 
   return (
@@ -47,6 +51,7 @@ export default function Header() {
           Trade
         </span>
       </div>
+
       <div className="flex gap-[16px]">
         <button
           onClick={handleGetStartClick}
@@ -54,7 +59,10 @@ export default function Header() {
         >
           Log in
         </button>
-        <button className="w-[100px] h-[36px] px-[15px] py-[2px] bg-[#225FED] rounded-[12px] text-[18px] font-[400] text-white transition-all duration-200 cursor-pointer">
+        <button
+          onClick={handleSignUpClick}
+          className="w-[100px] h-[36px] px-[15px] py-[2px] bg-[#225FED] rounded-[12px] text-[18px] font-[400] text-white transition-all duration-200 cursor-pointer"
+        >
           Sign up
         </button>
       </div>

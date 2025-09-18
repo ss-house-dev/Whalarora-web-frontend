@@ -1,5 +1,12 @@
 import React from 'react';
 import { OpenOrder } from '../types';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatPriceWithTick,
+  formatAmountWithStep,
+} from '@/features/trading/utils/symbolPrecision';
+import { formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 
 interface OpenOrdersListProps {
   orders: OpenOrder[];
@@ -7,24 +14,35 @@ interface OpenOrdersListProps {
   onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
+function parsePairParts(rawSymbol: string): { base: string; quote: string; display: string } {
+  const symbol = rawSymbol?.trim() ?? '';
+  if (!symbol) return { base: '', quote: 'USDT', display: '/USDT' };
+
+  const separators = ['/', '-', '_'];
+  for (const sep of separators) {
+    if (symbol.includes(sep)) {
+      const [baseRaw = '', quoteRaw = 'USDT'] = symbol.split(sep);
+      const base = baseRaw.toUpperCase();
+      const quote = quoteRaw.toUpperCase() || 'USDT';
+      return { base, quote, display: `${base}/${quote}` };
+    }
+  }
+
+  const upper = symbol.toUpperCase();
+  if (upper.endsWith('USDT')) {
+    const base = upper.slice(0, -4);
+    return { base, quote: 'USDT', display: `${base}/USDT` };
+  }
+
+  return { base: upper, quote: 'USDT', display: `${upper}/USDT` };
+}
+
 export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
   orders,
   loading = false,
   onCancelOrder,
 }) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('th-TH', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 8,
-    }).format(price);
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('th-TH', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 8,
-    }).format(amount);
-  };
+  const { data: precisionMap } = useSymbolPrecisions();
 
   if (loading) {
     return (
@@ -66,49 +84,68 @@ export const OpenOrdersList: React.FC<OpenOrdersListProps> = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {orders.map((order) => (
-            <tr key={order._id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {order.createdAt}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {order.symbol}/USDT
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {order.side === 'BUY' ? 'ซื้อ' : 'ขาย'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {formatPrice(order.price)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {formatAmount(order.amount)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {formatAmount(order.originalAmount)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {onCancelOrder && (
-                  <button
-                    onClick={() => onCancelOrder({ orderRef: order.orderRef, side: order.side })}
-                    className="text-red-600 hover:text-red-900 font-medium"
+          {orders.map((order) => {
+            const pair = parsePairParts(order.symbol);
+            const precision = precisionMap
+              ? getSymbolPrecision(precisionMap, pair.base, pair.quote)
+              : undefined;
+            const formattedPrice = formatPriceWithTick(order.price, precision, {
+              locale: 'en-US',
+              fallbackDecimals: 2,
+            });
+            const formattedAmount = formatAmountWithStep(order.amount, precision, {
+              locale: 'en-US',
+              fallbackDecimals: 6,
+            });
+            const formattedOriginalAmount = formatAmountWithStep(order.originalAmount, precision, {
+              locale: 'en-US',
+              fallbackDecimals: 6,
+            });
+
+            return (
+              <tr key={order._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: true })}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {pair.display}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}
                   >
-                    ยกเลิก
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+                    {order.side === 'BUY' ? 'ซื้อ' : 'ขาย'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formattedPrice}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formattedAmount}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formattedOriginalAmount}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    {order.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {onCancelOrder && (
+                    <button
+                      onClick={() => onCancelOrder({ orderRef: order.orderRef, side: order.side })}
+                      className="text-red-600 hover:text-red-900 font-medium"
+                    >
+                      ยกเลิก
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

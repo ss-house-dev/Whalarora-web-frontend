@@ -4,6 +4,13 @@ import { useGetTradeHistory } from "../hooks/useGetTradeHistory";
 import HistoryCard from "./HistoryCard";
 import PaginationFooter from "@/components/ui/PaginationFooter";
 import type { TradeHistoryRange } from "../types/history";
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  formatPriceWithTick,
+} from "@/features/trading/utils/symbolPrecision";
+import { formatDateParts } from "@/features/trading/utils/dateFormat";
 
 type FilterKey = TradeHistoryRange;
 
@@ -13,8 +20,9 @@ export default function HistoryListPreview() {
   const [range, setRange] = React.useState<FilterKey>("all");
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range });
+  const { data: precisionMap } = useSymbolPrecisions();
 
-  const items = data?.items ?? [];
+  const items = React.useMemo(() => data?.items ?? [], [data?.items]);
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
 
@@ -56,21 +64,6 @@ export default function HistoryListPreview() {
 
   const isInitialLoading = isLoading && items.length === 0;
   const isRefetching = isFetching && !isInitialLoading;
-
-  const toCardDate = (input?: string) => {
-    if (!input) return { date: "", time: "" };
-    if (/^\d{2}-\d{2}-\d{4}/.test(input)) {
-      const [datePart, timePart = ""] = input.split(" ");
-      return { date: datePart, time: timePart };
-    }
-    const d = new Date(input);
-    if (Number.isNaN(d.getTime())) return { date: "", time: "" };
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return {
-      date: `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`,
-      time: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
-    };
-  };
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: "All" },
@@ -114,9 +107,35 @@ export default function HistoryListPreview() {
               }`}
             >
               {items.map((it, idx) => {
-                const { date, time } = toCardDate(it.matchedAt ?? it.createdAt ?? "");
-                const status = typeof it.status === "string" ? it.status.toUpperCase() : "";
-                const cardStatus = status === "MATCHED" ? "complete" : "closed";
+                const statusRaw = typeof it.status === "string" ? it.status.toUpperCase() : "";
+                const cardStatus = statusRaw === "MATCHED" ? "complete" : "closed";
+                const sideRaw = typeof it.side === "string" ? it.side.toUpperCase() : "";
+                const timestampSource = it.createdAt ?? it.matchedAt ?? "";
+                const { date, time } = formatDateParts(timestampSource, { includeSeconds: true });
+                let displayOrderId = it.tradeRef;
+                if (statusRaw === "MATCHED") {
+                  if (sideRaw === "SELL" && it.sellOrderRef) {
+                    displayOrderId = it.sellOrderRef;
+                  } else if (sideRaw === "BUY" && it.buyOrderRef) {
+                    displayOrderId = it.buyOrderRef;
+                  }
+                } else if (statusRaw === "CANCELLED") {
+                  displayOrderId = it.tradeRef;
+                }
+                const baseSymbol = it.baseSymbol ?? it.symbol;
+                const quoteSymbol = it.quoteSymbol ?? "USDT";
+                const precision = precisionMap
+                  ? getSymbolPrecision(precisionMap, baseSymbol, quoteSymbol)
+                  : undefined;
+                const formattedAmount = formatAmountWithStep(it.amount, precision, {
+                  locale: "en-US",
+                  fallbackDecimals: 6,
+                });
+                const formattedPrice = formatPriceWithTick(it.price, precision, {
+                  locale: "en-US",
+                  fallbackDecimals: 2,
+                });
+
                 return (
                   <div
                     key={it.id}
@@ -128,16 +147,13 @@ export default function HistoryListPreview() {
                     <HistoryCard
                       status={cardStatus}
                       side={it.side.toLowerCase() as "buy" | "sell"}
-                      pair={`${it.symbol}/${it.quoteSymbol}`}
+                      pair={`${baseSymbol}/${quoteSymbol}`}
                       date={date}
                       time={time}
-                      orderId={it.tradeRef}
-                      amount={it.amount.toFixed(9)}
-                      baseSymbol={it.baseSymbol}
-                      price={it.price.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      orderId={displayOrderId}
+                      amount={formattedAmount}
+                      baseSymbol={baseSymbol}
+                      price={formattedPrice}
                       currency={it.currency}
                     />
                   </div>
@@ -164,6 +180,3 @@ export default function HistoryListPreview() {
     </div>
   );
 }
-
-
-

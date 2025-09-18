@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Header from '@/components/ui/header';
+import Header from '@/components/header';
 
 export default function Home() {
   const [isHoverDemo, setIsHoverDemo] = useState(false);

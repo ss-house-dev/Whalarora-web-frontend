@@ -1,6 +1,8 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useSymbolPrecisions, getSymbolPrecision, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
+import type { SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 // Color palette from the brief (using Tailwind arbitrary values)
@@ -50,27 +52,38 @@ function truncateCode(s: string, max = 4) {
   return s.length <= max ? s : s.slice(0, max) + '...';
 }
 
-/* ----------------------  ฟอร์แมตจำนวนให้รวมได้ 10 หลัก  ---------------------- */
+/* ----------------------  เธเธญเธฃเนเนเธกเธ•เธเธณเธเธงเธเนเธซเนเธฃเธงเธกเนเธ”เน 10 เธซเธฅเธฑเธ  ---------------------- */
 const MAX_AMOUNT_DIGITS = 10;
-function formatAmount10(value: number | string, maxDigits = MAX_AMOUNT_DIGITS) {
+type FormatAmountOptions = {
+  precision?: SymbolPrecision | null;
+  maxDigits?: number;
+  locale?: string;
+};
+
+function formatAmount10(value: number | string, options: FormatAmountOptions = {}) {
+  const { precision = null, maxDigits = MAX_AMOUNT_DIGITS, locale = 'en-US' } = options;
   const num = typeof value === 'string' ? Number(value.replace(/,/g, '')) : Number(value);
-  if (!Number.isFinite(num)) return String(value);
+  if (!Number.isFinite(num)) return String(value ?? '');
 
   const negative = num < 0;
   const abs = Math.abs(num);
-  const intStr = Math.floor(abs).toString(); // ส่วนจำนวนเต็ม (ไม่มีคอมมา)
-  const intDigits = Math.max(1, intStr.length); // 0.x => อย่างน้อย 1 หลัก
+  const intDigits = Math.max(1, Math.floor(abs).toString().length);
 
-  // ถ้าส่วนจำนวนเต็มยาวเกินหรือเท่ากับ maxDigits → ไม่แสดงทศนิยม
   if (intDigits >= maxDigits) {
-    return (negative ? '-' : '') + intStr;
+    const intPart = Math.floor(abs).toLocaleString(locale);
+    return negative ? `-${intPart}` : intPart;
   }
 
-  const fracDigits = maxDigits - intDigits; // จำนวนหลักทศนิยมที่เหลือให้ใช้
-  const fixed = abs.toFixed(fracDigits); // เติมศูนย์ให้ครบ
-  const [i, f] = fixed.split('.');
-  const out = f && fracDigits > 0 ? `${i}.${f}` : i;
-  return (negative ? '-' : '') + out;
+  const availableDecimals = Math.max(0, maxDigits - intDigits);
+  const precisionDecimals = precision?.quantityPrecision ?? availableDecimals;
+  const decimals = Math.min(precisionDecimals, availableDecimals);
+
+  const formatted = abs.toLocaleString(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  return negative ? `-${formatted}` : formatted;
 }
 /* -------------------------------------------------------------------------------------- */
 
@@ -102,6 +115,24 @@ export function AssetCard(props: AssetCardProps) {
     icon,
   } = props;
 
+  const { data: precisionMap } = useSymbolPrecisions();
+  const symbolPrecision = React.useMemo(
+    () => getSymbolPrecision(precisionMap, symbol, 'USDT'),
+    [precisionMap, symbol]
+  );
+
+  const priceDisplay = React.useMemo(
+    () => formatPriceWithTick(currentPrice, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    [currentPrice, symbolPrecision]
+  );
+  const averageCostDisplay = React.useMemo(
+    () => formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
+    [averageCost, symbolPrecision]
+  );
+  const amountDisplay = React.useMemo(
+    () => formatAmount10(amount, { precision: symbolPrecision, maxDigits: 10 }),
+    [amount, symbolPrecision]
+  );
   const isGain = pnlAbs >= 0;
 
   return (
@@ -125,7 +156,7 @@ export function AssetCard(props: AssetCardProps) {
                   className="w-10 h-10 rounded-full grid place-items-center"
                   style={{ backgroundColor: colors.btc }}
                 >
-                  <span className="text-black font-semibold">₿</span>
+                  <span className="text-black font-semibold">โฟ</span>
                 </div>
               )}
             </div>
@@ -142,9 +173,9 @@ export function AssetCard(props: AssetCardProps) {
                 style={{ backgroundColor: '#1E1E1E' }}
               >
                 <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
-                  {formatAmount10(amount, 10)}
+                  {amountDisplay}
                 </div>
-                {/* unit ยาวเกิน 4 ย่อเป็นตัวที่ 5 จะเป็น... */}
+                {/* unit เธขเธฒเธงเน€เธเธดเธ 4 เธขเนเธญเน€เธเนเธเธ•เธฑเธงเธ—เธตเน 5 เธเธฐเน€เธเนเธ... */}
                 <div className="text-base leading-normal text-white whitespace-nowrap">
                   {truncateCode(unit, 4)}
                 </div>
@@ -154,8 +185,8 @@ export function AssetCard(props: AssetCardProps) {
         </div>
         {/* Middle: stats */}
         <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
-          <Stat label="Current price" value={`$ ${fmtMoney(currentPrice)}`} />
-          <Stat label="Average cost" value={`$ ${fmtMoney(averageCost)}`} />
+          <Stat label="Current price" value={`$ ${priceDisplay}`} />
+          <Stat label="Average cost" value={`$ ${averageCostDisplay}`} />
           <Stat label="Value" value={`$ ${fmtMoney(value)}`} />
           <div className="w-56 shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
             <div className="text-[10px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
@@ -184,7 +215,7 @@ export function AssetCard(props: AssetCardProps) {
   );
 }
 
-/* --- Demo wrapper (unchanged; เขียนเผื่อไว้ ค่อยลบออกตอนเทสเสร็จ) --- */
+/* --- Demo wrapper (unchanged; เน€เธเธตเธขเธเน€เธเธทเนเธญเนเธงเน เธเนเธญเธขเธฅเธเธญเธญเธเธ•เธญเธเน€เธ—เธชเน€เธชเธฃเนเธ) --- */
 export default function Demo() {
   return (
     <div
@@ -210,3 +241,15 @@ export default function Demo() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
