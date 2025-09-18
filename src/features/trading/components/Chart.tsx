@@ -144,6 +144,7 @@ const AdvancedChart = () => {
       rightPriceScale: {
         borderColor: 'rgba(197,203,206,0.4)',
         scaleMargins: { top: 0.2, bottom: 0.2 },
+        visible: true,
       },
       timeScale: {
         borderColor: 'rgba(197,203,206,0.4)',
@@ -152,17 +153,40 @@ const AdvancedChart = () => {
       },
     });
 
-    const candle = chart.addSeries(CandlestickSeries, {});
+    // Create main candlestick series with proper price label settings
+    const candle = chart.addSeries(CandlestickSeries, {
+      priceScaleId: 'right',
+      // Ensure price label is always visible
+      lastValueVisible: true,
+      priceLineVisible: true,
+    });
+
     // additional series for toolbar
-    const line = chart.addSeries(LineSeries, { color: '#4cc9f0', lineWidth: 2, visible: false });
+    const line = chart.addSeries(LineSeries, {
+      color: '#4cc9f0',
+      lineWidth: 2,
+      visible: false,
+      priceScaleId: 'right',
+      // Keep price label for line chart too
+      lastValueVisible: true,
+      priceLineVisible: true,
+    });
+
     const volume = chart.addSeries(HistogramSeries, {
       priceScaleId: 'volume',
       color: '#6b7280',
       visible: showVolume,
+      // Hide last-value label/line for volume series only (red box)
+      lastValueVisible: false,
+      priceLineVisible: false,
     });
-    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-    const sma = chart.addSeries(LineSeries, { color: '#e0c097', lineWidth: 2, visible: false });
-    const ema = chart.addSeries(LineSeries, { color: '#ff9800', lineWidth: 2, visible: false });
+    // Keep volume on its own hidden price scale so main price numbers always show on the right
+    chart.priceScale('volume').applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+      visible: false,
+    });
+    const sma = chart.addSeries(LineSeries, { color: '#e0c097', lineWidth: 2, visible: false, priceScaleId: 'right' });
+    const ema = chart.addSeries(LineSeries, { color: '#ff9800', lineWidth: 2, visible: false, priceScaleId: 'right' });
 
     chartRef.current = chart;
     candleRef.current = candle;
@@ -237,7 +261,9 @@ const AdvancedChart = () => {
     }
   };
 
-  // 2) React to symbol change without removing chart (avoid flicker)
+  // 2) React to symbol/interval change without removing chart (avoid flicker)
+  //    Add run guards to avoid race conditions when switching fast
+  const runSeqRef = useRef(0);
   useEffect(() => {
     const run = async () => {
       const chart = chartRef.current;
@@ -255,24 +281,52 @@ const AdvancedChart = () => {
         wsRef.current = null;
       }
 
-      // set precision and formatter
+      // increment run sequence to invalidate older async work
+      const myRun = ++runSeqRef.current;
+
+      // set precision for series (avoid global priceFormatter which can hide ticks for small prices)
       const precision = await fetchPrecision(symbol);
-      chart.applyOptions({
-        localization: { priceFormatter: (p: number) => p.toFixed(precision) },
-      });
+      if (myRun !== runSeqRef.current) return; // aborted
+      const minMove = Math.pow(10, -precision);
+      // Reset any previous custom priceFormatter to let library format ticks
+      try {
+        chart.applyOptions({ localization: { priceFormatter: undefined as any } });
+      } catch {}
+
+      // Apply options with explicit price label settings
       candle.applyOptions({
-        priceFormat: { type: 'price', precision },
+        priceFormat: { type: 'price', precision, minMove },
         visible: chartType === 'candles',
+        // Ensure price labels are always visible for main series
+        lastValueVisible: true,
+        priceLineVisible: true,
       });
-      if (lineRef.current) lineRef.current.applyOptions({ visible: chartType === 'line' });
-      if (volumeRef.current) volumeRef.current.applyOptions({ visible: showVolume });
+
+      if (lineRef.current) {
+        lineRef.current.applyOptions({
+          visible: chartType === 'line',
+          priceFormat: { type: 'price', precision, minMove },
+          // Keep price label for line chart
+          lastValueVisible: chartType === 'line',
+          priceLineVisible: chartType === 'line',
+        });
+      }
+
+      if (volumeRef.current) {
+        volumeRef.current.applyOptions({
+          visible: showVolume,
+          // Volume should not show price label
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+      }
 
       // reset data and load history for new symbol
-      candle.setData([]);
       try {
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
         const resp = await fetch(url);
         const rows: KlineArray[] = await resp.json();
+        if (myRun !== runSeqRef.current) return; // aborted
         const data: CandlestickData[] = rows.map((r) => ({
           time: Math.floor(r[0] / 1000) as UTCTimestamp,
           open: parseFloat(r[1]),
@@ -310,6 +364,8 @@ const AdvancedChart = () => {
       wsRef.current = ws;
 
       ws.onmessage = (ev) => {
+        // ignore late messages from stale sockets
+        if (myRun !== runSeqRef.current || ws !== wsRef.current) return;
         const series = candleRef.current;
         if (!series) return;
         try {
@@ -361,13 +417,11 @@ const AdvancedChart = () => {
           recomputeIndicators();
         } catch {}
       };
-
-      ws.onerror = (e) => console.error('Chart WS error', e);
     };
 
     run();
 
-    // only close socket on symbol change/unmount; keep chart intact
+    // only close socket on symbol/interval change/unmount; keep chart intact
     return () => {
       if (wsRef.current) {
         try {
@@ -376,12 +430,65 @@ const AdvancedChart = () => {
         wsRef.current = null;
       }
     };
-  }, [selectedCoin.value, interval, chartType, showSMA, showEMA, showVolume]);
+  }, [selectedCoin.value, interval]);
+
+  // 3) Apply simple visibility/style toggles without reloading data or sockets
+  useEffect(() => {
+    const candle = candleRef.current;
+    const line = lineRef.current;
+    const sma = smaRef.current;
+    const ema = emaRef.current;
+    const volume = volumeRef.current;
+
+    if (candle) {
+      candle.applyOptions({
+        visible: chartType === 'candles',
+        // Always show price label for active chart type
+        lastValueVisible: chartType === 'candles',
+        priceLineVisible: chartType === 'candles',
+      });
+    }
+
+    if (line) {
+      line.applyOptions({
+        visible: chartType === 'line',
+        // Show price label only when line chart is active
+        lastValueVisible: chartType === 'line',
+        priceLineVisible: chartType === 'line',
+      });
+    }
+
+    if (sma) {
+      sma.applyOptions({
+        visible: showSMA,
+        // Don't show price labels for indicators to avoid clutter
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+    }
+
+    if (ema) {
+      ema.applyOptions({
+        visible: showEMA,
+        // Don't show price labels for indicators to avoid clutter
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+    }
+
+    if (volume) {
+      volume.applyOptions({
+        visible: showVolume,
+        // Never show price labels for volume
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+    }
+  }, [chartType, showSMA, showEMA, showVolume]);
 
   return (
     <div style={{ width: '100%', maxWidth: 900 }}>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-200">
-        <div className="font-medium mr-2">{selectedCoin.label}</div>
         <div className="flex gap-1">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
             <button
@@ -392,46 +499,6 @@ const AdvancedChart = () => {
               {tf}
             </button>
           ))}
-        </div>
-        <div className="ml-2 flex gap-1">
-          <button
-            onClick={() => setChartType('candles')}
-            className={`px-2 py-1 rounded border ${chartType === 'candles' ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
-          >
-            Candle
-          </button>
-          <button
-            onClick={() => setChartType('line')}
-            className={`px-2 py-1 rounded border ${chartType === 'line' ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
-          >
-            Line
-          </button>
-        </div>
-        <div className="ml-2 flex gap-1">
-          <button
-            onClick={() => setShowSMA((v) => !v)}
-            className={`px-2 py-1 rounded border ${showSMA ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
-          >
-            SMA20
-          </button>
-          <button
-            onClick={() => setShowEMA((v) => !v)}
-            className={`px-2 py-1 rounded border ${showEMA ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
-          >
-            EMA50
-          </button>
-          <button
-            onClick={() => setShowVolume((v) => !v)}
-            className={`px-2 py-1 rounded border ${showVolume ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
-          >
-            Vol
-          </button>
-          <button
-            onClick={() => chartRef.current?.timeScale().fitContent()}
-            className="px-2 py-1 rounded border bg-[#0b1324] border-[#1f2937]"
-          >
-            Fit
-          </button>
         </div>
       </div>
       <div ref={containerRef} style={{ width: '100%', height: 540 }} aria-busy={!ready} />
