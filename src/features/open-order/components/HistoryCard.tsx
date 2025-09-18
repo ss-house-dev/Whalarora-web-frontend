@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 type HistoryStatus = 'closed' | 'complete';
 type HistorySide = 'buy' | 'sell';
@@ -7,7 +7,7 @@ export interface HistoryCardProps {
   status: HistoryStatus;
   side: HistorySide;
   pair: string; // e.g. BTC/USDT
-  date: string; // e.g. 13-08-2025
+  date: string; // e.g. 13-Aug-2025
   time: string; // e.g. 14:30:30
   orderId: string; // full id; will be shortened visually
   amount: string; // formatted amount e.g. 0.020000000
@@ -44,33 +44,24 @@ export default function HistoryCard({
       className="w-[840px] h-[68px] p-3 bg-[#16171D] rounded-lg outline outline-offset-[-1px] flex items-center"
       style={{ outlineColor: '#474747' }}
     >
-      <div className="w-full grid grid-cols-[220px_80px_1fr_256px] items-center gap-6">
-        {/* Left: status + datetime */}
-        <div className="flex flex-col justify-center items-start gap-2">
-          <div className="self-stretch inline-flex justify-start items-center gap-6">
-            <div className="w-24 self-stretch p-2 rounded-lg flex justify-start items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
-              <span
-                className={`text-xs font-normal font-[Alexandria] leading-none ${status === 'complete' ? 'text-[#4ED7B0]' : 'text-[#A4A4A4]'}`}
-              >
-                {statusText}
-              </span>
-            </div>
-            <div className="self-stretch flex justify-start items-center gap-2 whitespace-nowrap">
-              <span className="text-white text-xs font-medium font-[Alexandria] leading-none">
-                {date}
-              </span>
-              <span className="text-white text-xs font-medium font-[Alexandria] leading-none">
-                {time}
-              </span>
-            </div>
-          </div>
+      <div className="w-full grid md:grid-cols-[104px_176px_76px_1fr_256px] grid-cols-[104px_176px_76px_1fr_256px] items-center gap-3">
+        <div className="w-[104px] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
+          <span
+            className={`text-xs font-normal font-[Alexandria] leading-none ${status === 'complete' ? 'text-[#4ED7B0]' : 'text-[#A4A4A4]'}`}
+          >
+            {statusText}
+          </span>
         </div>
 
-        {/* Side pill */}
-        <div className="flex items-center justify-center">
+        <div className="w-[176px] flex items-center gap-1.5 text-white text-xs font-medium font-[Alexandria] leading-none whitespace-nowrap">
+          <span>{date}</span>
+          <span>{time}</span>
+        </div>
+
+        <div className="w-[76px] flex items-center justify-center">
           <div
-            className={`w-[47px] h-7 px-3 rounded-lg inline-flex justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
+            className={`w-[47px] h-7 px-3 rounded-lg inline-flex -ml-12 justify-center items-center ${isBuy ? 'bg-[#217871]' : 'bg-[#C22727]'}`}
           >
             <span className="text-white text-xs font-normal font-[Alexandria] leading-none">
               {isBuy ? 'Buy' : 'Sell'}
@@ -78,9 +69,8 @@ export default function HistoryCard({
           </div>
         </div>
 
-        {/* Pair + order id */}
-        <div className="h-10 flex flex-col justify-center items-start gap-1">
-          <div className="w-20 text-white text-sm font-medium font-[Alexandria] leading-tight">
+        <div className="min-w-0 flex flex-col justify-center items-start gap-1">
+          <div className="text-white text-sm font-medium font-[Alexandria] leading-tight truncate">
             {pair}
           </div>
           <div className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -93,8 +83,7 @@ export default function HistoryCard({
           </div>
         </div>
 
-        {/* Amount/Matched + Price */}
-        <div className="w-64 self-stretch inline-flex flex-col justify-center items-start gap-1">
+        <div className="w-[256px] self-stretch inline-flex flex-col justify-center items-start gap-1">
           <div className="self-stretch px-2 rounded-xl inline-flex justify-end items-center gap-2">
             <div className="w-14 text-[#A4A4A4] text-xs font-normal font-[Alexandria] leading-none">
               {rightTopLabel}
