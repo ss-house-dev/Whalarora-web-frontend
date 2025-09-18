@@ -164,13 +164,17 @@ export default function OrderCard({ order, onDelete }: Props) {
       </AlertDialogTrigger>
       <AlertDialogContent className="items-stretch gap-6">
         <AlertDialogTitle className="sr-only">Close order</AlertDialogTitle>
-        <AlertDialogDescription className="sr-only">Do you want to close this order ?</AlertDialogDescription>
+        <AlertDialogDescription className="sr-only">
+          Do you want to close this order ?
+        </AlertDialogDescription>
         <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
           <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
             <Trash2 size={20} strokeWidth={2} />
           </div>
           <div className="flex flex-col">
-            <div className="text-white text-base font-normal font-[Alexandria] leading-normal">Close order</div>
+            <div className="text-white text-base font-normal font-[Alexandria] leading-normal">
+              Close order
+            </div>
             <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
               Do you want to close this order ?
             </div>
@@ -186,15 +190,24 @@ export default function OrderCard({ order, onDelete }: Props) {
               {isBuy ? 'Buy' : 'Sell'}
             </div>
             <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-              {formatCloseAmount(order.amount)}{baseCurrency ? ` ${baseCurrency}` : ''}
+              {formatCloseAmount(order.amount)}
+              {baseCurrency ? ` ${baseCurrency}` : ''}
             </div>
           </div>
 
           <div className="flex items-center justify-start gap-2">
-            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">at</div>
-            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">Price</div>
-            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">{priceValue}</div>
-            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">{quoteCurrency}</div>
+            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
+              at
+            </div>
+            <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
+              Price
+            </div>
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+              {priceValue}
+            </div>
+            <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+              {quoteCurrency}
+            </div>
           </div>
 
           <div className="flex items-center justify-start">
@@ -270,7 +283,7 @@ export default function OrderCard({ order, onDelete }: Props) {
 
             {onDelete ? <ConfirmCloseDialog /> : <div />}
 
-            <div className="col-start-1 mt-3 flex-1 ml-[32px]">
+            <div className="col-start-1 mt-3 flex-1 ml-[16px]">
               <ProgressBar
                 filledAmount={formatFilledAmount(order.filledAmount)}
                 filledPercent={order.filledPercent ?? 0}
