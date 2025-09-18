@@ -7,6 +7,8 @@ import {
   AlertDialogContent,
   AlertDialogCancel,
   AlertDialogAction,
+  AlertDialogTitle,
+  AlertDialogDescription,
 } from '@/components/ui/alert-dialog-close-order';
 import { Trash2 } from 'lucide-react';
 
@@ -74,6 +76,8 @@ export function CloseOrderBox({
 
       {/* กล่องเนื้อหา */}
       <AlertDialogContent>
+        <AlertDialogTitle className="sr-only">Close order</AlertDialogTitle>
+        <AlertDialogDescription className="sr-only">Do you want to close this order ?</AlertDialogDescription>
         {/* Header */}
         <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
           <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
