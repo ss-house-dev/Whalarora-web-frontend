@@ -17,7 +17,7 @@ type FilterKey = TradeHistoryRange;
 
 const filters: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'day', label: 'Day' },
+  { key: 'day', label: 'Today' },
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
 ];
