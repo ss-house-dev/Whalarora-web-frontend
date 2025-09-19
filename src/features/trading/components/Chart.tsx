@@ -8,6 +8,7 @@ import {
   ISeriesApi,
   CandlestickData,
   LineStyle,
+  CrosshairMode,
   UTCTimestamp,
   TickMarkType,
   Time,
@@ -237,8 +238,21 @@ const AdvancedChart = () => {
         secondsVisible: false,
       },
       crosshair: {
-        vertLine: { labelVisible: false }, // hide built-in time label
-        horzLine: { labelVisible: true },
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          visible: true,
+          labelVisible: false,
+          color: '#9CA3AF',
+          width: 1,
+          style: LineStyle.Dashed,
+        },
+        horzLine: {
+          visible: true,
+          labelVisible: true,
+          color: '#9CA3AF',
+          width: 1,
+          style: LineStyle.Dashed,
+        },
       },
     });
 
@@ -418,8 +432,21 @@ const AdvancedChart = () => {
           secondsVisible: false,
         },
         crosshair: {
-          vertLine: { labelVisible: false },
-          horzLine: { labelVisible: true },
+          mode: CrosshairMode.Normal,
+          vertLine: {
+            visible: true,
+            labelVisible: false,
+            color: '#9CA3AF',
+            width: 1,
+            style: LineStyle.Dashed,
+          },
+          horzLine: {
+            visible: true,
+            labelVisible: true,
+            color: '#9CA3AF',
+            width: 1,
+            style: LineStyle.Dashed,
+          },
         },
       });
 
@@ -621,7 +648,7 @@ const AdvancedChart = () => {
       <div className="relative w-full h-[508px]">
         <div
           ref={containerRef}
-          className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full"
+          className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full cursor-crosshair"
           aria-busy={!ready}
         />
         {/* Custom time tooltip (UTC+7) */}
