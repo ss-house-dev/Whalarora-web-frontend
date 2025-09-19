@@ -171,6 +171,7 @@ function timeFormatterUTC7(time: Time): string {
 const AdvancedChart = () => {
   const { selectedCoin } = useCoinContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const timeTooltipRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   // Removed last price line rendering per request
@@ -235,6 +236,10 @@ const AdvancedChart = () => {
         timeVisible: isIntradayInterval(interval),
         secondsVisible: false,
       },
+      crosshair: {
+        vertLine: { labelVisible: false }, // hide built-in time label
+        horzLine: { labelVisible: true },
+      },
     });
 
     // Create main candlestick series with proper price label settings
@@ -295,10 +300,29 @@ const AdvancedChart = () => {
     });
     resizeObserver.observe(container);
 
+    // Custom time tooltip that follows crosshair (UTC+7)
+    const unsub = chart.subscribeCrosshairMove((param) => {
+      const tooltip = timeTooltipRef.current;
+      if (!tooltip) return;
+      const p = param.point;
+      if (param.time && p && p.x != null && p.y != null) {
+        tooltip.style.display = 'block';
+        // clamp within container width
+        const x = Math.max(8, Math.min(p.x, (container.clientWidth || 900) - 8));
+        tooltip.style.left = `${x}px`;
+        tooltip.textContent = timeFormatterUTC7(param.time);
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
     setReady(true);
 
     return () => {
       resizeObserver.unobserve(container);
+      try {
+        chart.unsubscribeCrosshairMove(unsub as any);
+      } catch {}
       if (wsRef.current) {
         try {
           wsRef.current.close();
@@ -392,6 +416,10 @@ const AdvancedChart = () => {
           tickMarkFormatter: makeTickFormatter(interval),
           timeVisible: isIntradayInterval(interval),
           secondsVisible: false,
+        },
+        crosshair: {
+          vertLine: { labelVisible: false },
+          horzLine: { labelVisible: true },
         },
       });
 
@@ -595,6 +623,12 @@ const AdvancedChart = () => {
           ref={containerRef}
           className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full"
           aria-busy={!ready}
+        />
+        {/* Custom time tooltip (UTC+7) */}
+        <div
+          ref={timeTooltipRef}
+          style={{ display: 'none', transform: 'translateX(-50%)' }}
+          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
         />
         <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
