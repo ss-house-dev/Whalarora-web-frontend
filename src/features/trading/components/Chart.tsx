@@ -155,6 +155,19 @@ function makeTickFormatter(currentInterval: string) {
 
 const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includes(v);
 
+// Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
+function timeFormatterUTC7(time: Time): string {
+  const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+  const d = new Date((ts as number) * 1000 + 7 * 60 * 60 * 1000);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const Y = d.getUTCFullYear();
+  const M = pad(d.getUTCMonth() + 1);
+  const D = pad(d.getUTCDate());
+  const h = pad(d.getUTCHours());
+  const m = pad(d.getUTCMinutes());
+  return `${Y}/${M}/${D} ${h}:${m}`;
+}
+
 const AdvancedChart = () => {
   const { selectedCoin } = useCoinContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -201,6 +214,9 @@ const AdvancedChart = () => {
         textColor: '#d1d5db',
         fontFamily:
           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+      },
+      localization: {
+        timeFormatter: timeFormatterUTC7,
       },
       grid: {
         horzLines: { color: 'rgba(197,203,206,0.1)' },
@@ -368,7 +384,10 @@ const AdvancedChart = () => {
       const minMove = Math.pow(10, -precision);
       // Use fixed-width label formatter to prevent axis width jitter
       chart.applyOptions({
-        localization: { priceFormatter: makeFixedWidthFormatter(precision) },
+        localization: {
+          priceFormatter: makeFixedWidthFormatter(precision),
+          timeFormatter: timeFormatterUTC7,
+        },
         timeScale: {
           tickMarkFormatter: makeTickFormatter(interval),
           timeVisible: isIntradayInterval(interval),
