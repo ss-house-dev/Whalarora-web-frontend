@@ -144,9 +144,10 @@ const AdvancedChart = () => {
 
     const chart = createChart(container, {
       width: container.clientWidth || 900,
-      height: 540,
+      // draw slightly shorter than wrapper to avoid bottom clipping under rounded corners
+      height: 500,
       layout: {
-        background: { type: ColorType.Solid, color: '#0b0f14' },
+        background: { type: ColorType.Solid, color: '#0C0F17' },
         textColor: '#d1d5db',
         fontFamily:
           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
@@ -511,21 +512,29 @@ const AdvancedChart = () => {
   }, [chartType, showSMA, showEMA, showVolume]);
 
   return (
-    <div style={{ width: '100%', maxWidth: 900 }}>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-200">
-        <div className="flex gap-1">
+    <div className="w-full max-w-[900px]">
+      <div className="relative w-full h-[508px]">
+        <div
+          ref={containerRef}
+          className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full"
+          aria-busy={!ready}
+        />
+        <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
             <button
               key={tf}
               onClick={() => setIntervalSafe(tf)}
-              className={`px-2 py-1 rounded border ${interval === tf ? 'bg-blue-600 border-blue-500' : 'bg-[#0b1324] border-[#1f2937]'}`}
+              className={`px-2 py-1 rounded border backdrop-blur-sm ${
+                interval === tf
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-black/30 hover:bg-black/40 border-[#1f2937] text-gray-200'
+              }`}
             >
               {tf}
             </button>
           ))}
         </div>
       </div>
-      <div ref={containerRef} style={{ width: '100%', height: 540 }} aria-busy={!ready} />
     </div>
   );
 };
