@@ -93,6 +93,18 @@ async function fetchPrecision(symbol: string): Promise<number> {
   return 2;
 }
 
+// Create a stable-width price formatter to prevent right axis jitter
+function makeFixedWidthFormatter(precision: number) {
+  // Use exactly the market precision (clamped) to avoid showing extra decimals
+  const labelPrecision = Math.min(Math.max(0, precision), 8);
+  return (p: number) => {
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    // target width: at least 10 chars or based on precision
+    const target = Math.max(10, labelPrecision + 2); // includes "0."
+    return fixed.padStart(target, ' ');
+  };
+}
+
 const AdvancedChart = () => {
   const { selectedCoin } = useCoinContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -136,6 +148,8 @@ const AdvancedChart = () => {
       layout: {
         background: { type: ColorType.Solid, color: '#0b0f14' },
         textColor: '#d1d5db',
+        fontFamily:
+          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
       },
       grid: {
         horzLines: { color: 'rgba(197,203,206,0.1)' },
@@ -294,14 +308,14 @@ const AdvancedChart = () => {
       // increment run sequence to invalidate older async work
       const myRun = ++runSeqRef.current;
 
-      // set precision for series (avoid global priceFormatter which can hide ticks for small prices)
+      // set precision for series and a stable-width formatter for axis labels
       const precision = await fetchPrecision(symbol);
       if (myRun !== runSeqRef.current) return; // aborted
       const minMove = Math.pow(10, -precision);
-      // Reset any previous custom priceFormatter to let library format ticks
-      try {
-        chart.applyOptions({ localization: { priceFormatter: undefined as any } });
-      } catch {}
+      // Use fixed-width label formatter to prevent axis width jitter
+      chart.applyOptions({
+        localization: { priceFormatter: makeFixedWidthFormatter(precision) },
+      });
 
       // Apply options with explicit price label settings
       candle.applyOptions({
