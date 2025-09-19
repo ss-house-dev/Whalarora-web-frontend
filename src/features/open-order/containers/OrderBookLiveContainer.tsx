@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import clsx from 'clsx';
@@ -79,7 +79,15 @@ function ExtractedSymbol({ status, symbol }: { status: OrderBookStreamStatus; sy
   );
 }
 
-export default function OrderBookLiveContainer() {
+interface OrderBookLiveContainerProps {
+  className?: string;
+  showMetaInfo?: boolean;
+}
+
+export default function OrderBookLiveContainer({
+  className,
+  showMetaInfo = true,
+}: OrderBookLiveContainerProps) {
   const { selectedCoin } = useCoinContext();
   const { base, quote } = React.useMemo(
     () => parseSymbols(selectedCoin?.label),
@@ -104,17 +112,21 @@ export default function OrderBookLiveContainer() {
     return new Date(tsNumber).toLocaleTimeString('th-TH', { hour12: false });
   }, [data?.ts]);
 
+  const containerClass = clsx('flex flex-col gap-3', showMetaInfo ? 'items-center' : undefined, className);
+
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className={containerClass}>
       <OrderBookWidget bid={bid} ask={ask} disabled={status !== 'connected'} />
-      <div className="flex flex-col items-center gap-1 text-xs text-[#A4A4A4]">
-        <div className="flex items-center gap-2">
-          <span>Status: {STATUS_LABEL[status]}</span>
-          <ExtractedSymbol status={status} symbol={activeSymbol ?? base} />
+      {showMetaInfo ? (
+        <div className="flex flex-col items-center gap-1 text-xs text-[#A4A4A4]">
+          <div className="flex items-center gap-2">
+            <span>Status: {STATUS_LABEL[status]}</span>
+            <ExtractedSymbol status={status} symbol={activeSymbol ?? base} />
+          </div>
+          {updatedAt && <div>Last update: {updatedAt}</div>}
+          {error && <div className="text-red-400">{error}</div>}
         </div>
-        {updatedAt && <div>Last update: {updatedAt}</div>}
-        {error && <div className="text-red-400">{error}</div>}
-      </div>
+      ) : null}
     </div>
   );
 }
