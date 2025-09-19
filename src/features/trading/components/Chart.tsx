@@ -98,13 +98,14 @@ async function fetchPrecision(symbol: string): Promise<number> {
 
 // Create a stable-width price formatter to prevent right axis jitter
 function makeFixedWidthFormatter(precision: number) {
-  // จำกัดจำนวนทศนิยมตาม precision และใส่คอมมาที่หลักพัน
+  // Use exactly the market precision (clamped) to avoid showing extra decimals
   const labelPrecision = Math.min(Math.max(0, precision), 8);
-  const nf = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: labelPrecision,
-    maximumFractionDigits: labelPrecision,
-  });
-  return (p: number) => (isFinite(p) ? nf.format(p) : nf.format(0));
+  return (p: number) => {
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    // target width: at least 10 chars or based on precision
+    const target = Math.max(10, labelPrecision + 2); // includes "0."
+    return fixed.padStart(target, ' ');
+  };
 }
 
 // Custom time scale tick formatter based on selected interval
