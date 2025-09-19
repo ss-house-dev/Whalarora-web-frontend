@@ -9,6 +9,8 @@ import {
   CandlestickData,
   LineStyle,
   UTCTimestamp,
+  TickMarkType,
+  Time,
   CandlestickSeries,
   LineSeries,
   HistogramSeries,
@@ -105,6 +107,54 @@ function makeFixedWidthFormatter(precision: number) {
   };
 }
 
+// Custom time scale tick formatter based on selected interval
+function makeTickFormatter(currentInterval: string) {
+  const intraday = ['1m', '5m', '15m', '1h', '4h'];
+  const isIntraday = intraday.includes(currentInterval);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  // Always display in UTC+7 (Bangkok). We offset epoch seconds by +7h
+  return (time: Time, tickMarkType: TickMarkType, _locale?: string): string => {
+    const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+    const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
+    const d = new Date((ts as number) * 1000 + offsetMs);
+    const Y = d.getUTCFullYear();
+    const M = pad(d.getUTCMonth() + 1);
+    const D = pad(d.getUTCDate());
+    const h = pad(d.getUTCHours());
+    const m = pad(d.getUTCMinutes());
+
+    switch (tickMarkType) {
+      case TickMarkType.Year:
+        return String(Y);
+      case TickMarkType.Month:
+        return `${Y}/${M}`;
+      case TickMarkType.DayOfMonth:
+        // Show MM/DD on day breaks
+        return `${M}/${D}`;
+      default:
+        // Time-level ticks
+        if (isIntraday) {
+          // 15m: show only whole hours (HH:00); hide intermediate :15/:30/:45
+          if (currentInterval === '15m') {
+            return m === '00' ? `${h}:00` : '';
+          }
+          // 1h/4h: show HH:00
+          if (currentInterval === '1h' || currentInterval === '4h') {
+            return `${h}:00`;
+          }
+          // 1m/5m: show HH:mm
+          return `${h}:${m}`;
+        }
+        // For 1d and above fall back to date
+        return `${M}/${D}`;
+    }
+  };
+}
+
+const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includes(v);
+
 const AdvancedChart = () => {
   const { selectedCoin } = useCoinContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -165,6 +215,9 @@ const AdvancedChart = () => {
         borderColor: 'rgba(197,203,206,0.4)',
         fixLeftEdge: false,
         rightOffset: 5,
+        tickMarkFormatter: makeTickFormatter(interval),
+        timeVisible: isIntradayInterval(interval),
+        secondsVisible: false,
       },
     });
 
@@ -316,6 +369,11 @@ const AdvancedChart = () => {
       // Use fixed-width label formatter to prevent axis width jitter
       chart.applyOptions({
         localization: { priceFormatter: makeFixedWidthFormatter(precision) },
+        timeScale: {
+          tickMarkFormatter: makeTickFormatter(interval),
+          timeVisible: isIntradayInterval(interval),
+          secondsVisible: false,
+        },
       });
 
       // Apply options with explicit price label settings
