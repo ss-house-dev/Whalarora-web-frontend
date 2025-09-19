@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   createChart,
   ColorType,
@@ -36,30 +36,27 @@ type KlineArray = [
   string, // ignore
 ];
 
-type WsKlineMessage = {
-  e: 'kline';
-  E: number;
-  s: string;
-  k: {
-    t: number; // start time
-    T: number; // end time
-    s: string; // symbol
-    i: string; // interval
-    f: number; // first trade ID
-    L: number; // last trade ID
-    o: string; // open
-    c: string; // close
-    h: string; // high
-    l: string; // low
-    v: string; // volume
-    n: number; // number of trades
-    x: boolean; // is this kline closed?
-    q: string; // quote volume
-    V: string; // taker buy base
-    Q: string; // taker buy quote
-    B: string; // ignore
-  };
-};
+// Removed unused WsKlineMessage interface
+
+interface ExchangeInfoSymbol {
+  symbol: string;
+  filters: Array<{
+    filterType: string;
+    tickSize?: string;
+  }>;
+}
+
+interface ExchangeInfoResponse {
+  symbols?: ExchangeInfoSymbol[];
+}
+
+interface TradeMessage {
+  e: string;
+  T?: number;
+  E?: number;
+  p: string;
+  q?: string;
+}
 
 const DEFAULT_INTERVAL = '15m'; // 1m/5m/15m/1h supported
 
@@ -83,14 +80,14 @@ function parseSymbol(coinValue: string) {
 async function fetchPrecision(symbol: string): Promise<number> {
   try {
     const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-    const data = await res.json();
-    const info = data.symbols?.find((s: any) => s.symbol === symbol);
-    const priceFilter = info?.filters?.find((f: any) => f.filterType === 'PRICE_FILTER');
+    const data: ExchangeInfoResponse = await res.json();
+    const info = data.symbols?.find((s) => s.symbol === symbol);
+    const priceFilter = info?.filters?.find((f) => f.filterType === 'PRICE_FILTER');
     const tickSize = parseFloat(priceFilter?.tickSize ?? '0');
     if (tickSize > 0) {
       return Math.max(0, Math.round(-Math.log10(tickSize)));
     }
-  } catch (e) {
+  } catch {
     // ignore, fall through
   }
   return 2;
@@ -115,8 +112,8 @@ function makeTickFormatter(currentInterval: string) {
   const pad = (n: number) => n.toString().padStart(2, '0');
 
   // Always display in UTC+7 (Bangkok). We offset epoch seconds by +7h
-  return (time: Time, tickMarkType: TickMarkType, _locale?: string): string => {
-    const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+  return (time: Time, tickMarkType: TickMarkType): string => {
+    const ts = typeof time === 'number' ? time : ((time as { timestamp?: number }).timestamp ?? 0);
     const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
     const d = new Date((ts as number) * 1000 + offsetMs);
     const Y = d.getUTCFullYear();
@@ -157,7 +154,7 @@ const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includ
 
 // Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
 function timeFormatterUTC7(time: Time): string {
-  const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+  const ts = typeof time === 'number' ? time : ((time as { timestamp?: number }).timestamp ?? 0);
   const d = new Date((ts as number) * 1000 + 7 * 60 * 60 * 1000);
   const pad = (n: number) => n.toString().padStart(2, '0');
   const Y = d.getUTCFullYear();
@@ -197,6 +194,49 @@ const AdvancedChart = () => {
     intervalMsRef.current = intervalToMs(v);
   };
   const [ready, setReady] = useState(false);
+
+  // recompute indicators using barsRef
+  const recomputeIndicators = useCallback(() => {
+    const bars = barsRef.current;
+    // update close line (for line chart)
+    if (lineRef.current) {
+      const mapped = bars.map((b) => ({
+        time: b.time as UTCTimestamp,
+        value: b.close,
+      }));
+      lineRef.current.setData(mapped);
+    }
+    // SMA 20
+    if (smaRef.current) {
+      const len = 20;
+      const out: Array<{ time: UTCTimestamp; value: number }> = [];
+      let sum = 0;
+      for (let i = 0; i < bars.length; i++) {
+        sum += bars[i].close;
+        if (i >= len) sum -= bars[i - len].close;
+        if (i >= len - 1)
+          out.push({ time: bars[i].time as UTCTimestamp, value: +(sum / len).toFixed(8) });
+      }
+      smaRef.current.setData(out);
+      smaRef.current.applyOptions({ visible: showSMA });
+    }
+    // EMA 50
+    if (emaRef.current) {
+      const len = 50;
+      const out: Array<{ time: UTCTimestamp; value: number }> = [];
+      const k = 2 / (len + 1);
+      let emaVal: number | null = null;
+      for (let i = 0; i < bars.length; i++) {
+        const c = bars[i].close;
+        if (emaVal === null) emaVal = c;
+        else emaVal = c * k + emaVal * (1 - k);
+        if (i >= len - 1)
+          out.push({ time: bars[i].time as UTCTimestamp, value: +emaVal.toFixed(8) });
+      }
+      emaRef.current.setData(out);
+      emaRef.current.applyOptions({ visible: showEMA });
+    }
+  }, [showSMA, showEMA]);
 
   // 1) Initialize chart only once (avoid stacking/overlap)
   useEffect(() => {
@@ -314,7 +354,7 @@ const AdvancedChart = () => {
     resizeObserver.observe(container);
 
     // Custom time tooltip that follows crosshair (UTC+7)
-    const unsub = chart.subscribeCrosshairMove((param) => {
+    chart.subscribeCrosshairMove((param) => {
       const tooltip = timeTooltipRef.current;
       if (!tooltip) return;
       const p = param.point;
@@ -333,64 +373,25 @@ const AdvancedChart = () => {
 
     return () => {
       resizeObserver.unobserve(container);
-      try {
-        chart.unsubscribeCrosshairMove(unsub as any);
-      } catch {}
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch {
+          // ignore
+        }
         wsRef.current = null;
       }
       if (chartRef.current) {
         try {
           chartRef.current.remove();
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
       chartRef.current = null;
       candleRef.current = null;
     };
-  }, []);
-
-  // recompute indicators using barsRef
-  const recomputeIndicators = () => {
-    const bars = barsRef.current;
-    // update close line (for line chart)
-    if (lineRef.current) {
-      const mapped = bars.map((b) => ({ time: b.time as UTCTimestamp, value: b.close }) as any);
-      lineRef.current.setData(mapped);
-    }
-    // SMA 20
-    if (smaRef.current) {
-      const len = 20;
-      const out: any[] = [];
-      let sum = 0;
-      for (let i = 0; i < bars.length; i++) {
-        sum += bars[i].close;
-        if (i >= len) sum -= bars[i - len].close;
-        if (i >= len - 1)
-          out.push({ time: bars[i].time as UTCTimestamp, value: +(sum / len).toFixed(8) });
-      }
-      smaRef.current.setData(out);
-      smaRef.current.applyOptions({ visible: showSMA });
-    }
-    // EMA 50
-    if (emaRef.current) {
-      const len = 50;
-      const out: any[] = [];
-      const k = 2 / (len + 1);
-      let emaVal: number | null = null;
-      for (let i = 0; i < bars.length; i++) {
-        const c = bars[i].close;
-        if (emaVal === null) emaVal = c;
-        else emaVal = c * k + emaVal * (1 - k);
-        if (i >= len - 1)
-          out.push({ time: bars[i].time as UTCTimestamp, value: +emaVal.toFixed(8) });
-      }
-      emaRef.current.setData(out);
-      emaRef.current.applyOptions({ visible: showEMA });
-    }
-  };
+  }, [interval, showVolume]);
 
   // 2) React to symbol/interval change without removing chart (avoid flicker)
   //    Add run guards to avoid race conditions when switching fast
@@ -408,7 +409,9 @@ const AdvancedChart = () => {
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch {
+          // ignore
+        }
         wsRef.current = null;
       }
 
@@ -505,8 +508,8 @@ const AdvancedChart = () => {
             value: parseFloat(r[5]),
             color: parseFloat(r[4]) >= parseFloat(r[1]) ? '#26a69a' : '#ef5350',
           }));
-          volumeRef.current.setData(volData as any);
-          volAggRef.current = volData.length ? (volData[volData.length - 1] as any).value : 0;
+          volumeRef.current.setData(volData);
+          volAggRef.current = volData.length ? volData[volData.length - 1].value : 0;
         }
 
         recomputeIndicators();
@@ -525,7 +528,7 @@ const AdvancedChart = () => {
         const series = candleRef.current;
         if (!series) return;
         try {
-          const d = JSON.parse(ev.data);
+          const d: TradeMessage = JSON.parse(ev.data);
           // trade payload: { e: 'trade', T: time(ms), p: price }
           const price = parseFloat(d.p);
           const tMs: number = d.T || d.E || Date.now();
@@ -561,17 +564,19 @@ const AdvancedChart = () => {
 
           series.update(bar);
           if (lineRef.current && chartType === 'line') {
-            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
+            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close });
           }
           if (volumeRef.current && showVolume) {
             volumeRef.current.update({
               time: bar.time as UTCTimestamp,
               value: volAggRef.current,
               color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
-            } as any);
+            });
           }
           recomputeIndicators();
-        } catch {}
+        } catch {
+          // ignore parse errors
+        }
       };
     };
 
@@ -582,11 +587,13 @@ const AdvancedChart = () => {
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch {
+          // ignore
+        }
         wsRef.current = null;
       }
     };
-  }, [selectedCoin.value, interval]);
+  }, [selectedCoin.value, interval, chartType, showVolume, recomputeIndicators]);
 
   // 3) Apply simple visibility/style toggles without reloading data or sockets
   useEffect(() => {
