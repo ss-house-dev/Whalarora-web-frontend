@@ -97,14 +97,51 @@ async function fetchPrecision(symbol: string): Promise<number> {
 }
 
 // Create a stable-width price formatter to prevent right axis jitter
-function makeFixedWidthFormatter(precision: number) {
-  // Use exactly the market precision (clamped) to avoid showing extra decimals
+// but keep the right scale compact. Width is computed from the maximum
+// integer digits we expect (baseline) plus decimal precision.
+function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
   const labelPrecision = Math.min(Math.max(0, precision), 8);
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  const commaCount = Math.max(0, Math.floor((Math.max(1, baseIntDigits) - 1) / 3));
+  const target = Math.max(
+    // int digits + commas + optional dot + decimals
+    (Math.max(1, baseIntDigits) + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0)),
+    // ensure a sane minimum so tiny prices still align nicely
+    6 + (labelPrecision > 0 ? 1 + Math.min(labelPrecision, 4) : 0)
+  );
   return (p: number) => {
     const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
-    // target width: at least 10 chars or based on precision
-    const target = Math.max(10, labelPrecision + 2); // includes "0."
-    return fixed.padStart(target, ' ');
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
+  };
+}
+
+// Same formatter but reads current base digits from a ref so series labels
+// (last value bubble) stay in sync with the axis width without reapplying options.
+function makeSeriesFormatter(
+  precision: number,
+  baseIntDigitsRef: React.MutableRefObject<number>
+) {
+  const labelPrecision = Math.min(Math.max(0, precision), 8);
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  return (p: number) => {
+    const baseIntDigits = Math.max(1, baseIntDigitsRef.current);
+    const commaCount = Math.max(0, Math.floor((baseIntDigits - 1) / 3));
+    const target = Math.max(
+      baseIntDigits + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0),
+      6 + (labelPrecision > 0 ? 1 + Math.min(labelPrecision, 4) : 0)
+    );
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
   };
 }
 
@@ -182,6 +219,8 @@ const AdvancedChart = () => {
   const intervalMsRef = useRef<number>(intervalToMs(DEFAULT_INTERVAL));
   const barsRef = useRef<CandlestickData[]>([]);
   const volAggRef = useRef<number>(0);
+  // baseline for computing compact, fixed-width price labels
+  const baseIntDigitsRef = useRef<number>(1);
   // extra series
   const lineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -420,10 +459,11 @@ const AdvancedChart = () => {
       const precision = await fetchPrecision(symbol);
       if (myRun !== runSeqRef.current) return; // aborted
       const minMove = Math.pow(10, -precision);
-      // Use fixed-width label formatter to prevent axis width jitter
+      // Apply chart options (time & crosshair). We'll set priceFormatter after we know base digits.
       chart.applyOptions({
         localization: {
-          priceFormatter: makeFixedWidthFormatter(precision),
+          // temporary minimal formatter; will be replaced after history loads
+          priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
           timeFormatter: timeFormatterUTC7,
         },
         timeScale: {
@@ -452,7 +492,11 @@ const AdvancedChart = () => {
 
       // Apply options with explicit price label settings
       candle.applyOptions({
-        priceFormat: { type: 'price', precision, minMove },
+        priceFormat: {
+          type: 'custom',
+          minMove,
+          formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+        },
         visible: chartType === 'candles',
         // Ensure price labels are always visible for main series
         lastValueVisible: true,
@@ -462,7 +506,11 @@ const AdvancedChart = () => {
       if (lineRef.current) {
         lineRef.current.applyOptions({
           visible: chartType === 'line',
-          priceFormat: { type: 'price', precision, minMove },
+          priceFormat: {
+            type: 'custom',
+            minMove,
+            formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+          },
           // Keep price label for line chart
           lastValueVisible: chartType === 'line',
           priceLineVisible: chartType === 'line',
@@ -498,6 +546,18 @@ const AdvancedChart = () => {
         const last = data[data.length - 1];
         lastBarRef.current = last ?? null;
         lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
+
+        // compute base integer digits from historical highs to keep right scale compact
+        const maxHigh = data.reduce((m, b) => (b.high > m ? b.high : m), 0);
+        const intPart = Math.floor(Math.abs(maxHigh));
+        const baseDigits = intPart === 0 ? 1 : Math.floor(Math.log10(intPart)) + 1;
+        baseIntDigitsRef.current = Math.max(1, baseDigits);
+        chart.applyOptions({
+          localization: {
+            priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+            timeFormatter: timeFormatterUTC7,
+          },
+        });
 
         // set volume from history
         if (volumeRef.current) {
@@ -561,6 +621,21 @@ const AdvancedChart = () => {
           }
 
           series.update(bar);
+          // If integer digit count grows beyond baseline, widen once (no jitter)
+          const intPart = Math.floor(Math.abs(price));
+          const digitsNow = intPart === 0 ? 1 : Math.floor(Math.log10(intPart)) + 1;
+          if (digitsNow > baseIntDigitsRef.current) {
+            baseIntDigitsRef.current = digitsNow;
+            const precision = (series.options() as any)?.priceFormat?.precision ?? 2;
+            if (chartRef.current) {
+              chartRef.current.applyOptions({
+                localization: {
+                  priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+                  timeFormatter: timeFormatterUTC7,
+                },
+              });
+            }
+          }
           if (lineRef.current && chartType === 'line') {
             lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
           }
