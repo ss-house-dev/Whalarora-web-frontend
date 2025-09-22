@@ -62,6 +62,10 @@ type WsKlineMessage = {
 };
 
 const DEFAULT_INTERVAL = '15m'; // 1m/5m/15m/1h supported
+// Keep right price scale width stable across symbols by fixing
+// baseline integer digits and decimal width used for padding
+const AXIS_BASE_INT_DIGITS = 6; // supports up to 999,999 before widening
+const AXIS_DECIMALS_WIDTH = 2; // pad width for up to 8 decimals
 
 function intervalToMs(interval: string): number {
   const m = interval.match(/^(\d+)([mhd])$/i);
@@ -107,11 +111,12 @@ function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
     return d ? `${withCommas}.${d}` : withCommas;
   };
   const commaCount = Math.max(0, Math.floor((Math.max(1, baseIntDigits) - 1) / 3));
+  // Fixed target width uses constant decimal width so axis doesn't shift
   const target = Math.max(
-    // int digits + commas + optional dot + decimals
-    Math.max(1, baseIntDigits) + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0),
-    // ensure a sane minimum so tiny prices still align nicely
-    6 + (labelPrecision > 0 ? 1 + Math.min(labelPrecision, 4) : 0)
+    Math.max(1, baseIntDigits) +
+      commaCount +
+      (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+    8 // guarantee a usable minimum
   );
   return (p: number) => {
     const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
@@ -133,8 +138,8 @@ function makeSeriesFormatter(precision: number, baseIntDigitsRef: React.MutableR
     const baseIntDigits = Math.max(1, baseIntDigitsRef.current);
     const commaCount = Math.max(0, Math.floor((baseIntDigits - 1) / 3));
     const target = Math.max(
-      baseIntDigits + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0),
-      6 + (labelPrecision > 0 ? 1 + Math.min(labelPrecision, 4) : 0)
+      baseIntDigits + commaCount + (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+      8
     );
     const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
     const withCommas = addCommas(fixed);
@@ -217,7 +222,7 @@ const AdvancedChart = () => {
   const barsRef = useRef<CandlestickData[]>([]);
   const volAggRef = useRef<number>(0);
   // baseline for computing compact, fixed-width price labels
-  const baseIntDigitsRef = useRef<number>(1);
+  const baseIntDigitsRef = useRef<number>(AXIS_BASE_INT_DIGITS);
   // extra series
   const lineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -544,11 +549,8 @@ const AdvancedChart = () => {
         lastBarRef.current = last ?? null;
         lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
 
-        // compute base integer digits from historical highs to keep right scale compact
-        const maxHigh = data.reduce((m, b) => (b.high > m ? b.high : m), 0);
-        const intPart = Math.floor(Math.abs(maxHigh));
-        const baseDigits = intPart === 0 ? 1 : Math.floor(Math.log10(intPart)) + 1;
-        baseIntDigitsRef.current = Math.max(1, baseDigits);
+        // lock axis label width to fixed baseline to avoid jitter across symbols
+        baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
         chart.applyOptions({
           localization: {
             priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
@@ -618,21 +620,7 @@ const AdvancedChart = () => {
           }
 
           series.update(bar);
-          // If integer digit count grows beyond baseline, widen once (no jitter)
-          const intPart = Math.floor(Math.abs(price));
-          const digitsNow = intPart === 0 ? 1 : Math.floor(Math.log10(intPart)) + 1;
-          if (digitsNow > baseIntDigitsRef.current) {
-            baseIntDigitsRef.current = digitsNow;
-            const precision = (series.options() as any)?.priceFormat?.precision ?? 2;
-            if (chartRef.current) {
-              chartRef.current.applyOptions({
-                localization: {
-                  priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
-                  timeFormatter: timeFormatterUTC7,
-                },
-              });
-            }
-          }
+          // Keep axis width constant; do not widen based on incoming price
           if (lineRef.current && chartType === 'line') {
             lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
           }
@@ -727,7 +715,7 @@ const AdvancedChart = () => {
         <div
           ref={timeTooltipRef}
           style={{ display: 'none', transform: 'translateX(-50%)' }}
-          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
+          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#16171D] rounded-md shadow"
         />
         <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
