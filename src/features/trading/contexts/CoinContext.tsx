@@ -53,6 +53,22 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const closedRef = React.useRef<boolean>(false);
   const reconnectAttemptsRef = React.useRef<number>(0);
 
+  // Hydrate caches from localStorage once (persist across page switches)
+  useEffect(() => {
+    try {
+      const savedPrices = localStorage.getItem('wl_priceCache');
+      const savedPrecisions = localStorage.getItem('wl_precisionCache');
+      if (savedPrices) {
+        const obj = JSON.parse(savedPrices);
+        if (obj && typeof obj === 'object') priceCache.current = obj;
+      }
+      if (savedPrecisions) {
+        const obj = JSON.parse(savedPrecisions);
+        if (obj && typeof obj === 'object') precisionCache.current = obj;
+      }
+    } catch {}
+  }, []);
+
   // Load coin from storage depending on session
   useEffect(() => {
     const loadFromStorage = () => {
@@ -164,6 +180,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const places = Math.max(0, Math.round(-Math.log10(tickSize)));
           precisionCache.current[symbolLabel] = places;
           setPriceDecimalPlaces(places);
+          try {
+            localStorage.setItem('wl_precisionCache', JSON.stringify(precisionCache.current));
+          } catch {}
         } else {
           setPriceDecimalPlaces(2);
         }
@@ -198,6 +217,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setMarketPrice(price);
               setIsPriceLoading(false);
               lastUpdateRef.current = Date.now();
+              try {
+                localStorage.setItem('wl_priceCache', JSON.stringify(priceCache.current));
+              } catch {}
             }
           }
         } catch {
@@ -239,6 +261,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setMarketPrice(price);
               setIsPriceLoading(false);
               lastUpdateRef.current = Date.now();
+              try {
+                localStorage.setItem('wl_priceCache', JSON.stringify(priceCache.current));
+              } catch {}
             }
           } catch {}
         }
