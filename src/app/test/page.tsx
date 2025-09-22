@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CloseOrderBox } from '@/components/ui/close-order-box';
+import React from 'react';
+import OrderBookLiveContainer from '@/features/open-order/containers/OrderBookLiveContainer';
 import OrderBookWidget from '@/features/open-order/components/OrderBookWidget';
-import HistoryCard from '@/features/open-order/components/HistoryCard';
-import HistoryListPreview from '@/features/open-order/components/HistoryListPreview';
-import TradeHistoryContainer from '@/features/open-order/components/TradeHistoryContainer';
-import HistoryApiPreview from '@/features/open-order/components/HistoryApiPreview';
+import { CoinProvider, useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 const ORDER_BOOK_SCENARIOS = [
   {
@@ -119,28 +116,26 @@ const ORDER_BOOK_SCENARIOS = [
   },
 ] as const;
 
-export default function TestPage() {
-  const [activeSide, setActiveSide] = useState<'bid' | 'ask' | null>(null);
+function OrderBookTestContent() {
+  const { selectedCoin } = useCoinContext();
 
   return (
-    <div className="flex h-auto min-h-screen flex-col items-center justify-start gap-10 bg-[#0F0F0F] py-10">
-      <section className="flex w-full max-w-3xl flex-col items-center gap-4">
-        <h2 className="text-lg font-semibold text-white">OrderBookWidget previews</h2>
+    <div className="flex min-h-screen flex-col items-center justify-start gap-10 bg-[#0F0F0F] py-10">
+      <section className="flex flex-col items-center gap-3">
+        <h2 className="text-lg font-semibold text-white">Live OrderBook (websocket)</h2>
         <p className="text-sm text-[#A4A4A4]">
-          Click bid / ask on the first widget to verify the active state. The following widgets
-          cover the AC6-AC10 amount ranges and include a long-symbol wrap example.
+          Symbol from CoinContext: <span className="font-semibold text-white">{selectedCoin.label}</span>
         </p>
+        <OrderBookLiveContainer />
+      </section>
 
+      <section className="flex w-full max-w-3xl flex-col items-center gap-4">
+        <h3 className="text-lg font-semibold text-white">Snapshot scenarios</h3>
+        <p className="text-sm text-[#A4A4A4]">
+          Reference states used during design to validate formatting across different values.
+        </p>
         <div className="flex flex-col items-center gap-4">
-          <OrderBookWidget
-            bid={ORDER_BOOK_SCENARIOS[0].bid}
-            ask={ORDER_BOOK_SCENARIOS[0].ask}
-            activeSide={activeSide}
-            onBidClick={() => setActiveSide((prev) => (prev === 'bid' ? null : 'bid'))}
-            onAskClick={() => setActiveSide((prev) => (prev === 'ask' ? null : 'ask'))}
-          />
-
-          {ORDER_BOOK_SCENARIOS.slice(1).map(({ id, label, bid, ask }) => (
+          {ORDER_BOOK_SCENARIOS.map(({ id, label, bid, ask }) => (
             <div key={id} className="flex flex-col items-center gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-[#A4A4A4]">
                 {label}
@@ -149,86 +144,17 @@ export default function TestPage() {
             </div>
           ))}
 
-          <OrderBookWidget
-            bid={{ amountLabel: 'Amount (BTC)' }}
-            ask={{ amountLabel: 'Amount (BTC)' }}
-            disabled
-          />
-        </div>
-      </section>
-
-      <section className="flex w-full max-w-3xl flex-col items-center gap-4">
-        <h2 className="text-lg font-semibold text-white">Close order dialog samples</h2>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <CloseOrderBox
-            side="Buy"
-            amount="100,000.00"
-            token="BTC"
-            price="115,200.00"
-            currency="USD"
-          />
-          <CloseOrderBox
-            side="Buy"
-            amount="100,000"
-            token="1MBABYDOGE"
-            price="0.0012927"
-            currency="USD"
-          />
-          <CloseOrderBox
-            side="Buy"
-            amount="999.99K"
-            token="1MBABYDOGE"
-            price="9,999,999.99"
-            currency="USD"
-          />
-        </div>
-      </section>
-
-      <section className="flex w-full max-w-3xl flex-col gap-4">
-        <h2 className="text-lg font-semibold text-white">History components</h2>
-        <div className="flex flex-col gap-4">
-          <HistoryCard
-            status="closed"
-            side="buy"
-            pair="BTC/USDT"
-            date="13-08-2025"
-            time="14:30:30"
-            orderId="88cbe33fabcd0da4e39"
-            amount="0.020000000"
-            baseSymbol="BTC"
-            price="115,200.00"
-            currency="USD"
-          />
-          <HistoryCard
-            status="complete"
-            side="buy"
-            pair="BTC/USDT"
-            date="13-08-2025"
-            time="14:30:30"
-            orderId="88cbe33fabcd0da4e39"
-            amount="0.020000000"
-            baseSymbol="BTC"
-            price="115,200.00"
-            currency="USD"
-          />
-        </div>
-
-        <div className="rounded-xl border border-[#2F2F2F] p-6">
-          <HistoryListPreview />
-        </div>
-      </section>
-
-      <section className="flex w-full max-w-3xl flex-col gap-4">
-        <h2 className="text-lg font-semibold text-white">History API payload (raw)</h2>
-        <HistoryApiPreview />
-      </section>
-
-      <section className="flex w-full max-w-3xl flex-col gap-4">
-        <h2 className="text-lg font-semibold text-white">Trade history container (API)</h2>
-        <div className="flex justify-center rounded-xl border border-[#2F2F2F] bg-[#16171D] p-6">
-          <TradeHistoryContainer />
+          <OrderBookWidget bid={{ amountLabel: 'Amount (BTC)' }} ask={{ amountLabel: 'Amount (BTC)' }} disabled />
         </div>
       </section>
     </div>
+  );
+}
+
+export default function TestPage() {
+  return (
+    <CoinProvider>
+      <OrderBookTestContent />
+    </CoinProvider>
   );
 }
