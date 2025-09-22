@@ -109,7 +109,7 @@ function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
   const commaCount = Math.max(0, Math.floor((Math.max(1, baseIntDigits) - 1) / 3));
   const target = Math.max(
     // int digits + commas + optional dot + decimals
-    (Math.max(1, baseIntDigits) + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0)),
+    Math.max(1, baseIntDigits) + commaCount + (labelPrecision > 0 ? 1 + labelPrecision : 0),
     // ensure a sane minimum so tiny prices still align nicely
     6 + (labelPrecision > 0 ? 1 + Math.min(labelPrecision, 4) : 0)
   );
@@ -122,10 +122,7 @@ function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
 
 // Same formatter but reads current base digits from a ref so series labels
 // (last value bubble) stay in sync with the axis width without reapplying options.
-function makeSeriesFormatter(
-  precision: number,
-  baseIntDigitsRef: React.MutableRefObject<number>
-) {
+function makeSeriesFormatter(precision: number, baseIntDigitsRef: React.MutableRefObject<number>) {
   const labelPrecision = Math.min(Math.max(0, precision), 8);
   const addCommas = (numStr: string) => {
     const [i, d = ''] = numStr.split('.');
@@ -154,7 +151,7 @@ function makeTickFormatter(currentInterval: string) {
 
   // Always display in UTC+7 (Bangkok). We offset epoch seconds by +7h
   return (time: Time, tickMarkType: TickMarkType, _locale?: string): string => {
-    const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+    const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
     const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
     const d = new Date((ts as number) * 1000 + offsetMs);
     const Y = d.getUTCFullYear();
@@ -195,7 +192,7 @@ const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includ
 
 // Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
 function timeFormatterUTC7(time: Time): string {
-  const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+  const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
   const d = new Date((ts as number) * 1000 + 7 * 60 * 60 * 1000);
   const pad = (n: number) => n.toString().padStart(2, '0');
   const Y = d.getUTCFullYear();
