@@ -467,6 +467,56 @@ const AdvancedChart = () => {
 
       // increment run sequence to invalidate older async work
       const myRun = ++runSeqRef.current;
+
+      // Apply immediate axis/series format using cached precision (fast render)
+      const getCachedPrecision = (): number => {
+        try {
+          const s = localStorage.getItem('wl_precisionCache');
+          if (s) {
+            const obj = JSON.parse(s);
+            const key = selectedCoin.label; // e.g., BTC/USDT
+            const p = obj?.[key];
+            if (typeof p === 'number' && p >= 0 && p <= 8) return p;
+          }
+        } catch {}
+        return 2;
+      };
+      const initialPrecision = getCachedPrecision();
+      precisionRef.current = initialPrecision;
+      const initialMinMove = Math.pow(10, -initialPrecision);
+      chart.applyOptions({
+        localization: {
+          priceFormatter: makeFixedWidthFormatter(initialPrecision, baseIntDigitsRef.current),
+          timeFormatter: timeFormatterUTC7,
+        },
+        timeScale: {
+          tickMarkFormatter: makeTickFormatter(interval),
+          timeVisible: isIntradayInterval(interval),
+          secondsVisible: false,
+        },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: { visible: true, labelVisible: false, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+          horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+        },
+      });
+      candle.applyOptions({
+        priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
+        visible: chartType === 'candles',
+        lastValueVisible: true,
+        priceLineVisible: true,
+      });
+      if (lineRef.current) {
+        lineRef.current.applyOptions({
+          visible: chartType === 'line',
+          priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
+          lastValueVisible: chartType === 'line',
+          priceLineVisible: chartType === 'line',
+        });
+      }
+      if (volumeRef.current) {
+        volumeRef.current.applyOptions({ visible: showVolume, lastValueVisible: false, priceLineVisible: false });
+      }
       
       // Connect realtime WS immediately for faster first updates
       const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
