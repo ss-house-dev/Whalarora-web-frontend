@@ -353,12 +353,13 @@ const AdvancedChart = () => {
 
     const resizeObserver = new ResizeObserver((entries) => {
       const { width } = entries[0].contentRect;
+      if (!chartRef.current) return; // chart might be disposed
       chart.applyOptions({ width: Math.floor(width) });
     });
     resizeObserver.observe(container);
 
     // Custom time tooltip that follows crosshair (UTC+7)
-    const unsub = chart.subscribeCrosshairMove((param) => {
+    const crosshairHandler = (param: any) => {
       const tooltip = timeTooltipRef.current;
       if (!tooltip) return;
       const p = param.point;
@@ -371,14 +372,22 @@ const AdvancedChart = () => {
       } else {
         tooltip.style.display = 'none';
       }
-    });
+    };
+    chart.subscribeCrosshairMove(crosshairHandler);
 
     setReady(true);
 
     return () => {
-      resizeObserver.unobserve(container);
+      // Invalidate any in-flight async work for symbol/interval effect
+      runSeqRef.current++;
       try {
-        chart.unsubscribeCrosshairMove(unsub as any);
+        resizeObserver.unobserve(container);
+      } catch {}
+      try {
+        resizeObserver.disconnect();
+      } catch {}
+      try {
+        chart.unsubscribeCrosshairMove(crosshairHandler as any);
       } catch {}
       if (wsRef.current) {
         try {
@@ -522,6 +531,7 @@ const AdvancedChart = () => {
         if (myRun !== runSeqRef.current) return;
         precisionRef.current = precision;
         const minMove = Math.pow(10, -precision);
+        if (!chartRef.current || chartRef.current !== chart) return;
         chart.applyOptions({
           localization: {
             priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
@@ -538,6 +548,7 @@ const AdvancedChart = () => {
             horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
           },
         });
+        if (!candleRef.current || candleRef.current !== candle) return;
         candle.applyOptions({
           priceFormat: { type: 'custom', minMove, formatter: makeSeriesFormatter(precision, baseIntDigitsRef) },
           visible: chartType === 'candles',
@@ -572,6 +583,7 @@ const AdvancedChart = () => {
         }));
         // If WS already started appending current bar, avoid overriding it
         if (barsRef.current.length === 0) {
+          if (!candleRef.current || candleRef.current !== candle) return;
           candle.setData(data);
           barsRef.current = data;
         } else {
@@ -579,11 +591,14 @@ const AdvancedChart = () => {
           const lastHist = data[data.length - 1]?.time as UTCTimestamp | undefined;
           const wsLast = barsRef.current[barsRef.current.length - 1]?.time as UTCTimestamp | undefined;
           if (!wsLast || (lastHist && wsLast <= lastHist)) {
+            if (!candleRef.current || candleRef.current !== candle) return;
             candle.setData(data);
             barsRef.current = data;
           }
         }
-        chart.timeScale().fitContent();
+        if (chartRef.current === chart) {
+          chart.timeScale().fitContent();
+        }
         // keep track of last bar
         const last = barsRef.current[barsRef.current.length - 1] ?? data[data.length - 1];
         lastBarRef.current = last ?? null;
@@ -591,6 +606,7 @@ const AdvancedChart = () => {
 
         // lock axis label width to fixed baseline to avoid jitter across symbols
         baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
+        if (!chartRef.current || chartRef.current !== chart) return;
         chart.applyOptions({
           localization: {
             priceFormatter: makeFixedWidthFormatter(precisionRef.current, baseIntDigitsRef.current),
