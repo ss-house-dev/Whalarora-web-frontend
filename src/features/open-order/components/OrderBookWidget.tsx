@@ -28,10 +28,10 @@ const ASK_COLOR = '#D84C4C';
 const LABEL_COLOR = '#7E7E7E';
 const AMOUNT_COLOR = '#FFFFFF';
 const BORDER_COLOR = '#474747';
-const BID_OVERLAY = 'rgba(47, 172, 162, 0.16)';
-const ASK_OVERLAY = 'rgba(47, 172, 162, 0.16)';
-const BID_ACTIVE_OVERLAY = 'rgba(47, 172, 162, 0.32)';
-const ASK_ACTIVE_OVERLAY = 'rgba(47, 172, 162, 0.32)';
+const BID_OVERLAY = 'rgba(255, 255, 255, 0.08)';
+const ASK_OVERLAY = 'rgba(255, 255, 255, 0.08)';
+const BID_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
+const ASK_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
 
 function hasValue(value?: string | null) {
   if (value === null || value === undefined) return false;
@@ -138,7 +138,12 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
       if (disabled || event.repeat) return;
 
-      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Space' || event.key === 'Spacebar') {
+      if (
+        event.key === 'Enter' ||
+        event.key === ' ' ||
+        event.key === 'Space' ||
+        event.key === 'Spacebar'
+      ) {
         setIsPressing(true);
       }
     },
@@ -146,7 +151,12 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
   );
 
   const handleKeyUp = React.useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Space' || event.key === 'Spacebar') {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' ' ||
+      event.key === 'Space' ||
+      event.key === 'Spacebar'
+    ) {
       setIsPressing(false);
     }
   }, []);
@@ -295,7 +305,6 @@ export default function OrderBookWidget({
     <div
       className={clsx(
         'relative inline-flex h-[60px] w-[384px] overflow-hidden rounded-xl bg-[#16171D]',
-        'outline outline-1 outline-[#474747]',
         className
       )}
     >
