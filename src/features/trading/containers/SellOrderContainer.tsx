@@ -11,7 +11,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TradeQueryKeys } from '@/features/trading/constants';
 import { useGetCoin } from '@/features/trading/hooks/useGetCoin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
-import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 
 interface UserWithId {
   id: string;
@@ -21,8 +20,7 @@ interface UserWithId {
 export default function SellOrderContainer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin } = useCoinContext();
-  const { marketPrice, isPriceLoading, priceDecimalPlaces } = useMarketPrice(selectedCoin.label);
+  const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces } = useCoinContext();
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();

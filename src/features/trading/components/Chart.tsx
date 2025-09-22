@@ -223,6 +223,8 @@ const AdvancedChart = () => {
   const volAggRef = useRef<number>(0);
   // baseline for computing compact, fixed-width price labels
   const baseIntDigitsRef = useRef<number>(AXIS_BASE_INT_DIGITS);
+  // price precision cache
+  const precisionRef = useRef<number>(2);
   // extra series
   const lineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -351,12 +353,13 @@ const AdvancedChart = () => {
 
     const resizeObserver = new ResizeObserver((entries) => {
       const { width } = entries[0].contentRect;
+      if (!chartRef.current) return; // chart might be disposed
       chart.applyOptions({ width: Math.floor(width) });
     });
     resizeObserver.observe(container);
 
     // Custom time tooltip that follows crosshair (UTC+7)
-    const unsub = chart.subscribeCrosshairMove((param) => {
+    const crosshairHandler = (param: any) => {
       const tooltip = timeTooltipRef.current;
       if (!tooltip) return;
       const p = param.point;
@@ -369,14 +372,22 @@ const AdvancedChart = () => {
       } else {
         tooltip.style.display = 'none';
       }
-    });
+    };
+    chart.subscribeCrosshairMove(crosshairHandler);
 
     setReady(true);
 
     return () => {
-      resizeObserver.unobserve(container);
+      // Invalidate any in-flight async work for symbol/interval effect
+      runSeqRef.current++;
       try {
-        chart.unsubscribeCrosshairMove(unsub as any);
+        resizeObserver.unobserve(container);
+      } catch {}
+      try {
+        resizeObserver.disconnect();
+      } catch {}
+      try {
+        chart.unsubscribeCrosshairMove(crosshairHandler as any);
       } catch {}
       if (wsRef.current) {
         try {
@@ -457,15 +468,25 @@ const AdvancedChart = () => {
       // increment run sequence to invalidate older async work
       const myRun = ++runSeqRef.current;
 
-      // set precision for series and a stable-width formatter for axis labels
-      const precision = await fetchPrecision(symbol);
-      if (myRun !== runSeqRef.current) return; // aborted
-      const minMove = Math.pow(10, -precision);
-      // Apply chart options (time & crosshair). We'll set priceFormatter after we know base digits.
+      // Apply immediate axis/series format using cached precision (fast render)
+      const getCachedPrecision = (): number => {
+        try {
+          const s = localStorage.getItem('wl_precisionCache');
+          if (s) {
+            const obj = JSON.parse(s);
+            const key = selectedCoin.label; // e.g., BTC/USDT
+            const p = obj?.[key];
+            if (typeof p === 'number' && p >= 0 && p <= 8) return p;
+          }
+        } catch {}
+        return 2;
+      };
+      const initialPrecision = getCachedPrecision();
+      precisionRef.current = initialPrecision;
+      const initialMinMove = Math.pow(10, -initialPrecision);
       chart.applyOptions({
         localization: {
-          // temporary minimal formatter; will be replaced after history loads
-          priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+          priceFormatter: makeFixedWidthFormatter(initialPrecision, baseIntDigitsRef.current),
           timeFormatter: timeFormatterUTC7,
         },
         timeScale: {
@@ -475,60 +496,129 @@ const AdvancedChart = () => {
         },
         crosshair: {
           mode: CrosshairMode.Normal,
-          vertLine: {
-            visible: true,
-            labelVisible: false,
-            color: '#9CA3AF',
-            width: 1,
-            style: LineStyle.Dashed,
-          },
-          horzLine: {
-            visible: true,
-            labelVisible: true,
-            color: '#9CA3AF',
-            width: 1,
-            style: LineStyle.Dashed,
-          },
+          vertLine: { visible: true, labelVisible: false, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+          horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
         },
       });
-
-      // Apply options with explicit price label settings
       candle.applyOptions({
-        priceFormat: {
-          type: 'custom',
-          minMove,
-          formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
-        },
+        priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
         visible: chartType === 'candles',
-        // Ensure price labels are always visible for main series
         lastValueVisible: true,
         priceLineVisible: true,
       });
-
       if (lineRef.current) {
         lineRef.current.applyOptions({
           visible: chartType === 'line',
-          priceFormat: {
-            type: 'custom',
-            minMove,
-            formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
-          },
-          // Keep price label for line chart
+          priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
           lastValueVisible: chartType === 'line',
           priceLineVisible: chartType === 'line',
         });
       }
-
       if (volumeRef.current) {
-        volumeRef.current.applyOptions({
-          visible: showVolume,
-          // Volume should not show price label
-          lastValueVisible: false,
-          priceLineVisible: false,
-        });
+        volumeRef.current.applyOptions({ visible: showVolume, lastValueVisible: false, priceLineVisible: false });
       }
+      
+      // Connect realtime WS immediately for faster first updates
+      const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-      // reset data and load history for new symbol
+      ws.onmessage = (ev) => {
+        // ignore late messages from stale sockets
+        if (myRun !== runSeqRef.current || ws !== wsRef.current) return;
+        const series = candleRef.current;
+        if (!series) return;
+        try {
+          const d = JSON.parse(ev.data);
+          const price = parseFloat(d.p);
+          const tMs: number = d.T || d.E || Date.now();
+          if (!isFinite(price) || price <= 0) return;
+
+          const intervalMs = intervalMsRef.current;
+          const barStartMs = Math.floor(tMs / intervalMs) * intervalMs;
+          const barTime = Math.floor(barStartMs / 1000) as UTCTimestamp;
+
+          let bar = lastBarRef.current;
+          if (!bar || (lastBarTimeRef.current ?? 0) < barTime) {
+            bar = {
+              time: barTime,
+              open: price,
+              high: price,
+              low: price,
+              close: price,
+            };
+            lastBarRef.current = bar;
+            lastBarTimeRef.current = barTime;
+            barsRef.current = [...barsRef.current, bar];
+            volAggRef.current = parseFloat(d.q ?? '0') || 0;
+          } else {
+            bar.close = price;
+            if (price > bar.high) bar.high = price;
+            if (price < bar.low) bar.low = price;
+            const arr = barsRef.current;
+            if (arr.length) arr[arr.length - 1] = { ...bar };
+            volAggRef.current += parseFloat(d.q ?? '0') || 0;
+          }
+
+          series.update(bar);
+          if (lineRef.current && chartType === 'line') {
+            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
+          }
+          if (volumeRef.current && showVolume) {
+            volumeRef.current.update({
+              time: bar.time as UTCTimestamp,
+              value: volAggRef.current,
+              color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
+            } as any);
+          }
+          recomputeIndicators();
+        } catch {}
+      };
+
+      // Fetch precision in parallel and apply when ready
+      (async () => {
+        const precision = await fetchPrecision(symbol);
+        if (myRun !== runSeqRef.current) return;
+        precisionRef.current = precision;
+        const minMove = Math.pow(10, -precision);
+        if (!chartRef.current || chartRef.current !== chart) return;
+        chart.applyOptions({
+          localization: {
+            priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+            timeFormatter: timeFormatterUTC7,
+          },
+          timeScale: {
+            tickMarkFormatter: makeTickFormatter(interval),
+            timeVisible: isIntradayInterval(interval),
+            secondsVisible: false,
+          },
+          crosshair: {
+            mode: CrosshairMode.Normal,
+            vertLine: { visible: true, labelVisible: false, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+            horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+          },
+        });
+        if (!candleRef.current || candleRef.current !== candle) return;
+        candle.applyOptions({
+          priceFormat: { type: 'custom', minMove, formatter: makeSeriesFormatter(precision, baseIntDigitsRef) },
+          visible: chartType === 'candles',
+          lastValueVisible: true,
+          priceLineVisible: true,
+        });
+        if (lineRef.current) {
+          lineRef.current.applyOptions({
+            visible: chartType === 'line',
+            priceFormat: { type: 'custom', minMove, formatter: makeSeriesFormatter(precision, baseIntDigitsRef) },
+            lastValueVisible: chartType === 'line',
+            priceLineVisible: chartType === 'line',
+          });
+        }
+        if (volumeRef.current) {
+          volumeRef.current.applyOptions({ visible: showVolume, lastValueVisible: false, priceLineVisible: false });
+        }
+      })();
+
+      // reset data and load history for new symbol (in parallel with WS)
       try {
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
         const resp = await fetch(url);
@@ -541,19 +631,35 @@ const AdvancedChart = () => {
           low: parseFloat(r[3]),
           close: parseFloat(r[4]),
         }));
-        candle.setData(data);
-        chart.timeScale().fitContent();
-        // keep track of bars & last bar
-        barsRef.current = data;
-        const last = data[data.length - 1];
+        // If WS already started appending current bar, avoid overriding it
+        if (barsRef.current.length === 0) {
+          if (!candleRef.current || candleRef.current !== candle) return;
+          candle.setData(data);
+          barsRef.current = data;
+        } else {
+          // Merge: keep existing (WS) bars, but backfill history if it ends before
+          const lastHist = data[data.length - 1]?.time as UTCTimestamp | undefined;
+          const wsLast = barsRef.current[barsRef.current.length - 1]?.time as UTCTimestamp | undefined;
+          if (!wsLast || (lastHist && wsLast <= lastHist)) {
+            if (!candleRef.current || candleRef.current !== candle) return;
+            candle.setData(data);
+            barsRef.current = data;
+          }
+        }
+        if (chartRef.current === chart) {
+          chart.timeScale().fitContent();
+        }
+        // keep track of last bar
+        const last = barsRef.current[barsRef.current.length - 1] ?? data[data.length - 1];
         lastBarRef.current = last ?? null;
         lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
 
         // lock axis label width to fixed baseline to avoid jitter across symbols
         baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
+        if (!chartRef.current || chartRef.current !== chart) return;
         chart.applyOptions({
           localization: {
-            priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+            priceFormatter: makeFixedWidthFormatter(precisionRef.current, baseIntDigitsRef.current),
             timeFormatter: timeFormatterUTC7,
           },
         });
@@ -574,66 +680,7 @@ const AdvancedChart = () => {
         console.error('Chart: failed to load history', e);
       }
 
-      // subscribe realtime trade stream (faster than kline)
-      const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onmessage = (ev) => {
-        // ignore late messages from stale sockets
-        if (myRun !== runSeqRef.current || ws !== wsRef.current) return;
-        const series = candleRef.current;
-        if (!series) return;
-        try {
-          const d = JSON.parse(ev.data);
-          // trade payload: { e: 'trade', T: time(ms), p: price }
-          const price = parseFloat(d.p);
-          const tMs: number = d.T || d.E || Date.now();
-          if (!isFinite(price) || price <= 0) return;
-
-          const intervalMs = intervalMsRef.current;
-          const barStartMs = Math.floor(tMs / intervalMs) * intervalMs;
-          const barTime = Math.floor(barStartMs / 1000) as UTCTimestamp;
-
-          let bar = lastBarRef.current;
-          if (!bar || (lastBarTimeRef.current ?? 0) < barTime) {
-            bar = {
-              time: barTime,
-              open: price,
-              high: price,
-              low: price,
-              close: price,
-            };
-            lastBarRef.current = bar;
-            lastBarTimeRef.current = barTime;
-            // push new bar & reset volume agg
-            barsRef.current = [...barsRef.current, bar];
-            volAggRef.current = parseFloat(d.q ?? '0') || 0;
-          } else {
-            // update existing bar
-            bar.close = price;
-            if (price > bar.high) bar.high = price;
-            if (price < bar.low) bar.low = price;
-            const arr = barsRef.current;
-            if (arr.length) arr[arr.length - 1] = { ...bar };
-            volAggRef.current += parseFloat(d.q ?? '0') || 0;
-          }
-
-          series.update(bar);
-          // Keep axis width constant; do not widen based on incoming price
-          if (lineRef.current && chartType === 'line') {
-            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
-          }
-          if (volumeRef.current && showVolume) {
-            volumeRef.current.update({
-              time: bar.time as UTCTimestamp,
-              value: volAggRef.current,
-              color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
-            } as any);
-          }
-          recomputeIndicators();
-        } catch {}
-      };
+      // WS already started above
     };
 
     run();
