@@ -5,6 +5,7 @@ import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
 import { CombinedCombobox } from '@/components/combobox';
 import OrderTableContainer from '@/features/open-order/components/OrderTableContainer';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import { useCancelOrder } from '@/features/open-order/hooks/useCancelOrder';
 
 type OrderTabType = 'open' | 'history';
@@ -12,6 +13,7 @@ type OrderTabType = 'open' | 'history';
 export default function MarketOrderPage() {
   const [activeTab, setActiveTab] = useState<OrderTabType>('open');
   const cancelMutation = useCancelOrder();
+  const { selectedCoin, ordersVersion } = useCoinContext();
 
   const handleCancelOrder = async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
     try {
@@ -33,8 +35,11 @@ export default function MarketOrderPage() {
         <div className="w-[900px] min-h-[508px]">
           <AdvancedChart />
         </div>
-        <div className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[508px]">
-          <MarketOrderContainer />
+        <div
+          key={`${selectedCoin.value}-${ordersVersion}-panel`}
+          className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[508px]"
+        >
+          <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
         </div>
       </div>
 
