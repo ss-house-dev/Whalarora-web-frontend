@@ -62,6 +62,10 @@ type WsKlineMessage = {
 };
 
 const DEFAULT_INTERVAL = '15m'; // 1m/5m/15m/1h supported
+// Keep right price scale width stable across symbols by fixing
+// baseline integer digits and decimal width used for padding
+const AXIS_BASE_INT_DIGITS = 6; // supports up to 999,999 before widening
+const AXIS_DECIMALS_WIDTH = 2; // pad width for up to 8 decimals
 
 function intervalToMs(interval: string): number {
   const m = interval.match(/^(\d+)([mhd])$/i);
@@ -97,14 +101,50 @@ async function fetchPrecision(symbol: string): Promise<number> {
 }
 
 // Create a stable-width price formatter to prevent right axis jitter
-function makeFixedWidthFormatter(precision: number) {
-  // จำกัดจำนวนทศนิยมตาม precision และใส่คอมมาที่หลักพัน
+// but keep the right scale compact. Width is computed from the maximum
+// integer digits we expect (baseline) plus decimal precision.
+function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
   const labelPrecision = Math.min(Math.max(0, precision), 8);
-  const nf = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: labelPrecision,
-    maximumFractionDigits: labelPrecision,
-  });
-  return (p: number) => (isFinite(p) ? nf.format(p) : nf.format(0));
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  const commaCount = Math.max(0, Math.floor((Math.max(1, baseIntDigits) - 1) / 3));
+  // Fixed target width uses constant decimal width so axis doesn't shift
+  const target = Math.max(
+    Math.max(1, baseIntDigits) +
+      commaCount +
+      (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+    8 // guarantee a usable minimum
+  );
+  return (p: number) => {
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
+  };
+}
+
+// Same formatter but reads current base digits from a ref so series labels
+// (last value bubble) stay in sync with the axis width without reapplying options.
+function makeSeriesFormatter(precision: number, baseIntDigitsRef: React.MutableRefObject<number>) {
+  const labelPrecision = Math.min(Math.max(0, precision), 8);
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  return (p: number) => {
+    const baseIntDigits = Math.max(1, baseIntDigitsRef.current);
+    const commaCount = Math.max(0, Math.floor((baseIntDigits - 1) / 3));
+    const target = Math.max(
+      baseIntDigits + commaCount + (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+      8
+    );
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
+  };
 }
 
 // Custom time scale tick formatter based on selected interval
@@ -116,7 +156,7 @@ function makeTickFormatter(currentInterval: string) {
 
   // Always display in UTC+7 (Bangkok). We offset epoch seconds by +7h
   return (time: Time, tickMarkType: TickMarkType, _locale?: string): string => {
-    const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+    const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
     const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
     const d = new Date((ts as number) * 1000 + offsetMs);
     const Y = d.getUTCFullYear();
@@ -157,7 +197,7 @@ const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includ
 
 // Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
 function timeFormatterUTC7(time: Time): string {
-  const ts = typeof time === 'number' ? time : (time as any).timestamp ?? 0;
+  const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
   const d = new Date((ts as number) * 1000 + 7 * 60 * 60 * 1000);
   const pad = (n: number) => n.toString().padStart(2, '0');
   const Y = d.getUTCFullYear();
@@ -181,6 +221,8 @@ const AdvancedChart = () => {
   const intervalMsRef = useRef<number>(intervalToMs(DEFAULT_INTERVAL));
   const barsRef = useRef<CandlestickData[]>([]);
   const volAggRef = useRef<number>(0);
+  // baseline for computing compact, fixed-width price labels
+  const baseIntDigitsRef = useRef<number>(AXIS_BASE_INT_DIGITS);
   // extra series
   const lineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -419,10 +461,11 @@ const AdvancedChart = () => {
       const precision = await fetchPrecision(symbol);
       if (myRun !== runSeqRef.current) return; // aborted
       const minMove = Math.pow(10, -precision);
-      // Use fixed-width label formatter to prevent axis width jitter
+      // Apply chart options (time & crosshair). We'll set priceFormatter after we know base digits.
       chart.applyOptions({
         localization: {
-          priceFormatter: makeFixedWidthFormatter(precision),
+          // temporary minimal formatter; will be replaced after history loads
+          priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
           timeFormatter: timeFormatterUTC7,
         },
         timeScale: {
@@ -451,7 +494,11 @@ const AdvancedChart = () => {
 
       // Apply options with explicit price label settings
       candle.applyOptions({
-        priceFormat: { type: 'price', precision, minMove },
+        priceFormat: {
+          type: 'custom',
+          minMove,
+          formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+        },
         visible: chartType === 'candles',
         // Ensure price labels are always visible for main series
         lastValueVisible: true,
@@ -461,7 +508,11 @@ const AdvancedChart = () => {
       if (lineRef.current) {
         lineRef.current.applyOptions({
           visible: chartType === 'line',
-          priceFormat: { type: 'price', precision, minMove },
+          priceFormat: {
+            type: 'custom',
+            minMove,
+            formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+          },
           // Keep price label for line chart
           lastValueVisible: chartType === 'line',
           priceLineVisible: chartType === 'line',
@@ -497,6 +548,15 @@ const AdvancedChart = () => {
         const last = data[data.length - 1];
         lastBarRef.current = last ?? null;
         lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
+
+        // lock axis label width to fixed baseline to avoid jitter across symbols
+        baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
+        chart.applyOptions({
+          localization: {
+            priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+            timeFormatter: timeFormatterUTC7,
+          },
+        });
 
         // set volume from history
         if (volumeRef.current) {
@@ -560,6 +620,7 @@ const AdvancedChart = () => {
           }
 
           series.update(bar);
+          // Keep axis width constant; do not widen based on incoming price
           if (lineRef.current && chartType === 'line') {
             lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
           }
@@ -654,7 +715,7 @@ const AdvancedChart = () => {
         <div
           ref={timeTooltipRef}
           style={{ display: 'none', transform: 'translateX(-50%)' }}
-          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
+          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#16171D] rounded-md shadow"
         />
         <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
