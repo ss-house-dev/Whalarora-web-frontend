@@ -4,8 +4,10 @@ import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import BuyOrderContainer from '@/features/trading/containers/BuyOrderContainer';
 import SellOrderContainer from '@/features/trading/containers/SellOrderContainer';
+import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 export default function MarketOrderContainer() {
+  const { selectedCoin, ordersVersion } = useCoinContext();
   return (
     <div>
       <Tabs defaultValue="buy">
@@ -26,12 +28,12 @@ export default function MarketOrderContainer() {
 
         {/* Buy Tab */}
         <TabsContent value="buy" className="mt-7">
-          <BuyOrderContainer />
+          <BuyOrderContainer key={`${selectedCoin.value}-${ordersVersion}-buy`} />
         </TabsContent>
 
         {/* Sell Tab */}
         <TabsContent value="sell" className="mt-7">
-          <SellOrderContainer />
+          <SellOrderContainer key={`${selectedCoin.value}-${ordersVersion}-sell`} />
         </TabsContent>
       </Tabs>
     </div>
