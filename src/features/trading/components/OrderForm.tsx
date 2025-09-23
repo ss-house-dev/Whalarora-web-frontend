@@ -75,6 +75,17 @@ const OrderForm: React.FC<OrderFormProps> = ({
   // Track if user has manually entered a price
   const [hasUserPrice, setHasUserPrice] = React.useState(false);
 
+  // Truncate long symbols/currencies to 4 characters for display
+  const displaySymbol = symbol && symbol.length > 4 ? symbol.slice(0, 4) : symbol;
+  const displayBalanceCurrency =
+    balanceCurrency && balanceCurrency.length > 4
+      ? balanceCurrency.slice(0, 4)
+      : balanceCurrency;
+  const displayReceiveCurrency =
+    type === 'buy'
+      ? (receiveCurrency ? (receiveCurrency.length > 4 ? receiveCurrency.slice(0, 4) : receiveCurrency) : 'Coin')
+      : 'USDT';
+
   const handleButtonClick = () => {
     if (!isAuthenticated && onLoginClick) {
       onLoginClick();
@@ -88,7 +99,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       return 'Login';
     }
     const action = type === 'buy' ? 'Buy' : 'Sell';
-    return symbol ? `${action} ${symbol}` : action;
+    return displaySymbol ? `${action} ${displaySymbol}` : action;
   };
 
   // Handle price changes - track if user is entering custom price
@@ -126,9 +137,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   };
 
   // Handle click on receive container - focus the receive input inside
-  const handleReceiveContainerClick = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
+  const handleReceiveContainerClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const inputEl = e.currentTarget.querySelector('input') as HTMLInputElement | null;
     inputEl?.focus();
   };
@@ -177,10 +186,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
       <div className="flex justify-between mt-4 mb-[6px] px-3">
         <div className="text-xs text-[#A4A4A4]">Available Balance</div>
-        <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
-          <div>{availableBalance}</div>
-          <div>{balanceCurrency}</div>
-        </div>
+            <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
+              <div>{availableBalance}</div>
+              <div>{displayBalanceCurrency}</div>
+            </div>
       </div>
 
       {/* Spend */}
@@ -220,7 +229,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 className="text-[14px] font-normal cursor-text text-[#A4A4A4]"
                 onClick={handleAmountContainerClick}
               >
-                {balanceCurrency}
+                {displayBalanceCurrency}
               </span>
             </div>
           </div>
@@ -311,14 +320,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
               onClick={(e) => e.stopPropagation()}
             />
             <span className="text-sm font-normal text-[#A4A4A4]">
-              {type === 'buy' ? receiveCurrency || 'Coin' : 'USDT'}
+              {displayReceiveCurrency}
             </span>
           </div>
         </div>
       </div>
 
       {/* Action Button */}
-      <div className="mt-8 w-full">
+      <div className="mt-11 w-full">
         <Button
           className={`w-full rounded-lg ${buttonColor} cursor-pointer text-[16px] font-normal ${
             isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
