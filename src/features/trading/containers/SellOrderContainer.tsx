@@ -17,7 +17,11 @@ interface UserWithId {
   email?: string;
 }
 
-export default function SellOrderContainer() {
+interface SellOrderContainerProps {
+  onExchangeClick?: () => void;
+}
+
+export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces } = useCoinContext();
@@ -562,6 +566,7 @@ export default function SellOrderContainer() {
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveUSDChange}
+        onExchangeClick={onExchangeClick}
         onQuickAdd={handleQuickAddSell}
         onMax={handleMaxSell}
       />

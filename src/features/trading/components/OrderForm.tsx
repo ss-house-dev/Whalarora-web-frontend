@@ -41,6 +41,7 @@ interface OrderFormProps {
   onReceiveChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onQuickAdd?: (delta: number) => void;
   onMax?: () => void;
+  onExchangeClick?: () => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -76,6 +77,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onReceiveChange,
   onQuickAdd,
   onMax,
+  onExchangeClick,
 }) => {
   const [priceTab, setPriceTab] = React.useState<'current' | 'set'>(
     priceLabel === 'Price' ? 'current' : 'set'
@@ -371,7 +373,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
       <div className="space-y-3">
         {/* arrow */}
-        <div className="flex justify-center">
+        <div className="flex justify-center" onClick={() => onExchangeClick?.()}>
           <Image
             src="/assets/exchange.svg"
             alt="Exchange Button"

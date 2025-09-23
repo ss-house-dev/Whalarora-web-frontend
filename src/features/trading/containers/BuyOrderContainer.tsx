@@ -41,7 +41,11 @@ interface SessionUser {
   name?: string;
 }
 
-export default function BuyOrderContainer() {
+interface BuyOrderContainerProps {
+  onExchangeClick?: () => void;
+}
+
+export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces } = useCoinContext();
@@ -669,6 +673,7 @@ export default function BuyOrderContainer() {
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveChange}
+        onExchangeClick={onExchangeClick}
         onQuickAdd={handleQuickAdd}
         onMax={handleMax}
       />

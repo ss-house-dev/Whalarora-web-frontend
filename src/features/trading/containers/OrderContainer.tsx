@@ -8,9 +8,12 @@ import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 export default function MarketOrderContainer() {
   const { selectedCoin, ordersVersion } = useCoinContext();
+  const [activeTab, setActiveTab] = React.useState<'buy' | 'sell'>('buy');
+
+  const toggleTab = () => setActiveTab((t) => (t === 'buy' ? 'sell' : 'buy'));
   return (
     <div>
-      <Tabs defaultValue="buy">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buy' | 'sell')}>
         <TabsList className="w-full bg-[#1F2029]">
           <TabsTrigger
             value="buy"
@@ -28,12 +31,18 @@ export default function MarketOrderContainer() {
 
         {/* Buy Tab */}
         <TabsContent value="buy" className="mt-5">
-          <BuyOrderContainer key={`${selectedCoin.value}-${ordersVersion}-buy`} />
+          <BuyOrderContainer
+            key={`${selectedCoin.value}-${ordersVersion}-buy`}
+            onExchangeClick={toggleTab}
+          />
         </TabsContent>
 
         {/* Sell Tab */}
         <TabsContent value="sell" className="mt-5">
-          <SellOrderContainer key={`${selectedCoin.value}-${ordersVersion}-sell`} />
+          <SellOrderContainer
+            key={`${selectedCoin.value}-${ordersVersion}-sell`}
+            onExchangeClick={toggleTab}
+          />
         </TabsContent>
       </Tabs>
     </div>
