@@ -251,30 +251,38 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     return `${formattedInteger}.${decimalPart}`;
   }, []);
 
-  const formatNumberWithComma = useCallback((value: string): string => {
-    if (!value) return '';
-    let numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+  const formatNumberWithComma = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      let numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    // Normalize leading zeros similar to price formatting
-    if (numericValue === '.') numericValue = '0.';
-    if (numericValue.length > 1 && numericValue[0] === '0') {
-      if (numericValue[1] !== '.') {
-        numericValue = numericValue.replace(/^0+/, '');
-        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
-      } else {
-        numericValue = '0.' + numericValue.slice(2);
+      // Normalize leading zeros similar to price formatting
+      if (numericValue === '.') numericValue = '0.';
+      if (numericValue.length > 1 && numericValue[0] === '0') {
+        if (numericValue[1] !== '.') {
+          numericValue = numericValue.replace(/^0+/, '');
+          if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+        } else {
+          numericValue = '0.' + numericValue.slice(2);
+        }
       }
-    }
 
-    const parts = numericValue.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1];
+      // Limit decimal places based on priceDecimalPlaces
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      let decimalPart = parts[1];
 
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
+        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
+      }
 
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-  }, []);
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    },
+    [priceDecimalPlaces]
+  );
 
   const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
@@ -282,10 +290,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   }, []);
 
   // Updated to allow unlimited decimal places for amount (Spend in USD)
-  const isValidNumberFormat = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d*$/.test(numericValue);
-  }, []);
+  const isValidNumberFormat = useCallback(
+    (value: string): boolean => {
+      const numericValue = value.replace(/,/g, '');
+      // Use priceDecimalPlaces to limit decimal places for spend amount
+      const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
+      return regexPattern.test(numericValue);
+    },
+    [priceDecimalPlaces]
+  );
 
   // Allow up to 9 decimal places for coin amount (Receive on Buy)
   const isValidCoinFormatForBuy = useCallback((value: string): boolean => {
@@ -325,9 +338,14 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     (percentage: number): string => {
       const availableBalance = getAvailableBalance();
       const amount = (percentage / 100) * availableBalance;
-      return formatNumberWithComma(amount.toString());
+
+      // Format with coin's price decimal places
+      const formatted = amount.toFixed(priceDecimalPlaces);
+      const [integerPart, decimalPart] = formatted.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return `${formattedInteger}.${decimalPart}`;
     },
-    [getAvailableBalance, formatNumberWithComma]
+    [getAvailableBalance, priceDecimalPlaces]
   );
 
   const validateAmount = useCallback(() => {
@@ -432,14 +450,21 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const current = parseFloat((amount || '0').replace(/,/g, '')) || 0;
     const available = getAvailableBalance();
     const next = current + delta;
-    const formatted = formatNumberWithComma(next.toString());
-    setAmount(formatted);
+
+    // Format with proper decimal places
+    const formatted = next.toFixed(priceDecimalPlaces);
+    const [integerPart, decimalPart] = formatted.split('.');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const finalFormatted = `${formattedInteger}.${decimalPart}`;
+
+    setAmount(finalFormatted);
+
     if (next > available) {
       setSliderValue(0);
       setIsAmountValid(false);
       setAmountErrorMessage('Insufficient balance');
     } else {
-      const sliderPercentage = calculateSliderPercentage(formatted);
+      const sliderPercentage = calculateSliderPercentage(finalFormatted);
       setSliderValue(sliderPercentage);
       const isValid = next > 0;
       setIsAmountValid(isValid);
@@ -450,8 +475,14 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handleMax = () => {
     setIsReceiveEditing(false);
     const available = getAvailableBalance();
-    const formatted = formatNumberWithComma(available.toString());
-    setAmount(formatted);
+
+    // Format with proper decimal places
+    const formatted = available.toFixed(priceDecimalPlaces);
+    const [integerPart, decimalPart] = formatted.split('.');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const finalFormatted = `${formattedInteger}.${decimalPart}`;
+
+    setAmount(finalFormatted);
     setSliderValue(100);
     setIsAmountValid(available > 0);
     setAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
@@ -462,8 +493,19 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handleAmountBlur = () => {
     setIsReceiveEditing(false);
     setIsAmountFocused(false);
-    // No need to force 2 decimal places anymore - keep the user's input as is
+
     if (amount) {
+      // Format the amount with proper decimal places
+      const numericValue = amount.replace(/,/g, '');
+      const num = parseFloat(numericValue);
+      if (!isNaN(num)) {
+        // Format with the coin's price decimal places
+        const formatted = num.toFixed(priceDecimalPlaces);
+        const [integerPart, decimalPart] = formatted.split('.');
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const finalFormatted = `${formattedInteger}.${decimalPart}`;
+        setAmount(finalFormatted);
+      }
       validateAmount();
     }
   };
