@@ -3,6 +3,7 @@
 import React from "react";
 import OrderBookLiveContainer from "@/features/open-order/containers/OrderBookLiveContainer";
 import OrderBookWidget from "@/features/open-order/components/OrderBookWidget";
+import OpenOrderandTradeHistoryResponsive from "@/features/open-order/components/OpenOrderandTradeHistoryResponsive";
 import { CoinProvider, useCoinContext } from "@/features/trading/contexts/CoinContext";
 import {
   HoldingResponsive,
@@ -300,6 +301,11 @@ function OrderBookTestContent() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-start gap-12 bg-[#0F0F0F] py-10">
+      <section className="flex w-full justify-center px-4">
+        <div className="w-full max-w-6xl">
+          <OpenOrderandTradeHistoryResponsive />
+        </div>
+      </section>
       <section className="flex w-full justify-center px-4">
         <HoldingResponsive holdings={SAMPLE_HOLDINGS} pageSize={6} />
       </section>
