@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
 import AdvancedChart from '@/features/trading/components/Chart';
 import { CombinedCombobox } from '@/components/combobox';
@@ -14,15 +14,16 @@ type OrderTabType = 'open' | 'history';
 export default function MarketOrderPage() {
   const [activeTab, setActiveTab] = useState<OrderTabType>('open');
   const cancelMutation = useCancelOrder();
+  const { mutateAsync: cancelOrderAsync } = cancelMutation;
   const { selectedCoin, ordersVersion } = useCoinContext();
 
-  const handleCancelOrder = async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
+  const handleCancelOrder = useCallback(async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
     try {
-      await cancelMutation.mutateAsync(payload);
+      await cancelOrderAsync(payload);
     } catch (error) {
       console.error('Cancel order error:', error);
     }
-  };
+  }, [cancelOrderAsync]);
 
   return (
     <div className="mx-[23px] mt-[20px] space-y-[20px]">
@@ -60,3 +61,4 @@ export default function MarketOrderPage() {
     </div>
   );
 }
+

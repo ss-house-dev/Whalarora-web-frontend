@@ -1,9 +1,8 @@
 'use client';
 
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction, memo, useEffect, useRef, useState } from 'react';
 import { OpenOrdersContainer } from '../containers/OpenOrdersContainer'; // Corrected named import
 import TradeHistoryContainer from './TradeHistoryContainer';
-import { useRef, useState } from 'react';
 
 interface OrderTableContainerProps {
   activeTab: 'open' | 'history';
@@ -11,7 +10,7 @@ interface OrderTableContainerProps {
   onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
-export default function OrderTableContainer({
+function OrderTableContainer({
   activeTab,
   setActiveTab,
   onCancelOrder,
@@ -33,6 +32,7 @@ export default function OrderTableContainer({
       });
     }
   }, [activeTab]);
+
   return (
     <div className="w-[900px] h-[540px] bg-[#16171D] rounded-xl px-5 pt-3 pb-3 flex flex-col">
       {/* Tabs */}
@@ -82,3 +82,5 @@ export default function OrderTableContainer({
     </div>
   );
 }
+
+export default memo(OrderTableContainer);
