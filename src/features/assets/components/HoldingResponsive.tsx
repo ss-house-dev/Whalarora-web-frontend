@@ -299,9 +299,7 @@ export function HoldingResponsive({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {pagedHoldings.map((holding) => {
           const isGain = holding.pnlAbs >= 0;
-          const pnlAmountText = `${isGain ? "" : "-"}$ ${formatCurrency(
-            Math.abs(holding.pnlAbs)
-          )}`;
+          const pnlAmountText = `${isGain ? "" : "-"}${formatCurrency(Math.abs(holding.pnlAbs))}`;
           return (
             <article
               key={holding.id}
@@ -332,15 +330,15 @@ export function HoldingResponsive({
               </div>
 
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
                   <Stat
-                    label="Average cost"
-                    value={`$ ${formatCurrency(holding.averageCost)}`}
+                    label="Average cost (USDT)"
+                    value={formatCurrency(holding.averageCost)}
                     className="sm:w-36"
                   />
                   <Stat
                     label="Value"
-                    value={`$ ${formatCurrency(holding.value)}`}
+                    value={formatCurrency(holding.value)}
                     className="sm:w-36"
                   />
                 </div>
@@ -407,4 +405,11 @@ export function HoldingResponsive({
 }
 
 export type { HoldingItem, HoldingResponsiveProps };
+
+
+
+
+
+
+
 
