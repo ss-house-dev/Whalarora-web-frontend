@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
@@ -80,25 +80,31 @@ export default function SellOrderContainer() {
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
-
-  // ฟังก์ชันสำหรับการจัดรูปแบบราคาขณะพิมพ์ - อนุญาตให้พิมพ์ทศนิยมได้อย่างอิสระ
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
+    let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    // Normalize leading zeros
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
+    }
 
     const parts = numericValue.split('.');
     const integerPart = parts[0];
     const decimalPart = parts[1];
 
-    // เพิ่มคอมม่าให้กับจำนวนเต็ม
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    // คืนค่าตามที่ผู้ใช้พิมพ์ โดยไม่เติมหรือตัดทศนิยม
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  // ฟังก์ชันสำหรับจัดรูปแบบราคาเมื่อเสร็จสิ้นการแก้ไข (onBlur)
   const formatPriceForDisplay = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -108,16 +114,12 @@ export default function SellOrderContainer() {
     const parts = numericValue.split('.');
     const integerPart = parts[0];
     const decimalPart = parts[1];
-
-    // เพิ่มคอมม่าให้กับจำนวนเต็ม
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    // ถ้าไม่มีทศนิยมหรือเป็นจำนวนเต็ม ให้เติม .00
     if (!decimalPart) {
       return `${formattedInteger}.00`;
     }
 
-    // ถ้ามีทศนิยมแล้ว ให้คงไว้ตามที่ผู้ใช้ป้อน (ไม่เติม 0 ข้างหลัง)
     return `${formattedInteger}.${decimalPart}`;
   }, []);
 
@@ -161,8 +163,19 @@ export default function SellOrderContainer() {
 
   const formatCoinNumber = useCallback((value: string): string => {
     if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
+    let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    // Normalize leading zeros for coin input
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
+    }
 
     const parts = numericValue.split('.');
     const decimalPart = parts[1];
@@ -268,12 +281,10 @@ export default function SellOrderContainer() {
 
   const handlePriceBlur = () => {
     if (price) {
-      // ใช้ฟังก์ชัน formatPriceForDisplay เมื่อเสร็จสิ้นการแก้ไข
       const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
       console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
     } else {
-      // ถ้าไม่มีราคาที่กรอก ให้กลับไปใช้ market price และเปลี่ยน label กลับเป็น "Price"
       if (marketPrice && !isPriceLoading) {
         setPrice(marketPrice);
         setPriceLabel('Price');
