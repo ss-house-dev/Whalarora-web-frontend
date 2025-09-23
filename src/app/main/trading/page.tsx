@@ -42,10 +42,9 @@ export default function MarketOrderPage() {
 
         <div
           key={`${selectedCoin.value}-${ordersVersion}-panel`}
-          className="bg-[#081125] rounded-lg shadow-md p-5 w-[384px] h-[508px]"
+          className="bg-[#16171D] rounded-lg shadow-md p-5 w-[384px] h-[508px]"
         >
           <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
-
         </div>
       </div>
 

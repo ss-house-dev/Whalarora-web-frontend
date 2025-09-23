@@ -564,7 +564,7 @@ export default function BuyOrderContainer() {
         isInputFocused={isInputFocused}
         isAmountFocused={isAmountFocused}
         availableBalance={formatAvailableBalance()}
-        balanceCurrency="USD"
+        balanceCurrency="USDT"
         symbol={coinSymbol}
         buttonColor="bg-[#309C7D] hover:bg-[#28886C]"
         amountIcon="/currency-icons/dollar-icon.svg"

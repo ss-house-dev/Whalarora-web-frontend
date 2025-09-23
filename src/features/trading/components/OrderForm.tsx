@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/Button';
 import React from 'react';
 import Image from 'next/image';
-import DiscreteSlider from '@/features/trading/components/DiscreteSlider';
 
 interface OrderFormProps {
   type: 'buy' | 'sell';
@@ -24,7 +23,7 @@ interface OrderFormProps {
   buttonColor: string;
   amountIcon: string;
   receiveIcon: string;
-  receiveCurrency?: string; // เพิ่ม prop สำหรับหน่วยของช่อง Receive
+  receiveCurrency?: string;
   isSubmitting: boolean;
   isAuthenticated?: boolean;
   amountErrorMessage?: string;
@@ -49,7 +48,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amount,
   receiveAmount,
   isAmountValid,
-  isInputFocused,
   isAmountFocused,
   sliderValue,
   availableBalance,
@@ -57,7 +55,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   buttonColor,
   amountIcon,
   receiveIcon,
-  receiveCurrency, // เพิ่มใน props
+  receiveCurrency,
   isSubmitting,
   isAuthenticated = false,
   amountErrorMessage = 'Insufficient balance',
@@ -67,7 +65,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onAmountChange,
   onAmountFocus,
   onAmountBlur,
-  onSliderChange,
   onMarketClick,
   onSubmit,
   onLoginClick,
@@ -139,117 +136,119 @@ const OrderForm: React.FC<OrderFormProps> = ({
     <div className="space-y-7">
       {/* Price input */}
       <div
-        className="flex items-center rounded-lg bg-[#17306B] px-3 py-2 justify-between h-[44px] border border-transparent focus-within:border-[#3A8AF7] cursor-text"
+        className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
         onClick={handlePriceContainerClick}
       >
-        <span className="text-[12px] w-[100px] font-normal text-[#5775B7]">{priceLabel}</span>
+        <span className="text-sm w-[100px] font-normal text-[#A4A4A4]">{priceLabel}</span>
 
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}
             type="text"
-            className="text-[14px] font-normal rounded-lg bg-[#17306B] p-1 text-white text-right border-none outline-none"
+            className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={onPriceFocus}
             onBlur={handlePriceBlur}
             value={price}
             onChange={handlePriceChange} // Updated to use our new handler
             onClick={(e) => e.stopPropagation()} // Prevent double handling
           />
-          <span className="text-sm font-normal cursor-text" onClick={handlePriceContainerClick}>
-            USD
-          </span>
-
-          {!isInputFocused && (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="16"
-              viewBox="0 0 14 16"
-              fill="none"
-              className="h-4 w-4 shrink-0 cursor-pointer text-[#3A8AF7]"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent double handling
-                inputRef.current?.focus();
-                onPriceFocus();
-              }}
-            >
-              <path
-                d="M3.43225 12.4891H0.25V9.30683L8.82625 0.730576C8.9669 0.589973 9.15763 0.510986 9.3565 0.510986C9.55537 0.510986 9.7461 0.589973 9.88675 0.730576L12.0085 2.85158C12.0782 2.92123 12.1336 3.00395 12.1713 3.095C12.209 3.18604 12.2285 3.28364 12.2285 3.3822C12.2285 3.48076 12.209 3.57836 12.1713 3.66941C12.1336 3.76046 12.0782 3.84317 12.0085 3.91283L3.43225 12.4891ZM0.25 13.9891H13.75V15.4891H0.25V13.9891Z"
-                fill="#3A8AF7"
-              />
-            </svg>
-          )}
-
-          <Button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent container click
-              handleMarketClick();
-            }}
-            className={`cursor-pointer h-[28px] w-[68px] rounded-[6px] transition-colors ${
-              priceLabel === 'Price'
-                ? 'bg-[#17306B] border border-[#92CAFE] hover:bg-[#17306B]'
-                : 'bg-[#1F4293] hover:bg-[#1F4293]'
-            }`}
+          <span
+            className="text-sm font-normal cursor-text text-[#A4A4A4]"
+            onClick={handlePriceContainerClick}
           >
-            <span className="text-[10px] font-normal">Market</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <path
-                d="M5.99998 11.4167C3.00835 11.4167 0.583313 8.99167 0.583313 6.00004C0.583313 3.00842 3.00835 0.583374 5.99998 0.583374C8.9916 0.583374 11.4166 3.00842 11.4166 6.00004C11.4166 8.99167 8.9916 11.4167 5.99998 11.4167ZM5.45831 7.62504V8.70837H6.54165V7.62504H5.45831ZM6.54165 6.734C6.97697 6.60279 7.35068 6.3196 7.59473 5.93598C7.83878 5.55237 7.93693 5.09386 7.87129 4.64396C7.80566 4.19406 7.58062 3.7827 7.23715 3.48479C6.89369 3.18688 6.45464 3.02225 5.99998 3.02087C5.56166 3.02074 5.13684 3.17248 4.79781 3.45029C4.45877 3.72809 4.22647 4.11479 4.14044 4.54458L5.20319 4.75746C5.23335 4.60657 5.30574 4.46734 5.41193 4.35598C5.51812 4.24462 5.65375 4.16571 5.80304 4.12842C5.95233 4.09114 6.10914 4.09701 6.25522 4.14536C6.40131 4.19371 6.53066 4.28254 6.62822 4.40153C6.72579 4.52052 6.78756 4.66477 6.80635 4.8175C6.82514 4.97022 6.80017 5.12514 6.73436 5.26423C6.66854 5.40332 6.56458 5.52086 6.43457 5.60318C6.30457 5.68549 6.15386 5.7292 5.99998 5.72921C5.85632 5.72921 5.71855 5.78628 5.61696 5.88786C5.51538 5.98944 5.45831 6.12722 5.45831 6.27087V7.08337H6.54165V6.734Z"
-                fill="white"
-              />
-            </svg>
-          </Button>
+            USDT
+          </span>
         </div>
       </div>
 
       {/* Available Balance */}
       <div className="space-y-1">
-        <div className="flex justify-between mt-7">
-          <div className="text-[10px] text-[#9AAACE]">Available Balance</div>
-          <div className="flex flex-row gap-1 text-[10px] text-[#9AAACE]">
+        <div className="flex justify-between mt-4 mb-[6px] px-3">
+          <div className="text-xs text-[#A4A4A4]">Available Balance</div>
+          <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
             <div>{availableBalance}</div>
             <div>{balanceCurrency}</div>
           </div>
         </div>
 
-        {/* Amount */}
+        {/* Spend */}
         <div className="relative">
           <div
-            className={`flex items-center rounded-lg px-3 py-3 justify-between border h-[44px] cursor-text ${
+            className={`rounded-lg px-3 py-2 h-[88px] border cursor-text ${
               !isAmountValid
-                ? 'bg-[#17306B] border-[#D84C4C]'
-                : 'bg-[#17306B] border-transparent focus-within:border-[#3A8AF7]'
+                ? 'bg-[#1F2029] border-[#D84C4C]'
+                : 'bg-[#1F2029] border-transparent focus-within:border-[#3A8AF7]'
             }`}
             onClick={handleAmountContainerClick}
           >
-            <span className="text-[12px] font-normal text-[#5775B7] cursor-text">Amount</span>
-            <div className="flex items-center gap-2 text-[16px]">
-              <Input
-                ref={amountInputRef}
-                type="text"
-                className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
-                value={amount}
-                onChange={onAmountChange}
-                onFocus={onAmountFocus}
-                onBlur={onAmountBlur}
-                onClick={(e) => e.stopPropagation()} // Prevent double handling
-              />
-              <span
-                className={`text-[14px] font-normal cursor-text ${
-                  amount || isAmountFocused ? 'text-white' : 'text-[#5775B7]'
-                }`}
-                onClick={handleAmountContainerClick}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/assets/usdt.svg"
+                  alt="USDT"
+                  width={27}
+                  height={27}
+                  className="rounded-full"
+                />
+                <span className="text-sm font-normal text-[#A4A4A4] cursor-text">Spend</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[16px]">
+                <Input
+                  ref={amountInputRef}
+                  type="text"
+                  className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                  value={amount}
+                  onChange={onAmountChange}
+                  onFocus={onAmountFocus}
+                  onBlur={onAmountBlur}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <span
+                  className="text-[14px] font-normal cursor-text text-[#A4A4A4]"
+                  onClick={handleAmountContainerClick}
+                >
+                  {balanceCurrency}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
               >
-                {balanceCurrency}
-              </span>
+                +500
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                +1,000
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                +10,000
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                Max
+              </button>
             </div>
           </div>
+
           {!isAmountValid && (
             <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
               {amountErrorMessage}
@@ -259,9 +258,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
       </div>
 
       {/* Slider */}
-      <div className="mx-3">
+      {/* <div className="mx-3">
         <DiscreteSlider value={sliderValue} onChange={onSliderChange} />
-      </div>
+      </div> */}
 
       <div className="space-y-4">
         {/* Amount Cal */}
