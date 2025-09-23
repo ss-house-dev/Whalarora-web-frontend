@@ -281,9 +281,10 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
+  // Updated to allow unlimited decimal places for amount (Spend in USD)
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,2}$/.test(numericValue);
+    return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
   // Allow up to 9 decimal places for coin amount (Receive on Buy)
@@ -324,7 +325,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     (percentage: number): string => {
       const availableBalance = getAvailableBalance();
       const amount = (percentage / 100) * availableBalance;
-      return formatNumberWithComma(amount.toFixed(2));
+      return formatNumberWithComma(amount.toString());
     },
     [getAvailableBalance, formatNumberWithComma]
   );
@@ -431,7 +432,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const current = parseFloat((amount || '0').replace(/,/g, '')) || 0;
     const available = getAvailableBalance();
     const next = current + delta;
-    const formatted = formatNumberWithComma(next.toFixed(2));
+    const formatted = formatNumberWithComma(next.toString());
     setAmount(formatted);
     if (next > available) {
       setSliderValue(0);
@@ -449,7 +450,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handleMax = () => {
     setIsReceiveEditing(false);
     const available = getAvailableBalance();
-    const formatted = formatNumberWithComma(available.toFixed(2));
+    const formatted = formatNumberWithComma(available.toString());
     setAmount(formatted);
     setSliderValue(100);
     setIsAmountValid(available > 0);
@@ -461,13 +462,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handleAmountBlur = () => {
     setIsReceiveEditing(false);
     setIsAmountFocused(false);
+    // No need to force 2 decimal places anymore - keep the user's input as is
     if (amount) {
-      const numericValue = amount.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (!isNaN(num)) {
-        const formattedAmount = formatNumberWithComma(num.toFixed(2));
-        setAmount(formattedAmount);
-      }
       validateAmount();
     }
   };
@@ -491,7 +487,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       }
 
       const usd = coinNum * priceNum;
-      const newAmount = formatNumberWithComma(usd.toFixed(2));
+      const newAmount = formatNumberWithComma(usd.toString());
       setAmount(newAmount);
 
       const availableBalance = getAvailableBalance();

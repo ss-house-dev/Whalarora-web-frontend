@@ -85,6 +85,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
   const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
+
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
@@ -128,21 +129,13 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return `${formattedInteger}.${decimalPart}`;
   }, []);
 
-  const formatToMaxDigits = useCallback((value: number, maxDigits: number = 10): string => {
+  // ✅ แก้ไข: เอาการจำกัด maxDigits ออก - ให้พิมพ์ได้ไม่จำกัด
+  const formatToUnlimitedDigits = useCallback((value: number): string => {
     if (typeof value !== 'number' || isNaN(value)) return '0';
     let valueStr = value.toFixed(9);
     valueStr = valueStr.replace(/\.?0+$/, '');
     if (valueStr === '' || valueStr === '.') return '0';
-    const totalDigits = valueStr.replace('.', '').length;
-    if (totalDigits <= maxDigits) return valueStr;
-    const decimalIndex = valueStr.indexOf('.');
-    if (decimalIndex === -1) return valueStr.substring(0, maxDigits);
-    const integerPart = valueStr.substring(0, decimalIndex);
-    const decimalPart = valueStr.substring(decimalIndex + 1);
-    const availableDecimalDigits = maxDigits - integerPart.length;
-    if (availableDecimalDigits <= 0) return integerPart.substring(0, maxDigits);
-    const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
-    return integerPart + '.' + truncatedDecimal;
+    return valueStr;
   }, []);
 
   const getAvailableCoinBalance = useCallback(() => {
@@ -150,10 +143,11 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return coinBalance.amount || 0;
   }, [session, coinBalance]);
 
+  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
   const formatAvailableCoinBalance = useCallback(() => {
     const balance = getAvailableCoinBalance();
-    return formatToMaxDigits(balance, 10);
-  }, [getAvailableCoinBalance, formatToMaxDigits]);
+    return formatToUnlimitedDigits(balance);
+  }, [getAvailableCoinBalance, formatToUnlimitedDigits]);
 
   const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
     if (!value) return '';
@@ -192,6 +186,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return /^\d*\.?\d{0,2}$/.test(numericValue);
   }, []);
 
+  // ✅ แก้ไข: เอาการจำกัดหลักออก - ให้พิมพ์ได้ไม่จำกัด
   const formatCoinNumber = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
@@ -208,13 +203,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
     }
 
-    const parts = numericValue.split('.');
-    const decimalPart = parts[1];
-
-    if (decimalPart !== undefined && decimalPart.length > 9) {
-      return value;
-    }
-
+    // ✅ เอาการจำกัดทศนิยม 9 ตำแหน่งออก - ให้พิมพ์ได้ไม่จำกัด
     return numericValue;
   }, []);
 
@@ -223,9 +212,10 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
+  // ✅ แก้ไข: เอาการจำกัดทศนิยมออก - ให้พิมพ์ได้ไม่จำกัด
   const isValidCoinFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,9}$/.test(numericValue);
+    return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
   const calculateReceiveUSD = useCallback(
@@ -259,6 +249,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [getAvailableCoinBalance]
   );
 
+  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
   const calculateCoinFromPercentage = useCallback(
     (percentage: number): string => {
       const availableCoin = getAvailableCoinBalance();
@@ -267,9 +258,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const availableSatoshis = Math.floor(availableCoin * multiplier);
       const percentageSatoshis = Math.floor((percentage / 100) * availableSatoshis);
       const coinAmount = percentageSatoshis / multiplier;
-      return formatToMaxDigits(coinAmount, 10);
+      return formatToUnlimitedDigits(coinAmount);
     },
-    [getAvailableCoinBalance, formatToMaxDigits]
+    [getAvailableCoinBalance, formatToUnlimitedDigits]
   );
 
   const validateSellAmount = useCallback(() => {
@@ -361,12 +352,12 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
   };
 
-  // Quick add and max for sell amount (coin)
+  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
   const handleQuickAddSell = (delta: number) => {
     const current = parseFloat(sellAmount || '0') || 0;
     const available = getAvailableCoinBalance();
     const next = current + delta;
-    const formatted = formatToMaxDigits(next, 10);
+    const formatted = formatToUnlimitedDigits(next);
     setSellAmount(formatted);
     if (next > available) {
       setSellSliderValue(0);
@@ -381,9 +372,10 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
   };
 
+  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
   const handleMaxSell = () => {
     const available = getAvailableCoinBalance();
-    const formatted = formatToMaxDigits(available, 10);
+    const formatted = formatToUnlimitedDigits(available);
     setSellAmount(formatted);
     setSellSliderValue(100);
     setIsSellAmountValid(available > 0);
@@ -398,7 +390,8 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (sellAmount) {
       const num = parseFloat(sellAmount);
       if (!isNaN(num)) {
-        setSellAmount(formatToMaxDigits(num, 10));
+        // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
+        setSellAmount(formatToUnlimitedDigits(num));
       }
       validateSellAmount();
     }
@@ -424,7 +417,8 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
 
       const coinAmount = usdNum / priceNum;
-      const coinStr = formatToMaxDigits(coinAmount, 10);
+      // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
+      const coinStr = formatToUnlimitedDigits(coinAmount);
       setSellAmount(coinStr);
 
       const availableCoin = getAvailableCoinBalance();
