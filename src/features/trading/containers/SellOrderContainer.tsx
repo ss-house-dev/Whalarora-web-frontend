@@ -304,13 +304,16 @@ export default function SellOrderContainer() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
-      const formattedValue = formatPriceWithComma(inputValue);
+      const formattedValue = inputValue === '' ? '' : formatPriceWithComma(inputValue);
       setPrice(formattedValue);
     }
   };
 
   const handlePriceBlur = () => {
-    // Do not modify the price on blur; keep the exact value the user sees
+    if (price) {
+      const formattedPrice = formatPriceForDisplay(price);
+      setPrice(formattedPrice);
+    }
     setIsInputFocused(false);
   };
 
