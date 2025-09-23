@@ -1,6 +1,7 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/Button';
 import React from 'react';
 import Image from 'next/image';
@@ -74,16 +75,21 @@ const OrderForm: React.FC<OrderFormProps> = ({
 }) => {
   // Track if user has manually entered a price
   const [hasUserPrice, setHasUserPrice] = React.useState(false);
+  const [priceTab, setPriceTab] = React.useState<'current' | 'set'>(
+    priceLabel === 'Price' ? 'current' : 'set'
+  );
 
   // Truncate long symbols/currencies to 4 characters for display
   const displaySymbol = symbol && symbol.length > 4 ? symbol.slice(0, 4) : symbol;
   const displayBalanceCurrency =
-    balanceCurrency && balanceCurrency.length > 4
-      ? balanceCurrency.slice(0, 4)
-      : balanceCurrency;
+    balanceCurrency && balanceCurrency.length > 4 ? balanceCurrency.slice(0, 4) : balanceCurrency;
   const displayReceiveCurrency =
     type === 'buy'
-      ? (receiveCurrency ? (receiveCurrency.length > 4 ? receiveCurrency.slice(0, 4) : receiveCurrency) : 'Coin')
+      ? receiveCurrency
+        ? receiveCurrency.length > 4
+          ? receiveCurrency.slice(0, 4)
+          : receiveCurrency
+        : 'Coin'
       : 'USDT';
 
   const handleButtonClick = () => {
@@ -115,6 +121,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
     // Only auto-switch to market price if user hasn't entered a custom price
     if (!hasUserPrice) {
       onMarketClick();
+      setPriceTab('current');
     }
   };
 
@@ -128,6 +135,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const handlePriceContainerClick = () => {
     inputRef.current?.focus();
     onPriceFocus();
+    setPriceTab('set');
   };
 
   // Handle click on amount container - focus the amount input
@@ -151,13 +159,44 @@ const OrderForm: React.FC<OrderFormProps> = ({
       // When switching to market mode, reset the flag
       setHasUserPrice(false);
     }
+    setPriceTab(priceLabel === 'Price' ? 'current' : 'set');
   }, [priceLabel]);
 
   return (
-    <div className="space-y-3">
+    <div>
+      {/* Price mode tabs */}
+      <Tabs
+        value={priceTab}
+        onValueChange={(v) => {
+          const value = v as 'current' | 'set';
+          setPriceTab(value);
+          if (value === 'current') {
+            handleMarketClick();
+          } else {
+            handlePriceContainerClick();
+          }
+        }}
+        className="w-[220px] h-[32px]"
+      >
+        <TabsList className="w-full bg-[#121119] h-[32px] p-1">
+          <TabsTrigger
+            value="current"
+            className="text-xs px-3 data-[state=active]:bg-[#1F2029] data-[state=active]:h-[24px] data-[state=inactive]:text-[#474747] cursor-pointer"
+          >
+            Current price
+          </TabsTrigger>
+          <TabsTrigger
+            value="set"
+            className="text-xs px-3 data-[state=active]:bg-[#1F2029] data-[state=active]:h-[24px] data-[state=inactive]:text-[#474747] cursor-pointer"
+          >
+            Set price
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Price input */}
       <div
-        className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
+        className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 mt-4 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
         onClick={handlePriceContainerClick}
       >
         <span className="text-sm w-[100px] font-normal text-[#A4A4A4]">{priceLabel}</span>
@@ -167,7 +206,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
             ref={inputRef}
             type="text"
             className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
-            onFocus={onPriceFocus}
+            onFocus={() => {
+              onPriceFocus();
+              setPriceTab('set');
+            }}
             onBlur={handlePriceBlur}
             value={price}
             onChange={handlePriceChange} // Updated to use our new handler
@@ -183,19 +225,18 @@ const OrderForm: React.FC<OrderFormProps> = ({
       </div>
 
       {/* Available Balance */}
-
       <div className="flex justify-between mt-4 mb-[6px] px-3">
         <div className="text-xs text-[#A4A4A4]">Available Balance</div>
-            <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
-              <div>{availableBalance}</div>
-              <div>{displayBalanceCurrency}</div>
-            </div>
+        <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
+          <div>{availableBalance}</div>
+          <div>{displayBalanceCurrency}</div>
+        </div>
       </div>
 
       {/* Spend */}
       <div className="relative">
         <div
-          className={`rounded-lg px-3 py-2 h-[88px] border cursor-text ${
+          className={`rounded-lg px-3 py-2 mb-3 h-[88px] border cursor-text ${
             !isAmountValid
               ? 'bg-[#1F2029] border-[#D84C4C]'
               : 'bg-[#1F2029] border-transparent focus-within:border-[#3A8AF7]'
@@ -319,9 +360,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               }}
               onClick={(e) => e.stopPropagation()}
             />
-            <span className="text-sm font-normal text-[#A4A4A4]">
-              {displayReceiveCurrency}
-            </span>
+            <span className="text-sm font-normal text-[#A4A4A4]">{displayReceiveCurrency}</span>
           </div>
         </div>
       </div>
