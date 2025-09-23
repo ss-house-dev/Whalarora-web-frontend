@@ -81,7 +81,7 @@ export default function HoldingAssetsSection({
         )}
 
         {hasData && (
-          <div className="flex flex-col gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:gap-4">
             {pagedRows.map((row) => (
               <AssetCard
                 key={row.id}
@@ -94,7 +94,7 @@ export default function HoldingAssetsSection({
                 pnlAbs={row.pnlAbs}
                 pnlPct={row.pnlPct}
                 onBuySell={() => handleTradeClick(row.symbol)}
-                className="mx-auto w-full"
+                className="w-full lg:mx-auto lg:max-w-[1220px]"
               />
             ))}
           </div>
@@ -103,4 +103,5 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
+
 
