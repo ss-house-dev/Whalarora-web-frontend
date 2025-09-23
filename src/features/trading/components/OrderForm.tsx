@@ -57,6 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amountIcon,
   receiveIcon,
   receiveCurrency,
+  symbol,
   isSubmitting,
   isAuthenticated = false,
   amountErrorMessage = 'Insufficient balance',
@@ -86,7 +87,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
     if (!isAuthenticated) {
       return 'Login';
     }
-    return type === 'buy' ? 'Buy' : 'Sell';
+    const action = type === 'buy' ? 'Buy' : 'Sell';
+    return symbol ? `${action} ${symbol}` : action;
   };
 
   // Handle price changes - track if user is entering custom price
