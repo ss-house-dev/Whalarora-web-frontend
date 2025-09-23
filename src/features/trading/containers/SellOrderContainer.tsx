@@ -80,6 +80,7 @@ export default function SellOrderContainer() {
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
+  const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
@@ -159,6 +160,32 @@ export default function SellOrderContainer() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num);
+  }, []);
+
+  // Allow typing USD with commas and optional decimals (normalize leading zeros)
+  const formatUsdWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    let numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
+    }
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  }, []);
+
+  const isValidUSDFormat = useCallback((value: string): boolean => {
+    const numericValue = value.replace(/,/g, '');
+    return /^\d*\.?\d{0,2}$/.test(numericValue);
   }, []);
 
   const formatCoinNumber = useCallback((value: string): string => {
@@ -295,6 +322,7 @@ export default function SellOrderContainer() {
   };
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsReceiveUSDEditing(false);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
@@ -336,6 +364,7 @@ export default function SellOrderContainer() {
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
 
   const handleSellAmountBlur = () => {
+    setIsReceiveUSDEditing(false);
     setIsSellAmountFocused(false);
     if (sellAmount) {
       const num = parseFloat(sellAmount);
@@ -343,6 +372,43 @@ export default function SellOrderContainer() {
         setSellAmount(formatToMaxDigits(num, 10));
       }
       validateSellAmount();
+    }
+  };
+
+  // Handle Receive USD typing -> compute coin amount
+  const handleReceiveUSDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (inputValue === '' || isValidUSDFormat(inputValue)) {
+      setIsReceiveUSDEditing(true);
+      const formatted = formatUsdWithComma(inputValue);
+      setReceiveUSD(formatted);
+
+      const priceNum = parseFloat(price.replace(/,/g, ''));
+      const usdNum = parseFloat((formatted || '0').replace(/,/g, ''));
+
+      if (!inputValue || isNaN(usdNum) || usdNum === 0 || isNaN(priceNum) || priceNum <= 0) {
+        setSellAmount('');
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        setSellSliderValue(0);
+        return;
+      }
+
+      const coinAmount = usdNum / priceNum;
+      const coinStr = formatToMaxDigits(coinAmount, 10);
+      setSellAmount(coinStr);
+
+      const availableCoin = getAvailableCoinBalance();
+      if (coinAmount > availableCoin) {
+        setIsSellAmountValid(false);
+        setSellAmountErrorMessage('Insufficient balance');
+        setSellSliderValue(0);
+      } else {
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        const sliderPercentage = Math.min((coinAmount / availableCoin) * 100, 100);
+        setSellSliderValue(sliderPercentage);
+      }
     }
   };
 
@@ -419,9 +485,10 @@ export default function SellOrderContainer() {
   ]);
 
   useEffect(() => {
+    if (isReceiveUSDEditing) return;
     const calculatedReceiveUSD = calculateReceiveUSD(sellAmount, price);
     setReceiveUSD(calculatedReceiveUSD);
-  }, [sellAmount, price, calculateReceiveUSD]);
+  }, [sellAmount, price, calculateReceiveUSD, isReceiveUSDEditing]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
@@ -469,6 +536,7 @@ export default function SellOrderContainer() {
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
+        onReceiveChange={handleReceiveUSDChange}
       />
 
       {showAlert && (

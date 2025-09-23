@@ -188,6 +188,7 @@ export default function BuyOrderContainer() {
   const [amountErrorMessage, setAmountErrorMessage] = useState('');
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [receiveCoin, setReceiveCoin] = useState<string>('');
+  const [isReceiveEditing, setIsReceiveEditing] = useState(false);
 
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
@@ -279,6 +280,12 @@ export default function BuyOrderContainer() {
   const isValidNumberFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d{0,2}$/.test(numericValue);
+  }, []);
+
+  // Allow up to 9 decimal places for coin amount (Receive on Buy)
+  const isValidCoinFormatForBuy = useCallback((value: string): boolean => {
+    const numericValue = value.replace(/,/g, '');
+    return /^\d*\.?\d{0,9}$/.test(numericValue);
   }, []);
 
   const calculateReceiveCoin = useCallback((amountValue: string, priceValue: string): string => {
@@ -376,6 +383,8 @@ export default function BuyOrderContainer() {
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // User is editing Spend directly; stop Receive-driven updates
+    setIsReceiveEditing(false);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
@@ -402,6 +411,7 @@ export default function BuyOrderContainer() {
   };
 
   const handleSliderChange = (percentage: number) => {
+    setIsReceiveEditing(false);
     setSliderValue(percentage);
     const newAmount = calculateAmountFromPercentage(percentage);
     setAmount(newAmount);
@@ -418,6 +428,7 @@ export default function BuyOrderContainer() {
   const handleAmountFocus = () => setIsAmountFocused(true);
 
   const handleAmountBlur = () => {
+    setIsReceiveEditing(false);
     setIsAmountFocused(false);
     if (amount) {
       const numericValue = amount.replace(/,/g, '');
@@ -427,6 +438,42 @@ export default function BuyOrderContainer() {
         setAmount(formattedAmount);
       }
       validateAmount();
+    }
+  };
+
+  // Handle Receive (coin) typing -> compute Spend (USD)
+  const handleReceiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (inputValue === '' || isValidCoinFormatForBuy(inputValue)) {
+      setIsReceiveEditing(true);
+      setReceiveCoin(inputValue);
+
+      const priceNum = parseFloat(price.replace(/,/g, ''));
+      const coinNum = parseFloat((inputValue || '0').replace(/,/g, ''));
+
+      if (!inputValue || isNaN(coinNum) || coinNum === 0 || isNaN(priceNum) || priceNum <= 0) {
+        setAmount('');
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        setSliderValue(0);
+        return;
+      }
+
+      const usd = coinNum * priceNum;
+      const newAmount = formatNumberWithComma(usd.toFixed(2));
+      setAmount(newAmount);
+
+      const availableBalance = getAvailableBalance();
+      if (usd > availableBalance) {
+        setIsAmountValid(false);
+        setAmountErrorMessage('Insufficient balance');
+        setSliderValue(0);
+      } else {
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        const sliderPercentage = Math.min((usd / availableBalance) * 100, 100);
+        setSliderValue(sliderPercentage);
+      }
     }
   };
 
@@ -500,9 +547,10 @@ export default function BuyOrderContainer() {
   ]);
 
   useEffect(() => {
+    if (isReceiveEditing) return;
     const calculatedReceiveCoin = calculateReceiveCoin(amount, price);
     setReceiveCoin(calculatedReceiveCoin);
-  }, [amount, price, calculateReceiveCoin]);
+  }, [amount, price, calculateReceiveCoin, isReceiveEditing]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
@@ -593,6 +641,7 @@ export default function BuyOrderContainer() {
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
+        onReceiveChange={handleReceiveChange}
       />
     </div>
   );

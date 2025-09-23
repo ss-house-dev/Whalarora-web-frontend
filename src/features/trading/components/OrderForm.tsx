@@ -37,6 +37,7 @@ interface OrderFormProps {
   onMarketClick: () => void;
   onSubmit: () => void;
   onLoginClick?: () => void;
+  onReceiveChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -68,6 +69,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onMarketClick,
   onSubmit,
   onLoginClick,
+  onReceiveChange,
 }) => {
   // Track if user has manually entered a price
   const [hasUserPrice, setHasUserPrice] = React.useState(false);
@@ -289,9 +291,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <div className="flex gap-2 items-center">
               <Input
                 type="text"
-                className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
+                className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none"
                 value={receiveAmount}
-                readOnly
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onReceiveChange?.(e);
+                }}
               />
               <span className="text-[16px] font-normal text-[#92CAFE]">
                 {type === 'buy' ? receiveCurrency || 'Coin' : 'USD'}
