@@ -276,32 +276,29 @@ const OrderForm: React.FC<OrderFormProps> = ({
         </div>
 
         {/* Receive */}
-        <div className="relative flex items-center mt-3">
-          <div className="absolute z-10">
+        <div className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 gap-3 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text">
+          <div className="flex items-center gap-2">
             <Image
               src={receiveIcon}
               alt={`${receiveCurrency || (type === 'buy' ? 'Coin' : 'USD')} Icon`}
-              width={60}
-              height={60}
-              className="rounded-full object-cover"
+              width={27}
+              height={27}
             />
+            <span className="text-[#A4A4A4] text-sm font-normal">Receive</span>
           </div>
-          <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">Receive</span>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="text"
-                className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none"
-                value={receiveAmount}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onReceiveChange?.(e);
-                }}
-              />
-              <span className="text-[16px] font-normal text-[#92CAFE]">
-                {type === 'buy' ? receiveCurrency || 'Coin' : 'USD'}
-              </span>
-            </div>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="text"
+              className="w-full text-[16px] font-normal rounded-lg p-1 text-right border-none outline-none"
+              value={receiveAmount}
+              onChange={(e) => {
+                e.stopPropagation();
+                onReceiveChange?.(e);
+              }}
+            />
+            <span className="text-sm font-normal text-[#A4A4A4]">
+              {type === 'buy' ? receiveCurrency || 'Coin' : 'USDT'}
+            </span>
           </div>
         </div>
       </div>
