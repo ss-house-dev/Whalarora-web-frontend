@@ -199,7 +199,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 mt-4 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
         onClick={handlePriceContainerClick}
       >
-        <span className="text-sm w-[100px] font-normal text-[#A4A4A4]">{priceLabel}</span>
+        <span className="text-sm w-[100px] font-normal text-[#A4A4A4]">Price</span>
 
         <div className="flex items-center gap-2">
           <Input

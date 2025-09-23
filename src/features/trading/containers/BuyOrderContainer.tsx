@@ -348,7 +348,7 @@ export default function BuyOrderContainer() {
   }, [amount, getAvailableBalance]);
 
   const handlePriceFocus = () => {
-    setPriceLabel('Price');
+    setPriceLabel('Limit price');
     setIsInputFocused(true);
     setPrice('');
   };

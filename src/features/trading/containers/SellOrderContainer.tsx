@@ -287,7 +287,7 @@ export default function SellOrderContainer() {
   }, [sellAmount, getAvailableCoinBalance]);
 
   const handlePriceFocus = () => {
-    setPriceLabel('Price');
+    setPriceLabel('Limit price');
     setIsInputFocused(true);
     setPrice('');
   };
