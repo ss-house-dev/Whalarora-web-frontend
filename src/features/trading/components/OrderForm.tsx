@@ -90,20 +90,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
         : 'Coin'
       : 'USDT';
 
-  const handleButtonClick = () => {
-    if (!isAuthenticated && onLoginClick) {
-      onLoginClick();
-    } else {
-      onSubmit();
-    }
-  };
-
   const getButtonText = () => {
     if (!isAuthenticated) {
       return 'Login';
     }
     const action = type === 'buy' ? 'Buy' : 'Sell';
     return displaySymbol ? `${action} ${displaySymbol}` : action;
+  };
+
+  const handleButtonClick = () => {
+    if (!isAuthenticated && onLoginClick) {
+      onLoginClick();
+    } else {
+      onSubmit();
+    }
   };
 
   // Handle price changes
@@ -123,7 +123,17 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   // Handle click on price container or USD label - focus the input
   const handlePriceContainerClick = () => {
-    inputRef.current?.focus();
+    if (inputRef.current) {
+      inputRef.current.focus();
+      // Move cursor to end of input
+      setTimeout(() => {
+        if (inputRef.current) {
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      }, 0);
+    }
+
     // Only trigger onPriceFocus when switching from current -> set
     if (priceTab !== 'set') {
       onPriceFocus();
@@ -141,6 +151,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const handleReceiveContainerClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const inputEl = e.currentTarget.querySelector('input') as HTMLInputElement | null;
     inputEl?.focus();
+  };
+
+  // Function to focus input with cursor at end
+  const focusInputWithCursorAtEnd = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      // Move cursor to end
+      setTimeout(() => {
+        if (inputRef.current) {
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      }, 0);
+    }
   };
 
   React.useEffect(() => {
@@ -164,7 +188,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
           if (value === 'current') {
             handleMarketClick();
           } else {
-            handlePriceContainerClick();
+            // When switching to "set" tab, focus input and move cursor to end
+            onPriceFocus();
+            setTimeout(() => {
+              focusInputWithCursorAtEnd();
+            }, 0);
           }
         }}
         className="w-[220px] h-[32px]"
@@ -203,11 +231,27 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 onPriceFocus();
               }
               setPriceTab('set');
+              // Move cursor to end when focused
+              setTimeout(() => {
+                if (inputRef.current) {
+                  const length = inputRef.current.value.length;
+                  inputRef.current.setSelectionRange(length, length);
+                }
+              }, 0);
             }}
             onBlur={handlePriceBlur}
             value={price}
-            onChange={handlePriceChange} // Updated to use our new handler
-            onClick={(e) => e.stopPropagation()} // Prevent double handling
+            onChange={handlePriceChange}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Move cursor to end when clicked
+              setTimeout(() => {
+                if (inputRef.current) {
+                  const length = inputRef.current.value.length;
+                  inputRef.current.setSelectionRange(length, length);
+                }
+              }, 0);
+            }}
           />
           <span
             className="text-sm font-normal cursor-text text-[#A4A4A4]"
