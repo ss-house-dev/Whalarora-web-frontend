@@ -125,6 +125,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
     onAmountFocus();
   };
 
+  // Handle click on receive container - focus the receive input inside
+  const handleReceiveContainerClick = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    const inputEl = e.currentTarget.querySelector('input') as HTMLInputElement | null;
+    inputEl?.focus();
+  };
+
   // Reset user price flag when switching between limit and market modes
   React.useEffect(() => {
     if (priceLabel === 'Price') {
@@ -278,7 +286,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
         </div>
 
         {/* Receive */}
-        <div className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 gap-3 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text">
+        <div
+          className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 gap-3 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
+          onClick={handleReceiveContainerClick}
+        >
           <div className="flex items-center gap-2">
             <Image
               src={receiveIcon}
@@ -297,6 +308,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 e.stopPropagation();
                 onReceiveChange?.(e);
               }}
+              onClick={(e) => e.stopPropagation()}
             />
             <span className="text-sm font-normal text-[#A4A4A4]">
               {type === 'buy' ? receiveCurrency || 'Coin' : 'USDT'}
