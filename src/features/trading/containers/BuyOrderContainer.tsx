@@ -418,6 +418,37 @@ export default function BuyOrderContainer() {
     }
   };
 
+  // Quick add and max handlers for amount (USD)
+  const handleQuickAdd = (delta: number) => {
+    setIsReceiveEditing(false);
+    const current = parseFloat((amount || '0').replace(/,/g, '')) || 0;
+    const available = getAvailableBalance();
+    const next = current + delta;
+    const formatted = formatNumberWithComma(next.toFixed(2));
+    setAmount(formatted);
+    if (next > available) {
+      setSliderValue(0);
+      setIsAmountValid(false);
+      setAmountErrorMessage('Insufficient balance');
+    } else {
+      const sliderPercentage = calculateSliderPercentage(formatted);
+      setSliderValue(sliderPercentage);
+      const isValid = next > 0;
+      setIsAmountValid(isValid);
+      setAmountErrorMessage(isValid ? '' : 'Please enter amount');
+    }
+  };
+
+  const handleMax = () => {
+    setIsReceiveEditing(false);
+    const available = getAvailableBalance();
+    const formatted = formatNumberWithComma(available.toFixed(2));
+    setAmount(formatted);
+    setSliderValue(100);
+    setIsAmountValid(available > 0);
+    setAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
+  };
+
   const handleAmountFocus = () => setIsAmountFocused(true);
 
   const handleAmountBlur = () => {
@@ -635,6 +666,8 @@ export default function BuyOrderContainer() {
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveChange}
+        onQuickAdd={handleQuickAdd}
+        onMax={handleMax}
       />
     </div>
   );

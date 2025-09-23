@@ -354,6 +354,35 @@ export default function SellOrderContainer() {
     }
   };
 
+  // Quick add and max for sell amount (coin)
+  const handleQuickAddSell = (delta: number) => {
+    const current = parseFloat(sellAmount || '0') || 0;
+    const available = getAvailableCoinBalance();
+    const next = current + delta;
+    const formatted = formatToMaxDigits(next, 10);
+    setSellAmount(formatted);
+    if (next > available) {
+      setSellSliderValue(0);
+      setIsSellAmountValid(false);
+      setSellAmountErrorMessage('Insufficient balance');
+    } else {
+      const sliderPercentage = calculateSellSliderPercentage(formatted);
+      setSellSliderValue(sliderPercentage);
+      const isValid = next > 0;
+      setIsSellAmountValid(isValid);
+      setSellAmountErrorMessage(isValid ? '' : 'Please enter amount');
+    }
+  };
+
+  const handleMaxSell = () => {
+    const available = getAvailableCoinBalance();
+    const formatted = formatToMaxDigits(available, 10);
+    setSellAmount(formatted);
+    setSellSliderValue(100);
+    setIsSellAmountValid(available > 0);
+    setSellAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
+  };
+
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
 
   const handleSellAmountBlur = () => {
@@ -530,6 +559,8 @@ export default function SellOrderContainer() {
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveUSDChange}
+        onQuickAdd={handleQuickAddSell}
+        onMax={handleMaxSell}
       />
 
       {showAlert && (
