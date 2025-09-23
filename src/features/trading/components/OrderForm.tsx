@@ -133,7 +133,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   }, [priceLabel]);
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-3">
       {/* Price input */}
       <div
         className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
@@ -162,99 +162,98 @@ const OrderForm: React.FC<OrderFormProps> = ({
       </div>
 
       {/* Available Balance */}
-      <div className="space-y-1">
-        <div className="flex justify-between mt-4 mb-[6px] px-3">
-          <div className="text-xs text-[#A4A4A4]">Available Balance</div>
-          <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
-            <div>{availableBalance}</div>
-            <div>{balanceCurrency}</div>
-          </div>
+
+      <div className="flex justify-between mt-4 mb-[6px] px-3">
+        <div className="text-xs text-[#A4A4A4]">Available Balance</div>
+        <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
+          <div>{availableBalance}</div>
+          <div>{balanceCurrency}</div>
         </div>
+      </div>
 
-        {/* Spend */}
-        <div className="relative">
-          <div
-            className={`rounded-lg px-3 py-2 h-[88px] border cursor-text ${
-              !isAmountValid
-                ? 'bg-[#1F2029] border-[#D84C4C]'
-                : 'bg-[#1F2029] border-transparent focus-within:border-[#3A8AF7]'
-            }`}
-            onClick={handleAmountContainerClick}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/assets/usdt.svg"
-                  alt="USDT"
-                  width={27}
-                  height={27}
-                  className="rounded-full"
-                />
-                <span className="text-sm font-normal text-[#A4A4A4] cursor-text">Spend</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-[16px]">
-                <Input
-                  ref={amountInputRef}
-                  type="text"
-                  className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
-                  value={amount}
-                  onChange={onAmountChange}
-                  onFocus={onAmountFocus}
-                  onBlur={onAmountBlur}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <span
-                  className="text-[14px] font-normal cursor-text text-[#A4A4A4]"
-                  onClick={handleAmountContainerClick}
-                >
-                  {balanceCurrency}
-                </span>
-              </div>
-            </div>
-
+      {/* Spend */}
+      <div className="relative">
+        <div
+          className={`rounded-lg px-3 py-2 h-[88px] border cursor-text ${
+            !isAmountValid
+              ? 'bg-[#1F2029] border-[#D84C4C]'
+              : 'bg-[#1F2029] border-transparent focus-within:border-[#3A8AF7]'
+          }`}
+          onClick={handleAmountContainerClick}
+        >
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+              <Image
+                src="/assets/usdt.svg"
+                alt="USDT"
+                width={27}
+                height={27}
+                className="rounded-full"
+              />
+              <span className="text-sm font-normal text-[#A4A4A4] cursor-text">Spend</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-[16px]">
+              <Input
+                ref={amountInputRef}
+                type="text"
+                className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                value={amount}
+                onChange={onAmountChange}
+                onFocus={onAmountFocus}
+                onBlur={onAmountBlur}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span
+                className="text-[14px] font-normal cursor-text text-[#A4A4A4]"
+                onClick={handleAmountContainerClick}
               >
-                +500
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                +1,000
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                +10,000
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                Max
-              </button>
+                {balanceCurrency}
+              </span>
             </div>
           </div>
 
-          {!isAmountValid && (
-            <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
-              {amountErrorMessage}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              +500
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              +1,000
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              +10,000
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              Max
+            </button>
+          </div>
         </div>
+
+        {!isAmountValid && (
+          <span className="absolute top-full mt-1 text-[12px] text-[#D84C4C] z-10">
+            {amountErrorMessage}
+          </span>
+        )}
       </div>
 
       {/* Slider */}
@@ -262,40 +261,16 @@ const OrderForm: React.FC<OrderFormProps> = ({
         <DiscreteSlider value={sliderValue} onChange={onSliderChange} />
       </div> */}
 
-      <div className="space-y-4">
-        {/* Amount Cal */}
-        <div className="relative flex items-center">
-          <div className="absolute z-10">
-            <Image
-              src={amountIcon}
-              alt={`${balanceCurrency} Icon`}
-              width={60}
-              height={60}
-              className="rounded-full object-cover"
-            />
-          </div>
-          <div className="bg-[#212121] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
-            <span className="text-[#92CAFE] text-[12px] font-normal">Amount</span>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                className="w-full text-[16px] font-normal rounded-lg bg-[#212121] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
-                value={amount}
-                readOnly
-              />
-              <span className="text-[16px] font-normal text-[#92CAFE]">{balanceCurrency}</span>
-            </div>
-          </div>
-        </div>
-
+      <div className="space-y-3">
         {/* arrow */}
         <div className="flex justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-            <path
-              d="M7.00003 13.6355L13.207 7.4285L11.793 6.0145L7.00003 10.8075L2.20703 6.0145L0.79303 7.4285L7.00003 13.6355ZM7.00003 7.9855L13.207 1.7785L11.793 0.364502L7.00003 5.1575L2.20703 0.364502L0.79303 1.7785L7.00003 7.9855Z"
-              fill="#49B6AE"
-            />
-          </svg>
+          <Image
+            src="/assets/exchange.svg"
+            alt="Exchange Button"
+            width={28}
+            height={28}
+            className="cursor-pointer"
+          />
         </div>
 
         {/* Receive */}
@@ -312,7 +287,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="bg-[#17306B] w-full rounded-lg flex items-center justify-between ml-5 pl-[70px] pr-4 py-3 h-[32px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
             <span className="text-[#92CAFE] text-[12px] font-normal">Receive</span>
             <div className="flex gap-2 items-center">
-              <input
+              <Input
                 type="text"
                 className="w-full text-[16px] font-normal rounded-lg bg-[#17306B] p-1 text-[#92CAFE] text-right border-none outline-none cursor-context-menu"
                 value={receiveAmount}
