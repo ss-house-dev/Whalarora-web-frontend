@@ -73,8 +73,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onLoginClick,
   onReceiveChange,
 }) => {
-  // Track if user has manually entered a price
-  const [hasUserPrice, setHasUserPrice] = React.useState(false);
   const [priceTab, setPriceTab] = React.useState<'current' | 'set'>(
     priceLabel === 'Price' ? 'current' : 'set'
   );
@@ -108,33 +106,28 @@ const OrderForm: React.FC<OrderFormProps> = ({
     return displaySymbol ? `${action} ${displaySymbol}` : action;
   };
 
-  // Handle price changes - track if user is entering custom price
+  // Handle price changes
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHasUserPrice(e.target.value.trim() !== ''); // Mark as user price if not empty
     onPriceChange(e);
   };
 
-  // Handle price input blur - only switch to market if user hasn't entered a custom price
+  // Handle price input blur - do not auto-switch or change price
   const handlePriceBlur = () => {
-    onPriceBlur(); // Call the original blur handler
-
-    // Only auto-switch to market price if user hasn't entered a custom price
-    if (!hasUserPrice) {
-      onMarketClick();
-      setPriceTab('current');
-    }
+    onPriceBlur();
   };
 
-  // Handle market button click - reset the user price flag
+  // Handle market button click
   const handleMarketClick = () => {
-    setHasUserPrice(false); // Reset flag when explicitly clicking market
     onMarketClick();
   };
 
   // Handle click on price container or USD label - focus the input
   const handlePriceContainerClick = () => {
     inputRef.current?.focus();
-    onPriceFocus();
+    // Only trigger onPriceFocus when switching from current -> set
+    if (priceTab !== 'set') {
+      onPriceFocus();
+    }
     setPriceTab('set');
   };
 
@@ -150,14 +143,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
     inputEl?.focus();
   };
 
-  // Reset user price flag when switching between limit and market modes
   React.useEffect(() => {
     if (priceLabel === 'Price') {
       // When switching to limit mode, don't reset the flag
       // User should be able to keep their custom price
     } else {
-      // When switching to market mode, reset the flag
-      setHasUserPrice(false);
+      // Limit mode
     }
     setPriceTab(priceLabel === 'Price' ? 'current' : 'set');
   }, [priceLabel]);
@@ -207,7 +198,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
             type="text"
             className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={() => {
-              onPriceFocus();
+              // Only trigger onPriceFocus if not already in set tab
+              if (priceTab !== 'set') {
+                onPriceFocus();
+              }
               setPriceTab('set');
             }}
             onBlur={handlePriceBlur}

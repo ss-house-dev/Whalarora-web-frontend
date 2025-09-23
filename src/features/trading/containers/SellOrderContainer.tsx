@@ -287,9 +287,12 @@ export default function SellOrderContainer() {
   }, [sellAmount, getAvailableCoinBalance]);
 
   const handlePriceFocus = () => {
+    // Switch to Limit mode and snapshot current price
     setPriceLabel('Limit price');
     setIsInputFocused(true);
-    setPrice('');
+    if (marketPrice && !isPriceLoading) {
+      setPrice(marketPrice);
+    }
   };
 
   const handleMarketClick = () => {
@@ -307,17 +310,7 @@ export default function SellOrderContainer() {
   };
 
   const handlePriceBlur = () => {
-    if (price) {
-      const formattedPrice = formatPriceForDisplay(price);
-      setPrice(formattedPrice);
-      console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
-    } else {
-      if (marketPrice && !isPriceLoading) {
-        setPrice(marketPrice);
-        setPriceLabel('Price');
-        console.log(`SellOrderContainer: Price blur - reset to market price: "${marketPrice}"`);
-      }
-    }
+    // Do not modify the price on blur; keep the exact value the user sees
     setIsInputFocused(false);
   };
 
