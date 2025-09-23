@@ -67,6 +67,10 @@ export const useNavbar = () => {
     router.push('/auth/sign-in');
   };
 
+  const handleSignUpClick = () => {
+    router.push('/auth/sign-up');
+  };
+
   const toggleBalanceMenu = () => {
     setOpen((v) => !v);
   };
@@ -85,6 +89,7 @@ export const useNavbar = () => {
     handleAddCash,
     handleLogoClick,
     handleSignInClick,
+    handleSignUpClick,
     toggleBalanceMenu,
     toggleUserMenu,
     isAddingCash: addCashMutation.isPending,
