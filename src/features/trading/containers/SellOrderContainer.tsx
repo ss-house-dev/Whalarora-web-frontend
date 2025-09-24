@@ -129,25 +129,18 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return `${formattedInteger}.${decimalPart}`;
   }, []);
 
-  // ✅ แก้ไข: เอาการจำกัด maxDigits ออก - ให้พิมพ์ได้ไม่จำกัด
-  const formatToUnlimitedDigits = useCallback((value: number): string => {
-    if (typeof value !== 'number' || isNaN(value)) return '0';
-    let valueStr = value.toFixed(9);
-    valueStr = valueStr.replace(/\.?0+$/, '');
-    if (valueStr === '' || valueStr === '.') return '0';
-    return valueStr;
-  }, []);
-
   const getAvailableCoinBalance = useCallback(() => {
     if (!session || !coinBalance) return 0;
     return coinBalance.amount || 0;
   }, [session, coinBalance]);
 
-  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
   const formatAvailableCoinBalance = useCallback(() => {
     const balance = getAvailableCoinBalance();
-    return formatToUnlimitedDigits(balance);
-  }, [getAvailableCoinBalance, formatToUnlimitedDigits]);
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8, // Keep higher precision for display
+    }).format(balance);
+  }, [getAvailableCoinBalance]);
 
   const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
     if (!value) return '';
@@ -186,37 +179,54 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return /^\d*\.?\d{0,2}$/.test(numericValue);
   }, []);
 
-  // ✅ แก้ไข: เอาการจำกัดหลักออก - ให้พิมพ์ได้ไม่จำกัด
-  const formatCoinNumber = useCallback((value: string): string => {
-    if (!value) return '';
-    let numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+  // Fixed: Use priceDecimalPlaces to limit coin amount decimal places
+  const formatCoinNumber = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      let numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    // Normalize leading zeros for coin input
-    if (numericValue === '.') numericValue = '0.';
-    if (numericValue.length > 1 && numericValue[0] === '0') {
-      if (numericValue[1] !== '.') {
-        numericValue = numericValue.replace(/^0+/, '');
-        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
-      } else {
-        numericValue = '0.' + numericValue.slice(2);
+      // Normalize leading zeros for coin input
+      if (numericValue === '.') numericValue = '0.';
+      if (numericValue.length > 1 && numericValue[0] === '0') {
+        if (numericValue[1] !== '.') {
+          numericValue = numericValue.replace(/^0+/, '');
+          if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+        } else {
+          numericValue = '0.' + numericValue.slice(2);
+        }
       }
-    }
 
-    // ✅ เอาการจำกัดทศนิยม 9 ตำแหน่งออก - ให้พิมพ์ได้ไม่จำกัด
-    return numericValue;
-  }, []);
+      //  Fixed: Limit decimal places based on priceDecimalPlaces (tick size)
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      let decimalPart = parts[1];
+
+      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
+        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
+      }
+
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    },
+    [priceDecimalPlaces]
+  );
 
   const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
-  // ✅ แก้ไข: เอาการจำกัดทศนิยมออก - ให้พิมพ์ได้ไม่จำกัด
-  const isValidCoinFormat = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d*$/.test(numericValue);
-  }, []);
+  // Fixed: Validate coin format with priceDecimalPlaces limit (like BuyOrderContainer)
+  const isValidCoinFormat = useCallback(
+    (value: string): boolean => {
+      const numericValue = value.replace(/,/g, '');
+      const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
+      return regexPattern.test(numericValue);
+    },
+    [priceDecimalPlaces]
+  );
 
   const calculateReceiveUSD = useCallback(
     (coinAmount: string, priceValue: string): string => {
@@ -240,7 +250,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const calculateSellSliderPercentage = useCallback(
     (coinAmount: string): number => {
       if (!coinAmount) return 0;
-      const numAmount = parseFloat(coinAmount);
+      const numAmount = parseFloat(coinAmount.replace(/,/g, ''));
       const availableCoin = getAvailableCoinBalance();
       if (isNaN(numAmount) || numAmount <= 0 || availableCoin <= 0) return 0;
       const percentage = (numAmount / availableCoin) * 100;
@@ -249,22 +259,24 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [getAvailableCoinBalance]
   );
 
-  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
+  //  Fixed: Format with priceDecimalPlaces like BuyOrderContainer
   const calculateCoinFromPercentage = useCallback(
     (percentage: number): string => {
       const availableCoin = getAvailableCoinBalance();
       if (availableCoin <= 0 || percentage <= 0) return '0';
-      const multiplier = 1000000000;
-      const availableSatoshis = Math.floor(availableCoin * multiplier);
-      const percentageSatoshis = Math.floor((percentage / 100) * availableSatoshis);
-      const coinAmount = percentageSatoshis / multiplier;
-      return formatToUnlimitedDigits(coinAmount);
+      const amount = (percentage / 100) * availableCoin;
+
+      // Format with coin's price decimal places
+      const formatted = amount.toFixed(priceDecimalPlaces);
+      const [integerPart, decimalPart] = formatted.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return `${formattedInteger}.${decimalPart}`;
     },
-    [getAvailableCoinBalance, formatToUnlimitedDigits]
+    [getAvailableCoinBalance, priceDecimalPlaces]
   );
 
   const validateSellAmount = useCallback(() => {
-    const num = parseFloat(sellAmount);
+    const num = parseFloat(sellAmount.replace(/,/g, ''));
     const availableCoin = getAvailableCoinBalance();
     if (!sellAmount || sellAmount === '' || num === 0 || isNaN(num)) {
       setIsSellAmountValid(false);
@@ -333,17 +345,18 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       } else {
         setIsSellAmountValid(true);
         setSellAmountErrorMessage('');
-        const sliderPercentage = calculateSellSliderPercentage(numericValue);
+        const sliderPercentage = calculateSellSliderPercentage(inputValue);
         setSellSliderValue(sliderPercentage);
       }
     }
   };
 
   const handleSellSliderChange = (percentage: number) => {
+    setIsReceiveUSDEditing(false);
     setSellSliderValue(percentage);
     const newCoinAmount = calculateCoinFromPercentage(percentage);
     setSellAmount(newCoinAmount);
-    const num = parseFloat(newCoinAmount);
+    const num = parseFloat(newCoinAmount.replace(/,/g, ''));
     const availableCoin = getAvailableCoinBalance();
     const isValid = !isNaN(num) && num <= availableCoin;
     setIsSellAmountValid(isValid);
@@ -352,19 +365,27 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
   };
 
-  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
+  // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
   const handleQuickAddSell = (delta: number) => {
-    const current = parseFloat(sellAmount || '0') || 0;
+    setIsReceiveUSDEditing(false);
+    const current = parseFloat((sellAmount || '0').replace(/,/g, '')) || 0;
     const available = getAvailableCoinBalance();
     const next = current + delta;
-    const formatted = formatToUnlimitedDigits(next);
-    setSellAmount(formatted);
+
+    // Format with proper decimal places
+    const formatted = next.toFixed(priceDecimalPlaces);
+    const [integerPart, decimalPart] = formatted.split('.');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const finalFormatted = `${formattedInteger}.${decimalPart}`;
+
+    setSellAmount(finalFormatted);
+
     if (next > available) {
       setSellSliderValue(0);
       setIsSellAmountValid(false);
       setSellAmountErrorMessage('Insufficient balance');
     } else {
-      const sliderPercentage = calculateSellSliderPercentage(formatted);
+      const sliderPercentage = calculateSellSliderPercentage(finalFormatted);
       setSellSliderValue(sliderPercentage);
       const isValid = next > 0;
       setIsSellAmountValid(isValid);
@@ -372,11 +393,18 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
   };
 
-  // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
+  // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
   const handleMaxSell = () => {
+    setIsReceiveUSDEditing(false);
     const available = getAvailableCoinBalance();
-    const formatted = formatToUnlimitedDigits(available);
-    setSellAmount(formatted);
+
+    // Format with proper decimal places
+    const formatted = available.toFixed(priceDecimalPlaces);
+    const [integerPart, decimalPart] = formatted.split('.');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const finalFormatted = `${formattedInteger}.${decimalPart}`;
+
+    setSellAmount(finalFormatted);
     setSellSliderValue(100);
     setIsSellAmountValid(available > 0);
     setSellAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
@@ -387,11 +415,18 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const handleSellAmountBlur = () => {
     setIsReceiveUSDEditing(false);
     setIsSellAmountFocused(false);
+
     if (sellAmount) {
-      const num = parseFloat(sellAmount);
+      // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
+      const numericValue = sellAmount.replace(/,/g, '');
+      const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
-        setSellAmount(formatToUnlimitedDigits(num));
+        // Format with the coin's price decimal places
+        const formatted = num.toFixed(priceDecimalPlaces);
+        const [integerPart, decimalPart] = formatted.split('.');
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const finalFormatted = `${formattedInteger}.${decimalPart}`;
+        setSellAmount(finalFormatted);
       }
       validateSellAmount();
     }
@@ -417,9 +452,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
 
       const coinAmount = usdNum / priceNum;
-      // ✅ แก้ไข: ใช้ฟังก์ชันใหม่ที่ไม่จำกัดหลัก
-      const coinStr = formatToUnlimitedDigits(coinAmount);
-      setSellAmount(coinStr);
+      // Fixed: Format with priceDecimalPlaces
+      const newAmount = formatCoinNumber(coinAmount.toString());
+      setSellAmount(newAmount);
 
       const availableCoin = getAvailableCoinBalance();
       if (coinAmount > availableCoin) {
@@ -446,7 +481,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
 
     const numericPrice = parseFloat(price.replace(/,/g, '') || '0');
-    const coinAmountToSell = parseFloat(sellAmount || '0');
+    const coinAmountToSell = parseFloat(sellAmount.replace(/,/g, '') || '0');
     const userId =
       cashBalance?.userId || (session.user as UserWithId)?.id || session.user?.email || '';
     const lotPrice = numericPrice * coinAmountToSell;
@@ -494,7 +529,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       } else if (isPriceLoading) {
         setPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
-          `SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+          `SellOrderContainer: Set price to 0.${'0'.repeat(
+            priceDecimalPlaces
+          )} due to loading for ${selectedCoin.label}`
         );
       }
     }
