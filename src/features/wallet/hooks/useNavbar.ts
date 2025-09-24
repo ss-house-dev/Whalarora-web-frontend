@@ -7,7 +7,8 @@ export const useNavbar = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const mobileBalanceMenuRef = useRef<HTMLDivElement>(null);
+  const desktopBalanceMenuRef = useRef<HTMLDivElement>(null);
   const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const desktopUserMenuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
@@ -26,7 +27,11 @@ export const useNavbar = () => {
     const onDown = (e: MouseEvent) => {
       const target = e.target as Node;
 
-      if (menuRef.current && !menuRef.current.contains(target)) {
+      const clickedInsideBalanceMenu =
+        (mobileBalanceMenuRef.current && mobileBalanceMenuRef.current.contains(target)) ||
+        (desktopBalanceMenuRef.current && desktopBalanceMenuRef.current.contains(target));
+
+      if (!clickedInsideBalanceMenu) {
         setOpen(false);
       }
 
@@ -87,9 +92,18 @@ export const useNavbar = () => {
     window.dispatchEvent(new Event('guest-drawer:close'));
   };
 
+  useEffect(() => {
+    if (open) {
+      closeDrawers();
+    }
+  }, [open]);
+
   const toggleBalanceMenu = () => {
-    closeDrawers();
-    setOpen((v) => !v);
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const closeBalanceMenu = () => {
+    setOpen(false);
   };
 
   const toggleUserMenu = () => {
@@ -101,7 +115,8 @@ export const useNavbar = () => {
     open,
     userMenuOpen,
     session,
-    menuRef,
+    mobileBalanceMenuRef,
+    desktopBalanceMenuRef,
     mobileUserMenuRef,
     desktopUserMenuRef,
     handleSignOut,
@@ -110,6 +125,7 @@ export const useNavbar = () => {
     handleSignInClick,
     handleSignUpClick,
     toggleBalanceMenu,
+    closeBalanceMenu,
     toggleUserMenu,
     isAddingCash: addCashMutation.isPending,
   };
