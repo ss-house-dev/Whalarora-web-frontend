@@ -149,19 +149,16 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return formatToUnlimitedDigits(balance);
   }, [getAvailableCoinBalance, formatToUnlimitedDigits]);
 
-  const formatToPriceDecimalsWithComma = useCallback((): ((value: string) => string) => {
-    // Returns a formatter that formats with priceDecimalPlaces
-    return (value: string): string => {
-      if (!value) return '';
-      const numericValue = value.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return '';
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: priceDecimalPlaces,
-        maximumFractionDigits: priceDecimalPlaces,
-      }).format(num);
-    };
-  }, [priceDecimalPlaces]);
+  const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    const numericValue = value.replace(/,/g, '');
+    const num = parseFloat(numericValue);
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  }, []);
 
   // Allow typing USD with commas and optional decimals (normalize leading zeros)
   const formatUsdWithComma = useCallback((value: string): string => {
@@ -179,19 +176,15 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
     const parts = numericValue.split('.');
     const integerPart = parts[0];
-    let decimalPart = parts[1];
-    if (decimalPart && decimalPart.length > priceDecimalPlaces) {
-      decimalPart = decimalPart.substring(0, priceDecimalPlaces);
-    }
+    const decimalPart = parts[1];
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-  }, [priceDecimalPlaces]);
+  }, []);
 
   const isValidUSDFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
-    const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
-    return regexPattern.test(numericValue);
-  }, [priceDecimalPlaces]);
+    return /^\d*\.?\d{0,2}$/.test(numericValue);
+  }, []);
 
   // ✅ แก้ไข: เอาการจำกัดหลักออก - ให้พิมพ์ได้ไม่จำกัด
   const formatCoinNumber = useCallback((value: string): string => {
@@ -239,10 +232,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const numPrice = parseFloat(cleanPrice);
       if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
       const usdAmount = numCoin * numPrice;
-      const fmt = formatToPriceDecimalsWithComma();
-      return fmt(usdAmount.toString());
+      return formatToTwoDecimalsWithComma(usdAmount.toString());
     },
-    [formatToPriceDecimalsWithComma]
+    [formatToTwoDecimalsWithComma]
   );
 
   const calculateSellSliderPercentage = useCallback(
