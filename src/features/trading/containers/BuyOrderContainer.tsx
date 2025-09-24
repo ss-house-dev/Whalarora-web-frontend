@@ -614,8 +614,10 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
       const usd = coinNum * priceNum;
 
-      // จัดรูปแบบทศนิยมให้กับ spend amount ทันที
-      const formattedUsd = usd.toFixed(priceDecimalPlaces);
+      // Truncate to priceDecimalPlaces without rounding
+      const multiplier = Math.pow(10, priceDecimalPlaces);
+      const truncatedUsd = Math.trunc(usd * multiplier) / multiplier;
+      const formattedUsd = truncatedUsd.toFixed(priceDecimalPlaces);
       const [integerPart, decimalPart] = formattedUsd.split('.');
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       const newAmount = `${formattedInteger}.${decimalPart}`;
