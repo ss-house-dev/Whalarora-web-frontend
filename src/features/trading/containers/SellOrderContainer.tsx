@@ -142,42 +142,45 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }).format(balance);
   }, [getAvailableCoinBalance]);
 
-  const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return '';
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-  }, []);
+  const formatUsdAmount = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      let numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-  // Allow typing USD with commas and optional decimals (normalize leading zeros)
-  const formatUsdWithComma = useCallback((value: string): string => {
-    if (!value) return '';
-    let numericValue = value.replace(/,/g, '');
-    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-    if (numericValue === '.') numericValue = '0.';
-    if (numericValue.length > 1 && numericValue[0] === '0') {
-      if (numericValue[1] !== '.') {
-        numericValue = numericValue.replace(/^0+/, '');
-        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
-      } else {
-        numericValue = '0.' + numericValue.slice(2);
+      if (numericValue === '.') numericValue = '0.';
+      if (numericValue.length > 1 && numericValue[0] === '0') {
+        if (numericValue[1] !== '.') {
+          numericValue = numericValue.replace(/^0+/, '');
+          if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+        } else {
+          numericValue = '0.' + numericValue.slice(2);
+        }
       }
-    }
-    const parts = numericValue.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1];
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-  }, []);
 
-  const isValidUSDFormat = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,2}$/.test(numericValue);
-  }, []);
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      let decimalPart = parts[1];
+
+      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
+        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
+      }
+
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    },
+    [priceDecimalPlaces]
+  );
+
+  const isValidUSDFormat = useCallback(
+    (value: string): boolean => {
+      const numericValue = value.replace(/,/g, '');
+      const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
+      return regexPattern.test(numericValue);
+    },
+    [priceDecimalPlaces]
+  );
 
   // Fixed: Use priceDecimalPlaces to limit coin amount decimal places
   const formatCoinNumber = useCallback(
@@ -242,9 +245,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const numPrice = parseFloat(cleanPrice);
       if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
       const usdAmount = numCoin * numPrice;
-      return formatToTwoDecimalsWithComma(usdAmount.toString());
+      return formatUsdAmount(usdAmount.toString());
     },
-    [formatToTwoDecimalsWithComma]
+    [formatUsdAmount]
   );
 
   const calculateSellSliderPercentage = useCallback(
@@ -437,7 +440,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     const inputValue = e.target.value;
     if (inputValue === '' || isValidUSDFormat(inputValue)) {
       setIsReceiveUSDEditing(true);
-      const formatted = formatUsdWithComma(inputValue);
+      const formatted = formatUsdAmount(inputValue);
       setReceiveUSD(formatted);
 
       const priceNum = parseFloat(price.replace(/,/g, ''));
