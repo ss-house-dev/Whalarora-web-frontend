@@ -16,7 +16,15 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   showPagination = true,
   onCancelOrder,
 }) => {
-  const { orders, pagination, setPage, loading } = useOpenOrders();
+  const { orders, pagination, setPage, loading, error } = useOpenOrders();
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-red-500">
+        Failed to load open orders. Please log in.
+      </div>
+    );
+  }
 
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
   const [prevPagination, setPrevPagination] = React.useState<OpenOrdersState['pagination'] | null>(
