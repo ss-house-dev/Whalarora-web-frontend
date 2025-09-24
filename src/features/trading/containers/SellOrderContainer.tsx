@@ -466,25 +466,11 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
             ? decimalsFromSize(symbolPrecision.stepSize)
             : quantityPrecision) ??
           6;
-        let formatted = truncateToDecimals(num, decimals); // Declare once
-        let parts = formatted.split('.');
-        let integerPart = parts[0];
-        let decimalPart = parts[1];
-        let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        let finalFormatted =
-          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
 
-        if (!symbolPrecision) {
-          formatted = truncateToDecimals(num, quantityPrecision); // Reassign instead of redeclare
-          parts = formatted.split('.');
-          integerPart = parts[0];
-          decimalPart = parts[1];
-          formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          finalFormatted =
-            decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+        if (sellAmount) {
+          validateSellAmount();
         }
 
-        setSellAmount(finalFormatted);
         validateSellAmount();
       }
     }

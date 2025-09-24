@@ -209,20 +209,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handleReceiveBlur = () => {
     if (receiveCoin) {
       const numericValue = receiveCoin.replace(/,/g, '');
-      const num = parseFloat(numericValue);
-
-      if (!isNaN(num)) {
-        const decimals =
-          symbolPrecision?.quantityPrecision ??
-          (symbolPrecision?.stepSize
-            ? decimalsFromSize(symbolPrecision.stepSize)
-            : quantityPrecision) ??
-          6; // Fallback to 6
-        // Truncate to the specified number of decimal places
-        const multiplier = Math.pow(10, decimals);
-        const truncated = Math.trunc(num * multiplier) / multiplier;
-        setReceiveCoin(truncated.toFixed(decimals));
-      }
     }
   };
 
