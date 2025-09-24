@@ -375,13 +375,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
       <div className="space-y-3">
         {/* arrow */}
-        <div className="flex justify-center" onClick={() => onExchangeClick?.()}>
+        <div className="flex justify-center">
           <Image
             src="/assets/exchange.svg"
             alt="Exchange Button"
             width={28}
             height={28}
             className="cursor-pointer"
+            onClick={() => onExchangeClick?.()}
           />
         </div>
 

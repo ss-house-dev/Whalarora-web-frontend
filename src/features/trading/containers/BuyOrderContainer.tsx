@@ -214,9 +214,14 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       if (!isNaN(num)) {
         let formatted;
         if (symbolPrecision) {
-          formatted = formatAmountWithStep(num, symbolPrecision);
+          const decimals =
+            symbolPrecision.quantityPrecision ??
+            (symbolPrecision.stepSize
+              ? decimalsFromSize(symbolPrecision.stepSize)
+              : quantityPrecision);
+          formatted = floorToDecimals(num, decimals);
         } else {
-          formatted = num.toFixed(quantityPrecision);
+          formatted = floorToDecimals(num, quantityPrecision);
         }
         setReceiveCoin(formatted);
       }
@@ -358,6 +363,16 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [quantityPrecision]
   );
 
+  const floorToDecimals = useCallback((num: number, decimals: number): string => {
+    if (decimals === 0) {
+      return Math.floor(num).toString();
+    }
+
+    const multiplier = Math.pow(10, decimals);
+    const floored = Math.floor(num * multiplier) / multiplier;
+    return floored.toFixed(decimals);
+  }, []);
+
   const calculateReceiveCoin = useCallback(
     (amountValue: string, priceValue: string): string => {
       if (!amountValue || !priceValue) return '';
@@ -373,15 +388,24 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return '';
       const coinAmount = numAmount / numPrice;
       if (!Number.isFinite(coinAmount)) return '';
+
       if (symbolPrecision) {
-        return formatAmountWithStep(coinAmount, symbolPrecision);
+        // ใช้ floorToDecimals แทน formatAmountWithStep
+        const decimals =
+          symbolPrecision.quantityPrecision ??
+          (symbolPrecision.stepSize
+            ? decimalsFromSize(symbolPrecision.stepSize)
+            : quantityPrecision);
+        return floorToDecimals(coinAmount, decimals);
       }
+
       if (Number.isInteger(quantityPrecision) && quantityPrecision >= 0) {
-        return coinAmount.toFixed(quantityPrecision);
+        return floorToDecimals(coinAmount, quantityPrecision);
       }
+
       return coinAmount.toString();
     },
-    [symbolPrecision, quantityPrecision]
+    [symbolPrecision, quantityPrecision, floorToDecimals]
   );
 
   const calculateSliderPercentage = useCallback(
@@ -613,6 +637,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       }
     }
   };
+
   const handleSubmit = () => {
     if (!session) {
       router.push('/auth/sign-in');
