@@ -21,7 +21,8 @@ interface NavbarUIProps {
   userMenuOpen: boolean;
   session: Session | null;
   menuRef: React.RefObject<HTMLDivElement | null>;
-  userMenuRef: React.RefObject<HTMLDivElement | null>;
+  mobileUserMenuRef: React.RefObject<HTMLDivElement | null>;
+  desktopUserMenuRef: React.RefObject<HTMLDivElement | null>;
   handleSignOut: () => void;
   handleLogoClick: () => void;
   handleSignInClick: () => void;
@@ -35,7 +36,8 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
   userMenuOpen,
   session,
   menuRef,
-  userMenuRef,
+  mobileUserMenuRef,
+  desktopUserMenuRef,
   handleSignOut,
   handleLogoClick,
   handleSignInClick,
@@ -259,7 +261,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
               </div>
 
               {/* Avatar วงกลมเปิด user menu */}
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative" ref={mobileUserMenuRef}>
                 <button
                   onClick={() => {
                     toggleUserMenu();
@@ -423,7 +425,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
             {/* User section */}
             {session ? (
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative" ref={desktopUserMenuRef}>
                 <button
                   onClick={toggleUserMenu}
                   className="flex items-center gap-2 text-white text-sm px-3 py-2 rounded-lg bg-[#1F4293] hover:bg-[#17306B] transition-all duration-300 cursor-pointer"

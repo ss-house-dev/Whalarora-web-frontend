@@ -8,7 +8,8 @@ export const useNavbar = () => {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
+  const desktopUserMenuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
 
   const addCashMutation = useAddCashToTrade({
@@ -23,10 +24,17 @@ export const useNavbar = () => {
   // Handle click outside and escape key
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setOpen(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+
+      const clickedInsideUserMenu =
+        (mobileUserMenuRef.current && mobileUserMenuRef.current.contains(target)) ||
+        (desktopUserMenuRef.current && desktopUserMenuRef.current.contains(target));
+
+      if (!clickedInsideUserMenu) {
         setUserMenuOpen(false);
       }
     };
@@ -84,7 +92,8 @@ export const useNavbar = () => {
     userMenuOpen,
     session,
     menuRef,
-    userMenuRef,
+    mobileUserMenuRef,
+    desktopUserMenuRef,
     handleSignOut,
     handleAddCash,
     handleLogoClick,
