@@ -420,7 +420,7 @@ export default function OpenOrderandTradeHistoryResponsive() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-3xl bg-[#16171D] p-4 text-white shadow-lg shadow-black/20 sm:p-6 lg:p-8 min-h-[480px] h-full">
+    <div className="w-full max-w-[900px] h-full max-h-[548px] mx-auto flex flex-col gap-4 rounded-3xl bg-[#16171D] p-4 text-white shadow-lg shadow-black/20 sm:p-6 lg:p-8">
       {/* Tabs */}
       <div className="relative flex border-b pb-3 gap-3 pl-4 border-[#ffffff]/5">
         <button
