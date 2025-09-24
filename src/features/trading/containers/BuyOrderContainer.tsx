@@ -99,7 +99,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     return decimals ?? 6;
   }, [symbolPrecision]);
 
-
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
       console.log('BuyOrderContainer: Buy order response:', data);
@@ -205,6 +204,23 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
     createBuyOrderMutation.mutate(confirmPayload);
     setPendingOrder(null);
+  };
+
+  const handleReceiveBlur = () => {
+    if (receiveCoin) {
+      const numericValue = receiveCoin.replace(/,/g, '');
+      const num = parseFloat(numericValue);
+
+      if (!isNaN(num)) {
+        let formatted;
+        if (symbolPrecision) {
+          formatted = formatAmountWithStep(num, symbolPrecision);
+        } else {
+          formatted = num.toFixed(quantityPrecision);
+        }
+        setReceiveCoin(formatted);
+      }
+    }
   };
 
   const [priceLabel, setPriceLabel] = useState('Price');
@@ -750,6 +766,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         onAmountChange={handleAmountChange}
         onAmountFocus={handleAmountFocus}
         onAmountBlur={handleAmountBlur}
+        onReceiveBlur={handleReceiveBlur}
         onSliderChange={handleSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}

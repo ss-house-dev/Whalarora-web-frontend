@@ -39,6 +39,7 @@ interface OrderFormProps {
   onSubmit: () => void;
   onLoginClick?: () => void;
   onReceiveChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onReceiveBlur?: () => void;
   onQuickAdd?: (delta: number) => void;
   onMax?: () => void;
   onExchangeClick?: () => void;
@@ -75,6 +76,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onSubmit,
   onLoginClick,
   onReceiveChange,
+  onReceiveBlur,
   onQuickAdd,
   onMax,
   onExchangeClick,
@@ -405,6 +407,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
               onChange={(e) => {
                 e.stopPropagation();
                 onReceiveChange?.(e);
+              }}
+              onBlur={() => {
+                onReceiveBlur?.();
               }}
               onClick={(e) => e.stopPropagation()}
             />
