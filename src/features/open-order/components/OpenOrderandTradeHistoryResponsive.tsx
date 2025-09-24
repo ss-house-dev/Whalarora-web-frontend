@@ -67,10 +67,6 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
             {statusMeta.label}
           </span>
         </div>
-        <div className="flex items-center gap-2 whitespace-nowrap text-[#A4A4A4]">
-          <span>{order.date}</span>
-          <span>{order.time}</span>
-        </div>
         {order.cancellable ? (
           <button
             type="button"
@@ -91,6 +87,10 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
             {sideMeta.label}
           </span>
           <span className="text-sm font-medium leading-tight text-white">{order.pair}</span>
+        </div>
+        <div className="flex items-center gap-2 whitespace-nowrap text-xs text-[#A4A4A4]">
+          <span>{order.date}</span>
+          <span>{order.time}</span>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ function HistoryCardPreview({ entry }: { entry: HistoryPreview }) {
             {statusMeta.label}
           </span>
         </div>
-        <div className="flex items-center gap-2 whitespace-nowrap text-[#A4A4A4]">
+        <div className="flex items-center gap-2 whitespace-nowrap text-xs text-[#A4A4A4]">
           <span>{entry.date}</span>
           <span>{entry.time}</span>
         </div>
