@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
 import AlertBox from '@/components/ui/alert-box-sell';
 import { useSession } from 'next-auth/react';
@@ -11,6 +11,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TradeQueryKeys } from '@/features/trading/constants';
 import { useGetCoin } from '@/features/trading/hooks/useGetCoin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  decimalsFromSize,
+} from '@/features/trading/utils/symbolPrecision';
 
 interface UserWithId {
   id: string;
@@ -32,6 +38,28 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+
+  // Extract coin and quote symbols
+  const [coinSymbol, quoteSymbol] = useMemo(() => {
+    const [base, quote] = selectedCoin.label.split('/');
+    return [base ?? '', quote ?? 'USDT'];
+  }, [selectedCoin.label]);
+
+  // Get precision data from symbol precisions
+  const { data: precisionMap } = useSymbolPrecisions();
+
+  const symbolPrecision = useMemo(
+    () => getSymbolPrecision(precisionMap, coinSymbol, quoteSymbol),
+    [precisionMap, coinSymbol, quoteSymbol]
+  );
+
+  // Calculate quantity precision for coin amount (step size based)
+  const quantityPrecision = useMemo(() => {
+    const decimals =
+      symbolPrecision?.quantityPrecision ??
+      (symbolPrecision?.stepSize ? decimalsFromSize(symbolPrecision.stepSize) : undefined);
+    return decimals ?? 6;
+  }, [symbolPrecision]);
 
   const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
@@ -87,17 +115,17 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
   const [lastPercentage, setLastPercentage] = useState<number | null>(null);
 
-  // Truncate a number to specified decimal places without rounding
-  const truncateToDecimals = useCallback((num: number, decimals: number): string => {
+  // Floor number to specified decimal places without rounding
+  const floorToDecimals = useCallback((num: number, decimals: number): string => {
     if (isNaN(num) || !Number.isFinite(num)) return '0';
-    const factor = Math.pow(10, decimals);
-    const truncated = Math.floor(num * factor) / factor;
-    const parts = truncated.toString().split('.');
-    const integerPart = parts[0];
-    let decimalPart = parts[1] || '';
-    // Pad with zeros if necessary
-    decimalPart = decimalPart.padEnd(decimals, '0');
-    return `${integerPart}${decimals > 0 ? '.' + decimalPart : ''}`;
+
+    if (decimals === 0) {
+      return Math.floor(num).toString();
+    }
+
+    const multiplier = Math.pow(10, decimals);
+    const floored = Math.floor(num * multiplier) / multiplier;
+    return floored.toFixed(decimals);
   }, []);
 
   const formatPriceWithComma = useCallback((value: string): string => {
@@ -152,6 +180,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }).format(balance);
   }, [getAvailableCoinBalance]);
 
+  // Format USD amount using price decimal places (tick size)
   const formatUsdAmount = useCallback(
     (value: string): string => {
       if (!value) return '';
@@ -168,21 +197,20 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         }
       }
 
+      // แปลงเป็นตัวเลขแล้วใช้ toFixed เพื่อให้ได้ทศนิยมเต็ม
       const num = parseFloat(numericValue);
-      if (isNaN(num)) return numericValue;
+      if (isNaN(num)) return value;
 
-      const formatted = truncateToDecimals(num, priceDecimalPlaces);
-      const parts = formatted.split('.');
-      const integerPart = parts[0];
-      const decimalPart = parts[1];
-
+      const formatted = num.toFixed(priceDecimalPlaces);
+      const [integerPart, decimalPart] = formatted.split('.');
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+      return `${formattedInteger}.${decimalPart}`;
     },
-    [priceDecimalPlaces, truncateToDecimals]
+    [priceDecimalPlaces]
   );
 
+  // Validate USD format using price decimal places
   const isValidUSDFormat = useCallback(
     (value: string): boolean => {
       const numericValue = value.replace(/,/g, '');
@@ -192,6 +220,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [priceDecimalPlaces]
   );
 
+  // Format coin amount using quantity precision (step size)
   const formatCoinNumber = useCallback(
     (value: string): string => {
       if (!value) return '';
@@ -208,19 +237,20 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         }
       }
 
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return numericValue;
-
-      const formatted = truncateToDecimals(num, priceDecimalPlaces);
-      const parts = formatted.split('.');
+      // Limit decimal places to quantityPrecision (step size)
+      const parts = numericValue.split('.');
       const integerPart = parts[0];
-      const decimalPart = parts[1];
+      let decimalPart = parts[1];
+
+      if (decimalPart && decimalPart.length > quantityPrecision) {
+        decimalPart = decimalPart.substring(0, quantityPrecision);
+      }
 
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
       return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [priceDecimalPlaces, truncateToDecimals]
+    [quantityPrecision]
   );
 
   const isValidPriceFormat = useCallback((value: string): boolean => {
@@ -228,13 +258,22 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
+  // Validate coin format using quantity precision
   const isValidCoinFormat = useCallback(
     (value: string): boolean => {
       const numericValue = value.replace(/,/g, '');
-      const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
-      return regexPattern.test(numericValue);
+      if (numericValue === '') return true;
+      if (!/^\d*\.?\d*$/.test(numericValue)) return false;
+      if (!Number.isInteger(quantityPrecision) || quantityPrecision < 0) {
+        return true;
+      }
+      if (quantityPrecision === 0) {
+        return /^\d*$/.test(numericValue);
+      }
+      const decimalPart = numericValue.split('.')[1];
+      return !decimalPart || decimalPart.length <= quantityPrecision;
     },
-    [priceDecimalPlaces]
+    [quantityPrecision]
   );
 
   const calculateReceiveUSD = useCallback(
@@ -247,7 +286,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       )
         return '';
 
-      const numCoin = parseFloat(coinAmount);
+      const numCoin = parseFloat(coinAmount.replace(/,/g, ''));
       const numPrice = parseFloat(cleanPrice);
       if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
       const usdAmount = numCoin * numPrice;
@@ -273,9 +312,25 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const availableCoin = getAvailableCoinBalance();
       if (availableCoin <= 0 || percentage <= 0) return '0';
       const amount = (percentage / 100) * availableCoin;
+
+      // Use proper formatting with quantity precision
+      if (symbolPrecision) {
+        const decimals =
+          symbolPrecision.quantityPrecision ??
+          (symbolPrecision.stepSize
+            ? decimalsFromSize(symbolPrecision.stepSize)
+            : quantityPrecision);
+        const formatted = floorToDecimals(amount, decimals);
+        const parts = formatted.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+      }
+
       return formatCoinNumber(amount.toString());
     },
-    [getAvailableCoinBalance, formatCoinNumber]
+    [getAvailableCoinBalance, formatCoinNumber, symbolPrecision, quantityPrecision, floorToDecimals]
   );
 
   const validateSellAmount = useCallback(() => {
@@ -399,14 +454,31 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const numericValue = sellAmount.replace(/,/g, '');
       const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        const formatted = truncateToDecimals(num, priceDecimalPlaces);
-        const parts = formatted.split('.');
-        const integerPart = parts[0];
-        const decimalPart = parts[1];
-        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        const finalFormatted =
-          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-        setSellAmount(finalFormatted);
+        // Use proper formatting with quantity precision
+        if (symbolPrecision) {
+          const decimals =
+            symbolPrecision.quantityPrecision ??
+            (symbolPrecision.stepSize
+              ? decimalsFromSize(symbolPrecision.stepSize)
+              : quantityPrecision);
+          const formatted = floorToDecimals(num, decimals);
+          const parts = formatted.split('.');
+          const integerPart = parts[0];
+          const decimalPart = parts[1];
+          const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          const finalFormatted =
+            decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+          setSellAmount(finalFormatted);
+        } else {
+          const formatted = floorToDecimals(num, quantityPrecision);
+          const parts = formatted.split('.');
+          const integerPart = parts[0];
+          const decimalPart = parts[1];
+          const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          const finalFormatted =
+            decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+          setSellAmount(finalFormatted);
+        }
       }
       validateSellAmount();
     }
@@ -432,7 +504,26 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
 
       const coinAmount = usdNum / priceNum;
-      const newAmount = formatCoinNumber(coinAmount.toString());
+
+      // Format the coin amount properly using quantity precision
+      let newAmount;
+      if (symbolPrecision) {
+        const decimals =
+          symbolPrecision.quantityPrecision ??
+          (symbolPrecision.stepSize
+            ? decimalsFromSize(symbolPrecision.stepSize)
+            : quantityPrecision);
+        const formatted = floorToDecimals(coinAmount, decimals);
+        const parts = formatted.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        newAmount =
+          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+      } else {
+        newAmount = formatCoinNumber(coinAmount.toString());
+      }
+
       setSellAmount(newAmount);
 
       const availableCoin = getAvailableCoinBalance();
@@ -445,6 +536,22 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         setSellAmountErrorMessage('');
         const sliderPercentage = Math.min((coinAmount / availableCoin) * 100, 100);
         setSellSliderValue(sliderPercentage);
+      }
+    }
+  };
+
+  const handleReceiveBlur = () => {
+    if (receiveUSD) {
+      const numericValue = receiveUSD.replace(/,/g, '');
+      const num = parseFloat(numericValue);
+
+      if (!isNaN(num)) {
+        // ใช้ priceDecimalPlaces สำหรับการแสดงผล USD
+        const formatted = num.toFixed(priceDecimalPlaces);
+        const [integerPart, decimalPart] = formatted.split('.');
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const finalFormatted = `${formattedInteger}.${decimalPart}`;
+        setReceiveUSD(finalFormatted);
       }
     }
   };
@@ -539,7 +646,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     ADA: 'ada-coin.svg',
     DOGE: 'doge-coin.svg',
   };
-  const coinSymbol = selectedCoin.label.split('/')[0];
   const amountIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
 
   return (
@@ -577,6 +683,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveUSDChange}
+        onReceiveBlur={handleReceiveBlur}
         onExchangeClick={onExchangeClick}
         onQuickAdd={handlePercentageClick}
         onMax={handleMaxSell}
