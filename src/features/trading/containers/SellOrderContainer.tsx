@@ -197,15 +197,30 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         }
       }
 
-      // แปลงเป็นตัวเลขแล้วใช้ toFixed เพื่อให้ได้ทศนิยมเต็ม
-      const num = parseFloat(numericValue);
-      if (isNaN(num)) return value;
+      // Limit decimal places to priceDecimalPlaces (tick size) - แต่ไม่ pad
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      let decimalPart = parts[1];
 
-      const formatted = num.toFixed(priceDecimalPlaces);
-      const [integerPart, decimalPart] = formatted.split('.');
+      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
+        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
+      }
+
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-      return `${formattedInteger}.${decimalPart}`;
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    },
+    [priceDecimalPlaces]
+  );
+
+  const formatUsdForDisplay = useCallback(
+    (value: number): string => {
+      if (isNaN(value) || value <= 0) return '0.' + '0'.repeat(priceDecimalPlaces);
+
+      const formattedValue = value.toFixed(priceDecimalPlaces);
+      const [integerPart, decimalPart] = formattedValue.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return `${formattedInteger}.${decimalPart || '0'.repeat(priceDecimalPlaces)}`;
     },
     [priceDecimalPlaces]
   );
@@ -290,9 +305,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       const numPrice = parseFloat(cleanPrice);
       if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
       const usdAmount = numCoin * numPrice;
-      return formatUsdAmount(usdAmount.toString());
+      return formatUsdForDisplay(usdAmount); // ใช้ formatUsdForDisplay แทน
     },
-    [formatUsdAmount]
+    [formatUsdForDisplay]
   );
 
   const calculateSellSliderPercentage = useCallback(
