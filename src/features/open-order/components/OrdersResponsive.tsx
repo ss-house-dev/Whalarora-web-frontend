@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OpenOrdersContainer } from '../containers/OpenOrdersContainer';
 import TradeHistoryContainer from './TradeHistoryContainer';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -10,6 +9,7 @@ import { OpenOrdersProvider, useOpenOrders } from '../contexts/OpenOrdersContext
 import { useGetTradeHistory } from '../hooks/useGetTradeHistory';
 import type { TradeHistoryRange } from '../types/history';
 import { formatDateParts } from '@/features/trading/utils/dateFormat';
+import PaginationFooter from '@/components/ui/PaginationFooter';
 
 // --- Type Definitions ---
 type OrderStatus = 'complete' | 'partial' | 'pending' | 'closed';
@@ -78,14 +78,14 @@ const TRADE_FILTERS: { key: TradeHistoryRange; label: string }[] = [
   { key: 'year', label: 'Year' },
 ];
 
-// --- UI Components for Mobile (Card Layout) ---
+// --- Card Components for Mobile Content ---
 function OrderCardPreview({ order }: { order: OrderPreview }) {
   const statusMeta = ORDER_STATUS_META[order.status];
   const sideMeta = ORDER_SIDE_META[order.side];
   const showProgress = order.status === 'partial' && typeof order.filledPercent === 'number';
 
   return (
-    <article className="flex w-full max-w-xs flex-col gap-4 rounded-xl border border-[#474747] bg-[#16171D] p-4 sm:max-w-none">
+    <article className="flex w-full flex-col gap-0 rounded-xl border border-[#474747] bg-[#16171D] p-4">
       <header className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <span
@@ -96,7 +96,7 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
             {statusMeta.label}
           </span>
         </div>
-        {order.cancellable ? (
+        {order.cancellable && (
           <button
             type="button"
             className="ml-auto inline-flex size-8 items-center justify-center rounded-lg border border-[#474747] text-[#E9E9E9] transition hover:border-[#5F5F5F] hover:text-white"
@@ -104,7 +104,7 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
           >
             <Trash2 className="size-4" strokeWidth={1.5} />
           </button>
-        ) : null}
+        )}
       </header>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -137,7 +137,7 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
           </div>
         </div>
       </div>
-      {showProgress ? (
+      {showProgress && (
         <div className="flex flex-col gap-2">
           <div className="h-2 w-full overflow-hidden rounded-full bg-[#1F2029]">
             <div
@@ -152,7 +152,7 @@ function OrderCardPreview({ order }: { order: OrderPreview }) {
             <span className="font-normal leading-none">{order.filledPercent?.toFixed(2)} %</span>
           </div>
         </div>
-      ) : null}
+      )}
     </article>
   );
 }
@@ -212,131 +212,176 @@ function HistoryCardPreview({ entry }: { entry: HistoryPreview }) {
   );
 }
 
-// --- Data Components for Mobile ---
-function OpenOrdersList() {
-  const { orders, loading, error } = useOpenOrders();
-  if (error)
-    return (
-      <div className="text-center text-red-500">Failed to load open orders. Please login.</div>
-    );
-  if (loading) return <div className="text-center text-gray-400">Loading Open Orders...</div>;
-  if (orders.length === 0) return <div className="text-center text-gray-400">No open orders</div>;
+// --- Data Wrapper for Mobile Content ---
+function formatOrderId(orderId: string) {
+  if (orderId.length <= 10) {
+    return orderId;
+  }
+  return `${orderId.slice(0, 5)}...${orderId.slice(-5)}`;
+}
+
+function MobileHeader({ title }: { title: string }) {
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold leading-tight">{title}</h2>
+      </div>
+    </header>
+  );
+}
+
+function mapApiStatusToOrderStatus(
+  apiStatus: 'OPEN' | 'CLOSED' | 'CANCELLED' | 'PARTIALLY_FILLED'
+): OrderStatus {
+  switch (apiStatus) {
+    case 'OPEN':
+      return 'pending';
+    case 'PARTIALLY_FILLED':
+      return 'partial';
+    case 'CLOSED':
+    case 'CANCELLED':
+      return 'closed';
+    default:
+      return 'pending'; // Fallback for unknown statuses
+  }
+}
+
+function OpenOrdersCards() {
+  const { orders, loading, error, pagination, setPage } = useOpenOrders();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {orders.map((order) => {
-        const remainingAmount = order.amount;
-        const originalAmount = order.originalAmount;
-        const filledAmount = originalAmount - remainingAmount;
-        const filledPercent = originalAmount > 0 ? (filledAmount / originalAmount) * 100 : 0;
-        const { date, time } = formatDateParts(order.createdAt, { includeSeconds: true });
-
-        const mappedOrder: OrderPreview = {
-          id: order._id,
-          status: filledPercent === 100 ? 'complete' : filledPercent > 0 ? 'partial' : 'pending',
-          side: order.side.toLowerCase() as 'buy' | 'sell',
-          pair: `${order.symbol}/USDT`,
-          date: date,
-          time: time,
-          price: order.price.toString(),
-          priceCurrency: 'USDT',
-          quantityLabel: filledPercent === 100 ? 'Matched' : 'Amount',
-          quantity: order.originalAmount.toString(),
-          quantityUnit: order.symbol,
-          filledAmount: filledAmount.toString(),
-          filledUnit: order.symbol,
-          filledPercent: filledPercent,
-          cancellable: true,
-        };
-        return <OrderCardPreview key={order._id} order={mappedOrder} />;
-      })}
+    <div className="flex flex-col h-full">
+      {error ? (
+        <div className="flex-1 flex items-center justify-center text-center text-red-500">
+          Failed to load open orders.
+        </div>
+      ) : loading && orders.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-center text-gray-400">
+          Loading Open Orders...
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-center text-gray-400">
+          No open orders
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {orders.map((order) => {
+                const { date, time } = formatDateParts(order.createdAt, { includeSeconds: true });
+                const mappedOrder: OrderPreview = {
+                  id: order._id,
+                  status: mapApiStatusToOrderStatus(order.status),
+                  side: order.side.toLowerCase() as 'buy' | 'sell',
+                  pair: `${order.symbol}/USDT`,
+                  date,
+                  time,
+                  price: order.price.toString(),
+                  priceCurrency: 'USDT',
+                  quantityLabel: 'Amount',
+                  quantity: order.originalAmount.toString(),
+                  quantityUnit: order.symbol,
+                  filledAmount: (order.originalAmount - order.amount).toString(),
+                  filledUnit: order.symbol,
+                  filledPercent:
+                    order.originalAmount > 0
+                      ? ((order.originalAmount - order.amount) / order.originalAmount) * 100
+                      : 0,
+                  cancellable: true,
+                };
+                return <OrderCardPreview key={order._id} order={mappedOrder} />;
+              })}
+            </div>
+          </div>
+          <PaginationFooter
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalCount={pagination.total}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </div>
   );
 }
 
-function TradeHistoryList() {
+function TradeHistoryCards() {
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [filter, setFilter] = useState<TradeHistoryRange>('all');
-  const { data, isLoading, error } = useGetTradeHistory({ page: 1, limit: 10, range: filter });
+  const { data, isLoading, error } = useGetTradeHistory({ page, limit, range: filter });
   const items = data?.items ?? [];
 
-  if (error)
-    return (
-      <div className="text-center text-red-500">Failed to load trade history. Please login.</div>
-    );
-
   return (
-    <section className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold leading-tight">Trade History</h2>
+    <div className="flex flex-col h-full">
+      <div className="flex flex-wrap items-center justify-start gap-2 mb-4">
+        {TRADE_FILTERS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => {
+              setFilter(key);
+              setPage(1);
+            }}
+            className={`inline-flex h-7 items-center justify-center rounded-3xl px-3 text-xs font-medium transition ${
+              filter === key
+                ? 'border border-[#474747] bg-[#16171D] text-white'
+                : 'text-[#A4A4A4] hover:text-white'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {error ? (
+        <div className="flex-1 flex items-center justify-center text-center text-red-500">
+          Failed to load trade history.
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {TRADE_FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`inline-flex h-7 items-center justify-center rounded-3xl px-3 text-xs font-medium transition ${
-                filter === key
-                  ? 'border border-[#474747] bg-[#16171D] text-white'
-                  : 'text-[#A4A4A4] hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      ) : isLoading && items.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-center text-gray-400">
+          Loading Trade History...
         </div>
-      </header>
-      {isLoading ? (
-        <div className="text-center text-gray-400">Loading Trade History...</div>
       ) : items.length === 0 ? (
-        <div className="text-center text-gray-400">No trade history</div>
+        <div className="flex-1 flex items-center justify-center text-center text-gray-400">
+          No trade history
+        </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {items.map((entry) => {
-            const { date, time } = formatDateParts(entry.createdAt ?? entry.matchedAt ?? '', {
-              includeSeconds: true,
-            });
-            const mappedEntry: HistoryPreview = {
-              id: entry.id,
-              status: entry.status?.toLowerCase() === 'matched' ? 'complete' : 'closed',
-              side: entry.side.toLowerCase() as 'buy' | 'sell',
-              pair: `${entry.baseSymbol ?? entry.symbol}/${entry.quoteSymbol ?? 'USDT'}`,
-              date: date,
-              time: time,
-              orderId: entry.tradeRef,
-              amount: entry.amount.toString(),
-              baseSymbol: entry.baseSymbol ?? entry.symbol,
-              price: entry.price.toString(),
-              priceCurrency: entry.currency,
-            };
-            return <HistoryCardPreview key={entry.id} entry={mappedEntry} />;
-          })}
+        <div className="flex-1 overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {items.map((entry) => {
+              const { date, time } = formatDateParts(entry.createdAt ?? entry.matchedAt ?? '', {
+                includeSeconds: true,
+              });
+              const mappedEntry: HistoryPreview = {
+                id: entry.id,
+                status: entry.status?.toLowerCase() === 'matched' ? 'complete' : 'closed',
+                side: entry.side.toLowerCase() as 'buy' | 'sell',
+                pair: `${entry.baseSymbol ?? entry.symbol}/${entry.quoteSymbol ?? 'USDT'}`,
+                date,
+                time,
+                orderId: formatOrderId(entry.tradeRef),
+                amount: entry.amount.toString(),
+                baseSymbol: entry.baseSymbol ?? entry.symbol,
+                price: entry.price.toString(),
+                priceCurrency: entry.currency,
+              };
+              return <HistoryCardPreview key={entry.id} entry={mappedEntry} />;
+            })}
+          </div>
         </div>
       )}
-    </section>
-  );
-}
-
-// --- Layout Components ---
-function ResponsiveCardLayout() {
-  return (
-    <div className="flex w-full flex-col gap-8 rounded-3xl bg-[#0F1015] p-4 text-white shadow-lg shadow-black/20 sm:p-6 lg:p-8">
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold leading-tight">Open Orders</h2>
-          </div>
-        </header>
-        <OpenOrdersProvider>
-          <OpenOrdersList />
-        </OpenOrdersProvider>
-      </section>
-      <TradeHistoryList />
+      <PaginationFooter
+        page={data?.page ?? 1}
+        totalPages={data?.totalPages ?? 1}
+        totalCount={data?.total ?? 0}
+        onPageChange={setPage}
+      />
     </div>
   );
 }
 
-function DesktopTableLayout() {
+// --- Main Component ---
+export default function OpenOrderandTradeHistoryResponsive() {
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
   const openRef = React.useRef<HTMLButtonElement>(null);
   const historyRef = React.useRef<HTMLButtonElement>(null);
@@ -344,19 +389,38 @@ function DesktopTableLayout() {
     left: 0,
     width: 0,
   });
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     const el = activeTab === 'open' ? openRef.current : historyRef.current;
     if (el) {
-      setUnderlineStyle({
-        left: el.offsetLeft,
-        width: el.offsetWidth,
-      });
+      setUnderlineStyle({ left: el.offsetLeft, width: el.offsetWidth });
     }
   }, [activeTab]);
 
+  // Avoid rendering on server or during initial hydration check
+  if (isMobile === undefined) {
+    return null;
+  }
+
+  const renderContent = () => {
+    if (activeTab === 'open') {
+      return isMobile ? (
+        <OpenOrdersProvider>
+          <OpenOrdersCards />
+        </OpenOrdersProvider>
+      ) : (
+        <OpenOrdersContainer showPagination={true} />
+      );
+    }
+    if (activeTab === 'history') {
+      return isMobile ? <TradeHistoryCards /> : <TradeHistoryContainer />;
+    }
+    return null;
+  };
+
   return (
-    <div className="flex w-full flex-col gap-4 rounded-3xl bg-[#16171D] p-4 text-white shadow-lg shadow-black/20 sm:p-6 lg:p-8 min-h-[480px]">
+    <div className="flex w-full flex-col gap-4 rounded-3xl bg-[#16171D] p-4 text-white shadow-lg shadow-black/20 sm:p-6 lg:p-8 min-h-[480px] h-full">
       {/* Tabs */}
       <div className="relative flex border-b pb-3 gap-3 pl-4 border-[#ffffff]/5">
         <button
@@ -368,7 +432,6 @@ function DesktopTableLayout() {
         >
           Open Orders
         </button>
-
         <button
           ref={historyRef}
           onClick={() => setActiveTab('history')}
@@ -378,37 +441,14 @@ function DesktopTableLayout() {
         >
           Trade History
         </button>
-
-        {/* underline */}
         <span
           className="absolute bottom-3 h-[2px] bg-[#225FED] transition-all duration-300 ease-in-out"
-          style={{
-            left: underlineStyle.left,
-            width: underlineStyle.width,
-          }}
+          style={underlineStyle}
         />
       </div>
 
       {/* Content */}
-      <div className={`flex-1 overflow-hidden ${activeTab === 'history' ? 'mt-3' : 'mt-4'}`}>
-        {activeTab === 'open' ? (
-          <OpenOrdersContainer showPagination={true} />
-        ) : (
-          <TradeHistoryContainer />
-        )}
-      </div>
+      <div className="flex-1 overflow-hidden mt-4">{renderContent()}</div>
     </div>
   );
-}
-
-// --- Main Component ---
-export default function OpenOrderandTradeHistoryResponsive() {
-  const isMobile = useIsMobile();
-
-  // Avoid rendering on server or during initial hydration check
-  if (isMobile === undefined) {
-    return null;
-  }
-
-  return isMobile ? <ResponsiveCardLayout /> : <DesktopTableLayout />;
 }
