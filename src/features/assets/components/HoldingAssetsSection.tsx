@@ -45,7 +45,8 @@ export default function HoldingAssetsSection({
     console.log('Opening trade modal for:', symbol);
   };
 
-  const containerClass = 'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
+  const containerClass =
+    'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
 
   const hasError = Boolean(error);
   const isLoadingData = isLoading;
@@ -63,8 +64,8 @@ export default function HoldingAssetsSection({
     >
       <div className="flex flex-col space-y-4">
         {isLoadingData && (
-          <div className={containerClass}>
-            <div className="text-sm text-slate-300">{loadingMessage || 'Loading...'}</div>
+          <div className="flex h-64 items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
         )}
 
@@ -103,5 +104,3 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
-
-
