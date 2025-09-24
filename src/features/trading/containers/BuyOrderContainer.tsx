@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
 import AlertBox from '@/components/ui/alert-box';
 // Use shared CoinContext realtime price to avoid duplicate sockets
@@ -21,6 +21,12 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog-coin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  decimalsFromSize,
+} from '@/features/trading/utils/symbolPrecision';
 
 interface AlertState {
   message: string;
@@ -74,11 +80,29 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     enabled: !!session,
   });
 
+  const [coinSymbol, quoteSymbol] = useMemo(() => {
+    const [base, quote] = selectedCoin.label.split('/');
+    return [base ?? '', quote ?? 'USDT'];
+  }, [selectedCoin.label]);
+
+  const { data: precisionMap } = useSymbolPrecisions();
+
+  const symbolPrecision = useMemo(
+    () => getSymbolPrecision(precisionMap, coinSymbol, quoteSymbol),
+    [precisionMap, coinSymbol, quoteSymbol]
+  );
+
+  const quantityPrecision = useMemo(() => {
+    const decimals =
+      symbolPrecision?.quantityPrecision ??
+      (symbolPrecision?.stepSize ? decimalsFromSize(symbolPrecision.stepSize) : undefined);
+    return decimals ?? 6;
+  }, [symbolPrecision]);
+
+
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
       console.log('BuyOrderContainer: Buy order response:', data);
-      const coinSymbol = selectedCoin.label.split('/')[0];
-
       if (data.requiresConfirmation) {
         let confirmationMessage = '';
         let dialogTitle = '';
@@ -300,27 +324,49 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [priceDecimalPlaces]
   );
 
-  // Allow up to 9 decimal places for coin amount (Receive on Buy)
-  const isValidCoinFormatForBuy = useCallback((value: string): boolean => {
-    const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,9}$/.test(numericValue);
-  }, []);
+  // Allow coin input decimals based on the current symbol step size
+  const isValidCoinFormatForBuy = useCallback(
+    (value: string): boolean => {
+      const numericValue = value.replace(/,/g, '');
+      if (numericValue === '') return true;
+      if (!/^\d*\.?\d*$/.test(numericValue)) return false;
+      if (!Number.isInteger(quantityPrecision) || quantityPrecision < 0) {
+        return true;
+      }
+      if (quantityPrecision === 0) {
+        return /^\d*$/.test(numericValue);
+      }
+      const decimalPart = numericValue.split('.')[1];
+      return !decimalPart || decimalPart.length <= quantityPrecision;
+    },
+    [quantityPrecision]
+  );
 
-  const calculateReceiveCoin = useCallback((amountValue: string, priceValue: string): string => {
-    if (!amountValue || !priceValue) return '';
-    const cleanPrice = priceValue.replace(/,/g, '');
-    if (
-      cleanPrice === '0' ||
-      (cleanPrice.startsWith('0.0') && cleanPrice.replace(/[0.]/g, '') === '')
-    )
-      return '';
+  const calculateReceiveCoin = useCallback(
+    (amountValue: string, priceValue: string): string => {
+      if (!amountValue || !priceValue) return '';
+      const cleanPrice = priceValue.replace(/,/g, '');
+      if (
+        cleanPrice === '0' ||
+        (cleanPrice.startsWith('0.0') && cleanPrice.replace(/[0.]/g, '') === '')
+      )
+        return '';
 
-    const numAmount = parseFloat(amountValue.replace(/,/g, ''));
-    const numPrice = parseFloat(cleanPrice);
-    if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return '';
-    const coinAmount = numAmount / numPrice;
-    return coinAmount.toFixed(9);
-  }, []);
+      const numAmount = parseFloat(amountValue.replace(/,/g, ''));
+      const numPrice = parseFloat(cleanPrice);
+      if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return '';
+      const coinAmount = numAmount / numPrice;
+      if (!Number.isFinite(coinAmount)) return '';
+      if (symbolPrecision) {
+        return formatAmountWithStep(coinAmount, symbolPrecision);
+      }
+      if (Number.isInteger(quantityPrecision) && quantityPrecision >= 0) {
+        return coinAmount.toFixed(quantityPrecision);
+      }
+      return coinAmount.toString();
+    },
+    [symbolPrecision, quantityPrecision]
+  );
 
   const calculateSliderPercentage = useCallback(
     (amountValue: string): number => {
@@ -561,7 +607,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const coinAmount = parseFloat(receiveCoin.replace(/,/g, '') || '0');
     const sessionUser = session.user as SessionUser | undefined;
     const userId = cashBalance?.userId || sessionUser?.id || sessionUser?.email || '';
-    const coinSymbol = selectedCoin.label.split('/')[0];
 
     const orderPayload = {
       userId: userId,
@@ -630,7 +675,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     ADA: 'ada-coin.svg',
     DOGE: 'doge-coin.svg',
   };
-  const coinSymbol = selectedCoin.label.split('/')[0];
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
   const receiveCurrency = coinSymbol;
 
