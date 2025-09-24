@@ -40,7 +40,7 @@ interface OrderFormProps {
   onLoginClick?: () => void;
   onReceiveChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onReceiveBlur?: () => void;
-  onQuickAdd?: (percentage: number) => void;
+  onQuickAdd?: (value: number) => void;
   onMax?: () => void;
   onExchangeClick?: () => void;
 }
@@ -73,6 +73,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onAmountChange,
   onAmountFocus,
   onAmountBlur,
+  onSliderChange,
   onMarketClick,
   onSubmit,
   onLoginClick,
@@ -300,42 +301,85 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(25);
-              }}
-            >
-              25%
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(50);
-              }}
-            >
-              50%
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(75);
-              }}
-            >
-              75%
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMax?.();
-              }}
-            >
-              Max
-            </button>
+            {type === 'buy' ? (
+              <>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(500);
+                  }}
+                >
+                  +500
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(1000);
+                  }}
+                >
+                  +1000
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(10000);
+                  }}
+                >
+                  +10000
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMax?.();
+                  }}
+                >
+                  Max
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(25);
+                  }}
+                >
+                  25%
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(50);
+                  }}
+                >
+                  50%
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd?.(75);
+                  }}
+                >
+                  75%
+                </button>
+                <button
+                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMax?.();
+                  }}
+                >
+                  Max
+                </button>
+              </>
+            )}
           </div>
         </div>
 
