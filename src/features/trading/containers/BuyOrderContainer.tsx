@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
 import AlertBox from '@/components/ui/alert-box';
-// Use shared CoinContext realtime price to avoid duplicate sockets
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -24,7 +23,6 @@ import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import {
   useSymbolPrecisions,
   getSymbolPrecision,
-  formatAmountWithStep,
   decimalsFromSize,
 } from '@/features/trading/utils/symbolPrecision';
 
@@ -231,12 +229,21 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     }).format(balance);
   }, [getAvailableBalance]);
 
+  const truncateToDecimals = useCallback((num: number, decimals: number): string => {
+    if (isNaN(num) || !Number.isFinite(num)) return '0';
+    if (decimals === 0) {
+      return Math.trunc(num).toString();
+    }
+    const multiplier = Math.pow(10, decimals);
+    const truncated = Math.trunc(num * multiplier) / multiplier;
+    return truncated.toFixed(decimals);
+  }, []);
+
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    // Normalize leading zeros
     if (numericValue === '.') numericValue = '0.';
     if (numericValue.length > 1 && numericValue[0] === '0') {
       if (numericValue[1] !== '.') {
@@ -274,13 +281,11 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     return `${formattedInteger}.${decimalPart}`;
   }, []);
 
-  // เพิ่มฟังก์ชันสำหรับจัดรูปแบบ receiveCoin ให้มี comma
   const formatReceiveCoinWithComma = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    // Normalize leading zeros
     if (numericValue === '.') numericValue = '0.';
     if (numericValue.length > 1 && numericValue[0] === '0') {
       if (numericValue[1] !== '.') {
@@ -306,7 +311,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       let numericValue = value.replace(/,/g, '');
       if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-      // Normalize leading zeros similar to price formatting
       if (numericValue === '.') numericValue = '0.';
       if (numericValue.length > 1 && numericValue[0] === '0') {
         if (numericValue[1] !== '.') {
@@ -317,7 +321,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         }
       }
 
-      // Limit decimal places based on priceDecimalPlaces
       const parts = numericValue.split('.');
       const integerPart = parts[0];
       let decimalPart = parts[1];
@@ -338,18 +341,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
-  // Updated to allow unlimited decimal places for amount (Spend in USD)
   const isValidNumberFormat = useCallback(
     (value: string): boolean => {
       const numericValue = value.replace(/,/g, '');
-      // Use priceDecimalPlaces to limit decimal places for spend amount
       const regexPattern = new RegExp(`^\\d*\\.?\\d{0,${priceDecimalPlaces}}$`);
       return regexPattern.test(numericValue);
     },
     [priceDecimalPlaces]
   );
 
-  // Allow coin input decimals based on the current symbol step size
   const isValidCoinFormatForBuy = useCallback(
     (value: string): boolean => {
       const numericValue = value.replace(/,/g, '');
@@ -367,16 +367,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [quantityPrecision]
   );
 
-  const floorToDecimals = useCallback((num: number, decimals: number): string => {
-    if (decimals === 0) {
-      return Math.floor(num).toString();
-    }
-
-    const multiplier = Math.pow(10, decimals);
-    const floored = Math.floor(num * multiplier) / multiplier;
-    return floored.toFixed(decimals);
-  }, []);
-
   const calculateReceiveCoin = useCallback(
     (amountValue: string, priceValue: string): string => {
       if (!amountValue || !priceValue) return '';
@@ -390,33 +380,32 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       const numAmount = parseFloat(amountValue.replace(/,/g, ''));
       const numPrice = parseFloat(cleanPrice);
       if (isNaN(numAmount) || isNaN(numPrice) || numPrice <= 0) return '';
-      const coinAmount = numAmount / numPrice;
+
+      // Use a default value of 2 for priceDecimalPlaces if undefined
+      const effectivePriceDecimals = priceDecimalPlaces ?? 2;
+
+      // Truncate inputs before calculation
+      const truncatedAmount = truncateToDecimals(numAmount, effectivePriceDecimals);
+      const truncatedPrice = truncateToDecimals(numPrice, effectivePriceDecimals);
+      const coinAmount = parseFloat(truncatedAmount) / parseFloat(truncatedPrice);
       if (!Number.isFinite(coinAmount)) return '';
 
-      if (symbolPrecision) {
-        // ใช้ floorToDecimals แทน formatAmountWithStep
-        const decimals =
-          symbolPrecision.quantityPrecision ??
-          (symbolPrecision.stepSize
-            ? decimalsFromSize(symbolPrecision.stepSize)
-            : quantityPrecision);
-        const result = floorToDecimals(coinAmount, decimals);
-        // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
-        return formatReceiveCoinWithComma(result);
-      }
-
-      if (Number.isInteger(quantityPrecision) && quantityPrecision >= 0) {
-        const result = floorToDecimals(coinAmount, quantityPrecision);
-        // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
-        return formatReceiveCoinWithComma(result);
-      }
-
-      // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
-      return formatReceiveCoinWithComma(coinAmount.toString());
+      const decimals =
+        symbolPrecision?.quantityPrecision ??
+        (symbolPrecision?.stepSize
+          ? decimalsFromSize(symbolPrecision.stepSize)
+          : quantityPrecision);
+      const result = truncateToDecimals(coinAmount, decimals ?? 6); // Default to 6 for coin decimals
+      return formatReceiveCoinWithComma(result);
     },
-    [symbolPrecision, quantityPrecision, floorToDecimals, formatReceiveCoinWithComma]
+    [
+      symbolPrecision,
+      quantityPrecision,
+      truncateToDecimals,
+      formatReceiveCoinWithComma,
+      priceDecimalPlaces,
+    ]
   );
-
   const calculateSliderPercentage = useCallback(
     (amountValue: string): number => {
       if (!amountValue) return 0;
@@ -433,14 +422,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     (percentage: number): string => {
       const availableBalance = getAvailableBalance();
       const amount = (percentage / 100) * availableBalance;
-
-      // Format with coin's price decimal places
-      const formatted = amount.toFixed(priceDecimalPlaces);
+      const formatted = truncateToDecimals(amount, priceDecimalPlaces);
       const [integerPart, decimalPart] = formatted.split('.');
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       return `${formattedInteger}.${decimalPart}`;
     },
-    [getAvailableBalance, priceDecimalPlaces]
+    [getAvailableBalance, priceDecimalPlaces, truncateToDecimals]
   );
 
   const validateAmount = useCallback(() => {
@@ -466,7 +453,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   }, [amount, getAvailableBalance]);
 
   const handlePriceFocus = () => {
-    // Switch to Limit mode and snapshot current price
     setPriceLabel('Limit price');
     setIsInputFocused(true);
     if (marketPrice && !isPriceLoading) {
@@ -497,7 +483,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // User is editing Spend directly; stop Receive-driven updates
     setIsReceiveEditing(false);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidNumberFormat(inputValue)) {
@@ -521,6 +506,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         const sliderPercentage = calculateSliderPercentage(inputValue);
         setSliderValue(sliderPercentage);
       }
+      const calculatedReceiveCoin = calculateReceiveCoin(formattedValue, price);
+      setReceiveCoin(calculatedReceiveCoin);
     }
   };
 
@@ -537,17 +524,17 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     if (isValid) {
       setAmountErrorMessage('');
     }
+    const calculatedReceiveCoin = calculateReceiveCoin(newAmount, price);
+    setReceiveCoin(calculatedReceiveCoin);
   };
 
-  // Quick add and max handlers for amount (USD)
   const handleQuickAdd = (delta: number) => {
     setIsReceiveEditing(false);
     const current = parseFloat((amount || '0').replace(/,/g, '')) || 0;
     const available = getAvailableBalance();
     const next = current + delta;
 
-    // Format with proper decimal places
-    const formatted = next.toFixed(priceDecimalPlaces);
+    const formatted = truncateToDecimals(next, priceDecimalPlaces);
     const [integerPart, decimalPart] = formatted.split('.');
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const finalFormatted = `${formattedInteger}.${decimalPart}`;
@@ -565,14 +552,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       setIsAmountValid(isValid);
       setAmountErrorMessage(isValid ? '' : 'Please enter amount');
     }
+    const calculatedReceiveCoin = calculateReceiveCoin(finalFormatted, price);
+    setReceiveCoin(calculatedReceiveCoin);
   };
 
   const handleMax = () => {
     setIsReceiveEditing(false);
     const available = getAvailableBalance();
 
-    // Format with proper decimal places
-    const formatted = available.toFixed(priceDecimalPlaces);
+    const formatted = truncateToDecimals(available, priceDecimalPlaces);
     const [integerPart, decimalPart] = formatted.split('.');
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const finalFormatted = `${formattedInteger}.${decimalPart}`;
@@ -581,6 +569,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setSliderValue(100);
     setIsAmountValid(available > 0);
     setAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
+    const calculatedReceiveCoin = calculateReceiveCoin(finalFormatted, price);
+    setReceiveCoin(calculatedReceiveCoin);
   };
 
   const handleAmountFocus = () => setIsAmountFocused(true);
@@ -590,27 +580,25 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setIsAmountFocused(false);
 
     if (amount) {
-      // Format the amount with proper decimal places
       const numericValue = amount.replace(/,/g, '');
       const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        // Format with the coin's price decimal places
-        const formatted = num.toFixed(priceDecimalPlaces);
+        const formatted = truncateToDecimals(num, priceDecimalPlaces);
         const [integerPart, decimalPart] = formatted.split('.');
         const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         const finalFormatted = `${formattedInteger}.${decimalPart}`;
         setAmount(finalFormatted);
+        const calculatedReceiveCoin = calculateReceiveCoin(finalFormatted, price);
+        setReceiveCoin(calculatedReceiveCoin);
       }
       validateAmount();
     }
   };
 
-  // Handle Receive (coin) typing -> compute Spend (USD)
   const handleReceiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidCoinFormatForBuy(inputValue)) {
       setIsReceiveEditing(true);
-      // จัดรูปแบบ input ให้มี comma
       const formattedValue = inputValue === '' ? '' : formatReceiveCoinWithComma(inputValue);
       setReceiveCoin(formattedValue);
 
@@ -625,12 +613,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         return;
       }
 
-      const usd = coinNum * priceNum;
+      // Truncate coinNum and priceNum before calculation
+      const truncatedCoin = truncateToDecimals(coinNum, quantityPrecision);
+      const truncatedPrice = truncateToDecimals(priceNum, priceDecimalPlaces);
+      const usd = parseFloat(truncatedCoin) * parseFloat(truncatedPrice);
 
-      // Truncate to priceDecimalPlaces without rounding
-      const multiplier = Math.pow(10, priceDecimalPlaces);
-      const truncatedUsd = Math.trunc(usd * multiplier) / multiplier;
-      const formattedUsd = truncatedUsd.toFixed(priceDecimalPlaces);
+      const formattedUsd = truncateToDecimals(usd, priceDecimalPlaces);
       const [integerPart, decimalPart] = formattedUsd.split('.');
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       const newAmount = `${formattedInteger}.${decimalPart}`;
