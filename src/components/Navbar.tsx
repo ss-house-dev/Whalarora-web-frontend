@@ -164,13 +164,10 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
         <div className="flex w-full items-center justify-between md:hidden">
           <div className="flex items-center gap-3">
             <button
-              aria-label="Open menu"
+              aria-label="Toggle menu"
               onClick={() => {
-                if (!session) {
-                  window.dispatchEvent(new Event('guest-drawer:open'));
-                } else {
-                  window.dispatchEvent(new Event('auth-drawer:open'));
-                }
+                const eventName = session ? 'auth-drawer:toggle' : 'guest-drawer:toggle';
+                window.dispatchEvent(new Event(eventName));
               }}
             >
               <Menu className="text-white w-6 h-6" />
@@ -267,7 +264,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                     toggleUserMenu();
                     console.log('✅ Avatar clicked, userMenuOpen:', !userMenuOpen);
                   }}
-                  className="w-8 h-8 rounded-full bg-[#2F5BD6] text-white text-xs font-semibold flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-[#3A8AF7] text-white text-xs font-semibold flex items-center justify-center"
                 >
                   {userInitials}
                 </button>

@@ -79,11 +79,21 @@ export const useNavbar = () => {
     router.push('/auth/sign-up');
   };
 
+  const closeDrawers = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.dispatchEvent(new Event('auth-drawer:close'));
+    window.dispatchEvent(new Event('guest-drawer:close'));
+  };
+
   const toggleBalanceMenu = () => {
+    closeDrawers();
     setOpen((v) => !v);
   };
 
   const toggleUserMenu = () => {
+    closeDrawers();
     setUserMenuOpen((v) => !v);
   };
 

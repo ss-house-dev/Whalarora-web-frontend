@@ -38,15 +38,61 @@ export default function Sidebar() {
 
   // ฟังอีเวนต์จาก Navbar: ขอเปิด drawer
   useEffect(() => {
-    const open = () => setMobileAuthMenuOpen(true);
+    const open = () => {
+      setMobileAuthMenuOpen(true);
+      setMobileGuestMenuOpen(false);
+    };
+    const toggle = () => {
+      setMobileAuthMenuOpen((prev) => {
+        const next = !prev;
+        if (next) {
+          setMobileGuestMenuOpen(false);
+        }
+        return next;
+      });
+    };
+    const close = () => {
+      setMobileAuthMenuOpen(false);
+    };
+
     window.addEventListener('auth-drawer:open', open);
-    return () => window.removeEventListener('auth-drawer:open', open);
+    window.addEventListener('auth-drawer:toggle', toggle);
+    window.addEventListener('auth-drawer:close', close);
+
+    return () => {
+      window.removeEventListener('auth-drawer:open', open);
+      window.removeEventListener('auth-drawer:toggle', toggle);
+      window.removeEventListener('auth-drawer:close', close);
+    };
   }, []);
 
   useEffect(() => {
-    const open = () => setMobileGuestMenuOpen(true);
+    const open = () => {
+      setMobileGuestMenuOpen(true);
+      setMobileAuthMenuOpen(false);
+    };
+    const toggle = () => {
+      setMobileGuestMenuOpen((prev) => {
+        const next = !prev;
+        if (next) {
+          setMobileAuthMenuOpen(false);
+        }
+        return next;
+      });
+    };
+    const close = () => {
+      setMobileGuestMenuOpen(false);
+    };
+
     window.addEventListener('guest-drawer:open', open);
-    return () => window.removeEventListener('guest-drawer:open', open);
+    window.addEventListener('guest-drawer:toggle', toggle);
+    window.addEventListener('guest-drawer:close', close);
+
+    return () => {
+      window.removeEventListener('guest-drawer:open', open);
+      window.removeEventListener('guest-drawer:toggle', toggle);
+      window.removeEventListener('guest-drawer:close', close);
+    };
   }, []);
 
   // ICONS
@@ -142,73 +188,74 @@ export default function Sidebar() {
 
       {/* MOBILE GUEST DRAWER */}
       {!session && (
-        <div className="md:hidden">
+        <>
           {mobileGuestMenuOpen && (
-            <>
-              {/* Drawer Panel */}
-              <div
-                role="dialog"
-                aria-modal="true"
-                className={`fixed left-0 top-14 z-[65] h-[calc(100vh-3.5rem)] w-[300px] max-w-[86%] bg-[#16171D] shadow-2xl
-      transition-transform duration-300 ease-out border-r border-white/10
-      ${mobileGuestMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-              >
-                {/* ปุ่ม Log in / Sign up */}
-                <div className="px-4 py-5 flex justify-center">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => window.dispatchEvent(new Event('auth:signin'))}
-                      className="flex w-28 h-9 py-[2px] px-[15px] justify-center items-center gap-[10px] rounded-lg border-3 border-white/30 text-white text-sm"
-                    >
-                      Log in
-                    </button>
-                    <button
-                      onClick={() => window.dispatchEvent(new Event('auth:signup'))}
-                      className="flex w-28 h-9 py-[2px] px-[15px] justify-center items-center gap-[10px] rounded-lg bg-[#2F5BD6] text-white text-sm"
-                    >
-                      Sign up
-                    </button>
-                  </div>
-                </div>
-
-                {/* เมนูรายการ */}
-                <nav className="ps-4 py-5 space-y-6 text-white/90">
-                  <button
-                    className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                      isTrade
-                        ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
-                        : 'hover:bg-white/5'
-                    }`}
-                    onClick={() => {
-                      router.push('/main/trading');
-                      setMobileGuestMenuOpen(false);
-                    }}
-                  >
-                    <TradeIcon className={`w-5 h-5 ${isTrade ? 'text-[#225FED]' : 'text-white'}`} />
-                    <span className="text-[15px]">Trade</span>
-                  </button>
-
-                  <button
-                    className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                      !isTrade
-                        ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
-                        : 'hover:bg-white/5'
-                    }`}
-                    onClick={() => {
-                      router.push('/main/my-assets');
-                      setMobileGuestMenuOpen(false);
-                    }}
-                  >
-                    <AssetsIcon
-                      className={`w-5 h-5 ${!isTrade ? 'text-[#225FED]' : 'text-white'}`}
-                    />
-                    <span className="text-[15px]">My assets</span>
-                  </button>
-                </nav>
-              </div>
-            </>
+            <div
+              className="fixed left-0 right-0 top-14 bottom-0 z-[60] bg-black/40 opacity-100 pointer-events-auto transition-opacity duration-300 md:hidden"
+              onClick={() => setMobileGuestMenuOpen(false)}
+              aria-hidden="true"
+            />
           )}
-        </div>
+
+          <div
+            role="dialog"
+            aria-modal="true"
+            className={`md:hidden fixed left-0 top-14 z-[65] h-[calc(100vh-3.5rem)] w-[300px] max-w-[86%] bg-[#16171D] shadow-2xl
+      transition-transform duration-300 ease-out border-r-3 border-white/10
+      ${mobileGuestMenuOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'}`}
+          >
+            {/* ปุ่ม Log in / Sign up */}
+            <div className="px-4 py-5 flex justify-center">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => window.dispatchEvent(new Event('auth:signin'))}
+                  className="flex w-28 h-9 py-[2px] px-[15px] justify-center items-center gap-[10px] rounded-lg border-3 border-white/30 text-white text-sm"
+                >
+                  Log in
+                </button>
+                <button
+                  onClick={() => window.dispatchEvent(new Event('auth:signup'))}
+                  className="flex w-28 h-9 py-[2px] px-[15px] justify-center items-center gap-[10px] rounded-lg bg-[#2F5BD6] text-white text-sm"
+                >
+                  Sign up
+                </button>
+              </div>
+            </div>
+
+            {/* เมนูรายการ */}
+            <nav className="ps-4 py-5 space-y-6 text-white/90">
+              <button
+                className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
+                  isTrade
+                    ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
+                    : 'hover:bg-white/5'
+                }`}
+                onClick={() => {
+                  router.push('/main/trading');
+                  setMobileGuestMenuOpen(false);
+                }}
+              >
+                <TradeIcon className={`w-5 h-5 ${isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <span className="text-[15px]">Trade</span>
+              </button>
+
+              <button
+                className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
+                  !isTrade
+                    ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
+                    : 'hover:bg-white/5'
+                }`}
+                onClick={() => {
+                  router.push('/main/my-assets');
+                  setMobileGuestMenuOpen(false);
+                }}
+              >
+                <AssetsIcon className={`w-5 h-5 ${!isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <span className="text-[15px]">My assets</span>
+              </button>
+            </nav>
+          </div>
+        </>
       )}
 
       {/* ========== MOBILE AUTH DRAWER (เฉพาะเมื่อ login) ========== */}
@@ -228,7 +275,7 @@ export default function Sidebar() {
             role="dialog"
             aria-modal="true"
             className={`fixed left-0 top-14 z-[65] h-[calc(100vh-3.5rem)] w-[300px] max-w-[86%] bg-[#151821] shadow-2xl
-          transition-transform duration-300 ease-out border-r border-white/10
+          transition-transform duration-300 ease-out border-r-3 border-white/10
           ${mobileAuthMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
           >
             <div className="ps-4 py-5 space-y-6">
