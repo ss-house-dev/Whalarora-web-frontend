@@ -206,12 +206,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setPendingOrder(null);
   };
 
-  const handleReceiveBlur = () => {
-    if (receiveCoin) {
-      const numericValue = receiveCoin.replace(/,/g, '');
-    }
-  };
-
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
@@ -278,6 +272,32 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     }
 
     return `${formattedInteger}.${decimalPart}`;
+  }, []);
+
+  // เพิ่มฟังก์ชันสำหรับจัดรูปแบบ receiveCoin ให้มี comma
+  const formatReceiveCoinWithComma = useCallback((value: string): string => {
+    if (!value) return '';
+    let numericValue = value.replace(/,/g, '');
+    if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    // Normalize leading zeros
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
+    }
+
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
   const formatNumberWithComma = useCallback(
@@ -380,16 +400,21 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
           (symbolPrecision.stepSize
             ? decimalsFromSize(symbolPrecision.stepSize)
             : quantityPrecision);
-        return floorToDecimals(coinAmount, decimals);
+        const result = floorToDecimals(coinAmount, decimals);
+        // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
+        return formatReceiveCoinWithComma(result);
       }
 
       if (Number.isInteger(quantityPrecision) && quantityPrecision >= 0) {
-        return floorToDecimals(coinAmount, quantityPrecision);
+        const result = floorToDecimals(coinAmount, quantityPrecision);
+        // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
+        return formatReceiveCoinWithComma(result);
       }
 
-      return coinAmount.toString();
+      // เพิ่มการจัดรูปแบบ comma ให้กับผลลัพธ์
+      return formatReceiveCoinWithComma(coinAmount.toString());
     },
-    [symbolPrecision, quantityPrecision, floorToDecimals]
+    [symbolPrecision, quantityPrecision, floorToDecimals, formatReceiveCoinWithComma]
   );
 
   const calculateSliderPercentage = useCallback(
@@ -585,7 +610,9 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const inputValue = e.target.value;
     if (inputValue === '' || isValidCoinFormatForBuy(inputValue)) {
       setIsReceiveEditing(true);
-      setReceiveCoin(inputValue);
+      // จัดรูปแบบ input ให้มี comma
+      const formattedValue = inputValue === '' ? '' : formatReceiveCoinWithComma(inputValue);
+      setReceiveCoin(formattedValue);
 
       const priceNum = parseFloat(price.replace(/,/g, ''));
       const coinNum = parseFloat((inputValue || '0').replace(/,/g, ''));
@@ -782,7 +809,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         onAmountChange={handleAmountChange}
         onAmountFocus={handleAmountFocus}
         onAmountBlur={handleAmountBlur}
-        onReceiveBlur={handleReceiveBlur}
         onSliderChange={handleSliderChange}
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
