@@ -61,7 +61,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         );
         setAlertType('success');
       } else {
-        setAlertMessage(`Sell order created successfully!\nStatus: Pending`);
+        setAlertMessage('Sell order created successfully!\nStatus: Pending');
         setAlertType('info');
       }
       setShowAlert(true);
@@ -85,13 +85,26 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
   const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
+  const [lastPercentage, setLastPercentage] = useState<number | null>(null);
+
+  // Truncate a number to specified decimal places without rounding
+  const truncateToDecimals = useCallback((num: number, decimals: number): string => {
+    if (isNaN(num) || !Number.isFinite(num)) return '0';
+    const factor = Math.pow(10, decimals);
+    const truncated = Math.floor(num * factor) / factor;
+    const parts = truncated.toString().split('.');
+    const integerPart = parts[0];
+    let decimalPart = parts[1] || '';
+    // Pad with zeros if necessary
+    decimalPart = decimalPart.padEnd(decimals, '0');
+    return `${integerPart}${decimals > 0 ? '.' + decimalPart : ''}`;
+  }, []);
 
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
     let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    // Normalize leading zeros
     if (numericValue === '.') numericValue = '0.';
     if (numericValue.length > 1 && numericValue[0] === '0') {
       if (numericValue[1] !== '.') {
@@ -119,12 +132,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
     const parts = numericValue.split('.');
     const integerPart = parts[0];
-    const decimalPart = parts[1];
+    let decimalPart = parts[1] || '';
+    decimalPart = decimalPart.padEnd(2, '0'); // Ensure at least 2 decimal places
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-    if (!decimalPart) {
-      return `${formattedInteger}.00`;
-    }
 
     return `${formattedInteger}.${decimalPart}`;
   }, []);
@@ -138,7 +148,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     const balance = getAvailableCoinBalance();
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 8, // Keep higher precision for display
+      maximumFractionDigits: 8,
     }).format(balance);
   }, [getAvailableCoinBalance]);
 
@@ -158,19 +168,19 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         }
       }
 
-      const parts = numericValue.split('.');
-      const integerPart = parts[0];
-      let decimalPart = parts[1];
+      const num = parseFloat(numericValue);
+      if (isNaN(num)) return numericValue;
 
-      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
-        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
-      }
+      const formatted = truncateToDecimals(num, priceDecimalPlaces);
+      const parts = formatted.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1];
 
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
       return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [priceDecimalPlaces]
+    [priceDecimalPlaces, truncateToDecimals]
   );
 
   const isValidUSDFormat = useCallback(
@@ -182,14 +192,12 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [priceDecimalPlaces]
   );
 
-  // Fixed: Use priceDecimalPlaces to limit coin amount decimal places
   const formatCoinNumber = useCallback(
     (value: string): string => {
       if (!value) return '';
       let numericValue = value.replace(/,/g, '');
       if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-      // Normalize leading zeros for coin input
       if (numericValue === '.') numericValue = '0.';
       if (numericValue.length > 1 && numericValue[0] === '0') {
         if (numericValue[1] !== '.') {
@@ -200,20 +208,19 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         }
       }
 
-      //  Fixed: Limit decimal places based on priceDecimalPlaces (tick size)
-      const parts = numericValue.split('.');
-      const integerPart = parts[0];
-      let decimalPart = parts[1];
+      const num = parseFloat(numericValue);
+      if (isNaN(num)) return numericValue;
 
-      if (decimalPart && decimalPart.length > priceDecimalPlaces) {
-        decimalPart = decimalPart.substring(0, priceDecimalPlaces);
-      }
+      const formatted = truncateToDecimals(num, priceDecimalPlaces);
+      const parts = formatted.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1];
 
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
       return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [priceDecimalPlaces]
+    [priceDecimalPlaces, truncateToDecimals]
   );
 
   const isValidPriceFormat = useCallback((value: string): boolean => {
@@ -221,7 +228,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
-  // Fixed: Validate coin format with priceDecimalPlaces limit (like BuyOrderContainer)
   const isValidCoinFormat = useCallback(
     (value: string): boolean => {
       const numericValue = value.replace(/,/g, '');
@@ -262,20 +268,14 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [getAvailableCoinBalance]
   );
 
-  //  Fixed: Format with priceDecimalPlaces like BuyOrderContainer
   const calculateCoinFromPercentage = useCallback(
     (percentage: number): string => {
       const availableCoin = getAvailableCoinBalance();
       if (availableCoin <= 0 || percentage <= 0) return '0';
       const amount = (percentage / 100) * availableCoin;
-
-      // Format with coin's price decimal places
-      const formatted = amount.toFixed(priceDecimalPlaces);
-      const [integerPart, decimalPart] = formatted.split('.');
-      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      return `${formattedInteger}.${decimalPart}`;
+      return formatCoinNumber(amount.toString());
     },
-    [getAvailableCoinBalance, priceDecimalPlaces]
+    [getAvailableCoinBalance, formatCoinNumber]
   );
 
   const validateSellAmount = useCallback(() => {
@@ -297,7 +297,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   }, [sellAmount, getAvailableCoinBalance]);
 
   const handlePriceFocus = () => {
-    // Switch to Limit mode and snapshot current price
     setPriceLabel('Limit price');
     setIsInputFocused(true);
     if (marketPrice && !isPriceLoading) {
@@ -329,6 +328,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsReceiveUSDEditing(false);
+    setLastPercentage(null);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
@@ -356,6 +356,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
   const handleSellSliderChange = (percentage: number) => {
     setIsReceiveUSDEditing(false);
+    setLastPercentage(null);
     setSellSliderValue(percentage);
     const newCoinAmount = calculateCoinFromPercentage(percentage);
     setSellAmount(newCoinAmount);
@@ -368,49 +369,24 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
   };
 
-  // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
-  const handleQuickAddSell = (delta: number) => {
-    setIsReceiveUSDEditing(false);
-    const current = parseFloat((sellAmount || '0').replace(/,/g, '')) || 0;
-    const available = getAvailableCoinBalance();
-    const next = current + delta;
-
-    // Format with proper decimal places
-    const formatted = next.toFixed(priceDecimalPlaces);
-    const [integerPart, decimalPart] = formatted.split('.');
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const finalFormatted = `${formattedInteger}.${decimalPart}`;
-
-    setSellAmount(finalFormatted);
-
-    if (next > available) {
-      setSellSliderValue(0);
-      setIsSellAmountValid(false);
-      setSellAmountErrorMessage('Insufficient balance');
-    } else {
-      const sliderPercentage = calculateSellSliderPercentage(finalFormatted);
-      setSellSliderValue(sliderPercentage);
-      const isValid = next > 0;
-      setIsSellAmountValid(isValid);
-      setSellAmountErrorMessage(isValid ? '' : 'Please enter amount');
+  const handlePercentageClick = (percentage: number) => {
+    if (lastPercentage === percentage) {
+      return;
     }
+    setIsReceiveUSDEditing(false);
+    setLastPercentage(percentage);
+    setSellSliderValue(percentage);
+    const newCoinAmount = calculateCoinFromPercentage(percentage);
+    setSellAmount(newCoinAmount);
+    const num = parseFloat(newCoinAmount.replace(/,/g, ''));
+    const availableCoin = getAvailableCoinBalance();
+    const isValid = !isNaN(num) && num <= availableCoin;
+    setIsSellAmountValid(isValid);
+    setSellAmountErrorMessage(isValid ? '' : 'Insufficient balance');
   };
 
-  // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
   const handleMaxSell = () => {
-    setIsReceiveUSDEditing(false);
-    const available = getAvailableCoinBalance();
-
-    // Format with proper decimal places
-    const formatted = available.toFixed(priceDecimalPlaces);
-    const [integerPart, decimalPart] = formatted.split('.');
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const finalFormatted = `${formattedInteger}.${decimalPart}`;
-
-    setSellAmount(finalFormatted);
-    setSellSliderValue(100);
-    setIsSellAmountValid(available > 0);
-    setSellAmountErrorMessage(available > 0 ? '' : 'Insufficient balance');
+    handlePercentageClick(100);
   };
 
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
@@ -420,26 +396,27 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     setIsSellAmountFocused(false);
 
     if (sellAmount) {
-      // Fixed: Format with priceDecimalPlaces like BuyOrderContainer
       const numericValue = sellAmount.replace(/,/g, '');
       const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        // Format with the coin's price decimal places
-        const formatted = num.toFixed(priceDecimalPlaces);
-        const [integerPart, decimalPart] = formatted.split('.');
+        const formatted = truncateToDecimals(num, priceDecimalPlaces);
+        const parts = formatted.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
         const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        const finalFormatted = `${formattedInteger}.${decimalPart}`;
+        const finalFormatted =
+          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
         setSellAmount(finalFormatted);
       }
       validateSellAmount();
     }
   };
 
-  // Handle Receive USD typing -> compute coin amount
   const handleReceiveUSDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidUSDFormat(inputValue)) {
       setIsReceiveUSDEditing(true);
+      setLastPercentage(null);
       const formatted = formatUsdAmount(inputValue);
       setReceiveUSD(formatted);
 
@@ -455,7 +432,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
 
       const coinAmount = usdNum / priceNum;
-      // Fixed: Format with priceDecimalPlaces
       const newAmount = formatCoinNumber(coinAmount.toString());
       setSellAmount(newAmount);
 
@@ -513,6 +489,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     setReceiveUSD('');
     setIsSellAmountValid(true);
     setSellAmountErrorMessage('');
+    setLastPercentage(null);
   };
 
   const handleAlertClose = () => {
@@ -601,7 +578,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         onLoginClick={() => router.push('/auth/sign-in')}
         onReceiveChange={handleReceiveUSDChange}
         onExchangeClick={onExchangeClick}
-        onQuickAdd={handleQuickAddSell}
+        onQuickAdd={handlePercentageClick}
         onMax={handleMaxSell}
       />
 

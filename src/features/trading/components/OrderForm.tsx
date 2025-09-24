@@ -40,7 +40,7 @@ interface OrderFormProps {
   onLoginClick?: () => void;
   onReceiveChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onReceiveBlur?: () => void;
-  onQuickAdd?: (delta: number) => void;
+  onQuickAdd?: (percentage: number) => void;
   onMax?: () => void;
   onExchangeClick?: () => void;
 }
@@ -54,6 +54,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amount,
   receiveAmount,
   isAmountValid,
+  isInputFocused,
   isAmountFocused,
   sliderValue,
   availableBalance,
@@ -85,7 +86,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
     priceLabel === 'Price' ? 'current' : 'set'
   );
 
-  // Truncate long symbols/currencies to 4 characters for display
   const displaySymbol = symbol && symbol.length > 4 ? symbol.slice(0, 4) : symbol;
   const displayBalanceCurrency =
     balanceCurrency && balanceCurrency.length > 4 ? balanceCurrency.slice(0, 4) : balanceCurrency;
@@ -114,26 +114,21 @@ const OrderForm: React.FC<OrderFormProps> = ({
     }
   };
 
-  // Handle price changes
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onPriceChange(e);
   };
 
-  // Handle price input blur - do not auto-switch or change price
   const handlePriceBlur = () => {
     onPriceBlur();
   };
 
-  // Handle market button click
   const handleMarketClick = () => {
     onMarketClick();
   };
 
-  // Handle click on price container or USD label - focus the input
   const handlePriceContainerClick = () => {
     if (inputRef.current) {
       inputRef.current.focus();
-      // Move cursor to end of input
       setTimeout(() => {
         if (inputRef.current) {
           const length = inputRef.current.value.length;
@@ -142,30 +137,25 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }, 0);
     }
 
-    // Only trigger onPriceFocus when switching from current -> set
     if (priceTab !== 'set') {
       onPriceFocus();
     }
     setPriceTab('set');
   };
 
-  // Handle click on amount container - focus the amount input
   const handleAmountContainerClick = () => {
     amountInputRef.current?.focus();
     onAmountFocus();
   };
 
-  // Handle click on receive container - focus the receive input inside
   const handleReceiveContainerClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const inputEl = e.currentTarget.querySelector('input') as HTMLInputElement | null;
     inputEl?.focus();
   };
 
-  // Function to focus input with cursor at end
   const focusInputWithCursorAtEnd = () => {
     if (inputRef.current) {
       inputRef.current.focus();
-      // Move cursor to end
       setTimeout(() => {
         if (inputRef.current) {
           const length = inputRef.current.value.length;
@@ -176,12 +166,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   };
 
   React.useEffect(() => {
-    if (priceLabel === 'Price') {
-      // When switching to limit mode, don't reset the flag
-      // User should be able to keep their custom price
-    } else {
-      // Limit mode
-    }
     setPriceTab(priceLabel === 'Price' ? 'current' : 'set');
   }, [priceLabel]);
 
@@ -196,7 +180,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
           if (value === 'current') {
             handleMarketClick();
           } else {
-            // When switching to "set" tab, focus input and move cursor to end
             onPriceFocus();
             setTimeout(() => {
               focusInputWithCursorAtEnd();
@@ -233,12 +216,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
             type="text"
             className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={() => {
-              // Only trigger onPriceFocus if not already in set tab
               if (priceTab !== 'set') {
                 onPriceFocus();
               }
               setPriceTab('set');
-              // Move cursor to end when focused
               setTimeout(() => {
                 if (inputRef.current) {
                   const length = inputRef.current.value.length;
@@ -251,7 +232,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
             onChange={handlePriceChange}
             onClick={(e) => {
               e.stopPropagation();
-              // Move cursor to end when clicked
               setTimeout(() => {
                 if (inputRef.current) {
                   const length = inputRef.current.value.length;
@@ -319,88 +299,44 @@ const OrderForm: React.FC<OrderFormProps> = ({
             </div>
           </div>
 
-          {type === 'buy' && (
-            <div className="flex items-center gap-2">
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(500);
-                }}
-              >
-                +500
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(1000);
-                }}
-              >
-                +1,000
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(10000);
-                }}
-              >
-                +10,000
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMax?.();
-                }}
-              >
-                Max
-              </button>
-            </div>
-          )}
-
-          {/* สำหรับ Sell ให้แสดงปุ่มที่เกี่ยวข้องกับจำนวน coin */}
-          {type === 'sell' && (
-            <div className="flex items-center gap-2">
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(0.1);
-                }}
-              >
-                +0.1
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(1);
-                }}
-              >
-                +1
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickAdd?.(10);
-                }}
-              >
-                +10
-              </button>
-              <button
-                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMax?.();
-                }}
-              >
-                Max
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickAdd?.(25);
+              }}
+            >
+              25%
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickAdd?.(50);
+              }}
+            >
+              50%
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickAdd?.(75);
+              }}
+            >
+              75%
+            </button>
+            <button
+              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMax?.();
+              }}
+            >
+              Max
+            </button>
+          </div>
         </div>
 
         {!isAmountValid && (
