@@ -591,7 +591,13 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       }
 
       const usd = coinNum * priceNum;
-      const newAmount = formatNumberWithComma(usd.toString());
+
+      // จัดรูปแบบทศนิยมให้กับ spend amount ทันที
+      const formattedUsd = usd.toFixed(priceDecimalPlaces);
+      const [integerPart, decimalPart] = formattedUsd.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const newAmount = `${formattedInteger}.${decimalPart}`;
+
       setAmount(newAmount);
 
       const availableBalance = getAvailableBalance();
@@ -607,7 +613,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       }
     }
   };
-
   const handleSubmit = () => {
     if (!session) {
       router.push('/auth/sign-in');
