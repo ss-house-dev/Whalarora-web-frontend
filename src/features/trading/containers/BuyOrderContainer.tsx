@@ -212,18 +212,16 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       const num = parseFloat(numericValue);
 
       if (!isNaN(num)) {
-        let formatted;
-        if (symbolPrecision) {
-          const decimals =
-            symbolPrecision.quantityPrecision ??
-            (symbolPrecision.stepSize
-              ? decimalsFromSize(symbolPrecision.stepSize)
-              : quantityPrecision);
-          formatted = floorToDecimals(num, decimals);
-        } else {
-          formatted = floorToDecimals(num, quantityPrecision);
-        }
-        setReceiveCoin(formatted);
+        const decimals =
+          symbolPrecision?.quantityPrecision ??
+          (symbolPrecision?.stepSize
+            ? decimalsFromSize(symbolPrecision.stepSize)
+            : quantityPrecision) ??
+          6; // Fallback to 6
+        // Truncate to the specified number of decimal places
+        const multiplier = Math.pow(10, decimals);
+        const truncated = Math.trunc(num * multiplier) / multiplier;
+        setReceiveCoin(truncated.toFixed(decimals));
       }
     }
   };
