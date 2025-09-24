@@ -584,7 +584,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         symbol={coinSymbol}
         buttonColor="bg-[#D84C4C] hover:bg-[#C73E3E]"
         amountIcon={amountIcon}
-        receiveIcon="/currency-icons/dollar-icon.svg"
+        receiveIcon="/assets/usdt.svg"
         receiveCurrency="USD"
         isSubmitting={createSellOrderMutation.isPending}
         amountErrorMessage={sellAmountErrorMessage}

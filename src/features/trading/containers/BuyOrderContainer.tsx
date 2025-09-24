@@ -784,7 +784,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         balanceCurrency="USDT"
         symbol={coinSymbol}
         buttonColor="bg-[#309C7D] hover:bg-[#28886C]"
-        amountIcon="/currency-icons/dollar-icon.svg"
+        amountIcon="/assets/usdt.svg"
         receiveIcon={receiveIcon}
         receiveCurrency={receiveCurrency}
         isSubmitting={createBuyOrderMutation.isPending}

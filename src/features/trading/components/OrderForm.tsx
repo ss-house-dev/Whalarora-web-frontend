@@ -220,7 +220,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </TabsTrigger>
         </TabsList>
       </Tabs>
-
       {/* Price input */}
       <div
         className="flex items-center rounded-lg bg-[#1F2029] px-3 py-2 mt-4 justify-between h-[52px] mb-0 border border-transparent focus-within:border-[#225FED] cursor-text"
@@ -269,7 +268,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </span>
         </div>
       </div>
-
       {/* Available Balance */}
       <div className="flex justify-between mt-4 mb-[6px] px-3">
         <div className="text-xs text-[#A4A4A4]">Available Balance</div>
@@ -292,8 +290,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Image
-                src="/assets/usdt.svg"
-                alt="USDT"
+                src={amountIcon}
+                alt={type === 'buy' ? 'USDT' : displaySymbol || 'Coin'}
                 width={27}
                 height={27}
                 className="rounded-full"
@@ -316,49 +314,93 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 className="text-[14px] font-normal cursor-text text-[#A4A4A4]"
                 onClick={handleAmountContainerClick}
               >
-                {displayBalanceCurrency}
+                {type === 'buy' ? displayBalanceCurrency : displaySymbol}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(500);
-              }}
-            >
-              +500
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(1000);
-              }}
-            >
-              +1,000
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd?.(10000);
-              }}
-            >
-              +10,000
-            </button>
-            <button
-              className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMax?.();
-              }}
-            >
-              Max
-            </button>
-          </div>
+          {type === 'buy' && (
+            <div className="flex items-center gap-2">
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(500);
+                }}
+              >
+                +500
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(1000);
+                }}
+              >
+                +1,000
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(10000);
+                }}
+              >
+                +10,000
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMax?.();
+                }}
+              >
+                Max
+              </button>
+            </div>
+          )}
+
+          {/* สำหรับ Sell ให้แสดงปุ่มที่เกี่ยวข้องกับจำนวน coin */}
+          {type === 'sell' && (
+            <div className="flex items-center gap-2">
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(0.1);
+                }}
+              >
+                +0.1
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(1);
+                }}
+              >
+                +1
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAdd?.(10);
+                }}
+              >
+                +10
+              </button>
+              <button
+                className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMax?.();
+                }}
+              >
+                Max
+              </button>
+            </div>
+          )}
         </div>
 
         {!isAmountValid && (
@@ -367,12 +409,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </span>
         )}
       </div>
-
       {/* Slider */}
       {/* <div className="mx-3">
         <DiscreteSlider value={sliderValue} onChange={onSliderChange} />
       </div> */}
-
       <div className="space-y-3">
         {/* arrow */}
         <div className="flex justify-center">
@@ -418,7 +458,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
           </div>
         </div>
       </div>
-
       {/* Action Button */}
       <div className="mt-11 w-full">
         <Button
