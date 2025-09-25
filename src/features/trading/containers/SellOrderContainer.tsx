@@ -43,7 +43,6 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const lastAppliedSelectionRef = useRef<number | null>(null);
   const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
     useCoinContext();
   const { data: session } = useSession();
@@ -701,13 +700,11 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   useEffect(() => {
     if (!orderFormSelection) return;
     if (orderFormSelection.side !== 'sell') return;
-    if (lastAppliedSelectionRef.current === orderFormSelection.token) return;
 
     const isMarketMode = orderFormSelection.mode === 'market';
     setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
     setPrice(orderFormSelection.price);
     setIsInputFocused(false);
-    lastAppliedSelectionRef.current = orderFormSelection.token;
   }, [orderFormSelection]);
 
   const coinSymbolMap: { [key: string]: string } = {

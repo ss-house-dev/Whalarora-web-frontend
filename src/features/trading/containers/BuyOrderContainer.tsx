@@ -66,7 +66,6 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const lastAppliedSelectionRef = useRef<number | null>(null);
   const {
     selectedCoin,
     marketPrice,
@@ -738,13 +737,11 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   useEffect(() => {
     if (!orderFormSelection) return;
     if (orderFormSelection.side !== 'buy') return;
-    if (lastAppliedSelectionRef.current === orderFormSelection.token) return;
 
     const isMarketMode = orderFormSelection.mode === 'market';
     setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
     setPrice(orderFormSelection.price);
     setIsInputFocused(false);
-    lastAppliedSelectionRef.current = orderFormSelection.token;
   }, [orderFormSelection]);
 
   useEffect(() => {
