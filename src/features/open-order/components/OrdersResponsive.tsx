@@ -404,13 +404,18 @@ export default function OpenOrderandTradeHistoryResponsive() {
   }
 
   const renderContent = () => {
+    const handleCancelOrder = () => {
+      // In a real app, you'd call a mutation here.
+      console.log('Cancel order clicked');
+    };
+
     if (activeTab === 'open') {
       return isMobile ? (
         <OpenOrdersProvider>
           <OpenOrdersCards />
         </OpenOrdersProvider>
       ) : (
-        <OpenOrdersContainer showPagination={true} />
+        <OpenOrdersContainer showPagination={true} onCancelOrder={handleCancelOrder} />
       );
     }
     if (activeTab === 'history') {
