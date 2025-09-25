@@ -25,7 +25,10 @@ const MAX_AMOUNT_DIGITS = 10;
 
 type MobileOrderStatus = 'complete' | 'partial' | 'pending' | 'closed';
 
-const ORDER_STATUS_META: Record<MobileOrderStatus, { label: string; dotColor: string; textColor: string }> = {
+const ORDER_STATUS_META: Record<
+  MobileOrderStatus,
+  { label: string; dotColor: string; textColor: string }
+> = {
   complete: { label: 'Complete', dotColor: '#4ED7B0', textColor: '#4ED7B0' },
   partial: { label: 'Partially Filled', dotColor: '#FFD477', textColor: '#FFD477' },
   pending: { label: 'Pending', dotColor: '#215EEC', textColor: '#6F8BFF' },
@@ -37,15 +40,13 @@ const ORDER_SIDE_META: Record<'buy' | 'sell', { label: string; badgeColor: strin
   sell: { label: 'Sell', badgeColor: '#D84C4C' },
 };
 
-const STATUS_TO_MOBILE: Record<
-  'pending' | 'partial' | 'filled' | 'cancelled',
-  MobileOrderStatus
-> = {
-  pending: 'pending',
-  partial: 'partial',
-  filled: 'complete',
-  cancelled: 'closed',
-};
+const STATUS_TO_MOBILE: Record<'pending' | 'partial' | 'filled' | 'cancelled', MobileOrderStatus> =
+  {
+    pending: 'pending',
+    partial: 'partial',
+    filled: 'complete',
+    cancelled: 'closed',
+  };
 
 const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
 
@@ -186,11 +187,7 @@ export default function OrderCard({ order, onDelete }: Props) {
     });
   };
 
-  const ConfirmCloseDialog = ({
-    variant = 'desktop',
-  }: {
-    variant?: 'desktop' | 'mobile';
-  }) => {
+  const ConfirmCloseDialog = ({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) => {
     const triggerClassName =
       variant === 'mobile'
         ? 'inline-flex size-8 items-center justify-center rounded-lg border border-[#474747] text-[#E9E9E9] transition hover:border-[#5F5F5F] hover:text-white'
@@ -399,11 +396,11 @@ export default function OrderCard({ order, onDelete }: Props) {
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
-              <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
               </div>
-              <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1A1A1A] px-3 py-1 rounded-md whitespace-nowrap">
+              <div className="flex items-center w-[213px] justify-between gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Amount</span>
                 <span className="text-[12px] font-medium text-white">
                   {formatAmount(order.amount)}
