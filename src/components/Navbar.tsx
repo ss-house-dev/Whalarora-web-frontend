@@ -450,7 +450,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 aria-label="Wallet balance"
                 aria-expanded={open}
                 aria-haspopup="menu"
-                className="flex h-9 min-w-[230px] items-center gap-3 rounded-md bg-[rgba(255,255,255,0.12)] px-4 text-white shadow-sm transition-colors hover:border-[#3A3E4F]"
+                className="flex h-9 min-w-[230px] items-center gap-3 rounded-md bg-[rgba(255,255,255,0.12)] px-4 text-white shadow-sm transition-colors hover:border-[#3A3E4F] cursor-pointer"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-md text-[#225FED]">
                   <svg
@@ -524,7 +524,6 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   </div>
 
                   <div
-                    onClick={handleResetPortfolio}
                     className={`h-10 px-[14px] flex items-center justify-between text-base cursor-pointer group ${
                       showResetConfirm || resetPortfolioMutation.isPending
                         ? 'bg-[#17306B] cursor-not-allowed'
@@ -566,7 +565,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                   type="button"
                   aria-label="User menu"
                   onClick={toggleUserMenu}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3A8AF7] text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.45)] transition-transform"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3A8AF7] text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.45)] transition-transform cursor-pointer"
                 >
                   {userInitials}
                 </button>
@@ -593,7 +592,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                         type="button"
                         onClick={handleResetPortfolio}
                         disabled={showResetConfirm || resetPortfolioMutation.isPending}
-                        className={`flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-4 py-2 text-sm font-normal leading-tight text-[#D84C4C] transition ${
+                        className={`flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-4 py-2 text-sm font-normal leading-tight text-[#D84C4C] transition cursor-pointer ${
                           showResetConfirm || resetPortfolioMutation.isPending
                             ? 'cursor-not-allowed opacity-60'
                             : 'hover:bg-[#22232F]'
@@ -617,7 +616,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                       <button
                         type="button"
                         onClick={enhancedHandleSignOut}
-                        className="flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-4 py-2 text-sm font-normal leading-tight text-[#E9E9E9] transition hover:bg-[#22232F]"
+                        className="flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-4 py-2 text-sm font-normal leading-tight text-[#E9E9E9] transition hover:bg-[#22232F] cursor-pointer"
                       >
                         <span>Log out</span>
                         <LogOut className="h-4 w-4 text-[#E9E9E9]" />
