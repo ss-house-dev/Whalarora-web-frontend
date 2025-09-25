@@ -7,13 +7,14 @@ import SellOrderContainer from '@/features/trading/containers/SellOrderContainer
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 export default function MarketOrderContainer() {
-  const { selectedCoin, ordersVersion } = useCoinContext();
-  const [activeTab, setActiveTab] = React.useState<'buy' | 'sell'>('buy');
+  const { selectedCoin, ordersVersion, activeOrderTab, setActiveOrderTab } = useCoinContext();
 
-  const toggleTab = () => setActiveTab((t) => (t === 'buy' ? 'sell' : 'buy'));
+  const toggleTab = React.useCallback(() => {
+    setActiveOrderTab(activeOrderTab === 'buy' ? 'sell' : 'buy');
+  }, [activeOrderTab, setActiveOrderTab]);
   return (
     <div>
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buy' | 'sell')}>
+      <Tabs value={activeOrderTab} onValueChange={(v) => setActiveOrderTab(v as 'buy' | 'sell')}>
         <TabsList className="w-full bg-[#1F2029]">
           <TabsTrigger
             value="buy"
