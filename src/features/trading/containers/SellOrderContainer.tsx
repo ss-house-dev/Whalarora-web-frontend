@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
 import AlertBox from '@/components/ui/alert-box-sell';
 import { useSession } from 'next-auth/react';
@@ -11,16 +11,40 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TradeQueryKeys } from '@/features/trading/constants';
 import { useGetCoin } from '@/features/trading/hooks/useGetCoin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  decimalsFromSize,
+} from '@/features/trading/utils/symbolPrecision';
 
 interface UserWithId {
   id: string;
   email?: string;
 }
 
-export default function SellOrderContainer() {
+interface SellOrderContainerProps {
+  onExchangeClick?: () => void;
+}
+
+const DEFAULT_FIAT_PLACEHOLDER = '> 0.01';
+const DEFAULT_STEP_PLACEHOLDER = '> 0.00001';
+
+const createStepSizePlaceholder = (stepSize?: string) => {
+  if (!stepSize) return DEFAULT_STEP_PLACEHOLDER;
+  const decimals = decimalsFromSize(stepSize);
+  const numericValue = Number(stepSize);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return DEFAULT_STEP_PLACEHOLDER;
+  if (decimals === undefined) {
+    return `> ${numericValue}`;
+  }
+  return `> ${numericValue.toFixed(decimals)}`;
+};
+
+export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces } = useCoinContext();
+  const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
+    useCoinContext();
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -28,6 +52,31 @@ export default function SellOrderContainer() {
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+
+  const [coinSymbol, quoteSymbol] = useMemo(() => {
+    const [base, quote] = selectedCoin.label.split('/');
+    return [base ?? '', quote ?? 'USDT'];
+  }, [selectedCoin.label]);
+
+  const { data: precisionMap } = useSymbolPrecisions();
+
+  const symbolPrecision = useMemo(
+    () => getSymbolPrecision(precisionMap, coinSymbol, quoteSymbol),
+    [precisionMap, coinSymbol, quoteSymbol]
+  );
+
+  const quantityPrecision = useMemo(() => {
+    const decimals =
+      symbolPrecision?.quantityPrecision ??
+      (symbolPrecision?.stepSize ? decimalsFromSize(symbolPrecision.stepSize) : undefined);
+    return decimals ?? 6;
+  }, [symbolPrecision]);
+
+  const spendPlaceholder = useMemo(() => {
+    return createStepSizePlaceholder(symbolPrecision?.stepSize);
+  }, [symbolPrecision?.stepSize]);
+
+  const receivePlaceholder = DEFAULT_FIAT_PLACEHOLDER;
 
   const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
@@ -57,7 +106,7 @@ export default function SellOrderContainer() {
         );
         setAlertType('success');
       } else {
-        setAlertMessage(`Sell order created successfully!\nStatus: Pending`);
+        setAlertMessage('Sell order created successfully!\nStatus: Pending');
         setAlertType('info');
       }
       setShowAlert(true);
@@ -80,25 +129,44 @@ export default function SellOrderContainer() {
   const [sellSliderValue, setSellSliderValue] = useState<number>(0);
   const [receiveUSD, setReceiveUSD] = useState<string>('');
   const [isSellAmountFocused, setIsSellAmountFocused] = useState(false);
+  const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
+  const [isReceiveUSDUserInput, setIsReceiveUSDUserInput] = useState(false);
+  const [lastPercentage, setLastPercentage] = useState<number | null>(null);
 
-  // ฟังก์ชันสำหรับการจัดรูปแบบราคาขณะพิมพ์ - อนุญาตให้พิมพ์ทศนิยมได้อย่างอิสระ
+  const truncateToDecimals = useCallback((num: number, decimals: number): string => {
+    if (isNaN(num) || !Number.isFinite(num)) return '0';
+    if (decimals === 0) {
+      return Math.trunc(num).toString();
+    }
+    const multiplier = Math.pow(10, decimals);
+    const truncated = Math.trunc(num * multiplier) / multiplier;
+    return truncated.toFixed(decimals);
+  }, []);
+
   const formatPriceWithComma = useCallback((value: string): string => {
     if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
+    let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
+    }
 
     const parts = numericValue.split('.');
     const integerPart = parts[0];
     const decimalPart = parts[1];
 
-    // เพิ่มคอมม่าให้กับจำนวนเต็ม
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    // คืนค่าตามที่ผู้ใช้พิมพ์ โดยไม่เติมหรือตัดทศนิยม
     return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
   }, []);
 
-  // ฟังก์ชันสำหรับจัดรูปแบบราคาเมื่อเสร็จสิ้นการแก้ไข (onBlur)
   const formatPriceForDisplay = useCallback((value: string): string => {
     if (!value) return '';
     const numericValue = value.replace(/,/g, '');
@@ -107,35 +175,11 @@ export default function SellOrderContainer() {
 
     const parts = numericValue.split('.');
     const integerPart = parts[0];
-    const decimalPart = parts[1];
-
-    // เพิ่มคอมม่าให้กับจำนวนเต็ม
+    let decimalPart = parts[1] || '';
+    decimalPart = decimalPart.padEnd(2, '0');
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    // ถ้าไม่มีทศนิยมหรือเป็นจำนวนเต็ม ให้เติม .00
-    if (!decimalPart) {
-      return `${formattedInteger}.00`;
-    }
-
-    // ถ้ามีทศนิยมแล้ว ให้คงไว้ตามที่ผู้ใช้ป้อน (ไม่เติม 0 ข้างหลัง)
     return `${formattedInteger}.${decimalPart}`;
-  }, []);
-
-  const formatToMaxDigits = useCallback((value: number, maxDigits: number = 10): string => {
-    if (typeof value !== 'number' || isNaN(value)) return '0';
-    let valueStr = value.toFixed(9);
-    valueStr = valueStr.replace(/\.?0+$/, '');
-    if (valueStr === '' || valueStr === '.') return '0';
-    const totalDigits = valueStr.replace('.', '').length;
-    if (totalDigits <= maxDigits) return valueStr;
-    const decimalIndex = valueStr.indexOf('.');
-    if (decimalIndex === -1) return valueStr.substring(0, maxDigits);
-    const integerPart = valueStr.substring(0, decimalIndex);
-    const decimalPart = valueStr.substring(decimalIndex + 1);
-    const availableDecimalDigits = maxDigits - integerPart.length;
-    if (availableDecimalDigits <= 0) return integerPart.substring(0, maxDigits);
-    const truncatedDecimal = decimalPart.substring(0, availableDecimalDigits);
-    return integerPart + '.' + truncatedDecimal;
   }, []);
 
   const getAvailableCoinBalance = useCallback(() => {
@@ -145,68 +189,138 @@ export default function SellOrderContainer() {
 
   const formatAvailableCoinBalance = useCallback(() => {
     const balance = getAvailableCoinBalance();
-    return formatToMaxDigits(balance, 10);
-  }, [getAvailableCoinBalance, formatToMaxDigits]);
-
-  const formatToTwoDecimalsWithComma = useCallback((value: string): string => {
-    if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
-    const num = parseFloat(numericValue);
-    if (isNaN(num)) return '';
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-  }, []);
+      maximumFractionDigits: 8,
+    }).format(balance);
+  }, [getAvailableCoinBalance]);
 
-  const formatCoinNumber = useCallback((value: string): string => {
+  const formatUsdAmount = (value: string): string => {
     if (!value) return '';
-    const numericValue = value.replace(/,/g, '');
+    let numericValue = value.replace(/,/g, '');
     if (!/^\d*\.?\d*$/.test(numericValue)) return value;
 
-    const parts = numericValue.split('.');
-    const decimalPart = parts[1];
-
-    if (decimalPart !== undefined && decimalPart.length > 9) {
-      return value;
+    if (numericValue === '.') numericValue = '0.';
+    if (numericValue.length > 1 && numericValue[0] === '0') {
+      if (numericValue[1] !== '.') {
+        numericValue = numericValue.replace(/^0+/, '');
+        if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+      } else {
+        numericValue = '0.' + numericValue.slice(2);
+      }
     }
 
-    return numericValue;
-  }, []);
+    const parts = numericValue.split('.');
+    const integerPart = parts[0];
+    let decimalPart = parts[1];
+
+    // ไม่ตัดทศนิยม เก็บไว้ตามที่ user พิมพ์
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  };
+
+  const formatCoinNumber = useCallback(
+    (value: string): string => {
+      if (!value) return '';
+      let numericValue = value.replace(/,/g, '');
+      if (!/^\d*\.?\d*$/.test(numericValue)) return value;
+
+      if (numericValue === '.') numericValue = '0.';
+      if (numericValue.length > 1 && numericValue[0] === '0') {
+        if (numericValue[1] !== '.') {
+          numericValue = numericValue.replace(/^0+/, '');
+          if (numericValue === '' || numericValue[0] === '.') numericValue = '0' + numericValue;
+        } else {
+          numericValue = '0.' + numericValue.slice(2);
+        }
+      }
+
+      const parts = numericValue.split('.');
+      const integerPart = parts[0];
+      let decimalPart = parts[1];
+
+      if (decimalPart && decimalPart.length > quantityPrecision) {
+        decimalPart = decimalPart.substring(0, quantityPrecision);
+      }
+
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    },
+    [quantityPrecision]
+  );
 
   const isValidPriceFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
     return /^\d*\.?\d*$/.test(numericValue);
   }, []);
 
-  const isValidCoinFormat = useCallback((value: string): boolean => {
+  const isValidUSDFormat = useCallback((value: string): boolean => {
     const numericValue = value.replace(/,/g, '');
-    return /^\d*\.?\d{0,9}$/.test(numericValue);
+    // อนุญาตให้ใส่ทศนิยมได้ไม่จำกัด (ไม่ใช้ priceDecimalPlaces ในการ validate)
+    return /^\d*\.?\d*$/.test(numericValue);
   }, []);
+
+  const isValidCoinFormat = useCallback(
+    (value: string): boolean => {
+      const numericValue = value.replace(/,/g, '');
+      if (numericValue === '') return true;
+      if (!/^\d*\.?\d*$/.test(numericValue)) return false;
+      if (!Number.isInteger(quantityPrecision) || quantityPrecision < 0) {
+        return true;
+      }
+      if (quantityPrecision === 0) {
+        return /^\d*$/.test(numericValue);
+      }
+      const decimalPart = numericValue.split('.')[1];
+      return !decimalPart || decimalPart.length <= quantityPrecision;
+    },
+    [quantityPrecision]
+  );
 
   const calculateReceiveUSD = useCallback(
     (coinAmount: string, priceValue: string): string => {
       if (!coinAmount || !priceValue) return '';
+
       const cleanPrice = priceValue.replace(/,/g, '');
+      const cleanCoin = coinAmount.replace(/,/g, '');
+
+      // ตรวจสอบว่าเป็น 0 หรือไม่
       if (
         cleanPrice === '0' ||
+        cleanCoin === '0' ||
         (cleanPrice.startsWith('0.0') && cleanPrice.replace(/[0.]/g, '') === '')
-      )
+      ) {
         return '';
+      }
 
-      const numCoin = parseFloat(coinAmount);
+      const numCoin = parseFloat(cleanCoin);
       const numPrice = parseFloat(cleanPrice);
-      if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0) return '';
+
+      if (isNaN(numCoin) || isNaN(numPrice) || numPrice <= 0 || numCoin <= 0) {
+        return '';
+      }
+
+      // คำนวณแล้วใช้ truncate ตาม priceDecimalPlaces (tick size)
       const usdAmount = numCoin * numPrice;
-      return formatToTwoDecimalsWithComma(usdAmount.toString());
+
+      // ใช้ truncateToDecimals ตาม priceDecimalPlaces
+      const truncatedAmount = truncateToDecimals(usdAmount, priceDecimalPlaces);
+      const parts = truncatedAmount.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1];
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [formatToTwoDecimalsWithComma]
+    [priceDecimalPlaces, truncateToDecimals]
   );
 
   const calculateSellSliderPercentage = useCallback(
     (coinAmount: string): number => {
       if (!coinAmount) return 0;
-      const numAmount = parseFloat(coinAmount);
+      const numAmount = parseFloat(coinAmount.replace(/,/g, ''));
       const availableCoin = getAvailableCoinBalance();
       if (isNaN(numAmount) || numAmount <= 0 || availableCoin <= 0) return 0;
       const percentage = (numAmount / availableCoin) * 100;
@@ -219,17 +333,26 @@ export default function SellOrderContainer() {
     (percentage: number): string => {
       const availableCoin = getAvailableCoinBalance();
       if (availableCoin <= 0 || percentage <= 0) return '0';
-      const multiplier = 1000000000;
-      const availableSatoshis = Math.floor(availableCoin * multiplier);
-      const percentageSatoshis = Math.floor((percentage / 100) * availableSatoshis);
-      const coinAmount = percentageSatoshis / multiplier;
-      return formatToMaxDigits(coinAmount, 10);
+      const amount = (percentage / 100) * availableCoin;
+
+      const decimals =
+        symbolPrecision?.quantityPrecision ??
+        (symbolPrecision?.stepSize
+          ? decimalsFromSize(symbolPrecision.stepSize)
+          : quantityPrecision) ??
+        6;
+      const formatted = truncateToDecimals(amount, decimals);
+      const parts = formatted.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1];
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [getAvailableCoinBalance, formatToMaxDigits]
+    [getAvailableCoinBalance, symbolPrecision, quantityPrecision, truncateToDecimals]
   );
 
   const validateSellAmount = useCallback(() => {
-    const num = parseFloat(sellAmount);
+    const num = parseFloat(sellAmount.replace(/,/g, ''));
     const availableCoin = getAvailableCoinBalance();
     if (!sellAmount || sellAmount === '' || num === 0 || isNaN(num)) {
       setIsSellAmountValid(false);
@@ -249,7 +372,9 @@ export default function SellOrderContainer() {
   const handlePriceFocus = () => {
     setPriceLabel('Limit price');
     setIsInputFocused(true);
-    setPrice('');
+    if (marketPrice && !isPriceLoading) {
+      setPrice(marketPrice);
+    }
   };
 
   const handleMarketClick = () => {
@@ -261,29 +386,23 @@ export default function SellOrderContainer() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
-      const formattedValue = formatPriceWithComma(inputValue);
+      const formattedValue = inputValue === '' ? '' : formatPriceWithComma(inputValue);
       setPrice(formattedValue);
     }
   };
 
   const handlePriceBlur = () => {
     if (price) {
-      // ใช้ฟังก์ชัน formatPriceForDisplay เมื่อเสร็จสิ้นการแก้ไข
       const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
-      console.log(`SellOrderContainer: Price blur - formatted user input: "${formattedPrice}"`);
-    } else {
-      // ถ้าไม่มีราคาที่กรอก ให้กลับไปใช้ market price และเปลี่ยน label กลับเป็น "Price"
-      if (marketPrice && !isPriceLoading) {
-        setPrice(marketPrice);
-        setPriceLabel('Price');
-        console.log(`SellOrderContainer: Price blur - reset to market price: "${marketPrice}"`);
-      }
     }
     setIsInputFocused(false);
   };
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsReceiveUSDEditing(false);
+    setIsReceiveUSDUserInput(false); // reset flag เมื่อ user เปลี่ยน sell amount
+    setLastPercentage(null);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidCoinFormat(inputValue)) {
       const formattedValue = formatCoinNumber(inputValue);
@@ -303,35 +422,178 @@ export default function SellOrderContainer() {
       } else {
         setIsSellAmountValid(true);
         setSellAmountErrorMessage('');
-        const sliderPercentage = calculateSellSliderPercentage(numericValue);
+        const sliderPercentage = calculateSellSliderPercentage(inputValue);
         setSellSliderValue(sliderPercentage);
       }
+      const calculatedReceiveUSD = calculateReceiveUSD(formattedValue, price);
+      setReceiveUSD(calculatedReceiveUSD);
     }
   };
 
   const handleSellSliderChange = (percentage: number) => {
+    setIsReceiveUSDEditing(false);
+    setIsReceiveUSDUserInput(false); // reset flag
+    setLastPercentage(null);
     setSellSliderValue(percentage);
     const newCoinAmount = calculateCoinFromPercentage(percentage);
     setSellAmount(newCoinAmount);
-    const num = parseFloat(newCoinAmount);
+    const num = parseFloat(newCoinAmount.replace(/,/g, ''));
     const availableCoin = getAvailableCoinBalance();
     const isValid = !isNaN(num) && num <= availableCoin;
     setIsSellAmountValid(isValid);
     if (isValid) {
       setSellAmountErrorMessage('');
     }
+    const calculatedReceiveUSD = calculateReceiveUSD(newCoinAmount, price);
+    setReceiveUSD(calculatedReceiveUSD);
+  };
+
+  const handlePercentageClick = (percentage: number) => {
+    if (lastPercentage === percentage) {
+      return;
+    }
+    setIsReceiveUSDEditing(false);
+    setIsReceiveUSDUserInput(false); // reset flag
+    setLastPercentage(percentage);
+    setSellSliderValue(percentage);
+    const newCoinAmount = calculateCoinFromPercentage(percentage);
+    setSellAmount(newCoinAmount);
+    const num = parseFloat(newCoinAmount.replace(/,/g, ''));
+    const availableCoin = getAvailableCoinBalance();
+    const isValid = !isNaN(num) && num <= availableCoin;
+    setIsSellAmountValid(isValid);
+    setSellAmountErrorMessage(isValid ? '' : 'Insufficient balance');
+    const calculatedReceiveUSD = calculateReceiveUSD(newCoinAmount, price);
+    setReceiveUSD(calculatedReceiveUSD);
+  };
+
+  const handleMaxSell = () => {
+    handlePercentageClick(100);
   };
 
   const handleSellAmountFocus = () => setIsSellAmountFocused(true);
 
   const handleSellAmountBlur = () => {
+    setIsReceiveUSDEditing(false);
     setIsSellAmountFocused(false);
+
     if (sellAmount) {
-      const num = parseFloat(sellAmount);
+      const numericValue = sellAmount.replace(/,/g, '');
+      const num = parseFloat(numericValue);
       if (!isNaN(num)) {
-        setSellAmount(formatToMaxDigits(num, 10));
+        const decimals =
+          symbolPrecision?.quantityPrecision ??
+          (symbolPrecision?.stepSize
+            ? decimalsFromSize(symbolPrecision.stepSize)
+            : quantityPrecision) ??
+          6;
+        const formatted = truncateToDecimals(num, decimals);
+        const parts = formatted.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const finalFormatted =
+          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+        setSellAmount(finalFormatted);
+
+        // คำนวณ receiveUSD ใหม่เฉพาะเมื่อไม่ใช่ค่าที่ user พิมพ์ใน receive field
+        if (!isReceiveUSDUserInput) {
+          const calculatedReceiveUSD = calculateReceiveUSD(finalFormatted, price);
+          setReceiveUSD(calculatedReceiveUSD);
+        }
+
+        validateSellAmount();
       }
-      validateSellAmount();
+    }
+  };
+
+  const handleReceiveUSDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // ตรวจสอบ format ก่อน
+    if (inputValue === '' || isValidUSDFormat(inputValue)) {
+      setIsReceiveUSDEditing(true);
+      setIsReceiveUSDUserInput(true); // mark ว่าเป็นค่าที่ user พิมพ์
+      setLastPercentage(null);
+
+      const formattedInput = formatUsdAmount(inputValue);
+      setReceiveUSD(formattedInput);
+
+      // ถ้าไม่มี input หรือเป็น 0 ให้ clear sell amount
+      if (!inputValue || inputValue === '0' || inputValue === '0.') {
+        setSellAmount('');
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        setSellSliderValue(0);
+        return;
+      }
+
+      // เฉพาะเมื่อ user พิมพ์จริงๆ ถึงจะคำนวณ coin amount
+      // แต่ไม่ต้องอัปเดต receiveUSD กลับ
+      const priceNum = parseFloat(price.replace(/,/g, ''));
+      const usdNum = parseFloat(formattedInput.replace(/,/g, '') || '0');
+
+      // ตรวจสอบให้แน่ใจว่า price และ usd amount ถูกต้อง
+      if (isNaN(priceNum) || priceNum <= 0 || isNaN(usdNum) || usdNum <= 0) {
+        setSellAmount('');
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        setSellSliderValue(0);
+        return;
+      }
+
+      // คำนวณ coin amount สำหรับแสดงใน sell amount field
+      const coinAmount = usdNum / priceNum;
+
+      // Truncate เฉพาะผลลัพธ์
+      const decimals = symbolPrecision?.quantityPrecision ?? quantityPrecision ?? 6;
+      const truncatedCoinAmount = truncateToDecimals(coinAmount, decimals);
+
+      // Format สำหรับแสดงผล
+      const parts = truncatedCoinAmount.split('.');
+      const integerPart = parts[0];
+      const decimalPart = parts[1];
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const newAmount =
+        decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+
+      setSellAmount(newAmount);
+
+      // ตรวจสอบ balance
+      const availableCoin = getAvailableCoinBalance();
+      const numericCoinAmount = parseFloat(truncatedCoinAmount);
+
+      if (numericCoinAmount > availableCoin) {
+        setIsSellAmountValid(false);
+        setSellAmountErrorMessage('Insufficient balance');
+        setSellSliderValue(0);
+      } else {
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        const sliderPercentage = Math.min((numericCoinAmount / availableCoin) * 100, 100);
+        setSellSliderValue(sliderPercentage);
+      }
+    }
+  };
+
+  const handleReceiveBlur = () => {
+    setIsReceiveUSDEditing(false);
+
+    // เก็บค่าที่ user พิมพ์ไว้ ไม่เปลี่ยนแปลง
+    if (receiveUSD && isReceiveUSDUserInput) {
+      const numericValue = receiveUSD.replace(/,/g, '');
+      const num = parseFloat(numericValue);
+
+      if (!isNaN(num) && num >= 0) {
+        // แค่ format comma เท่านั้น ไม่เปลี่ยนแปลงค่า
+        const parts = numericValue.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const finalFormatted =
+          decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+        setReceiveUSD(finalFormatted);
+      }
     }
   };
 
@@ -346,7 +608,7 @@ export default function SellOrderContainer() {
     }
 
     const numericPrice = parseFloat(price.replace(/,/g, '') || '0');
-    const coinAmountToSell = parseFloat(sellAmount || '0');
+    const coinAmountToSell = parseFloat(sellAmount.replace(/,/g, '') || '0');
     const userId =
       cashBalance?.userId || (session.user as UserWithId)?.id || session.user?.email || '';
     const lotPrice = numericPrice * coinAmountToSell;
@@ -375,6 +637,8 @@ export default function SellOrderContainer() {
     setReceiveUSD('');
     setIsSellAmountValid(true);
     setSellAmountErrorMessage('');
+    setIsReceiveUSDUserInput(false); // reset flag
+    setLastPercentage(null);
   };
 
   const handleAlertClose = () => {
@@ -394,7 +658,9 @@ export default function SellOrderContainer() {
       } else if (isPriceLoading) {
         setPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
-          `SellOrderContainer: Set price to 0.00 due to loading for ${selectedCoin.label}`
+          `SellOrderContainer: Set price to 0.${'0'.repeat(
+            priceDecimalPlaces
+          )} due to loading for ${selectedCoin.label}`
         );
       }
     }
@@ -408,9 +674,38 @@ export default function SellOrderContainer() {
   ]);
 
   useEffect(() => {
-    const calculatedReceiveUSD = calculateReceiveUSD(sellAmount, price);
-    setReceiveUSD(calculatedReceiveUSD);
-  }, [sellAmount, price, calculateReceiveUSD]);
+    // ปิดการคำนวณอัตโนมัติใน useEffect เพื่อป้องกันการเปลี่ยนแปลงค่า receive ที่ user พิมพ์
+    // ให้คำนวณแค่ใน onChange events เท่านั้น
+    return;
+
+    // โค้ดเดิม (comment ไว้)
+    // if (isReceiveUSDEditing || isReceiveUSDUserInput) return;
+    // if (!sellAmount || sellAmount === '0') {
+    //   setReceiveUSD('');
+    //   return;
+    // }
+    // if (isSellAmountFocused) {
+    //   const calculatedReceiveUSD = calculateReceiveUSD(sellAmount, price);
+    //   setReceiveUSD(calculatedReceiveUSD);
+    // }
+  }, [
+    sellAmount,
+    price,
+    calculateReceiveUSD,
+    isReceiveUSDEditing,
+    isReceiveUSDUserInput,
+    isSellAmountFocused,
+  ]);
+
+  useEffect(() => {
+    if (!orderFormSelection) return;
+    if (orderFormSelection.side !== 'sell') return;
+
+    const isMarketMode = orderFormSelection.mode === 'market';
+    setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
+    setPrice(orderFormSelection.price);
+    setIsInputFocused(false);
+  }, [orderFormSelection]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
@@ -421,7 +716,6 @@ export default function SellOrderContainer() {
     ADA: 'ada-coin.svg',
     DOGE: 'doge-coin.svg',
   };
-  const coinSymbol = selectedCoin.label.split('/')[0];
   const amountIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
 
   return (
@@ -443,11 +737,13 @@ export default function SellOrderContainer() {
         symbol={coinSymbol}
         buttonColor="bg-[#D84C4C] hover:bg-[#C73E3E]"
         amountIcon={amountIcon}
-        receiveIcon="/currency-icons/dollar-icon.svg"
+        receiveIcon="/assets/usdt.svg"
         receiveCurrency="USD"
         isSubmitting={createSellOrderMutation.isPending}
         amountErrorMessage={sellAmountErrorMessage}
         isAuthenticated={!!session}
+        spendPlaceholder={spendPlaceholder}
+        receivePlaceholder={receivePlaceholder}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
@@ -458,6 +754,11 @@ export default function SellOrderContainer() {
         onMarketClick={handleMarketClick}
         onSubmit={handleSubmit}
         onLoginClick={() => router.push('/auth/sign-in')}
+        onReceiveChange={handleReceiveUSDChange}
+        onReceiveBlur={handleReceiveBlur}
+        onExchangeClick={onExchangeClick}
+        onQuickAdd={handlePercentageClick}
+        onMax={handleMaxSell}
       />
 
       {showAlert && (
