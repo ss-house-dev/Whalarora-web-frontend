@@ -188,10 +188,11 @@ export default function OrderCard({ order, onDelete }: Props) {
   };
 
   const ConfirmCloseDialog = ({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) => {
-    const triggerClassName =
-      variant === 'mobile'
-        ? 'inline-flex size-8 items-center justify-center rounded-lg border border-[#474747] text-[#E9E9E9] transition hover:border-[#5F5F5F] hover:text-white'
-        : 'w-8 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-[#A4A4A4] hover:text-white hover:border-white transition';
+    const isMobileVariant = variant === 'mobile';
+    const triggerClassName = isMobileVariant
+      ? 'inline-flex size-8 items-center justify-center rounded-lg border border-[#474747] text-[#E9E9E9] transition hover:border-[#5F5F5F] hover:text-white'
+      : 'w-8 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-[#A4A4A4] hover:text-white hover:border-white transition';
+    const contentClassName = `items-stretch gap-6 ${isMobileVariant ? 'max-w-[18rem] p-0' : 'sm:max-w-[420px]'}`;
 
     return (
       <AlertDialog>
@@ -200,74 +201,99 @@ export default function OrderCard({ order, onDelete }: Props) {
             <Trash2 size={16} strokeWidth={1.5} />
           </button>
         </AlertDialogTrigger>
-        <AlertDialogContent className="items-stretch gap-6">
+        <AlertDialogContent className={contentClassName}>
           <AlertDialogTitle className="sr-only">Close order</AlertDialogTitle>
           <AlertDialogDescription className="sr-only">
             Do you want to close this order ?
           </AlertDialogDescription>
-          <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
-            <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
-              <Trash2 size={20} strokeWidth={2} />
-            </div>
-            <div className="flex flex-col">
-              <div className="text-white text-base font-normal font-[Alexandria] leading-normal">
-                Close order
+          {isMobileVariant ? (
+            <div className="w-72 p-4 bg-[#16171D] rounded-xl outline outline-1 outline-offset-[-1px] outline-[#474747] flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-3 pb-3 border-b border-[#474747]/60 w-full">
+                <div className="flex h-12 w-12 items-center justify-center text-[#C22727]">
+                  <Trash2 size={60} strokeWidth={1.8} />
+                </div>
+                <p className="w-full text-center text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-normal">
+                  Do you want to close this order ?
+                </p>
               </div>
-              <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-                Do you want to close this order ?
-              </div>
-            </div>
-          </div>
-          <div className="w-full grid grid-cols-2 gap-y-4 gap-x-4">
-            <div className="flex items-center gap-3">
-              <div
-                className={`text-sm font-normal font-[Alexandria] leading-tight ${
-                  isBuy ? 'text-[#2FACA2]' : 'text-[#C22727]'
-                }`}
-              >
-                {isBuy ? 'Buy' : 'Sell'}
-              </div>
-              <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-                {formatCloseAmount(order.amount)}
-                {baseCurrency ? ` ${baseCurrency}` : ''}
+              <div className="w-full flex flex-col gap-3">
+                <AlertDialogAction
+                  onClick={() => onDelete?.()}
+                  className="h-10 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] text-neutral-100 text-sm font-normal font-[Alexandria] leading-tight transition"
+                >
+                  Confirm
+                </AlertDialogAction>
+                <AlertDialogCancel className="h-10 rounded-lg border border-[#A4A4A4] text-white text-sm font-normal font-[Alexandria] leading-tight transition hover:bg-[#1F2029]">
+                  Keep Open
+                </AlertDialogCancel>
               </div>
             </div>
+          ) : (
+            <>
+              <div className="w-full pb-3 border-b border-[#A4A4A4]/10 flex items-center gap-2">
+                <div className="w-7 h-7 flex items-center justify-center text-[#C22727]">
+                  <Trash2 size={20} strokeWidth={2} />
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-white text-base font-normal font-[Alexandria] leading-normal">
+                    Close order
+                  </div>
+                  <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+                    Do you want to close this order ?
+                  </div>
+                </div>
+              </div>
+              <div className="w-full grid grid-cols-2 gap-y-4 gap-x-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`text-sm font-normal font-[Alexandria] leading-tight ${
+                      isBuy ? 'text-[#2FACA2]' : 'text-[#C22727]'
+                    }`}
+                  >
+                    {isBuy ? 'Buy' : 'Sell'}
+                  </div>
+                  <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+                    {formatCloseAmount(order.amount)}
+                    {baseCurrency ? ` ${baseCurrency}` : ''}
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-start gap-2">
-              <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
-                at
-              </div>
-              <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
-                Price
-              </div>
-              <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-                {priceValue}
-              </div>
-              <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
-                {quoteCurrency}
-              </div>
-            </div>
+                <div className="flex items-center justify-start gap-1">
+                  <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
+                    at
+                  </div>
+                  <div className="text-[#A4A4A4] text-sm font-normal font-[Alexandria] leading-tight">
+                    Price
+                  </div>
+                  <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+                    {priceValue}
+                  </div>
+                  <div className="text-[#E9E9E9] text-sm font-normal font-[Alexandria] leading-tight">
+                    {quoteCurrency}
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-start">
-              <AlertDialogCancel className="w-32 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-white text-sm font-normal font-[Alexandria] leading-tight hover:bg-gray-700 transition">
-                Keep Open
-              </AlertDialogCancel>
-            </div>
+                <div className="flex items-center justify-start">
+                  <AlertDialogCancel className="w-32 h-8 rounded-lg border border-[#A4A4A4] flex items-center justify-center text-white text-sm font-normal font-[Alexandria] leading-tight hover:bg-gray-700 transition">
+                    Keep Open
+                  </AlertDialogCancel>
+                </div>
 
-            <div className="flex items-center justify-start">
-              <AlertDialogAction
-                onClick={() => onDelete?.()}
-                className="w-32 h-8 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] flex items-center justify-center text-neutral-100 text-sm font-normal font-[Alexandria] leading-tight transition"
-              >
-                Confirm
-              </AlertDialogAction>
-            </div>
-          </div>
+                <div className="flex items-center justify-start">
+                  <AlertDialogAction
+                    onClick={() => onDelete?.()}
+                    className="w-32 h-8 rounded-lg bg-[#C22727] hover:bg-[#D84C4C] flex items-center justify-center text-neutral-100 text-sm font-normal font-[Alexandria] leading-tight transition"
+                  >
+                    Confirm
+                  </AlertDialogAction>
+                </div>
+              </div>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     );
   };
-
   if (isMobile) {
     const mobileStatus = STATUS_TO_MOBILE[order.status] ?? 'pending';
     const statusMeta = ORDER_STATUS_META[mobileStatus];

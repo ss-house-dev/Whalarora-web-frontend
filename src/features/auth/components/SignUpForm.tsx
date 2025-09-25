@@ -191,8 +191,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-[464px] h-[740px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
+    <div className="flex items-center justify-center min-h-screen px-4 py-6">
+      <div className="w-full max-w-[464px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col space-y-4 text-white">
             <div className="space-y-4">
@@ -337,13 +337,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               </div>
 
               {/* Error Message */}
-              <div className="w-[400px] h-[26px] mb-0 flex items-center justify-center"></div>
+              <div className="w-full h-[26px] mb-0 flex items-center justify-center"></div>
 
               {/* Button Sign Up */}
               <div className="flex justify-center">
                 <Button
                   type="submit"
-                  className="w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
+                  className="w-full max-w-[400px] h-[48px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED]"
                   disabled={isLoading}
                 >
                   {isLoading ? (
