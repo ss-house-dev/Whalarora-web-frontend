@@ -8,32 +8,41 @@ import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 
 export default function MarketOrderContainer() {
   const { selectedCoin, ordersVersion } = useCoinContext();
+  const [activeTab, setActiveTab] = React.useState<'buy' | 'sell'>('buy');
+
+  const toggleTab = () => setActiveTab((t) => (t === 'buy' ? 'sell' : 'buy'));
   return (
     <div>
-      <Tabs defaultValue="buy">
-        <TabsList className="w-full bg-[#2D2D2D]">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buy' | 'sell')}>
+        <TabsList className="w-full bg-[#1F2029]">
           <TabsTrigger
             value="buy"
-            className="font-bold data-[state=active]:bg-[linear-gradient(185deg,_#309C7D_23.13%,_#26F6BA_157.05%)] h-[28px] cursor-pointer"
+            className="font-bold data-[state=active]:bg-[#0A997F] data-[state=inactive]:text-[#A4A4A4] h-[28px] cursor-pointer"
           >
             Buy
           </TabsTrigger>
           <TabsTrigger
             value="sell"
-            className="font-bold data-[state=active]:bg-[linear-gradient(357deg,_#D84C4C_2.29%,_#722828_186.28%)] h-[28px] cursor-pointer"
+            className="font-bold data-[state=active]:bg-[#D84C4C] data-[state=inactive]:text-[#A4A4A4] h-[28px] cursor-pointer"
           >
             Sell
           </TabsTrigger>
         </TabsList>
 
         {/* Buy Tab */}
-        <TabsContent value="buy" className="mt-7">
-          <BuyOrderContainer key={`${selectedCoin.value}-${ordersVersion}-buy`} />
+        <TabsContent value="buy" className="mt-5">
+          <BuyOrderContainer
+            key={`${selectedCoin.value}-${ordersVersion}-buy`}
+            onExchangeClick={toggleTab}
+          />
         </TabsContent>
 
         {/* Sell Tab */}
-        <TabsContent value="sell" className="mt-7">
-          <SellOrderContainer key={`${selectedCoin.value}-${ordersVersion}-sell`} />
+        <TabsContent value="sell" className="mt-5">
+          <SellOrderContainer
+            key={`${selectedCoin.value}-${ordersVersion}-sell`}
+            onExchangeClick={toggleTab}
+          />
         </TabsContent>
       </Tabs>
     </div>
