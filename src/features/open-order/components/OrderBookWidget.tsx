@@ -202,7 +202,7 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
       onKeyUp={handleKeyUp}
       className={clsx(
         'group relative h-full min-w-[140px] flex-1 overflow-hidden px-3 py-1 transition',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
+        'focus-visible:outline-offset-[-2px]',
         roundingClass,
         disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
       )}

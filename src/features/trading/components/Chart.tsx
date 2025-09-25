@@ -250,10 +250,11 @@ const AdvancedChart = () => {
     // ensure container is clean
     container.innerHTML = '';
 
+    const chartHeight = Math.max(240, container.clientHeight || 400);
+
     const chart = createChart(container, {
       width: container.clientWidth || 900,
-      // draw slightly shorter than wrapper to avoid bottom clipping under rounded corners
-      height: 500,
+      height: chartHeight,
       layout: {
         background: { type: ColorType.Solid, color: '#0C0F17' },
         textColor: '#d1d5db',
@@ -352,9 +353,12 @@ const AdvancedChart = () => {
     emaRef.current = ema;
 
     const resizeObserver = new ResizeObserver((entries) => {
-      const { width } = entries[0].contentRect;
+      const { width, height } = entries[0].contentRect;
       if (!chartRef.current) return; // chart might be disposed
-      chart.applyOptions({ width: Math.floor(width) });
+      const nextWidth = Math.max(0, Math.floor(width));
+      const nextHeightSource = height || container.clientHeight;
+      const nextHeight = Math.max(240, Math.floor(nextHeightSource || chartHeight));
+      chart.applyOptions({ width: nextWidth, height: nextHeight });
     });
     resizeObserver.observe(container);
 
@@ -801,8 +805,8 @@ const AdvancedChart = () => {
   }, [chartType, showSMA, showEMA, showVolume]);
 
   return (
-    <div className="w-full lg:max-w-[900px]">
-      <div className="relative h-[320px] w-full sm:h-[420px] lg:h-[508px]">
+    <div className="w-full">
+      <div className="relative h-[260px] w-full sm:h-[320px] md:h-[380px] lg:h-[508px]">
         <div
           ref={containerRef}
           className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full cursor-crosshair"
