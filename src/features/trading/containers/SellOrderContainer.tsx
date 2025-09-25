@@ -26,6 +26,20 @@ interface SellOrderContainerProps {
   onExchangeClick?: () => void;
 }
 
+const DEFAULT_FIAT_PLACEHOLDER = '> 0.01';
+const DEFAULT_STEP_PLACEHOLDER = '> 0.00001';
+
+const createStepSizePlaceholder = (stepSize?: string) => {
+  if (!stepSize) return DEFAULT_STEP_PLACEHOLDER;
+  const decimals = decimalsFromSize(stepSize);
+  const numericValue = Number(stepSize);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return DEFAULT_STEP_PLACEHOLDER;
+  if (decimals === undefined) {
+    return `> ${numericValue}`;
+  }
+  return `> ${numericValue.toFixed(decimals)}`;
+};
+
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +70,12 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       (symbolPrecision?.stepSize ? decimalsFromSize(symbolPrecision.stepSize) : undefined);
     return decimals ?? 6;
   }, [symbolPrecision]);
+
+  const spendPlaceholder = useMemo(() => {
+    return createStepSizePlaceholder(symbolPrecision?.stepSize);
+  }, [symbolPrecision?.stepSize]);
+
+  const receivePlaceholder = DEFAULT_FIAT_PLACEHOLDER;
 
   const { data: cashBalance } = useGetCashBalance({
     enabled: !!session,
@@ -711,6 +731,8 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         isSubmitting={createSellOrderMutation.isPending}
         amountErrorMessage={sellAmountErrorMessage}
         isAuthenticated={!!session}
+        spendPlaceholder={spendPlaceholder}
+        receivePlaceholder={receivePlaceholder}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}

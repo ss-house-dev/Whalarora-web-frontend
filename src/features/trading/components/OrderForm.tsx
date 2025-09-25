@@ -28,6 +28,9 @@ interface OrderFormProps {
   isSubmitting: boolean;
   isAuthenticated?: boolean;
   amountErrorMessage?: string;
+  // เพิ่ม props สำหรับ placeholder
+  spendPlaceholder?: string;
+  receivePlaceholder?: string;
   onPriceFocus: () => void;
   onPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceBlur: () => void;
@@ -67,6 +70,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
   isSubmitting,
   isAuthenticated = false,
   amountErrorMessage = 'Insufficient balance',
+  spendPlaceholder = '> 0.01',
+  receivePlaceholder = '> 0.01',
   onPriceFocus,
   onPriceChange,
   onPriceBlur,
@@ -283,6 +288,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <div className="flex items-center gap-2 text-[16px]">
               <Input
                 ref={amountInputRef}
+                placeholder={spendPlaceholder}
                 type="text"
                 className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
                 value={amount}
@@ -423,6 +429,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <div className="flex gap-2 items-center">
             <Input
               type="text"
+              placeholder={receivePlaceholder}
               className="w-full text-[16px] font-normal rounded-lg p-1 text-right border-none outline-none"
               value={receiveAmount}
               onChange={(e) => {

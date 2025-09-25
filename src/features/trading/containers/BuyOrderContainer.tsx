@@ -49,6 +49,20 @@ interface BuyOrderContainerProps {
   onExchangeClick?: () => void;
 }
 
+const DEFAULT_FIAT_PLACEHOLDER = '> 0.01';
+const DEFAULT_STEP_PLACEHOLDER = '> 0.00001';
+
+const createStepSizePlaceholder = (stepSize?: string) => {
+  if (!stepSize) return DEFAULT_STEP_PLACEHOLDER;
+  const decimals = decimalsFromSize(stepSize);
+  const numericValue = Number(stepSize);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return DEFAULT_STEP_PLACEHOLDER;
+  if (decimals === undefined) {
+    return `> ${numericValue}`;
+  }
+  return `> ${numericValue.toFixed(decimals)}`;
+};
+
 export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -96,6 +110,13 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       (symbolPrecision?.stepSize ? decimalsFromSize(symbolPrecision.stepSize) : undefined);
     return decimals ?? 6;
   }, [symbolPrecision]);
+
+  // เพิ่ม placeholders
+  const spendPlaceholder = DEFAULT_FIAT_PLACEHOLDER;
+
+  const receivePlaceholder = useMemo(() => {
+    return createStepSizePlaceholder(symbolPrecision?.stepSize);
+  }, [symbolPrecision?.stepSize]);
 
   const createBuyOrderMutation = useCreateBuyOrder({
     onSuccess: (data) => {
@@ -791,6 +812,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         isSubmitting={createBuyOrderMutation.isPending}
         amountErrorMessage={amountErrorMessage}
         isAuthenticated={!!session}
+        spendPlaceholder={spendPlaceholder}
+        receivePlaceholder={receivePlaceholder}
         onPriceFocus={handlePriceFocus}
         onPriceChange={handlePriceChange}
         onPriceBlur={handlePriceBlur}
