@@ -11,6 +11,19 @@ interface Coin {
   popoverIcon: React.ReactNode;
 }
 
+interface OrderFormSelection {
+  side: 'buy' | 'sell';
+  price: string;
+  token: number;
+  mode: 'limit' | 'market';
+}
+
+interface OrderBookSelectionPayload {
+  side: 'buy' | 'sell';
+  price: number | string | null | undefined;
+  fallbackPrice?: number | string | null;
+}
+
 interface CoinContextType {
   selectedCoin: Coin;
   setSelectedCoin: (coin: Coin) => void;
@@ -19,6 +32,10 @@ interface CoinContextType {
   priceDecimalPlaces: number;
   ordersVersion: number;
   refreshOrders: () => void;
+  activeOrderTab: 'buy' | 'sell';
+  setActiveOrderTab: (tab: 'buy' | 'sell') => void;
+  orderFormSelection: OrderFormSelection | null;
+  applyOrderBookSelection: (payload: OrderBookSelectionPayload) => void;
 }
 
 const CoinContext = createContext<CoinContextType | undefined>(undefined);
@@ -40,6 +57,8 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isPriceLoading, setIsPriceLoading] = useState<boolean>(true);
   const [priceDecimalPlaces, setPriceDecimalPlaces] = useState<number>(2);
   const [ordersVersion, setOrdersVersion] = useState<number>(0);
+  const [activeOrderTab, setActiveOrderTabState] = useState<'buy' | 'sell'>('buy');
+  const [orderFormSelection, setOrderFormSelection] = useState<OrderFormSelection | null>(null);
   const { data: session, status } = useSession();
 
   // real-time infra
@@ -107,6 +126,8 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setSelectedCoinState(coin);
         setOrdersVersion((v) => v + 1);
+        setActiveOrderTabState('buy');
+        setOrderFormSelection(null);
         if (session) {
           const symbol = coin.value.replace('BINANCE:', '').replace('USDT', '');
           localStorage.setItem(
@@ -120,7 +141,6 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const refreshOrders = useCallback(() => setOrdersVersion((v) => v + 1), []);
-
   const formatOriginalPrice = useCallback((value: number, places: number): string => {
     if (isNaN(value) || value <= 0) return '0.' + '0'.repeat(places);
     const formattedValue = value.toFixed(places);
@@ -128,6 +148,46 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return `${formattedInteger}.${decimalPart || '0'.repeat(places)}`;
   }, []);
+
+
+  const setActiveOrderTab = useCallback((tab: 'buy' | 'sell') => {
+    setActiveOrderTabState(tab);
+  }, []);
+
+  const applyOrderBookSelection = useCallback(
+    ({ side, price, fallbackPrice }: OrderBookSelectionPayload) => {
+      if (side !== 'buy' && side !== 'sell') return;
+
+      const parseNumeric = (value: number | string | null | undefined) => {
+        if (value === null || value === undefined) return NaN;
+        if (typeof value === 'string') {
+          const sanitized = String(value).replace(/[^0-9.]/g, '');
+          return sanitized ? Number(sanitized) : NaN;
+        }
+        return Number(value);
+      };
+
+      let numeric = parseNumeric(price);
+      let mode: 'limit' | 'market' = 'limit';
+
+      if (!Number.isFinite(numeric) || numeric <= 0) {
+        numeric = parseNumeric(fallbackPrice);
+        mode = 'market';
+      }
+
+      if (!Number.isFinite(numeric) || numeric <= 0) return;
+
+      const formattedPrice = formatOriginalPrice(numeric, priceDecimalPlaces);
+      setOrderFormSelection({
+        side,
+        price: formattedPrice,
+        token: Date.now(),
+        mode,
+      });
+      setActiveOrderTab(side);
+    },
+    [formatOriginalPrice, priceDecimalPlaces, setActiveOrderTab]
+  );
 
   // Real-time price per selected coin with reconnection + stale HTTP fallback
   useEffect(() => {
@@ -303,6 +363,10 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
         priceDecimalPlaces,
         ordersVersion,
         refreshOrders,
+        activeOrderTab,
+        setActiveOrderTab,
+        orderFormSelection,
+        applyOrderBookSelection,
       }}
     >
       {children}
