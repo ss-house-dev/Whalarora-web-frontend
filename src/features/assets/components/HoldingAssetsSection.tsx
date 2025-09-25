@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
+
 import HoldingAssetsTable from './HoldingAssetsTable';
 import { AssetCard } from './AssetCard';
 
@@ -40,13 +41,14 @@ export default function HoldingAssetsSection({
   }, [rows, page, pageSize]);
 
   const handleTradeClick = (symbol: string) => {
-    // เปิด trade modal หรือ redirect ไปหน้า trading
+    // TODO: Hook up trade modal / navigation when ready
     console.log('Opening trade modal for:', symbol);
-    // TODO: Implement trade modal logic
   };
 
-  // กำหนดสถานะสำหรับการแสดงผล
-  const hasError = !!error;
+  const containerClass =
+    'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
+
+  const hasError = Boolean(error);
   const isLoadingData = isLoading;
   const hasData = !isLoadingData && !hasError && rows.length > 0;
   const hasNoData = !isLoadingData && !hasError && rows.length === 0;
@@ -54,37 +56,33 @@ export default function HoldingAssetsSection({
   return (
     <HoldingAssetsTable
       title="My holding assets"
-      totalAssets={rows.length} // ส่งจำนวนจริงเสมอ
-      totalPages={totalPages} // ส่ง totalPages จริงเสมอ
+      totalAssets={rows.length}
+      totalPages={totalPages}
       initialPage={1}
       onPageChange={setPage}
-      showPagination={true} // แสดง pagination เสมอ
+      showPagination
     >
-      <div className="flex flex-col space-y-[16px]">
-        {/* Loading state */}
+      <div className="flex flex-col space-y-4">
         {isLoadingData && (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-slate-300 text-sm">{loadingMessage || 'Loading...'}</div>
+          <div className="flex h-64 items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
         )}
 
-        {/* Error state */}
         {hasError && (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-red-400 text-sm">Error: {error}</div>
+          <div className={containerClass}>
+            <div className="text-sm text-red-400">Error: {error}</div>
           </div>
         )}
 
-        {/* No data state */}
         {hasNoData && (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-slate-300 text-sm">No holding asset.</p>
+          <div className={containerClass}>
+            <p className="text-sm text-slate-300">No holding asset.</p>
           </div>
         )}
 
-        {/* Data state */}
         {hasData && (
-          <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:gap-4">
             {pagedRows.map((row) => (
               <AssetCard
                 key={row.id}
@@ -97,10 +95,10 @@ export default function HoldingAssetsSection({
                 pnlAbs={row.pnlAbs}
                 pnlPct={row.pnlPct}
                 onBuySell={() => handleTradeClick(row.symbol)}
-                className="mx-auto lg:w-[1220px] h-20 px-4 py-3 rounded-xl"
+                className="w-full lg:mx-auto lg:max-w-[1220px]"
               />
             ))}
-          </>
+          </div>
         )}
       </div>
     </HoldingAssetsTable>
