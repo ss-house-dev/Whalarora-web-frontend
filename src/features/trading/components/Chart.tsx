@@ -496,12 +496,28 @@ const AdvancedChart = () => {
         },
         crosshair: {
           mode: CrosshairMode.Normal,
-          vertLine: { visible: true, labelVisible: false, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
-          horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+          vertLine: {
+            visible: true,
+            labelVisible: false,
+            color: '#9CA3AF',
+            width: 1,
+            style: LineStyle.Dashed,
+          },
+          horzLine: {
+            visible: true,
+            labelVisible: true,
+            color: '#9CA3AF',
+            width: 1,
+            style: LineStyle.Dashed,
+          },
         },
       });
       candle.applyOptions({
-        priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
+        priceFormat: {
+          type: 'custom',
+          minMove: initialMinMove,
+          formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef),
+        },
         visible: chartType === 'candles',
         lastValueVisible: true,
         priceLineVisible: true,
@@ -509,15 +525,23 @@ const AdvancedChart = () => {
       if (lineRef.current) {
         lineRef.current.applyOptions({
           visible: chartType === 'line',
-          priceFormat: { type: 'custom', minMove: initialMinMove, formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef) },
+          priceFormat: {
+            type: 'custom',
+            minMove: initialMinMove,
+            formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef),
+          },
           lastValueVisible: chartType === 'line',
           priceLineVisible: chartType === 'line',
         });
       }
       if (volumeRef.current) {
-        volumeRef.current.applyOptions({ visible: showVolume, lastValueVisible: false, priceLineVisible: false });
+        volumeRef.current.applyOptions({
+          visible: showVolume,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
       }
-      
+
       // Connect realtime WS immediately for faster first updates
       const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
       const ws = new WebSocket(wsUrl);
@@ -594,13 +618,29 @@ const AdvancedChart = () => {
           },
           crosshair: {
             mode: CrosshairMode.Normal,
-            vertLine: { visible: true, labelVisible: false, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
-            horzLine: { visible: true, labelVisible: true, color: '#9CA3AF', width: 1, style: LineStyle.Dashed },
+            vertLine: {
+              visible: true,
+              labelVisible: false,
+              color: '#9CA3AF',
+              width: 1,
+              style: LineStyle.Dashed,
+            },
+            horzLine: {
+              visible: true,
+              labelVisible: true,
+              color: '#9CA3AF',
+              width: 1,
+              style: LineStyle.Dashed,
+            },
           },
         });
         if (!candleRef.current || candleRef.current !== candle) return;
         candle.applyOptions({
-          priceFormat: { type: 'custom', minMove, formatter: makeSeriesFormatter(precision, baseIntDigitsRef) },
+          priceFormat: {
+            type: 'custom',
+            minMove,
+            formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+          },
           visible: chartType === 'candles',
           lastValueVisible: true,
           priceLineVisible: true,
@@ -608,13 +648,21 @@ const AdvancedChart = () => {
         if (lineRef.current) {
           lineRef.current.applyOptions({
             visible: chartType === 'line',
-            priceFormat: { type: 'custom', minMove, formatter: makeSeriesFormatter(precision, baseIntDigitsRef) },
+            priceFormat: {
+              type: 'custom',
+              minMove,
+              formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+            },
             lastValueVisible: chartType === 'line',
             priceLineVisible: chartType === 'line',
           });
         }
         if (volumeRef.current) {
-          volumeRef.current.applyOptions({ visible: showVolume, lastValueVisible: false, priceLineVisible: false });
+          volumeRef.current.applyOptions({
+            visible: showVolume,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
         }
       })();
 
@@ -639,7 +687,9 @@ const AdvancedChart = () => {
         } else {
           // Merge: keep existing (WS) bars, but backfill history if it ends before
           const lastHist = data[data.length - 1]?.time as UTCTimestamp | undefined;
-          const wsLast = barsRef.current[barsRef.current.length - 1]?.time as UTCTimestamp | undefined;
+          const wsLast = barsRef.current[barsRef.current.length - 1]?.time as
+            | UTCTimestamp
+            | undefined;
           if (!wsLast || (lastHist && wsLast <= lastHist)) {
             if (!candleRef.current || candleRef.current !== candle) return;
             candle.setData(data);
@@ -762,7 +812,7 @@ const AdvancedChart = () => {
         <div
           ref={timeTooltipRef}
           style={{ display: 'none', transform: 'translateX(-50%)' }}
-          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#16171D] rounded-md shadow"
+          className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
         />
         <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
