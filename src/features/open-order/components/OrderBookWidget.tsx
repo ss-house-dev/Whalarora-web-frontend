@@ -201,7 +201,7 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
       className={clsx(
-        'group relative h-full min-w-[176px] flex-1 overflow-hidden px-3 py-1 transition',
+        'group relative h-full min-w-[140px] flex-1 overflow-hidden px-3 py-1 transition',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
         roundingClass,
         disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
@@ -304,7 +304,7 @@ export default function OrderBookWidget({
   return (
     <div
       className={clsx(
-        'relative inline-flex h-[60px] w-[384px] overflow-hidden rounded-xl bg-[#16171D]',
+        'relative inline-flex h-[60px] w-full max-w-[384px] overflow-hidden rounded-xl bg-[#16171D]',
         className
       )}
     >

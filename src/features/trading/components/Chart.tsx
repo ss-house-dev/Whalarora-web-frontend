@@ -801,8 +801,8 @@ const AdvancedChart = () => {
   }, [chartType, showSMA, showEMA, showVolume]);
 
   return (
-    <div className="w-full max-w-[900px]">
-      <div className="relative w-full h-[508px]">
+    <div className="w-full lg:max-w-[900px]">
+      <div className="relative h-[320px] w-full sm:h-[420px] lg:h-[508px]">
         <div
           ref={containerRef}
           className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full cursor-crosshair"
@@ -814,7 +814,7 @@ const AdvancedChart = () => {
           style={{ display: 'none', transform: 'translateX(-50%)' }}
           className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
         />
-        <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 overflow-x-auto text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
             <button
               key={tf}

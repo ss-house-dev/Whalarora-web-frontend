@@ -26,31 +26,33 @@ export default function MarketOrderPage() {
   }, [cancelOrderAsync]);
 
   return (
-    <div className="mx-[23px] mt-[20px] space-y-[20px]">
+    <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
       {/* Symbol selector & live orderbook */}
-      <div className="flex items-start gap-[17px]">
-        <div className="flex-1">
-          <CombinedCombobox />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[17px]">
+        <div className="w-full lg:flex-1">
+          <CombinedCombobox className="w-full" />
         </div>
-        <OrderBookLiveContainer className="w-[384px] mr-22" showMetaInfo={false} />
+        <div className="w-full lg:w-[384px]">
+          <OrderBookLiveContainer className="w-full lg:max-w-[384px]" showMetaInfo={false} />
+        </div>
       </div>
 
-      {/* Chart and Order Container side by side */}
-      <div className="flex gap-[17px]">
-        <div className="w-[900px] min-h-[508px]">
+      {/* Chart and Order Container */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-[17px]">
+        <div className="w-full lg:w-[900px]">
           <AdvancedChart />
         </div>
 
         <div
           key={`${selectedCoin.value}-${ordersVersion}-panel`}
-          className="bg-[#16171D] rounded-lg shadow-md p-5 w-[384px] h-[508px]"
+          className="w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 lg:h-[508px] lg:w-[384px]"
         >
           <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
         </div>
       </div>
 
       {/* Tabbed Orders Section */}
-      <div className="flex-1 mb-10">
+      <div className="mb-10 flex-1">
         <OrderTableContainer
           activeTab={activeTab}
           setActiveTab={setActiveTab}

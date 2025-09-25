@@ -131,7 +131,11 @@ export default function OrderBookLiveContainer({
     return new Date(tsNumber).toLocaleTimeString('th-TH', { hour12: false });
   }, [data?.ts]);
 
-  const containerClass = clsx('flex flex-col gap-3', showMetaInfo ? 'items-center' : undefined, className);
+  const containerClass = clsx(
+    'flex w-full flex-col gap-3',
+    showMetaInfo ? 'items-center' : undefined,
+    className
+  );
 
   return (
     <div className={containerClass}>

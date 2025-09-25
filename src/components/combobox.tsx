@@ -161,7 +161,7 @@ const binanceCoins = [
 ];
 
 export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
-  const { selectedCoin, setSelectedCoin } = useCoinContext();
+  const { selectedCoin, setSelectedCoin, marketPrice, isPriceLoading } = useCoinContext();
   const [open, setOpen] = React.useState(false);
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
   const [loadingPairs, setLoadingPairs] = React.useState<boolean>(true);
@@ -245,98 +245,130 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const selectedCoinData =
     allCoins.find((coin) => coin.value === selectedCoin.value) || selectedCoin;
 
+  const displayPrice = React.useMemo(() => {
+    if (isPriceLoading) return '--';
+    return marketPrice && marketPrice.trim().length > 0 ? marketPrice : '--';
+  }, [isPriceLoading, marketPrice]);
+
   return (
     <div
-      className={`bg-[#16171D] h-[60px] w-[900px] flex items-center rounded-[12px] ${className}`}
+      className={cn(
+        'bg-[#16171D] w-full rounded-[12px] px-4 py-4 flex flex-col gap-4 lg:h-[60px] lg:flex-row lg:items-center lg:justify-between lg:px-0 lg:py-0',
+        className
+      )}
     >
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <SelectCoin
-            role="combobox"
-            aria-expanded={open}
-            className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-transparent cursor-pointer border-0"
-          >
-            <div className="flex items-center gap-2">
-              {selectedCoinData.icon}
-              <span>{selectedCoinData.label}</span>
-            </div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="10"
-              height="8"
-              viewBox="0 0 10 8"
-              fill="none"
+      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:gap-0">
+        <div className="flex w-full flex-col gap-3 px-0 lg:w-auto lg:flex-none lg:flex-row lg:items-center lg:gap-0 lg:px-[12px]">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <SelectCoin
+                role="combobox"
+                aria-expanded={open}
+                className="h-[56px] w-full justify-between rounded-[12px] border-0 bg-transparent px-[12px] py-[12px] text-[18px] font-[500] lg:h-[60px] lg:w-[260px]"
+              >
+                <div className="flex items-center gap-2">
+                  {selectedCoinData.icon}
+                  <span>{selectedCoinData.label}</span>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="10"
+                  height="8"
+                  viewBox="0 0 10 8"
+                  fill="none"
+                >
+                  <path
+                    d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
+                    fill="white"
+                  />
+                </svg>
+              </SelectCoin>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[240px] max-w-[90vw] p-0 border-0 bg-transparent"
+              align="start"
+              side="bottom"
+              sideOffset={4}
             >
-              <path
-                d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
-                fill="white"
-              />
-            </svg>
-          </SelectCoin>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[174px] p-0 border-0 bg-transparent"
-          align="start"
-          side="bottom"
-          sideOffset={4}
-        >
-          <Command>
-            <CommandInput value={searchValue} onValueChange={setSearchValue} />
-            <CommandList ref={listRef} className="max-h-[280px]">
-              <CommandEmpty>{loadingPairs ? 'Loading coins…' : 'Coin not found'}</CommandEmpty>
-              <CommandGroup>
-                {coins.map((coin) => (
-                  <CommandItem
-                    key={coin.value}
-                    value={coin.value}
-                    onSelect={() => {
-                      setSelectedCoin({
-                        value: coin.value,
-                        label: coin.label,
-                        icon: coin.icon,
-                        popoverIcon: coin.popoverIcon,
-                      });
-                      setSearchValue('');
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      'flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]',
-                      selectedCoin.value === coin.value && 'bg-[#323338]'
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      {coin.popoverIcon}
-                      <span>{coin.label}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+              <Command>
+                <CommandInput value={searchValue} onValueChange={setSearchValue} />
+                <CommandList ref={listRef} className="max-h-[280px]">
+                  <CommandEmpty>{loadingPairs ? 'Loading coins…' : 'Coin not found'}</CommandEmpty>
+                  <CommandGroup>
+                    {coins.map((coin) => (
+                      <CommandItem
+                        key={coin.value}
+                        value={coin.value}
+                        onSelect={() => {
+                          setSelectedCoin({
+                            value: coin.value,
+                            label: coin.label,
+                            icon: coin.icon,
+                            popoverIcon: coin.popoverIcon,
+                          });
+                          setSearchValue('');
+                          setOpen(false);
+                        }}
+                        className={cn(
+                          'mx-[4px] flex h-[40px] w-full items-center justify-between rounded-[8px] px-2',
+                          selectedCoin.value === coin.value && 'bg-[#323338]'
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          {coin.popoverIcon}
+                          <span>{coin.label}</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
-      <svg xmlns="http://www.w3.org/2000/svg" width="3" height="36" viewBox="0 0 3 36" fill="none">
-        <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
-      </svg>
+          <div className="flex w-full items-center justify-between px-1 lg:hidden">
+            <span className="text-xs text-[#8B8E93]">Last price</span>
+            <span className="text-lg font-semibold text-[#00D4AA]">{displayPrice}</span>
+          </div>
+        </div>
 
-      <div className="flex items-center px-4 flex-1">
-        <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">--</div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h High</span>
-          <span className="text-white text-sm font-medium">--</span>
+        <div className="hidden items-center lg:flex lg:flex-1 lg:border-l lg:border-[#474747] lg:px-6">
+          <div className="mr-6 text-[20px] font-[400] text-[#00D4AA]">{displayPrice}</div>
+          <div className="mr-6 flex flex-col items-start">
+            <span className="text-xs text-[#8B8E93]">24h High</span>
+            <span className="text-sm font-medium text-white">--</span>
+          </div>
+          <div className="mr-6 flex flex-col items-start">
+            <span className="text-xs text-[#8B8E93]">24h Low</span>
+            <span className="text-sm font-medium text-white">--</span>
+          </div>
+          <div className="mr-6 flex flex-col items-start">
+            <span className="text-xs text-[#8B8E93]">24h Volume (BTC)</span>
+            <span className="text-sm font-medium text-white">--</span>
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-xs text-[#8B8E93]">24h Volume (USDT)</span>
+            <span className="text-sm font-medium text-white">--</span>
+          </div>
         </div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h Low</span>
-          <span className="text-white text-sm font-medium">--</span>
+      </div>
+
+      <div className="grid w-full grid-cols-2 gap-4 px-1 text-xs text-[#8B8E93] lg:hidden">
+        <div className="flex flex-col">
+          <span>24h High</span>
+          <span className="text-sm font-medium text-white">--</span>
         </div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h Volume (BTC)</span>
-          <span className="text-white text-sm font-medium">--</span>
+        <div className="flex flex-col text-right">
+          <span>24h Low</span>
+          <span className="text-sm font-medium text-white">--</span>
         </div>
-        <div className="flex flex-col items-start">
-          <span className="text-[#8B8E93] text-xs">24h Volume (USDT)</span>
-          <span className="text-white text-sm font-medium">--</span>
+        <div className="flex flex-col">
+          <span>Volume (BTC)</span>
+          <span className="text-sm font-medium text-white">--</span>
+        </div>
+        <div className="flex flex-col text-right">
+          <span>Volume (USDT)</span>
+          <span className="text-sm font-medium text-white">--</span>
         </div>
       </div>
     </div>
