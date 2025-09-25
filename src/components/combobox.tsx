@@ -253,80 +253,82 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   return (
     <div
       className={cn(
-        'flex h-[56px] w-full items-center gap-3 rounded-[12px] bg-[#16171D] px-3 sm:h-[60px] sm:gap-4 sm:px-4',
+        'flex h-[56px] w-full items-center rounded-[12px] bg-[#16171D] px-3 sm:h-[60px] sm:px-4',
         className
       )}
     >
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <SelectCoin
-            role="combobox"
-            aria-expanded={open}
-            variant="ghost"
-            className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-[12px] border-0 bg-transparent px-0 text-[16px] font-semibold text-white hover:bg-transparent focus-visible:ring-0 sm:text-[18px]"
-          >
-            <div className="flex min-w-0 items-center gap-2">
-              {selectedCoinData.icon}
-              <span className="truncate">{selectedCoinData.label}</span>
-            </div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="10"
-              height="8"
-              viewBox="0 0 10 8"
-              fill="none"
+      <div className="flex flex-1 min-w-0 items-center">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <SelectCoin
+              role="combobox"
+              aria-expanded={open}
+              variant="ghost"
+              className="flex w-full min-w-0 items-center justify-between gap-2 rounded-[12px] border-0 bg-transparent px-0 text-[16px] font-semibold text-white hover:bg-transparent focus-visible:ring-0 sm:text-[18px]"
             >
-              <path
-                d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
-                fill="white"
-              />
-            </svg>
-          </SelectCoin>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[260px] max-w-[90vw] border-0 bg-transparent p-0"
-          align="start"
-          side="bottom"
-          sideOffset={4}
-        >
-          <Command>
-            <CommandInput value={searchValue} onValueChange={setSearchValue} />
-            <CommandList ref={listRef} className="max-h-[280px]">
-              <CommandEmpty>{loadingPairs ? 'Loading coins...' : 'Coin not found'}</CommandEmpty>
-              <CommandGroup>
-                {coins.map((coin) => (
-                  <CommandItem
-                    key={coin.value}
-                    value={coin.value}
-                    onSelect={() => {
-                      setSelectedCoin({
-                        value: coin.value,
-                        label: coin.label,
-                        icon: coin.icon,
-                        popoverIcon: coin.popoverIcon,
-                      });
-                      setSearchValue('');
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      'mx-[4px] flex h-[40px] w-full items-center justify-between rounded-[8px] px-2',
-                      selectedCoin.value === coin.value && 'bg-[#323338]'
-                    )}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {coin.popoverIcon}
-                      <span className="truncate">{coin.label}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      <div className="h-6 w-px flex-shrink-0 bg-[#2B2C33] sm:h-8" />
-      <div className="flex-shrink-0 text-[16px] font-semibold text-[#00D4AA] sm:text-[20px]">
-        --
+              <div className="flex min-w-0 items-center gap-2">
+                {selectedCoinData.icon}
+                <span className="truncate">{selectedCoinData.label}</span>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="10"
+                height="8"
+                viewBox="0 0 10 8"
+                fill="none"
+              >
+                <path
+                  d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
+                  fill="white"
+                />
+              </svg>
+            </SelectCoin>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[260px] max-w-[90vw] border-0 bg-transparent p-0"
+            align="start"
+            side="bottom"
+            sideOffset={4}
+          >
+            <Command>
+              <CommandInput value={searchValue} onValueChange={setSearchValue} />
+              <CommandList ref={listRef} className="max-h-[280px]">
+                <CommandEmpty>{loadingPairs ? 'Loading coins...' : 'Coin not found'}</CommandEmpty>
+                <CommandGroup>
+                  {coins.map((coin) => (
+                    <CommandItem
+                      key={coin.value}
+                      value={coin.value}
+                      onSelect={() => {
+                        setSelectedCoin({
+                          value: coin.value,
+                          label: coin.label,
+                          icon: coin.icon,
+                          popoverIcon: coin.popoverIcon,
+                        });
+                        setSearchValue('');
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'mx-[4px] flex h-[40px] w-full items-center justify-between rounded-[8px] px-2',
+                        selectedCoin.value === coin.value && 'bg-[#323338]'
+                      )}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {coin.popoverIcon}
+                        <span className="truncate">{coin.label}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="mx-3 h-6 w-px flex-shrink-0 bg-[#2B2C33] sm:mx-4 sm:h-8" />
+      <div className="flex flex-1 items-center justify-end">
+        <span className="max-w-full truncate text-right text-[16px] font-semibold text-[#00D4AA] sm:text-[20px]">{displayPrice}</span>
       </div>
     </div>
   );
