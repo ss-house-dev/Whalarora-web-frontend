@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import OrderBookLiveContainer from '@/features/open-order/containers/OrderBookLiveContainer';
 import OrderBookWidget from '@/features/open-order/components/OrderBookWidget';
-import OpenOrderandTradeHistoryResponsive from '@/features/open-order/components/OrdersResponsive';
+import OrderTableContainer from '@/features/open-order/components/OrderTableContainer';
 import { CoinProvider, useCoinContext } from '@/features/trading/contexts/CoinContext';
 import {
   HoldingResponsive,
@@ -298,12 +298,13 @@ const ORDER_BOOK_SCENARIOS = [
 
 function OrderBookTestContent() {
   const { selectedCoin } = useCoinContext();
+  const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-start gap-12 bg-[#0F0F0F] py-10">
       <section className="flex w-full justify-center px-4">
         <div className="w-full max-w-6xl">
-          <OpenOrderandTradeHistoryResponsive />
+          <OrderTableContainer activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </section>
       <section className="flex w-full justify-center px-4">
