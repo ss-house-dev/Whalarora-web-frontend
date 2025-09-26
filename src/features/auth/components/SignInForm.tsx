@@ -47,28 +47,30 @@ export const SignInForm: React.FC<SignInFormProps> = ({
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-6 md:px-0 md:py-0">
-      <div className="w-full max-w-[384px] rounded-xl bg-[#16171D] px-6 py-6 text-white outline outline-1 outline-[#474747] md:h-[640px] md:w-[464px] md:max-w-none md:bg-[#081125] md:px-8 md:py-5 md:outline-none">
-        <div className="flex h-full flex-col">
-          <div className="space-y-6">
-            {/* Back Button */}
-            <div>
+      <div className="w-full max-w-[384px] rounded-[12px] border border-[#474747] bg-[#16171D] px-6 py-6 text-white shadow-[0_24px_56px_rgba(2,6,23,0.35)] md:max-w-[464px] md:px-8 md:py-8">
+        <div className="flex flex-col space-y-6 md:space-y-8">
+          <div className="space-y-6 md:space-y-8">
+            <button
+              type="button"
+              onClick={onGoBack}
+              aria-label="Go back"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#A4A4A4] transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#225FED]"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="12"
                 height="20"
                 viewBox="0 0 12 20"
                 fill="none"
-                className="h-5 w-3 cursor-pointer text-white transition-opacity hover:opacity-80"
-                onClick={onGoBack}
+                className="h-5 w-3"
               >
                 <path
                   d="M4.36308 9.99921L10.9292 16.6862C11.5238 17.2917 11.5239 18.2619 10.9296 18.8677C10.3193 19.4896 9.31748 19.4897 8.70706 18.868L0 9.99921L8.7078 1.13111C9.3179 0.509782 10.319 0.509781 10.9291 1.13111C11.5237 1.73662 11.5237 2.70678 10.9291 3.31228L4.36308 9.99921Z"
-                  fill="white"
+                  fill="currentColor"
                 />
               </svg>
-            </div>
+            </button>
 
-            {/* Logo and Heading */}
             <div className="flex flex-col items-center space-y-4 md:space-y-6">
               <Image
                 src="/assets/whalarora-logo.svg"
@@ -77,13 +79,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 height={105}
                 className="h-[84px] w-[84px] rounded-full object-cover md:h-[105px] md:w-[105px]"
               />
-              <p className="text-3xl font-semibold leading-10 text-white md:bg-clip-text md:text-[32px] md:font-bold md:text-transparent md:leading-10 md:bg-gradient-to-b md:from-[#1F4293] md:to-[#43E9DD]">
+              <p className="text-[28px] font-bold leading-[40px] text-white md:text-[32px] md:leading-[40px]">
                 Log in an account
               </p>
             </div>
 
-            <div className="flex flex-col items-center space-y-5 md:space-y-4">
-              {/* Username */}
+            <div className="flex flex-col items-center space-y-5 md:space-y-6">
               <div className="w-full">
                 <FormInputIcon
                   label="Username"
@@ -104,7 +105,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 />
               </div>
 
-              {/* Password */}
               <div className="w-full">
                 <FormInputIcon
                   label="Password"
@@ -119,7 +119,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                       type="button"
                       onClick={onTogglePasswordVisibility}
                       disabled={isLoading}
-                      className="focus:outline-none disabled:opacity-50"
+                      className="p-1 focus:outline-none disabled:opacity-50"
                     >
                       {showPassword ? (
                         <Eye className="h-6 w-6 cursor-pointer text-gray-400" />
@@ -131,9 +131,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 />
               </div>
 
-              {/* Remember Me & Forgot password */}
-              <div className="flex w-full items-center justify-between gap-3">
-                <div className="flex items-center space-x-2">
+              <div className="flex w-full items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id="remember-me"
                     checked={formData.rememberMe}
@@ -143,7 +142,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   />
                   <Label
                     htmlFor="remember-me"
-                    className={`cursor-pointer text-xs font-normal leading-none text-white md:text-base md:leading-tight md:font-medium ${
+                    className={`cursor-pointer text-sm font-medium leading-none text-white ${
                       isLoading ? 'opacity-50' : ''
                     }`}
                   >
@@ -152,20 +151,19 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 </div>
                 <button
                   type="button"
-                  className={`text-sm font-medium text-[#7C7C7E] transition-opacity hover:opacity-80 md:text-[14px] md:text-white md:underline md:underline-offset-2 ${
+                  className={`text-sm font-medium text-[#B0B0B0] transition-colors hover:text-white ${
                     isLoading ? 'pointer-events-none opacity-50' : ''
                   }`}
                   onClick={onForgotPassword}
                 >
-                  Forgot password ?
+                  Forgot password?
                 </button>
               </div>
             </div>
 
-            {/* Error Message */}
             <div className="flex w-full justify-center">
               {error && (
-                <div className="flex w-full max-w-[320px] items-center rounded-[12px] border border-[#D84C4C] px-3 py-3 md:max-w-none md:w-[400px]">
+                <div className="flex w-full max-w-[320px] items-center rounded-[12px] border border-[#D84C4C] px-3 py-3 md:max-w-[400px]">
                   <div className="mr-2 flex-shrink-0">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -181,35 +179,16 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-[12px] text-[#D84C4C]">{error}</p>
+                    <p className="text-xs text-[#D84C4C]">{error}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Button Login */}
             <div className="flex justify-center">
-              {/* Mobile (< md): พื้นสี #225FED */}
               <Button
                 variant="default"
-                className="md:hidden h-12 w-full cursor-pointer text-base disabled:cursor-not-allowed disabled:opacity-50 bg-[#225FED] hover:bg-[#1e4fda]"
-                onClick={onSignIn}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Log in'
-                )}
-              </Button>
-
-              {/* Desktop (≥ md): gradient2 */}
-              <Button
-                variant="gradient2"
-                className="hidden md:inline-flex md:h-[48px] md:w-[400px] md:text-[18px] h-12 w-full cursor-pointer text-base disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-12 w-full max-w-[320px] cursor-pointer text-base bg-[#225FED] hover:bg-[#1e4fda] disabled:cursor-not-allowed disabled:opacity-50 md:h-[48px] md:max-w-[400px] md:text-[18px]"
                 onClick={onSignIn}
                 disabled={isLoading}
               >
@@ -225,11 +204,11 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-center text-xs text-white md:mt-4 md:text-[12px]">
-            <p className="mr-2">Don&apos;t have an account ?</p>
+          <div className="flex items-center justify-center text-sm text-[#B0B0B0] md:text-[14px]">
+            <p className="mr-2">Don&apos;t have an account?</p>
             <button
               type="button"
-              className={`text-base text-[#3A8AF7] transition-opacity hover:opacity-80 md:text-[16px] ${
+              className={`text-base text-[#3A8AF7] transition-opacity hover:opacity-80 md:text-[16px] cursor-pointer ${
                 isLoading ? 'pointer-events-none opacity-50' : ''
               }`}
               onClick={onSignUp}
