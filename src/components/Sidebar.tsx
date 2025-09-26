@@ -10,12 +10,13 @@ export default function Sidebar() {
   const { data: session } = useSession();
 
   const getInitialTab = useCallback(() => {
+    if (pathname.includes('/main/trading')) return 'trade';
     if (pathname.includes('/main/my-assets')) return 'assets';
     if (pathname.includes('/main/my-wallet')) return 'wallet';
-    return 'trade';
+    return null;
   }, [pathname]);
 
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState<string | null>(() => getInitialTab());
 
   useEffect(() => {
     setActiveTab(getInitialTab());
@@ -155,7 +156,8 @@ export default function Sidebar() {
     router.push(route);
   };
 
-  const isTrade = pathname.includes('/trading');
+  const isTradeActive = activeTab === 'trade';
+  const isAssetsActive = activeTab === 'assets';
 
   return (
     <>
@@ -226,7 +228,7 @@ export default function Sidebar() {
             <nav className="ps-4 py-5 space-y-6 text-white/90">
               <button
                 className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                  isTrade
+                  isTradeActive
                     ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
                     : 'hover:bg-white/5'
                 }`}
@@ -235,13 +237,13 @@ export default function Sidebar() {
                   setMobileGuestMenuOpen(false);
                 }}
               >
-                <TradeIcon className={`w-5 h-5 ${isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <TradeIcon className={`w-5 h-5 ${isTradeActive ? 'text-[#225FED]' : 'text-white'}`} />
                 <span className="text-[15px]">Trade</span>
               </button>
 
               <button
                 className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                  !isTrade
+                  isAssetsActive
                     ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
                     : 'hover:bg-white/5'
                 }`}
@@ -250,7 +252,7 @@ export default function Sidebar() {
                   setMobileGuestMenuOpen(false);
                 }}
               >
-                <AssetsIcon className={`w-5 h-5 ${!isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <AssetsIcon className={`w-5 h-5 ${isAssetsActive ? 'text-[#225FED]' : 'text-white'}`} />
                 <span className="text-[15px]">My assets</span>
               </button>
             </nav>
@@ -282,7 +284,7 @@ export default function Sidebar() {
               {/* เมนู Trade */}
               <button
                 className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                  isTrade
+                  isTradeActive
                     ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
                     : 'hover:bg-white/5'
                 }`}
@@ -291,14 +293,14 @@ export default function Sidebar() {
                   setMobileAuthMenuOpen(false);
                 }}
               >
-                <TradeIcon className={`w-5 h-5 ${isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <TradeIcon className={`w-5 h-5 ${isTradeActive ? 'text-[#225FED]' : 'text-white'}`} />
                 <span className="text-[15px]">Trade</span>
               </button>
 
               {/* เมนู My Assets */}
               <button
                 className={`w-full h-10 px-3 rounded-l-md flex items-center gap-3 ${
-                  !isTrade
+                  isAssetsActive
                     ? 'bg-[#0000001F] border-r-4 border-[#225FED] text-[#225FED]'
                     : 'hover:bg-white/5'
                 }`}
@@ -307,7 +309,7 @@ export default function Sidebar() {
                   setMobileAuthMenuOpen(false);
                 }}
               >
-                <AssetsIcon className={`w-5 h-5 ${!isTrade ? 'text-[#225FED]' : 'text-white'}`} />
+                <AssetsIcon className={`w-5 h-5 ${isAssetsActive ? 'text-[#225FED]' : 'text-white'}`} />
                 <span className="text-[15px]">My assets</span>
               </button>
             </div>
@@ -317,3 +319,4 @@ export default function Sidebar() {
     </>
   );
 }
+
