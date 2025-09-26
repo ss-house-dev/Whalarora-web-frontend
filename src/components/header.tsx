@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -9,18 +9,9 @@ import Sidebar from '@/components/Sidebar';
 export default function Header() {
   const router = useRouter();
   const { data: session } = useSession();
-  const userInitial = useMemo(() => {
-    const name = session?.user?.name;
-    if (name) {
-      const trimmed = name.trim();
-      if (trimmed.length > 0) return trimmed[0]?.toUpperCase() ?? 'N';
-    }
-    const email = session?.user?.email;
-    if (email) return email.trim()[0]?.toUpperCase() ?? 'N';
-    return 'N';
-  }, [session]);
 
-  const handleGetStartClick = () => (session ? router.push('/main/trading') : router.push('/auth/sign-in'));
+  const handleGetStartClick = () =>
+    session ? router.push('/main/trading') : router.push('/auth/sign-in');
   const handleLogoClick = () => router.push('/');
   const handleSignUpClick = () => router.push('/auth/sign-up');
   const handleMobileMenuToggle = () => {
@@ -136,4 +127,3 @@ export default function Header() {
     </>
   );
 }
-

@@ -10,6 +10,7 @@ export default function Sidebar() {
   const { data: session } = useSession();
 
   const getInitialTab = useCallback(() => {
+    if (!pathname) return null;
     if (pathname.includes('/main/trading')) return 'trade';
     if (pathname.includes('/main/my-assets')) return 'assets';
     if (pathname.includes('/main/my-wallet')) return 'wallet';

@@ -13,7 +13,8 @@ export default function Welcome() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Get username from session or URL params
-  const username = session?.user?.name || searchParams.get('username') || 'User';
+  const usernameParam = searchParams?.get('username');
+  const username = session?.user?.name || usernameParam || 'User';
 
   const handleGoBack = () => {
     // ใช้ browser history API แทน Next.js router
