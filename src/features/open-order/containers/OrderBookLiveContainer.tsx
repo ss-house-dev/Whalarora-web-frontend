@@ -88,13 +88,32 @@ export default function OrderBookLiveContainer({
   className,
   showMetaInfo = true,
 }: OrderBookLiveContainerProps) {
-  const { selectedCoin } = useCoinContext();
+  const { selectedCoin, applyOrderBookSelection, marketPrice } = useCoinContext();
   const { base, quote } = React.useMemo(
     () => parseSymbols(selectedCoin?.label),
     [selectedCoin?.label]
   );
 
   const { data, status, error, activeSymbol } = useOrderBookStream(base);
+
+  const bidPrice = data?.bid?.price;
+  const askPrice = data?.ask?.price;
+
+  const sanitizedMarketPrice = React.useMemo(() => {
+    if (!marketPrice) return null;
+    const numeric = Number(String(marketPrice).replace(/[^0-9.]/g, ''));
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+  }, [marketPrice]);
+
+  const handleBidClick = React.useCallback(() => {
+    if (status !== 'connected') return;
+    applyOrderBookSelection({ side: 'sell', price: bidPrice, fallbackPrice: sanitizedMarketPrice });
+  }, [applyOrderBookSelection, bidPrice, sanitizedMarketPrice, status]);
+
+  const handleAskClick = React.useCallback(() => {
+    if (status !== 'connected') return;
+    applyOrderBookSelection({ side: 'buy', price: askPrice, fallbackPrice: sanitizedMarketPrice });
+  }, [applyOrderBookSelection, askPrice, sanitizedMarketPrice, status]);
 
   const bid = React.useMemo(
     () => toSideContent('bid', data?.bid, base, quote),
@@ -112,11 +131,21 @@ export default function OrderBookLiveContainer({
     return new Date(tsNumber).toLocaleTimeString('th-TH', { hour12: false });
   }, [data?.ts]);
 
-  const containerClass = clsx('flex flex-col gap-3', showMetaInfo ? 'items-center' : undefined, className);
+  const containerClass = clsx(
+    'flex w-full flex-col gap-3',
+    showMetaInfo ? 'items-center' : undefined,
+    className
+  );
 
   return (
     <div className={containerClass}>
-      <OrderBookWidget bid={bid} ask={ask} disabled={status !== 'connected'} />
+      <OrderBookWidget
+        bid={bid}
+        ask={ask}
+        disabled={status !== 'connected'}
+        onBidClick={handleBidClick}
+        onAskClick={handleAskClick}
+      />
       {showMetaInfo ? (
         <div className="flex flex-col items-center gap-1 text-xs text-[#A4A4A4]">
           <div className="flex items-center gap-2">

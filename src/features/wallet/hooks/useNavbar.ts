@@ -7,8 +7,10 @@ export const useNavbar = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileBalanceMenuRef = useRef<HTMLDivElement>(null);
+  const desktopBalanceMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
+  const desktopUserMenuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
 
   const addCashMutation = useAddCashToTrade({
@@ -23,10 +25,21 @@ export const useNavbar = () => {
   // Handle click outside and escape key
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+
+      const clickedInsideBalanceMenu =
+        (mobileBalanceMenuRef.current && mobileBalanceMenuRef.current.contains(target)) ||
+        (desktopBalanceMenuRef.current && desktopBalanceMenuRef.current.contains(target));
+
+      if (!clickedInsideBalanceMenu) {
         setOpen(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+
+      const clickedInsideUserMenu =
+        (mobileUserMenuRef.current && mobileUserMenuRef.current.contains(target)) ||
+        (desktopUserMenuRef.current && desktopUserMenuRef.current.contains(target));
+
+      if (!clickedInsideUserMenu) {
         setUserMenuOpen(false);
       }
     };
@@ -67,11 +80,34 @@ export const useNavbar = () => {
     router.push('/auth/sign-in');
   };
 
+  const handleSignUpClick = () => {
+    router.push('/auth/sign-up');
+  };
+
+  const closeDrawers = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.dispatchEvent(new Event('auth-drawer:close'));
+    window.dispatchEvent(new Event('guest-drawer:close'));
+  };
+
+  useEffect(() => {
+    if (open) {
+      closeDrawers();
+    }
+  }, [open]);
+
   const toggleBalanceMenu = () => {
-    setOpen((v) => !v);
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const closeBalanceMenu = () => {
+    setOpen(false);
   };
 
   const toggleUserMenu = () => {
+    closeDrawers();
     setUserMenuOpen((v) => !v);
   };
 
@@ -79,13 +115,17 @@ export const useNavbar = () => {
     open,
     userMenuOpen,
     session,
-    menuRef,
-    userMenuRef,
+    mobileBalanceMenuRef,
+    desktopBalanceMenuRef,
+    mobileUserMenuRef,
+    desktopUserMenuRef,
     handleSignOut,
     handleAddCash,
     handleLogoClick,
     handleSignInClick,
+    handleSignUpClick,
     toggleBalanceMenu,
+    closeBalanceMenu,
     toggleUserMenu,
     isAddingCash: addCashMutation.isPending,
   };
