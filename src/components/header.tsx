@@ -68,13 +68,13 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <button
                 onClick={handleGetStartClick}
-                className="flex h-9 items-center justify-center rounded-lg border-2 border-[#A4A4A4] px-4 text-lg font-normal leading-7 text-[#E9E9E9] transition hover:bg-white/10"
+                className="flex h-9 items-center justify-center rounded-lg border-2 border-[#A4A4A4] px-4 text-lg font-normal leading-7 text-[#E9E9E9] transition hover:bg-white/10 cursor-pointer"
               >
                 Log in
               </button>
               <button
                 onClick={handleSignUpClick}
-                className="flex h-9 items-center justify-center rounded-lg bg-[#225FED] px-6 text-lg font-normal leading-7 text-white transition hover:bg-[#1B4FCC]"
+                className="flex h-9 items-center justify-center rounded-lg bg-[#225FED] px-6 text-lg font-normal leading-7 text-white transition hover:bg-[#1B4FCC] cursor-pointer"
               >
                 Sign up
               </button>
