@@ -9,7 +9,6 @@ import Sidebar from '@/components/Sidebar';
 export default function Header() {
   const router = useRouter();
   const { data: session } = useSession();
-
   const userInitial = useMemo(() => {
     const name = session?.user?.name;
     if (name) {
@@ -27,10 +26,6 @@ export default function Header() {
   const handleMobileMenuToggle = () => {
     const eventName = session ? 'auth-drawer:toggle' : 'guest-drawer:toggle';
     window.dispatchEvent(new Event(eventName));
-  };
-  const handleMobileProfileClick = () => {
-    if (session) return router.push('/main/trading');
-    handleSignUpClick();
   };
 
   useEffect(() => {

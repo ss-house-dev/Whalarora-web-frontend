@@ -28,7 +28,6 @@ export default function HoldingAssetsSection({
   rows,
   pageSize = 10,
   isLoading = false,
-  loadingMessage,
   error,
 }: HoldingAssetsSectionProps) {
   const [page, setPage] = useState(1);
