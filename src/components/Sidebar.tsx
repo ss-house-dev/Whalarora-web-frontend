@@ -191,7 +191,7 @@ export default function Sidebar() {
         <>
           {mobileGuestMenuOpen && (
             <div
-              className="fixed left-0 right-0 top-14 bottom-0 z-[60] bg-black/40 opacity-100 pointer-events-auto transition-opacity duration-300 md:hidden"
+              className="fixed left-0 right-0 top-14 bottom-0 z-[60] opacity-100 pointer-events-auto transition-opacity duration-300 md:hidden"
               onClick={() => setMobileGuestMenuOpen(false)}
               aria-hidden="true"
             />
