@@ -161,7 +161,7 @@ const binanceCoins = [
 ];
 
 export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
-  const { selectedCoin, setSelectedCoin, marketPrice, isPriceLoading } = useCoinContext();
+  const { selectedCoin, setSelectedCoin } = useCoinContext();
   const [open, setOpen] = React.useState(false);
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
   const [loadingPairs, setLoadingPairs] = React.useState<boolean>(true);
@@ -245,90 +245,133 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const selectedCoinData =
     allCoins.find((coin) => coin.value === selectedCoin.value) || selectedCoin;
 
-  const displayPrice = React.useMemo(() => {
-    if (isPriceLoading) return '--';
-    return marketPrice && marketPrice.trim().length > 0 ? marketPrice : '--';
-  }, [isPriceLoading, marketPrice]);
-
   return (
     <div
       className={cn(
-        'flex h-[56px] w-full items-center rounded-[12px] bg-[#16171D] px-3 sm:h-[60px] sm:px-4',
+        'bg-[#16171D] h-[60px] w-full max-w-[900px] flex items-center rounded-[12px]',
         className
       )}
     >
-      <div className="flex flex-1 min-w-0 items-center">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <SelectCoin
-              role="combobox"
-              aria-expanded={open}
-              variant="ghost"
-              className="flex w-full min-w-0 items-center justify-between gap-2 rounded-[12px] border-0 bg-transparent px-0 text-[16px] font-semibold text-white hover:bg-transparent focus-visible:ring-0 sm:text-[18px]"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                {selectedCoinData.icon}
-                <span className="truncate">{selectedCoinData.label}</span>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="10"
-                height="8"
-                viewBox="0 0 10 8"
-                fill="none"
-              >
-                <path
-                  d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
-                  fill="white"
-                />
-              </svg>
-            </SelectCoin>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[260px] max-w-[90vw] border-0 bg-transparent p-0"
-            align="start"
-            side="bottom"
-            sideOffset={4}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <SelectCoin
+            role="combobox"
+            aria-expanded={open}
+            className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] sm:text-[16px] md:text-[18px] font-[500] bg-transparent cursor-pointer border-0 min-w-fit flex-1 sm:flex-initial"
           >
-            <Command>
-              <CommandInput value={searchValue} onValueChange={setSearchValue} />
-              <CommandList ref={listRef} className="max-h-[280px]">
-                <CommandEmpty>{loadingPairs ? 'Loading coins...' : 'Coin not found'}</CommandEmpty>
-                <CommandGroup>
-                  {coins.map((coin) => (
-                    <CommandItem
-                      key={coin.value}
-                      value={coin.value}
-                      onSelect={() => {
-                        setSelectedCoin({
-                          value: coin.value,
-                          label: coin.label,
-                          icon: coin.icon,
-                          popoverIcon: coin.popoverIcon,
-                        });
-                        setSearchValue('');
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        'mx-[4px] flex h-[40px] w-full items-center justify-between rounded-[8px] px-2',
-                        selectedCoin.value === coin.value && 'bg-[#323338]'
-                      )}
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        {coin.popoverIcon}
-                        <span className="truncate">{coin.label}</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <div className="mx-3 h-6 w-px flex-shrink-0 bg-[#2B2C33] sm:mx-4 sm:h-8" />
-      <div className="flex flex-1 items-center justify-end">
-        <span className="max-w-full truncate text-right text-[16px] font-semibold text-[#00D4AA] sm:text-[20px]">{displayPrice}</span>
+            <div className="flex items-center gap-2">
+              <div className="w-[28px] h-[28px] sm:w-[24px] sm:h-[24px] md:w-[28px] md:h-[28px]">
+                {selectedCoinData.icon}
+              </div>
+              <span className="whitespace-nowrap">{selectedCoinData.label}</span>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="8"
+              viewBox="0 0 10 8"
+              fill="none"
+              className="ml-2 flex-shrink-0"
+            >
+              <path
+                d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
+                fill="white"
+              />
+            </svg>
+          </SelectCoin>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[174px] p-0 border-0 bg-transparent"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+        >
+          <Command>
+            <CommandInput value={searchValue} onValueChange={setSearchValue} />
+            <CommandList ref={listRef} className="max-h-[280px]">
+              <CommandEmpty>{loadingPairs ? 'Loading coins…' : 'Coin not found'}</CommandEmpty>
+              <CommandGroup>
+                {coins.map((coin) => (
+                  <CommandItem
+                    key={coin.value}
+                    value={coin.value}
+                    onSelect={() => {
+                      setSelectedCoin({
+                        value: coin.value,
+                        label: coin.label,
+                        icon: coin.icon,
+                        popoverIcon: coin.popoverIcon,
+                      });
+                      setSearchValue('');
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      'flex items-center justify-between rounded-[8px] w-[180px] h-[40px] mx-[4px]',
+                      selectedCoin.value === coin.value && 'bg-[#323338]'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      {coin.popoverIcon}
+                      <span>{coin.label}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {/* Divider - แสดงเสมอ */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="3"
+        height="36"
+        viewBox="0 0 3 36"
+        fill="none"
+        className="flex-shrink-0"
+      >
+        <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+
+      {/* Data section - Responsive visibility */}
+      <div className="flex items-center px-2 sm:px-3 flex-1 min-w-0 gap-2 sm:gap-2 md:gap-3 lg:gap-4 sm:justify-start justify-end">
+        {/* Last Price - แสดงเสมอ และชิดขวาเมื่อจอเล็ก */}
+        <div className="text-[#00D4AA] font-[400] text-[16px] sm:text-[18px] md:text-[20px] whitespace-nowrap flex-shrink-0">
+          --
+        </div>
+
+        {/* 24h High - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h High</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
+        </div>
+
+        {/* 24h Low - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h Low</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
+        </div>
+
+        {/* 24h Volume (BTC) - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
+            24h Vol (BTC)
+          </span>
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            --
+          </span>
+        </div>
+
+        {/* 24h Volume (USDT) - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
+            24h Vol (USDT)
+          </span>
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            --
+          </span>
+        </div>
       </div>
     </div>
   );
