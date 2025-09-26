@@ -1,6 +1,32 @@
 import axiosInstance from '@/lib/axios';
 import { GetOpenOrdersRequest, GetOpenOrdersResponse } from '../types';
 
+function buildEmptyResponse(params: GetOpenOrdersRequest = {}): GetOpenOrdersResponse {
+  return {
+    page: params.page ?? 1,
+    limit: params.limit ?? 10,
+    total: 0,
+    totalPages: 1,
+    formattedOrders: [],
+  };
+}
+
+function extractStatus(error: unknown): number | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { status?: number } }).response;
+    return response?.status;
+  }
+  return undefined;
+}
+
+function extractMessage(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    return response?.data?.message;
+  }
+  return undefined;
+}
+
 const getOpenOrders = async (params: GetOpenOrdersRequest = {}): Promise<GetOpenOrdersResponse> => {
   try {
     const { data } = await axiosInstance.get('/trade/open', {
@@ -12,37 +38,22 @@ const getOpenOrders = async (params: GetOpenOrdersRequest = {}): Promise<GetOpen
 
     return data;
   } catch (error: unknown) {
-    console.error('Get open orders error:', error);
+    const status = extractStatus(error);
 
-    // Type guard เพื่อตรวจสอบ error structure
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as {
-        response?: {
-          status?: number;
-          data?: {
-            message?: string;
-          };
-        };
-      };
-
-      if (axiosError.response?.status === 401) {
-        throw new Error('Please log in again');
-      }
-
-      if (axiosError.response?.status === 403) {
-        throw new Error('Access denied. Insufficient permissions');
-      }
-
-      if (axiosError.response?.status === 404) {
-        throw new Error('Orders not found');
-      }
-
-      const errorMessage =
-        axiosError.response?.data?.message || 'An error occurred while fetching open orders.';
-      throw new Error(errorMessage);
+    // For unauthenticated or forbidden users we gracefully return an empty list
+    if (status === 401 || status === 403) {
+      return buildEmptyResponse(params);
     }
 
-    // กรณี error ที่ไม่ใช่ axios error
+    if (status === 404) {
+      return buildEmptyResponse(params);
+    }
+
+    const message = extractMessage(error);
+    if (message) {
+      throw new Error(message);
+    }
+
     throw new Error('An unexpected error occurred while fetching open orders.');
   }
 };

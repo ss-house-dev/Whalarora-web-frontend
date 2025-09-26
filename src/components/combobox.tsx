@@ -247,18 +247,23 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
 
   return (
     <div
-      className={`bg-[#16171D] h-[60px] w-[900px] flex items-center rounded-[12px] ${className}`}
+      className={cn(
+        'bg-[#16171D] h-[60px] w-full max-w-[900px] flex items-center rounded-[12px]',
+        className
+      )}
     >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <SelectCoin
             role="combobox"
             aria-expanded={open}
-            className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] font-[500] bg-transparent cursor-pointer border-0"
+            className="h-[60px] py-[12px] px-[12px] justify-between text-[18px] sm:text-[16px] md:text-[18px] font-[500] bg-transparent cursor-pointer border-0 min-w-fit flex-1 sm:flex-initial"
           >
             <div className="flex items-center gap-2">
-              {selectedCoinData.icon}
-              <span>{selectedCoinData.label}</span>
+              <div className="w-[28px] h-[28px] sm:w-[24px] sm:h-[24px] md:w-[28px] md:h-[28px]">
+                {selectedCoinData.icon}
+              </div>
+              <span className="whitespace-nowrap">{selectedCoinData.label}</span>
             </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -266,6 +271,7 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
               height="8"
               viewBox="0 0 10 8"
               fill="none"
+              className="ml-2 flex-shrink-0"
             >
               <path
                 d="M5.00002 7.23207L0.150879 2.38407L1.76802 0.768066L5.00002 4.00007L8.23202 0.768066L9.84916 2.38407L5.00002 7.23207Z"
@@ -316,27 +322,55 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         </PopoverContent>
       </Popover>
 
-      <svg xmlns="http://www.w3.org/2000/svg" width="3" height="36" viewBox="0 0 3 36" fill="none">
+      {/* Divider - แสดงเสมอ */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="3"
+        height="36"
+        viewBox="0 0 3 36"
+        fill="none"
+        className="flex-shrink-0"
+      >
         <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      <div className="flex items-center px-4 flex-1">
-        <div className="text-[#00D4AA] font-[400] text-[20px] mr-6">--</div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h High</span>
-          <span className="text-white text-sm font-medium">--</span>
+      {/* Data section - Responsive visibility */}
+      <div className="flex items-center px-2 sm:px-3 flex-1 min-w-0 gap-2 sm:gap-2 md:gap-3 lg:gap-4 sm:justify-start justify-end">
+        {/* Last Price - แสดงเสมอ และชิดขวาเมื่อจอเล็ก */}
+        <div className="text-[#00D4AA] font-[400] text-[16px] sm:text-[18px] md:text-[20px] whitespace-nowrap flex-shrink-0">
+          --
         </div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h Low</span>
-          <span className="text-white text-sm font-medium">--</span>
+
+        {/* 24h High - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h High</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
         </div>
-        <div className="flex flex-col items-start mr-6">
-          <span className="text-[#8B8E93] text-xs">24h Volume (BTC)</span>
-          <span className="text-white text-sm font-medium">--</span>
+
+        {/* 24h Low - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h Low</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
         </div>
-        <div className="flex flex-col items-start">
-          <span className="text-[#8B8E93] text-xs">24h Volume (USDT)</span>
-          <span className="text-white text-sm font-medium">--</span>
+
+        {/* 24h Volume (BTC) - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
+            24h Vol (BTC)
+          </span>
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            --
+          </span>
+        </div>
+
+        {/* 24h Volume (USDT) - แสดงตั้งแต่ sm ขึ้นไป */}
+        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
+            24h Vol (USDT)
+          </span>
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
+            --
+          </span>
         </div>
       </div>
     </div>

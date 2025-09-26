@@ -12,7 +12,7 @@ interface FormItemInputProps {
   disabled?: boolean;
   placeholder?: string;
   hasError?: boolean;
-  errorMessage?: string; // เพิ่ม prop นี้เพื่อรองรับ custom error message
+  errorMessage?: string; // expose custom error message support
 }
 
 const FormItemInput = ({
@@ -25,19 +25,19 @@ const FormItemInput = ({
   onKeyPress,
   disabled = false,
   hasError = false,
-  errorMessage, // รับ custom error message
+  errorMessage, // allow overriding the default error copy
 }: FormItemInputProps) => {
   const isEmpty = value.trim() === ''; // Check if the input is empty
 
-  // กำหนด error message ที่จะแสดง
+  // decide which error message to surface
   const displayErrorMessage = errorMessage || (isEmpty && hasError ? 'Required.' : '');
 
   return (
-    <div className="relative">
-      <div className="flex justify-between items-center mb-[2px]">
-        <span className="text-white text-[16px]">{label}</span>
+    <div className="relative w-full">
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-sm font-medium leading-tight text-white md:text-[16px]">{label}</span>
         {displayErrorMessage && (
-          <span className="text-[#D84C4C] text-[12px]">{displayErrorMessage}</span>
+          <span className="text-[12px] text-[#D84C4C]">{displayErrorMessage}</span>
         )}
       </div>
       <div className="relative">
@@ -47,16 +47,16 @@ const FormItemInput = ({
           onChange={onChange}
           onKeyPress={onKeyPress}
           disabled={disabled}
-          className={`rounded-[8px] w-[400px] h-[44px] bg-[#1F2029] p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-            hasError ? 'border-[#D84C4C]' : 'focus:border-[#225FED]'
-          } focus:outline-none ${
+          className={`h-12 w-full rounded-[12px] border border-transparent bg-[#1F2029] p-3 text-white placeholder:text-[#787878] transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none md:h-[44px] md:w-[400px] md:rounded-[8px] ${
+            hasError ? 'border-[#D84C4C] focus:border-[#D84C4C]' : 'focus:border-[#225FED]'
+          } ${
             type === 'password'
               ? '[&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-password-toggle]:hidden [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden'
               : ''
           }`}
         />
         {suffixIcon && (
-          <div className="absolute right-3 top-0 h-full flex items-center">{suffixIcon}</div>
+          <div className="absolute right-3 top-0 flex h-full items-center">{suffixIcon}</div>
         )}
       </div>
       {options}
