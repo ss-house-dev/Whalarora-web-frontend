@@ -3,8 +3,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const DEFAULT_WS_URL = 'http://141.11.156.52:3002/orderbook';
-const WS_URL = process.env.NEXT_PUBLIC_ORDERBOOK_WS ?? DEFAULT_WS_URL;
+const SOCKET_NAMESPACE = '/orderbook';
+const SOCKET_PATH = '/socket.io/';
+
+const runtimeBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}${SOCKET_NAMESPACE}`;
+  }
+  return `https://whalarora.sshouse.dev${SOCKET_NAMESPACE}`;
+};
+
+const WS_URL =
+  process.env.NEXT_PUBLIC_ORDERBOOK_WS?.trim() &&
+  !process.env.NEXT_PUBLIC_ORDERBOOK_WS!.startsWith('http://')
+    ? process.env.NEXT_PUBLIC_ORDERBOOK_WS!.trim()
+    : process.env.NEXT_PUBLIC_ORDERBOOK_WS?.trim() || runtimeBaseUrl();
 
 export type OrderBookSide = {
   price?: number | string | null;
@@ -36,28 +49,34 @@ export function useOrderBookStream(symbol?: string | null): UseOrderBookStreamRe
   const socketRef = useRef<Socket | null>(null);
   const subscribedSymbolRef = useRef<string | null>(null);
 
+  // สร้าง socket instance ครั้งเดียว
   useEffect(() => {
-    const socket = io(WS_URL, { transports: ['websocket'], autoConnect: false });
+    const socket = io(WS_URL, {
+      path: SOCKET_PATH,
+      transports: ['websocket'],
+      autoConnect: false,
+      withCredentials: false,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    });
+
     socketRef.current = socket;
 
     const handleConnect = () => {
       setStatus('connected');
       setError(null);
     };
-
-    const handleDisconnect = () => {
-      setStatus('disconnected');
-    };
-
+    const handleDisconnect = () => setStatus('disconnected');
     const handleOrderBook = (payload: OrderBookMessage) => {
       setData(payload ?? null);
-      if (payload?.symbol) {
-        setActiveSymbol(String(payload.symbol).toUpperCase());
-      }
+      if (payload?.symbol) setActiveSymbol(String(payload.symbol).toUpperCase());
     };
-
     const handleError = (err: unknown) => {
-      const message = err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
+      const message =
+        err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
       setError(message);
       setStatus('disconnected');
     };
@@ -83,6 +102,7 @@ export function useOrderBookStream(symbol?: string | null): UseOrderBookStreamRe
     };
   }, []);
 
+  // จัดการ subscribe/unsubscribe ตาม symbol
   useEffect(() => {
     const socket = socketRef.current;
     if (!socket) return;
@@ -114,14 +134,14 @@ export function useOrderBookStream(symbol?: string | null): UseOrderBookStreamRe
       setStatus('connecting');
       setError(null);
       socket.connect();
-      const handleConnect = () => {
+      const onConnect = () => {
         subscribeCurrent();
-        socket.off('connect', handleConnect);
+        socket.off('connect', onConnect);
       };
-      socket.on('connect', handleConnect);
+      socket.on('connect', onConnect);
 
       return () => {
-        socket.off('connect', handleConnect);
+        socket.off('connect', onConnect);
         if (socket.connected && subscribedSymbolRef.current === nextSymbol) {
           socket.emit('unsubscribe', { symbol: nextSymbol });
           subscribedSymbolRef.current = null;
