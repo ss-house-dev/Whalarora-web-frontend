@@ -34,9 +34,15 @@ export default function MarketOrderPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[20px]">
         {/* Chart section with CombinedCombobox above */}
         <div className="w-full lg:flex-[1.6] lg:min-w-0">
-          <div className="space-y-4">
-            <CombinedCombobox className="w-full" />
-            <AdvancedChart />
+          <div className="flex flex-col space-y-4">
+            {/* ใช้ w-full และ flex-shrink-0 เพื่อให้แน่ใจว่าจะเท่ากับ chart */}
+            <div className="w-full flex-shrink-0">
+              <CombinedCombobox className="w-full min-w-full" />
+            </div>
+            {/* Chart container */}
+            <div className="w-full flex-shrink-0">
+              <AdvancedChart />
+            </div>
           </div>
         </div>
 
