@@ -6,6 +6,33 @@ import { io, Socket } from 'socket.io-client';
 const DEFAULT_WS_URL = 'http://141.11.156.52:3002/orderbook';
 const WS_URL = process.env.NEXT_PUBLIC_ORDERBOOK_WS ?? DEFAULT_WS_URL;
 
+function resolveSocketUrl(): string {
+  const fallback = WS_URL?.trim() ?? '';
+
+  if (typeof window === 'undefined') {
+    return fallback || DEFAULT_WS_URL;
+  }
+
+  const base = fallback.length > 0 ? fallback : `${window.location.origin}${new URL(DEFAULT_WS_URL).pathname}`;
+
+  try {
+    const url = new URL(base, window.location.origin);
+    const pageProtocol = window.location.protocol;
+
+    if (pageProtocol === 'https:' && (url.protocol === 'http:' || url.protocol === 'ws:')) {
+      url.protocol = url.protocol === 'ws:' ? 'wss:' : 'https:';
+    }
+
+    if (pageProtocol === 'http:' && url.protocol === 'wss:') {
+      url.protocol = 'ws:';
+    }
+
+    return url.toString();
+  } catch {
+    return base;
+  }
+}
+
 export type OrderBookSide = {
   price?: number | string | null;
   qty?: number | string | null;
@@ -37,7 +64,9 @@ export function useOrderBookStream(symbol?: string | null): UseOrderBookStreamRe
   const subscribedSymbolRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const socket = io(WS_URL, { transports: ['websocket'], autoConnect: false });
+    const resolvedUrl = resolveSocketUrl();
+
+    const socket = io(resolvedUrl, { transports: ['websocket'], autoConnect: false });
     socketRef.current = socket;
 
     const handleConnect = () => {
