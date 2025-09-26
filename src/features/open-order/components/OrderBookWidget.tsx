@@ -1,6 +1,5 @@
 // src/features/open-order/components/OrderBookWidget.tsx
 import React from 'react';
-import clsx from 'clsx';
 
 type Side = 'bid' | 'ask';
 
@@ -22,25 +21,28 @@ export interface OrderBookWidgetProps {
   className?: string;
 }
 
+// Constants
 const PLACEHOLDER = '--';
-const BID_COLOR = '#2FACA2';
-const ASK_COLOR = '#D84C4C';
-const LABEL_COLOR = '#7E7E7E';
-const AMOUNT_COLOR = '#FFFFFF';
-const BORDER_COLOR = '#474747';
-const BID_OVERLAY = 'rgba(255, 255, 255, 0.08)';
-const ASK_OVERLAY = 'rgba(255, 255, 255, 0.08)';
-const BID_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
-const ASK_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
+const COLORS = {
+  BID: '#2FACA2',
+  ASK: '#D84C4C',
+  LABEL: '#7E7E7E',
+  AMOUNT: '#FFFFFF',
+  BORDER: '#474747',
+  BID_OVERLAY: 'rgba(255, 255, 255, 0.08)',
+  ASK_OVERLAY: 'rgba(255, 255, 255, 0.08)',
+  BID_ACTIVE_OVERLAY: 'rgba(255, 255, 255, 0.16)',
+  ASK_ACTIVE_OVERLAY: 'rgba(255, 255, 255, 0.16)',
+} as const;
 
-function hasValue(value?: string | null) {
-  if (value === null || value === undefined) return false;
-  return value.trim().length > 0;
+// Utility functions
+function hasValue(value?: string | null): boolean {
+  return value != null && value.trim().length > 0;
 }
 
-// AC6-AC10: format amount to 2 decimal places with K/M/B/T abbreviations
 function formatAmount(value?: string | null): string {
-  if (value === undefined || value === null) return PLACEHOLDER;
+  if (!hasValue(value)) return PLACEHOLDER;
+
   const sanitized = String(value).replace(/,/g, '').trim();
   if (sanitized.length === 0) return PLACEHOLDER;
 
@@ -52,19 +54,21 @@ function formatAmount(value?: string | null): string {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+
   const formatTruncated = (v: number) => formatTwoDecimals(Math.trunc(v * 100) / 100);
 
   const abs = Math.abs(n);
 
-  if (abs < 1_000) return formatTruncated(n); // AC6
-  if (abs < 1_000_000) return `${formatTruncated(n / 1_000)}k`; // AC7
-  if (abs < 1_000_000_000) return `${formatTruncated(n / 1_000_000)}M`; // AC8
-  if (abs < 1_000_000_000_000) return `${formatTruncated(n / 1_000_000_000)}B`; // AC9
-  if (abs < 1_000_000_000_000_000) return `${formatTruncated(n / 1_000_000_000_000)}T`; // AC10
+  if (abs < 1_000) return formatTruncated(n);
+  if (abs < 1_000_000) return `${formatTruncated(n / 1_000)}k`;
+  if (abs < 1_000_000_000) return `${formatTruncated(n / 1_000_000)}M`;
+  if (abs < 1_000_000_000_000) return `${formatTruncated(n / 1_000_000_000)}B`;
+  if (abs < 1_000_000_000_000_000) return `${formatTruncated(n / 1_000_000_000_000)}T`;
+
   return formatTwoDecimals(n);
 }
 
-/** Render amount label with optional long-symbol wrap. */
+// Components
 function AmountLabel({
   side,
   label,
@@ -79,88 +83,70 @@ function AmountLabel({
   const isLongAmountSymbol = hasAmountSymbol && amountSymbol.length > 4;
 
   const rawAmountLabel = label ?? (hasAmountSymbol ? `Amount (${amountSymbol})` : 'Amount');
-
   const compactAmountLabel = isLongAmountSymbol
     ? rawAmountLabel.replace(/\s*\([^)]*\)\s*/, '').trim() || rawAmountLabel
     : rawAmountLabel;
 
-  const content = isLongAmountSymbol ? (
-    <>
-      <span>{compactAmountLabel}</span>
-      <span>({amountSymbol})</span>
-    </>
-  ) : (
-    rawAmountLabel
-  );
+  const baseClasses = 'text-[11px] font-normal leading-none font-[Alexandria]';
+  const alignmentClasses = side === 'bid' ? 'text-right' : 'text-left';
+  const layoutClasses = isLongAmountSymbol
+    ? 'inline-flex flex-col gap-[2px] mb-2.5'
+    : 'whitespace-nowrap';
+
+  const className = `${baseClasses} ${alignmentClasses} ${layoutClasses}`;
 
   return (
-    <span
-      className={clsx(
-        isLongAmountSymbol ? 'inline-flex flex-col gap-[2px] mb-2.5' : 'whitespace-nowrap',
-        'text-[11px] font-normal leading-none font-[Alexandria]',
-        side === 'bid' ? 'text-right' : 'text-left'
+    <span className={className} style={{ color: COLORS.LABEL }}>
+      {isLongAmountSymbol ? (
+        <>
+          <span>{compactAmountLabel}</span>
+          <span>({amountSymbol})</span>
+        </>
+      ) : (
+        rawAmountLabel
       )}
-      style={{ color: LABEL_COLOR }}
-    >
-      {content}
     </span>
   );
 }
 
-type SideProps = {
+function OrderBookSide({
+  side,
+  content,
+  isActive,
+  disabled,
+  onClick,
+}: {
   side: Side;
   content: SideContent | undefined;
   isActive: boolean;
   disabled: boolean;
   onClick?: () => void;
-};
-
-function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: SideProps) {
+}) {
   const [isPressing, setIsPressing] = React.useState(false);
 
-  const startPress = React.useCallback(() => {
-    if (!disabled) {
+  // Event handlers
+  const handlePointerDown = () => !disabled && setIsPressing(true);
+  const handlePointerUp = () => setIsPressing(false);
+  const handleBlur = () => setIsPressing(false);
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled || event.repeat) return;
+    if (['Enter', ' ', 'Space', 'Spacebar'].includes(event.key)) {
       setIsPressing(true);
     }
-  }, [disabled]);
+  };
 
-  const endPress = React.useCallback(() => {
-    setIsPressing(false);
-  }, []);
+  const handleKeyUp = (event: React.KeyboardEvent) => {
+    if (['Enter', ' ', 'Space', 'Spacebar'].includes(event.key)) {
+      setIsPressing(false);
+    }
+  };
 
   React.useEffect(() => {
-    if (disabled) {
-      setIsPressing(false);
-    }
+    if (disabled) setIsPressing(false);
   }, [disabled]);
 
-  const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (disabled || event.repeat) return;
-
-      if (
-        event.key === 'Enter' ||
-        event.key === ' ' ||
-        event.key === 'Space' ||
-        event.key === 'Spacebar'
-      ) {
-        setIsPressing(true);
-      }
-    },
-    [disabled]
-  );
-
-  const handleKeyUp = React.useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (
-      event.key === 'Enter' ||
-      event.key === ' ' ||
-      event.key === 'Space' ||
-      event.key === 'Spacebar'
-    ) {
-      setIsPressing(false);
-    }
-  }, []);
-
+  // Data processing
   const labelText = content?.label ?? (side === 'bid' ? 'Bid' : 'Ask');
   const priceValue =
     !disabled && hasValue(content?.price) ? (content?.price as string) : PLACEHOLDER;
@@ -168,24 +154,37 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
     !disabled && hasValue(content?.amount) ? (content?.amount as string) : PLACEHOLDER;
   const amountValue = rawAmount === PLACEHOLDER ? PLACEHOLDER : formatAmount(rawAmount);
 
+  // Styling
   const isPlaceholderPrice = priceValue === PLACEHOLDER;
   const isPlaceholderAmount = amountValue === PLACEHOLDER;
 
-  const highlightColor = side === 'bid' ? BID_COLOR : ASK_COLOR;
-  const priceColor = isPlaceholderPrice ? LABEL_COLOR : highlightColor;
-  const amountColor = isPlaceholderAmount ? LABEL_COLOR : AMOUNT_COLOR;
-  const overlayBaseColor = side === 'bid' ? BID_OVERLAY : ASK_OVERLAY;
-  const overlayActiveColor = side === 'bid' ? BID_ACTIVE_OVERLAY : ASK_ACTIVE_OVERLAY;
-  const overlayColor = isPressing ? overlayActiveColor : overlayBaseColor;
+  const highlightColor = COLORS[side.toUpperCase() as keyof typeof COLORS];
+  const priceColor = isPlaceholderPrice ? COLORS.LABEL : highlightColor;
+  const amountColor = isPlaceholderAmount ? COLORS.LABEL : COLORS.AMOUNT;
+
+  const overlayColor = isPressing
+    ? COLORS[`${side.toUpperCase()}_ACTIVE_OVERLAY` as keyof typeof COLORS]
+    : COLORS[`${side.toUpperCase()}_OVERLAY` as keyof typeof COLORS];
+
   const roundingClass = side === 'bid' ? 'rounded-l-xl' : 'rounded-r-xl';
 
-  const overlayOpacity = disabled ? 0 : isActive || isPressing ? 1 : undefined;
+  // Base classes
+  const buttonClasses = [
+    'group relative h-full flex-1 overflow-hidden px-2 sm:px-3 py-1 transition',
+    'focus-visible:outline-offset-[-2px] min-w-0',
+    roundingClass,
+    disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer',
+  ].join(' ');
 
-  const overlayStateClass = disabled
-    ? 'opacity-0'
-    : isActive
-      ? 'opacity-100'
-      : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100';
+  const overlayClasses = [
+    'pointer-events-none absolute inset-0 transition-opacity',
+    roundingClass,
+    disabled
+      ? 'opacity-0'
+      : isActive
+        ? 'opacity-100'
+        : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100',
+  ].join(' ');
 
   return (
     <button
@@ -193,38 +192,26 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       aria-pressed={isActive}
-      onPointerDown={startPress}
-      onPointerUp={endPress}
-      onPointerLeave={endPress}
-      onPointerCancel={endPress}
-      onBlur={endPress}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
-      className={clsx(
-        'group relative h-full min-w-[140px] flex-1 overflow-hidden px-3 py-1 transition',
-        'focus-visible:outline-offset-[-2px]',
-        roundingClass,
-        disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
-      )}
+      className={buttonClasses}
       style={{ outlineColor: highlightColor }}
     >
-      {/* WHY: overlay kept for active/hover state */}
-      <span
-        className={clsx(
-          'pointer-events-none absolute inset-0 transition-opacity',
-          roundingClass,
-          overlayStateClass
-        )}
-        style={{ backgroundColor: overlayColor, opacity: overlayOpacity }}
-      />
+      {/* Overlay */}
+      <span className={overlayClasses} style={{ backgroundColor: overlayColor }} />
 
-      {/* === GRID: 2 rows x 2 cols to lock positions regardless of text length/wrap === */}
-      <div className="relative grid h-full grid-rows-2 grid-cols-2 items-center">
-        {/* Row 1 - labels */}
+      {/* Content Grid */}
+      <div className="relative grid h-full grid-rows-2 grid-cols-2 items-center gap-x-1 sm:gap-x-2">
+        {/* Row 1 - Labels */}
         {side === 'bid' ? (
           <>
             <span
-              className="col-start-1 row-start-1 mt-0 whitespace-nowrap text-sm font-medium leading-tight font-[Alexandria] text-left"
+              className="col-start-1 row-start-1 text-sm font-medium leading-tight font-[Alexandria] text-left truncate"
               style={{ color: highlightColor }}
             >
               {labelText}
@@ -247,7 +234,7 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
               />
             </div>
             <span
-              className="col-start-2 row-start-1 mt-0 whitespace-nowrap text-sm font-medium leading-tight font-[Alexandria] text-right"
+              className="col-start-2 row-start-1 text-sm font-medium leading-tight font-[Alexandria] text-right truncate"
               style={{ color: highlightColor }}
             >
               {labelText}
@@ -255,18 +242,20 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
           </>
         )}
 
-        {/* Row 2 - values */}
+        {/* Row 2 - Values */}
         {side === 'bid' ? (
           <>
             <span
-              className="col-start-1 row-start-2 whitespace-nowrap text-xs font-normal leading-none font-[Alexandria] text-left"
+              className="col-start-1 row-start-2 text-xs font-normal leading-none font-[Alexandria] text-left truncate"
               style={{ color: priceColor }}
+              title={priceValue}
             >
               {priceValue}
             </span>
             <span
-              className="col-start-2 row-start-2 whitespace-nowrap text-xs font-normal leading-none font-[Alexandria] text-right"
+              className="col-start-2 row-start-2 text-xs font-normal leading-none font-[Alexandria] text-right truncate"
               style={{ color: amountColor }}
+              title={amountValue}
             >
               {amountValue}
             </span>
@@ -274,14 +263,16 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
         ) : (
           <>
             <span
-              className="col-start-1 row-start-2 whitespace-nowrap text-xs font-normal leading-none font-[Alexandria] text-left"
+              className="col-start-1 row-start-2 text-xs font-normal leading-none font-[Alexandria] text-left truncate"
               style={{ color: amountColor }}
+              title={amountValue}
             >
               {amountValue}
             </span>
             <span
-              className="col-start-2 row-start-2 whitespace-nowrap text-xs font-normal leading-none font-[Alexandria] text-right"
+              className="col-start-2 row-start-2 text-xs font-normal leading-none font-[Alexandria] text-right truncate"
               style={{ color: priceColor }}
+              title={priceValue}
             >
               {priceValue}
             </span>
@@ -292,6 +283,7 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
   );
 }
 
+// Main component
 export default function OrderBookWidget({
   bid,
   ask,
@@ -299,24 +291,28 @@ export default function OrderBookWidget({
   disabled = false,
   onBidClick,
   onAskClick,
-  className,
+  className = '',
 }: OrderBookWidgetProps) {
+  const containerClasses = [
+    'relative inline-flex h-[60px] w-full overflow-hidden rounded-xl bg-[#16171D]',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div
-      className={clsx(
-        'relative inline-flex h-[60px] w-full max-w-[384px] overflow-hidden rounded-xl bg-[#16171D]',
-        className
-      )}
-    >
-      <OrderBookWidgetSide
+    <div className={containerClasses}>
+      <OrderBookSide
         side="bid"
         content={bid}
         disabled={disabled}
         isActive={activeSide === 'bid'}
         onClick={onBidClick}
       />
-      <div className="my-1 h-12 w-px self-center" style={{ backgroundColor: BORDER_COLOR }} />
-      <OrderBookWidgetSide
+
+      <div className="my-1 h-12 w-px self-center" style={{ backgroundColor: COLORS.BORDER }} />
+
+      <OrderBookSide
         side="ask"
         content={ask}
         disabled={disabled}
