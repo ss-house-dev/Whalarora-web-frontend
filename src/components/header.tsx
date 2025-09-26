@@ -1,7 +1,7 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession, signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Menu } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
@@ -21,7 +21,7 @@ export default function Header() {
     return 'N';
   }, [session]);
 
-  const handleGetStartClick = () => (session ? router.push('/main/trading') : signIn());
+  const handleGetStartClick = () => (session ? router.push('/main/trading') : router.push('/auth/sign-in'));
   const handleLogoClick = () => router.push('/');
   const handleSignUpClick = () => router.push('/auth/sign-up');
   const handleMobileMenuToggle = () => {
@@ -33,11 +33,35 @@ export default function Header() {
     handleSignUpClick();
   };
 
+  useEffect(() => {
+    const closeMobileMenus = () => {
+      window.dispatchEvent(new Event('guest-drawer:close'));
+      window.dispatchEvent(new Event('auth-drawer:close'));
+    };
+
+    const onSignin = () => {
+      closeMobileMenus();
+      router.push('/auth/sign-in');
+    };
+
+    const onSignup = () => {
+      closeMobileMenus();
+      router.push('/auth/sign-up');
+    };
+
+    window.addEventListener('auth:signin', onSignin);
+    window.addEventListener('auth:signup', onSignup);
+
+    return () => {
+      window.removeEventListener('auth:signin', onSignin);
+      window.removeEventListener('auth:signup', onSignup);
+    };
+  }, [router]);
   return (
     <>
       {/* พื้นหลังเต็มจอ */}
       <header className="relative z-10 w-full md:w-10/12 border-b border-white/5 bg-[#16171D] backdrop-blur-md mx-auto md:rounded-b-lg">
-        <div className="mx-auto w-full px-1 md:px-7">
+        <div className="mx-auto w-full px-4 md:px-7">
           {/* DESKTOP (>= md) */}
           <div className="hidden h-14 w-full items-center justify-between md:flex">
             <div className="flex items-center gap-3">
@@ -87,10 +111,10 @@ export default function Header() {
               <button
                 type="button"
                 onClick={handleMobileMenuToggle}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
+                className="flex items-center justify-center text-white"
                 aria-label="Toggle menu"
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6 text-white" />
               </button>
               <button
                 type="button"
@@ -101,9 +125,9 @@ export default function Header() {
                 <Image
                   src="/assets/whalarora-logo.svg"
                   alt="Whalarora logo"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 rounded-full"
+                  width={28}
+                  height={28}
+                  className="rounded-full cursor-pointer"
                   priority
                 />
               </button>
@@ -117,3 +141,4 @@ export default function Header() {
     </>
   );
 }
+
