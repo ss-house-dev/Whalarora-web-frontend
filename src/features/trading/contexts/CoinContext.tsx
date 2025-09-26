@@ -24,6 +24,21 @@ interface OrderBookSelectionPayload {
   fallbackPrice?: number | string | null;
 }
 
+// Add proper types for Binance API responses
+interface BinancePriceFilter {
+  filterType: string;
+  tickSize?: string;
+}
+
+interface BinanceSymbolInfo {
+  symbol: string;
+  filters?: BinancePriceFilter[];
+}
+
+interface BinanceExchangeInfo {
+  symbols?: BinanceSymbolInfo[];
+}
+
 interface CoinContextType {
   selectedCoin: Coin;
   setSelectedCoin: (coin: Coin) => void;
@@ -44,10 +59,22 @@ const defaultCoin: Coin = {
   value: 'BINANCE:BTCUSDT',
   label: 'BTC/USDT',
   icon: (
-    <Image src="/currency-icons/bitcoin-icon.svg" alt="Bitcoin" width={28} height={28} className="rounded-full" />
+    <Image
+      src="/currency-icons/bitcoin-icon.svg"
+      alt="Bitcoin"
+      width={28}
+      height={28}
+      className="rounded-full"
+    />
   ),
   popoverIcon: (
-    <Image src="/currency-icons/bitcoin-icon.svg" alt="Bitcoin" width={20} height={20} className="rounded-full" />
+    <Image
+      src="/currency-icons/bitcoin-icon.svg"
+      alt="Bitcoin"
+      width={20}
+      height={20}
+      className="rounded-full"
+    />
   ),
 };
 
@@ -85,7 +112,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const obj = JSON.parse(savedPrecisions);
         if (obj && typeof obj === 'object') precisionCache.current = obj;
       }
-    } catch {}
+    } catch {
+      // Silently handle parsing errors
+    }
   }, []);
 
   // Load coin from storage depending on session
@@ -111,7 +140,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSelectedCoinState(defaultCoin);
           }
         }
-      } catch (e) {
+      } catch {
         setSelectedCoinState(defaultCoin);
       }
     };
@@ -135,7 +164,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
             JSON.stringify({ value: coin.value, label: coin.label, symbol })
           );
         }
-      } catch {}
+      } catch {
+        // Silently handle storage errors
+      }
     },
     [session]
   );
@@ -148,7 +179,6 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return `${formattedInteger}.${decimalPart || '0'.repeat(places)}`;
   }, []);
-
 
   const setActiveOrderTab = useCallback((tab: 'buy' | 'sell') => {
     setActiveOrderTabState(tab);
@@ -208,7 +238,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (wsRef.current) {
       try {
         wsRef.current.close();
-      } catch {}
+      } catch {
+        // Silently handle close errors
+      }
       wsRef.current = null;
     }
     closedRef.current = false;
@@ -232,9 +264,11 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const apiSymbol = `${coinSymbol}USDT`;
         const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-        const data = await response.json();
-        const symInfo = data.symbols?.find((s: any) => s.symbol === apiSymbol);
-        const priceFilter = symInfo?.filters?.find((f: any) => f.filterType === 'PRICE_FILTER');
+        const data: BinanceExchangeInfo = await response.json();
+        const symInfo = data.symbols?.find((s: BinanceSymbolInfo) => s.symbol === apiSymbol);
+        const priceFilter = symInfo?.filters?.find(
+          (f: BinancePriceFilter) => f.filterType === 'PRICE_FILTER'
+        );
         const tickSize = parseFloat(priceFilter?.tickSize ?? '0');
         if (!isNaN(tickSize) && tickSize > 0) {
           const places = Math.max(0, Math.round(-Math.log10(tickSize)));
@@ -242,7 +276,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setPriceDecimalPlaces(places);
           try {
             localStorage.setItem('wl_precisionCache', JSON.stringify(precisionCache.current));
-          } catch {}
+          } catch {
+            // Silently handle storage errors
+          }
         } else {
           setPriceDecimalPlaces(2);
         }
@@ -279,7 +315,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastUpdateRef.current = Date.now();
               try {
                 localStorage.setItem('wl_priceCache', JSON.stringify(priceCache.current));
-              } catch {}
+              } catch {
+                // Silently handle storage errors
+              }
             }
           }
         } catch {
@@ -323,9 +361,13 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastUpdateRef.current = Date.now();
               try {
                 localStorage.setItem('wl_priceCache', JSON.stringify(priceCache.current));
-              } catch {}
+              } catch {
+                // Silently handle storage errors
+              }
             }
-          } catch {}
+          } catch {
+            // Silently handle fetch errors
+          }
         }
       }, 3000);
     };
@@ -347,7 +389,9 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch {
+          // Silently handle close errors
+        }
         wsRef.current = null;
       }
     };

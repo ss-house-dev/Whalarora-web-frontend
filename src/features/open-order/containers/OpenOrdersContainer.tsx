@@ -44,18 +44,13 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
   const { orders, pagination, setPage, loading, error } = useOpenOrders();
   const isMobile = useIsMobile();
 
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-red-500">
-        Failed to load open orders. Please log in.
-      </div>
-    );
-  }
-
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
   const [prevPagination, setPrevPagination] = React.useState<OpenOrdersState['pagination'] | null>(
     null
   );
+
+  // Fade-in animation on every page switch
+  const [pageMounted, setPageMounted] = React.useState(false);
 
   // อัปเดตค่าก่อนหน้าเมื่อโหลดเสร็จและมีข้อมูลใหม่
   React.useEffect(() => {
@@ -64,20 +59,27 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
     }
   }, [loading, pagination]);
 
+  React.useEffect(() => {
+    setPageMounted(false);
+    const id = requestAnimationFrame(() => setPageMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, [pagination?.page]);
+
+  // Early return after all hooks have been called
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-red-500">
+        Failed to load open orders. Please log in.
+      </div>
+    );
+  }
+
   // ใช้ pagination data จาก API หรือค่าก่อนหน้าถ้ากำลัง loading
   const displayPagination = loading && prevPagination ? prevPagination : pagination;
   const currentPage = displayPagination?.page || 1;
   const totalPages =
     pagination?.totalPages || Math.ceil((pagination?.total || 0) / (pagination?.limit || 10));
   const totalItems = pagination?.total || orders.length;
-
-  // Fade-in animation on every page switch
-  const [pageMounted, setPageMounted] = React.useState(false);
-  React.useEffect(() => {
-    setPageMounted(false);
-    const id = requestAnimationFrame(() => setPageMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, [currentPage]);
 
   return (
     <div className="flex flex-col h-full">

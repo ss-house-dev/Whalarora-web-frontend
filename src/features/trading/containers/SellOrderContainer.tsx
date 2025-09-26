@@ -212,7 +212,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
     const parts = numericValue.split('.');
     const integerPart = parts[0];
-    let decimalPart = parts[1];
+    const decimalPart = parts[1];
 
     // ไม่ตัดทศนิยม เก็บไว้ตามที่ user พิมพ์
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -652,11 +652,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (priceLabel === 'Price' && !isInputFocused) {
       if (marketPrice && !isPriceLoading) {
         setPrice(marketPrice);
-        console.log(
-          `SellOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
-        );
-      } else if (isPriceLoading) {
-        setPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
           `SellOrderContainer: Set price to 0.${'0'.repeat(
             priceDecimalPlaces
