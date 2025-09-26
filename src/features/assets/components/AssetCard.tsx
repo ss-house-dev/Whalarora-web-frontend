@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import clsx from 'clsx';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
@@ -426,6 +427,7 @@ export function AssetCard(props: AssetCardProps) {
     pnlAbs,
     pnlPct,
     icon,
+    className,
     enableRealTimePrice = true,
     onBuySell, // ใช้ onBuySell prop เพื่อเรียกใช้ฟังก์ชันที่กำหนดเอง
   } = props;
@@ -503,44 +505,51 @@ export function AssetCard(props: AssetCardProps) {
     }
   };
 
+  const compactPnlText = isPriceLoading
+    ? '0.00 (+0.00%)'
+    : `${isRealTimeGain ? '' : '-'}${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
+        Math.abs(realTimePnlPct) * 100
+      ).toFixed(2)}%)`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[1248px] h-[80px] pl-4 pr-4 py-3 border border-[#666] rounded-[12px] flex items-center"
+      className={clsx(
+        'w-full rounded-[12px] border border-[#3A3B44] bg-[#1F2029] p-3 shadow-sm outline outline-1 outline-[#3A3B44]',
+        'lg:flex lg:h-[80px] lg:max-w-[1248px] lg:items-center lg:border-[#666] lg:bg-transparent lg:px-4 lg:py-3 lg:shadow-none lg:outline-none',
+        className
+      )}
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-12 w-full">
+      <div className="hidden w-full items-stretch lg:flex lg:items-center lg:gap-12">
         {/* Left: Ticker + amount (fixed width so all rows align) */}
-        <div className="w-[272px] flex-none pr-[16px] lg:border-r border-[#828282]">
-          <div className="flex items-center gap-4">
-            {/* Token icon - Fixed at 40px (w-10 h-10) */}
-            <div className="w-10 h-10 relative flex items-center justify-center shrink-0">
-              {displayIcon}
+        <div className="flex w-[272px] flex-none items-center gap-4 border-r border-[#828282] pr-[16px]">
+          <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
+            {displayIcon}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <div
+              className="max-w-[240px] truncate text-sm leading-tight text-white"
+              title={`${symbol} (${name})`}
+            >
+              {symbol} ({name})
             </div>
-
-            <div className="flex flex-col gap-1">
-              <div
-                className="text-white text-sm leading-tight max-w-[240px] truncate"
-                title={`${symbol} (${name})`}
-              >
-                {symbol} ({name})
+            <div className="inline-flex items-center gap-2.5 rounded-xl bg-[#1F2029] px-2 py-1">
+              <div className="min-w-[120px] whitespace-nowrap text-left text-base leading-normal text-white">
+                {amountDisplay}
               </div>
-              <div className="px-2 py-1 rounded-xl inline-flex items-center gap-2.5 bg-[#1F2029]">
-                <div className="text-base leading-normal text-white min-w-[120px] text-left whitespace-nowrap">
-                  {amountDisplay}
-                </div>
 
-                <div className="text-base leading-normal text-white whitespace-nowrap">
-                  {truncateCode(unit, 4)}
-                </div>
+              <div className="whitespace-nowrap text-base leading-normal text-white">
+                {truncateCode(unit, 4).toUpperCase()}
               </div>
             </div>
           </div>
         </div>
 
         {/* Middle: stats */}
-        <div className="flex flex-nowrap items-center gap-4 lg:gap-3 flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-4 lg:gap-3">
           <Stat
             label="Current price"
             value={`$ ${formattedCurrentPrice}`}
@@ -548,13 +557,13 @@ export function AssetCard(props: AssetCardProps) {
           />
           <Stat label="Average cost" value={`$ ${averageCostDisplay}`} />
           <Stat label="Value" value={`$ ${fmtMoney(realTimeValue)}`} />
-          <div className="shrink-0 h-11 inline-flex flex-col justify-center items-start gap-1">
-            <div className="text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
+          <div className="inline-flex h-11 shrink-0 flex-col items-start justify-center gap-1">
+            <div className="text-[12px] leading-none" style={{ color: colors.gray600 }}>
               Unrealized PNL
             </div>
 
             <div
-              className="w-full text-[16px] leading-normal flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis"
+              className="flex w-full items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis text-[16px] leading-normal"
               style={{
                 color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
               }}
@@ -577,11 +586,71 @@ export function AssetCard(props: AssetCardProps) {
         {/* Right: CTA with 16px margin from right edge */}
         <button
           onClick={handleBuySell}
-          className="w-[128px] h-[32px] px-6 rounded-lg flex items-center justify-center text-sm text-neutral-100 bg-blue-600 hover:brightness-110 active:brightness-95 transition"
+          className="flex h-[32px] w-[128px] items-center justify-center rounded-lg bg-blue-600 px-6 text-sm text-neutral-100 transition hover:brightness-110 active:brightness-95"
         >
           Buy/Sell
         </button>
       </div>
+
+      <div className="flex flex-col gap-3 lg:hidden">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center">
+            {displayIcon}
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-baseline gap-1 text-sm">
+              <span className="text-white">{symbol}</span>
+              <span className="text-[#A4A4A4]">{name}</span>
+            </div>
+            <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
+              <span className="text-white">{amountDisplay}</span>
+              <span className="text-right text-[#A4A4A4]">{truncateCode(unit, 4).toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-[#A4A4A4]">Average cost (USDT)</span>
+              <span className="text-sm text-white">{averageCostDisplay}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-[#A4A4A4]">Value</span>
+              <span className="text-sm text-white">{fmtMoney(realTimeValue)}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 sm:gap-2">
+            <span className="text-xs text-[#A4A4A4]">Unrealized PNL</span>
+            <span
+              className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
+              style={{
+                color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+              }}
+            >
+              {compactPnlText}
+              {!isPriceLoading &&
+                (isRealTimeGain ? (
+                  <ArrowUpRight size={16} className="text-[#4ED7B0]" />
+                ) : (
+                  <ArrowDownRight size={16} className="text-[#FF6B6B]" />
+                ))}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-auto">
+          <button
+            type="button"
+            onClick={handleBuySell}
+            className="flex h-8 w-full items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+          >
+            Buy/Sell
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }
+

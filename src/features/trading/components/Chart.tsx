@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   ColorType,
@@ -36,29 +36,36 @@ type KlineArray = [
   string, // ignore
 ];
 
-// Removed unused WsKlineMessage interface
-
-interface ExchangeInfoSymbol {
-  symbol: string;
-  filters: Array<{
-    filterType: string;
-    tickSize?: string;
-  }>;
-}
-
-interface ExchangeInfoResponse {
-  symbols?: ExchangeInfoSymbol[];
-}
-
-interface TradeMessage {
-  e: string;
-  T?: number;
-  E?: number;
-  p: string;
-  q?: string;
-}
+type WsKlineMessage = {
+  e: 'kline';
+  E: number;
+  s: string;
+  k: {
+    t: number; // start time
+    T: number; // end time
+    s: string; // symbol
+    i: string; // interval
+    f: number; // first trade ID
+    L: number; // last trade ID
+    o: string; // open
+    c: string; // close
+    h: string; // high
+    l: string; // low
+    v: string; // volume
+    n: number; // number of trades
+    x: boolean; // is this kline closed?
+    q: string; // quote volume
+    V: string; // taker buy base
+    Q: string; // taker buy quote
+    B: string; // ignore
+  };
+};
 
 const DEFAULT_INTERVAL = '15m'; // 1m/5m/15m/1h supported
+// Keep right price scale width stable across symbols by fixing
+// baseline integer digits and decimal width used for padding
+const AXIS_BASE_INT_DIGITS = 6; // supports up to 999,999 before widening
+const AXIS_DECIMALS_WIDTH = 2; // pad width for up to 8 decimals
 
 function intervalToMs(interval: string): number {
   const m = interval.match(/^(\d+)([mhd])$/i);
@@ -80,28 +87,64 @@ function parseSymbol(coinValue: string) {
 async function fetchPrecision(symbol: string): Promise<number> {
   try {
     const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-    const data: ExchangeInfoResponse = await res.json();
-    const info = data.symbols?.find((s) => s.symbol === symbol);
-    const priceFilter = info?.filters?.find((f) => f.filterType === 'PRICE_FILTER');
+    const data = await res.json();
+    const info = data.symbols?.find((s: any) => s.symbol === symbol);
+    const priceFilter = info?.filters?.find((f: any) => f.filterType === 'PRICE_FILTER');
     const tickSize = parseFloat(priceFilter?.tickSize ?? '0');
     if (tickSize > 0) {
       return Math.max(0, Math.round(-Math.log10(tickSize)));
     }
-  } catch {
+  } catch (e) {
     // ignore, fall through
   }
   return 2;
 }
 
 // Create a stable-width price formatter to prevent right axis jitter
-function makeFixedWidthFormatter(precision: number) {
-  // จำกัดจำนวนทศนิยมตาม precision และใส่คอมมาที่หลักพัน
+// but keep the right scale compact. Width is computed from the maximum
+// integer digits we expect (baseline) plus decimal precision.
+function makeFixedWidthFormatter(precision: number, baseIntDigits: number) {
   const labelPrecision = Math.min(Math.max(0, precision), 8);
-  const nf = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: labelPrecision,
-    maximumFractionDigits: labelPrecision,
-  });
-  return (p: number) => (isFinite(p) ? nf.format(p) : nf.format(0));
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  const commaCount = Math.max(0, Math.floor((Math.max(1, baseIntDigits) - 1) / 3));
+  // Fixed target width uses constant decimal width so axis doesn't shift
+  const target = Math.max(
+    Math.max(1, baseIntDigits) +
+      commaCount +
+      (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+    8 // guarantee a usable minimum
+  );
+  return (p: number) => {
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
+  };
+}
+
+// Same formatter but reads current base digits from a ref so series labels
+// (last value bubble) stay in sync with the axis width without reapplying options.
+function makeSeriesFormatter(precision: number, baseIntDigitsRef: React.MutableRefObject<number>) {
+  const labelPrecision = Math.min(Math.max(0, precision), 8);
+  const addCommas = (numStr: string) => {
+    const [i, d = ''] = numStr.split('.');
+    const withCommas = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return d ? `${withCommas}.${d}` : withCommas;
+  };
+  return (p: number) => {
+    const baseIntDigits = Math.max(1, baseIntDigitsRef.current);
+    const commaCount = Math.max(0, Math.floor((baseIntDigits - 1) / 3));
+    const target = Math.max(
+      baseIntDigits + commaCount + (AXIS_DECIMALS_WIDTH > 0 ? 1 + AXIS_DECIMALS_WIDTH : 0),
+      8
+    );
+    const fixed = isFinite(p) ? p.toFixed(labelPrecision) : '0';
+    const withCommas = addCommas(fixed);
+    return withCommas.padStart(target, ' ');
+  };
 }
 
 // Custom time scale tick formatter based on selected interval
@@ -112,8 +155,8 @@ function makeTickFormatter(currentInterval: string) {
   const pad = (n: number) => n.toString().padStart(2, '0');
 
   // Always display in UTC+7 (Bangkok). We offset epoch seconds by +7h
-  return (time: Time, tickMarkType: TickMarkType): string => {
-    const ts = typeof time === 'number' ? time : ((time as { timestamp?: number }).timestamp ?? 0);
+  return (time: Time, tickMarkType: TickMarkType, _locale?: string): string => {
+    const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
     const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
     const d = new Date((ts as number) * 1000 + offsetMs);
     const Y = d.getUTCFullYear();
@@ -154,7 +197,7 @@ const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includ
 
 // Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
 function timeFormatterUTC7(time: Time): string {
-  const ts = typeof time === 'number' ? time : ((time as { timestamp?: number }).timestamp ?? 0);
+  const ts = typeof time === 'number' ? time : ((time as any).timestamp ?? 0);
   const d = new Date((ts as number) * 1000 + 7 * 60 * 60 * 1000);
   const pad = (n: number) => n.toString().padStart(2, '0');
   const Y = d.getUTCFullYear();
@@ -178,6 +221,10 @@ const AdvancedChart = () => {
   const intervalMsRef = useRef<number>(intervalToMs(DEFAULT_INTERVAL));
   const barsRef = useRef<CandlestickData[]>([]);
   const volAggRef = useRef<number>(0);
+  // baseline for computing compact, fixed-width price labels
+  const baseIntDigitsRef = useRef<number>(AXIS_BASE_INT_DIGITS);
+  // price precision cache
+  const precisionRef = useRef<number>(2);
   // extra series
   const lineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -195,49 +242,6 @@ const AdvancedChart = () => {
   };
   const [ready, setReady] = useState(false);
 
-  // recompute indicators using barsRef
-  const recomputeIndicators = useCallback(() => {
-    const bars = barsRef.current;
-    // update close line (for line chart)
-    if (lineRef.current) {
-      const mapped = bars.map((b) => ({
-        time: b.time as UTCTimestamp,
-        value: b.close,
-      }));
-      lineRef.current.setData(mapped);
-    }
-    // SMA 20
-    if (smaRef.current) {
-      const len = 20;
-      const out: Array<{ time: UTCTimestamp; value: number }> = [];
-      let sum = 0;
-      for (let i = 0; i < bars.length; i++) {
-        sum += bars[i].close;
-        if (i >= len) sum -= bars[i - len].close;
-        if (i >= len - 1)
-          out.push({ time: bars[i].time as UTCTimestamp, value: +(sum / len).toFixed(8) });
-      }
-      smaRef.current.setData(out);
-      smaRef.current.applyOptions({ visible: showSMA });
-    }
-    // EMA 50
-    if (emaRef.current) {
-      const len = 50;
-      const out: Array<{ time: UTCTimestamp; value: number }> = [];
-      const k = 2 / (len + 1);
-      let emaVal: number | null = null;
-      for (let i = 0; i < bars.length; i++) {
-        const c = bars[i].close;
-        if (emaVal === null) emaVal = c;
-        else emaVal = c * k + emaVal * (1 - k);
-        if (i >= len - 1)
-          out.push({ time: bars[i].time as UTCTimestamp, value: +emaVal.toFixed(8) });
-      }
-      emaRef.current.setData(out);
-      emaRef.current.applyOptions({ visible: showEMA });
-    }
-  }, [showSMA, showEMA]);
-
   // 1) Initialize chart only once (avoid stacking/overlap)
   useEffect(() => {
     const container = containerRef.current;
@@ -246,10 +250,11 @@ const AdvancedChart = () => {
     // ensure container is clean
     container.innerHTML = '';
 
+    const chartHeight = Math.max(240, container.clientHeight || 400);
+
     const chart = createChart(container, {
       width: container.clientWidth || 900,
-      // draw slightly shorter than wrapper to avoid bottom clipping under rounded corners
-      height: 500,
+      height: chartHeight,
       layout: {
         background: { type: ColorType.Solid, color: '#0C0F17' },
         textColor: '#d1d5db',
@@ -348,13 +353,17 @@ const AdvancedChart = () => {
     emaRef.current = ema;
 
     const resizeObserver = new ResizeObserver((entries) => {
-      const { width } = entries[0].contentRect;
-      chart.applyOptions({ width: Math.floor(width) });
+      const { width, height } = entries[0].contentRect;
+      if (!chartRef.current) return; // chart might be disposed
+      const nextWidth = Math.max(0, Math.floor(width));
+      const nextHeightSource = height || container.clientHeight;
+      const nextHeight = Math.max(240, Math.floor(nextHeightSource || chartHeight));
+      chart.applyOptions({ width: nextWidth, height: nextHeight });
     });
     resizeObserver.observe(container);
 
     // Custom time tooltip that follows crosshair (UTC+7)
-    chart.subscribeCrosshairMove((param) => {
+    const crosshairHandler = (param: any) => {
       const tooltip = timeTooltipRef.current;
       if (!tooltip) return;
       const p = param.point;
@@ -367,31 +376,78 @@ const AdvancedChart = () => {
       } else {
         tooltip.style.display = 'none';
       }
-    });
+    };
+    chart.subscribeCrosshairMove(crosshairHandler);
 
     setReady(true);
 
     return () => {
-      resizeObserver.unobserve(container);
+      // Invalidate any in-flight async work for symbol/interval effect
+      runSeqRef.current++;
+      try {
+        resizeObserver.unobserve(container);
+      } catch {}
+      try {
+        resizeObserver.disconnect();
+      } catch {}
+      try {
+        chart.unsubscribeCrosshairMove(crosshairHandler as any);
+      } catch {}
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {
-          // ignore
-        }
+        } catch {}
         wsRef.current = null;
       }
       if (chartRef.current) {
         try {
           chartRef.current.remove();
-        } catch {
-          // ignore
-        }
+        } catch {}
       }
       chartRef.current = null;
       candleRef.current = null;
     };
-  }, [interval, showVolume]);
+  }, []);
+
+  // recompute indicators using barsRef
+  const recomputeIndicators = () => {
+    const bars = barsRef.current;
+    // update close line (for line chart)
+    if (lineRef.current) {
+      const mapped = bars.map((b) => ({ time: b.time as UTCTimestamp, value: b.close }) as any);
+      lineRef.current.setData(mapped);
+    }
+    // SMA 20
+    if (smaRef.current) {
+      const len = 20;
+      const out: any[] = [];
+      let sum = 0;
+      for (let i = 0; i < bars.length; i++) {
+        sum += bars[i].close;
+        if (i >= len) sum -= bars[i - len].close;
+        if (i >= len - 1)
+          out.push({ time: bars[i].time as UTCTimestamp, value: +(sum / len).toFixed(8) });
+      }
+      smaRef.current.setData(out);
+      smaRef.current.applyOptions({ visible: showSMA });
+    }
+    // EMA 50
+    if (emaRef.current) {
+      const len = 50;
+      const out: any[] = [];
+      const k = 2 / (len + 1);
+      let emaVal: number | null = null;
+      for (let i = 0; i < bars.length; i++) {
+        const c = bars[i].close;
+        if (emaVal === null) emaVal = c;
+        else emaVal = c * k + emaVal * (1 - k);
+        if (i >= len - 1)
+          out.push({ time: bars[i].time as UTCTimestamp, value: +emaVal.toFixed(8) });
+      }
+      emaRef.current.setData(out);
+      emaRef.current.applyOptions({ visible: showEMA });
+    }
+  };
 
   // 2) React to symbol/interval change without removing chart (avoid flicker)
   //    Add run guards to avoid race conditions when switching fast
@@ -409,23 +465,32 @@ const AdvancedChart = () => {
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {
-          // ignore
-        }
+        } catch {}
         wsRef.current = null;
       }
 
       // increment run sequence to invalidate older async work
       const myRun = ++runSeqRef.current;
 
-      // set precision for series and a stable-width formatter for axis labels
-      const precision = await fetchPrecision(symbol);
-      if (myRun !== runSeqRef.current) return; // aborted
-      const minMove = Math.pow(10, -precision);
-      // Use fixed-width label formatter to prevent axis width jitter
+      // Apply immediate axis/series format using cached precision (fast render)
+      const getCachedPrecision = (): number => {
+        try {
+          const s = localStorage.getItem('wl_precisionCache');
+          if (s) {
+            const obj = JSON.parse(s);
+            const key = selectedCoin.label; // e.g., BTC/USDT
+            const p = obj?.[key];
+            if (typeof p === 'number' && p >= 0 && p <= 8) return p;
+          }
+        } catch {}
+        return 2;
+      };
+      const initialPrecision = getCachedPrecision();
+      precisionRef.current = initialPrecision;
+      const initialMinMove = Math.pow(10, -initialPrecision);
       chart.applyOptions({
         localization: {
-          priceFormatter: makeFixedWidthFormatter(precision),
+          priceFormatter: makeFixedWidthFormatter(initialPrecision, baseIntDigitsRef.current),
           timeFormatter: timeFormatterUTC7,
         },
         timeScale: {
@@ -451,73 +516,37 @@ const AdvancedChart = () => {
           },
         },
       });
-
-      // Apply options with explicit price label settings
       candle.applyOptions({
-        priceFormat: { type: 'price', precision, minMove },
+        priceFormat: {
+          type: 'custom',
+          minMove: initialMinMove,
+          formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef),
+        },
         visible: chartType === 'candles',
-        // Ensure price labels are always visible for main series
         lastValueVisible: true,
         priceLineVisible: true,
       });
-
       if (lineRef.current) {
         lineRef.current.applyOptions({
           visible: chartType === 'line',
-          priceFormat: { type: 'price', precision, minMove },
-          // Keep price label for line chart
+          priceFormat: {
+            type: 'custom',
+            minMove: initialMinMove,
+            formatter: makeSeriesFormatter(initialPrecision, baseIntDigitsRef),
+          },
           lastValueVisible: chartType === 'line',
           priceLineVisible: chartType === 'line',
         });
       }
-
       if (volumeRef.current) {
         volumeRef.current.applyOptions({
           visible: showVolume,
-          // Volume should not show price label
           lastValueVisible: false,
           priceLineVisible: false,
         });
       }
 
-      // reset data and load history for new symbol
-      try {
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
-        const resp = await fetch(url);
-        const rows: KlineArray[] = await resp.json();
-        if (myRun !== runSeqRef.current) return; // aborted
-        const data: CandlestickData[] = rows.map((r) => ({
-          time: Math.floor(r[0] / 1000) as UTCTimestamp,
-          open: parseFloat(r[1]),
-          high: parseFloat(r[2]),
-          low: parseFloat(r[3]),
-          close: parseFloat(r[4]),
-        }));
-        candle.setData(data);
-        chart.timeScale().fitContent();
-        // keep track of bars & last bar
-        barsRef.current = data;
-        const last = data[data.length - 1];
-        lastBarRef.current = last ?? null;
-        lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
-
-        // set volume from history
-        if (volumeRef.current) {
-          const volData = rows.map((r) => ({
-            time: Math.floor(r[0] / 1000) as UTCTimestamp,
-            value: parseFloat(r[5]),
-            color: parseFloat(r[4]) >= parseFloat(r[1]) ? '#26a69a' : '#ef5350',
-          }));
-          volumeRef.current.setData(volData);
-          volAggRef.current = volData.length ? volData[volData.length - 1].value : 0;
-        }
-
-        recomputeIndicators();
-      } catch (e) {
-        console.error('Chart: failed to load history', e);
-      }
-
-      // subscribe realtime trade stream (faster than kline)
+      // Connect realtime WS immediately for faster first updates
       const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -528,8 +557,7 @@ const AdvancedChart = () => {
         const series = candleRef.current;
         if (!series) return;
         try {
-          const d: TradeMessage = JSON.parse(ev.data);
-          // trade payload: { e: 'trade', T: time(ms), p: price }
+          const d = JSON.parse(ev.data);
           const price = parseFloat(d.p);
           const tMs: number = d.T || d.E || Date.now();
           if (!isFinite(price) || price <= 0) return;
@@ -549,11 +577,9 @@ const AdvancedChart = () => {
             };
             lastBarRef.current = bar;
             lastBarTimeRef.current = barTime;
-            // push new bar & reset volume agg
             barsRef.current = [...barsRef.current, bar];
             volAggRef.current = parseFloat(d.q ?? '0') || 0;
           } else {
-            // update existing bar
             bar.close = price;
             if (price > bar.high) bar.high = price;
             if (price < bar.low) bar.low = price;
@@ -564,20 +590,151 @@ const AdvancedChart = () => {
 
           series.update(bar);
           if (lineRef.current && chartType === 'line') {
-            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close });
+            lineRef.current.update({ time: bar.time as UTCTimestamp, value: bar.close } as any);
           }
           if (volumeRef.current && showVolume) {
             volumeRef.current.update({
               time: bar.time as UTCTimestamp,
               value: volAggRef.current,
               color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
-            });
+            } as any);
           }
           recomputeIndicators();
-        } catch {
-          // ignore parse errors
-        }
+        } catch {}
       };
+
+      // Fetch precision in parallel and apply when ready
+      (async () => {
+        const precision = await fetchPrecision(symbol);
+        if (myRun !== runSeqRef.current) return;
+        precisionRef.current = precision;
+        const minMove = Math.pow(10, -precision);
+        if (!chartRef.current || chartRef.current !== chart) return;
+        chart.applyOptions({
+          localization: {
+            priceFormatter: makeFixedWidthFormatter(precision, baseIntDigitsRef.current),
+            timeFormatter: timeFormatterUTC7,
+          },
+          timeScale: {
+            tickMarkFormatter: makeTickFormatter(interval),
+            timeVisible: isIntradayInterval(interval),
+            secondsVisible: false,
+          },
+          crosshair: {
+            mode: CrosshairMode.Normal,
+            vertLine: {
+              visible: true,
+              labelVisible: false,
+              color: '#9CA3AF',
+              width: 1,
+              style: LineStyle.Dashed,
+            },
+            horzLine: {
+              visible: true,
+              labelVisible: true,
+              color: '#9CA3AF',
+              width: 1,
+              style: LineStyle.Dashed,
+            },
+          },
+        });
+        if (!candleRef.current || candleRef.current !== candle) return;
+        candle.applyOptions({
+          priceFormat: {
+            type: 'custom',
+            minMove,
+            formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+          },
+          visible: chartType === 'candles',
+          lastValueVisible: true,
+          priceLineVisible: true,
+        });
+        if (lineRef.current) {
+          lineRef.current.applyOptions({
+            visible: chartType === 'line',
+            priceFormat: {
+              type: 'custom',
+              minMove,
+              formatter: makeSeriesFormatter(precision, baseIntDigitsRef),
+            },
+            lastValueVisible: chartType === 'line',
+            priceLineVisible: chartType === 'line',
+          });
+        }
+        if (volumeRef.current) {
+          volumeRef.current.applyOptions({
+            visible: showVolume,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+        }
+      })();
+
+      // reset data and load history for new symbol (in parallel with WS)
+      try {
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
+        const resp = await fetch(url);
+        const rows: KlineArray[] = await resp.json();
+        if (myRun !== runSeqRef.current) return; // aborted
+        const data: CandlestickData[] = rows.map((r) => ({
+          time: Math.floor(r[0] / 1000) as UTCTimestamp,
+          open: parseFloat(r[1]),
+          high: parseFloat(r[2]),
+          low: parseFloat(r[3]),
+          close: parseFloat(r[4]),
+        }));
+        // If WS already started appending current bar, avoid overriding it
+        if (barsRef.current.length === 0) {
+          if (!candleRef.current || candleRef.current !== candle) return;
+          candle.setData(data);
+          barsRef.current = data;
+        } else {
+          // Merge: keep existing (WS) bars, but backfill history if it ends before
+          const lastHist = data[data.length - 1]?.time as UTCTimestamp | undefined;
+          const wsLast = barsRef.current[barsRef.current.length - 1]?.time as
+            | UTCTimestamp
+            | undefined;
+          if (!wsLast || (lastHist && wsLast <= lastHist)) {
+            if (!candleRef.current || candleRef.current !== candle) return;
+            candle.setData(data);
+            barsRef.current = data;
+          }
+        }
+        if (chartRef.current === chart) {
+          chart.timeScale().fitContent();
+        }
+        // keep track of last bar
+        const last = barsRef.current[barsRef.current.length - 1] ?? data[data.length - 1];
+        lastBarRef.current = last ?? null;
+        lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
+
+        // lock axis label width to fixed baseline to avoid jitter across symbols
+        baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
+        if (!chartRef.current || chartRef.current !== chart) return;
+        chart.applyOptions({
+          localization: {
+            priceFormatter: makeFixedWidthFormatter(precisionRef.current, baseIntDigitsRef.current),
+            timeFormatter: timeFormatterUTC7,
+          },
+        });
+
+        // set volume from history
+        if (volumeRef.current) {
+          const volData = rows.map((r) => ({
+            time: Math.floor(r[0] / 1000) as UTCTimestamp,
+            value: parseFloat(r[5]),
+            color: parseFloat(r[4]) >= parseFloat(r[1]) ? '#26a69a' : '#ef5350',
+          }));
+          volumeRef.current.setData(volData as any);
+          volAggRef.current = volData.length ? (volData[volData.length - 1] as any).value : 0;
+        }
+
+        recomputeIndicators();
+      } catch (e) {
+        console.error('Chart: failed to load history', e);
+      }
+
+      // WS already started above
     };
 
     run();
@@ -587,13 +744,11 @@ const AdvancedChart = () => {
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {
-          // ignore
-        }
+        } catch {}
         wsRef.current = null;
       }
     };
-  }, [selectedCoin.value, interval, chartType, showVolume, recomputeIndicators]);
+  }, [selectedCoin.value, interval]);
 
   // 3) Apply simple visibility/style toggles without reloading data or sockets
   useEffect(() => {
@@ -650,8 +805,8 @@ const AdvancedChart = () => {
   }, [chartType, showSMA, showEMA, showVolume]);
 
   return (
-    <div className="w-full max-w-[900px]">
-      <div className="relative w-full h-[508px]">
+    <div className="w-full">
+      <div className="relative h-[260px] w-full sm:h-[320px] md:h-[380px] lg:h-[508px]">
         <div
           ref={containerRef}
           className="rounded-xl overflow-hidden bg-[#0C0F17] border border-[#1f2937] w-full h-full cursor-crosshair"
@@ -663,7 +818,7 @@ const AdvancedChart = () => {
           style={{ display: 'none', transform: 'translateX(-50%)' }}
           className="pointer-events-none absolute bottom-2 z-20 px-2 py-1 text-xs text-gray-200 bg-[#16171D] border border-[#1f2937] rounded-md shadow"
         />
-        <div className="absolute top-2 left-2 z-10 flex flex-wrap items-center gap-1 text-xs text-gray-200 cursor-pointer">
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 overflow-x-auto text-xs text-gray-200 cursor-pointer">
           {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
             <button
               key={tf}

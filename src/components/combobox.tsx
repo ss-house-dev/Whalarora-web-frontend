@@ -164,6 +164,7 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const { selectedCoin, setSelectedCoin } = useCoinContext();
   const [open, setOpen] = React.useState(false);
   const [pairs, setPairs] = React.useState<USDTPair[]>([]);
+  const [loadingPairs, setLoadingPairs] = React.useState<boolean>(true);
   const [searchValue, setSearchValue] = React.useState<string>('');
   const listRef = React.useRef<HTMLDivElement>(null);
 
@@ -179,12 +180,28 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         }))
         .sort((a, b) => a.symbol.localeCompare(b.symbol));
       setPairs(usdtPairs);
+      try {
+        localStorage.setItem('wl_usdtPairs_v1', JSON.stringify(usdtPairs));
+      } catch {}
     } catch (err) {
       console.error('Error:', err);
     }
+    setLoadingPairs(false);
   };
 
   React.useEffect(() => {
+    // hydrate from cache for instant list
+    try {
+      const cached = localStorage.getItem('wl_usdtPairs_v1');
+      if (cached) {
+        const parsed = JSON.parse(cached) as USDTPair[];
+        if (Array.isArray(parsed) && parsed.length) {
+          setPairs(parsed);
+          setLoadingPairs(false);
+        }
+      }
+    } catch {}
+    // fetch latest in background
     fetchUSDTPairs();
   }, []);
 
@@ -266,7 +283,7 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
           <Command>
             <CommandInput value={searchValue} onValueChange={setSearchValue} />
             <CommandList ref={listRef} className="max-h-[280px]">
-              <CommandEmpty>Coin not found</CommandEmpty>
+              <CommandEmpty>{loadingPairs ? 'Loading coins…' : 'Coin not found'}</CommandEmpty>
               <CommandGroup>
                 {coins.map((coin) => (
                   <CommandItem

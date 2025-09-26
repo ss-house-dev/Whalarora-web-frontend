@@ -12,6 +12,7 @@ import {
   formatPriceWithTick,
 } from '@/features/trading/utils/symbolPrecision';
 import { formatDateParts } from '@/features/trading/utils/dateFormat';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type FilterKey = TradeHistoryRange;
 
@@ -29,6 +30,7 @@ export default function TradeHistoryContainer() {
 
   const { data, isLoading, isFetching } = useGetTradeHistory({ page, limit, range: filter });
   const { data: precisionMap } = useSymbolPrecisions();
+  const isMobile = useIsMobile();
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
@@ -81,26 +83,22 @@ export default function TradeHistoryContainer() {
   return (
     <div className="flex flex-col h-full">
       {/* Filters */}
-      <div className="mt-0 mb-2 pl-1">
-        <div className="w-72 py-1 rounded-xl inline-flex justify-start items-start gap-2.5">
+      <div className="mt-0 mb-4 pl-1 pr-1 sm:pr-0">
+        <div className="flex flex-wrap items-center gap-2">
           {filters.map(({ key, label }) => {
             const isActive = filter === key;
             return (
               <button
                 key={key}
                 onClick={() => handleSetFilter(key)}
-                className={`${
-                  isActive ? 'outline outline-1 outline-offset-[-1px] outline-[#474747]' : ''
-                } w-16 h-6 px-2 py-1 rounded-3xl flex justify-center items-center`}
+                className={`inline-flex h-7 items-center justify-center rounded-3xl px-3 text-xs font-normal font-[Alexandria] transition ${
+                  isActive
+                    ? 'border border-[#474747] bg-[#16171D] text-white'
+                    : 'text-[#A4A4A4] hover:text-white'
+                }`}
                 aria-pressed={isActive}
               >
-                <span
-                  className={`${
-                    isActive ? 'text-white' : 'text-[#A4A4A4]'
-                  } text-sm font-normal font-[Alexandria] leading-tight`}
-                >
-                  {label}
-                </span>
+                {label}
               </button>
             );
           })}
@@ -108,13 +106,13 @@ export default function TradeHistoryContainer() {
       </div>
 
       {/* Order list */}
-      <div className="relative flex-1 overflow-y-auto pr-2">
+      <div className={`relative flex-1 overflow-y-auto ${isMobile ? 'pt-2 pr-0' : 'pr-2'}`}>
         {isInitialLoading || (isRefetching && items.length === 0) ? (
           <div className="flex justify-center items-center py-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-slate-400 text-sm flex justify-center items-center h-8">
+          <div className="text-slate-400 text-sm flex justify-center items-center py-6">
             No trade history
           </div>
         ) : (
@@ -122,7 +120,7 @@ export default function TradeHistoryContainer() {
             className={`transition-opacity duration-300 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}
           >
             <div
-              className={`flex flex-col gap-3.5 transition-opacity duration-300 ease-out ${
+              className={`flex flex-col gap-4 transition-opacity duration-300 ease-out ${
                 pageMounted ? 'opacity-100' : 'opacity-0'
               }`}
             >

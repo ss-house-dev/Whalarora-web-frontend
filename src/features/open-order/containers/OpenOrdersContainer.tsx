@@ -4,6 +4,7 @@ import { formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat
 import OrderCard, { Order } from '../components/OrderCard';
 import PaginationFooter from '@/components/ui/PaginationFooter';
 import { OpenOrdersState } from '../types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface OpenOrdersContainerProps {
   className?: string;
@@ -12,11 +13,44 @@ interface OpenOrdersContainerProps {
   onCancelOrder?: (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => void;
 }
 
+const normalizeOrderStatus = (status: string | undefined | null): Order['status'] => {
+  const normalized = status ? String(status).trim().toUpperCase() : '';
+  switch (normalized) {
+    case 'OPEN':
+    case 'PENDING':
+    case 'ACTIVE':
+      return 'pending';
+    case 'PARTIALLY_FILLED':
+    case 'PARTIAL':
+    case 'PARTIALLYFILLED':
+      return 'partial';
+    case 'FILLED':
+    case 'COMPLETED':
+    case 'MATCHED':
+      return 'filled';
+    case 'CANCELLED':
+    case 'CANCELED':
+    case 'CLOSED':
+      return 'cancelled';
+    default:
+      return 'pending';
+  }
+};
+
 const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> = ({
   showPagination = true,
   onCancelOrder,
 }) => {
-  const { orders, pagination, setPage, loading } = useOpenOrders();
+  const { orders, pagination, setPage, loading, error } = useOpenOrders();
+  const isMobile = useIsMobile();
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-red-500">
+        Failed to load open orders. Please log in.
+      </div>
+    );
+  }
 
   // เก็บ pagination ก่อนหน้าไว้แสดงระหว่าง loading
   const [prevPagination, setPrevPagination] = React.useState<OpenOrdersState['pagination'] | null>(
@@ -50,18 +84,18 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
       {/* Order list */}
 
       <div
-        className={`relative flex-1 overflow-y-auto pr-2 transition-opacity duration-300 ${
+        className={`relative flex-1 overflow-y-auto ${isMobile ? 'pt-2 pr-0' : 'pr-2'} transition-opacity duration-300 ${
           loading ? 'opacity-60' : 'opacity-100'
         }`}
       >
         {/* Orders list (kept mounted so pagination stays stable during loading) */}
         {!loading && orders.length === 0 ? (
-          <div className="text-slate-400 text-sm flex justify-center items-center h-8">
+          <div className="text-slate-400 text-sm flex justify-center items-center py-6 text-center">
             No open order
           </div>
         ) : (
           <div
-            className={`transition-opacity duration-300 ease-out ${
+            className={`flex flex-col gap-1.5 transition-opacity duration-300 ease-out ${
               pageMounted ? 'opacity-100' : 'opacity-0'
             }`}
           >
@@ -79,11 +113,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                 datetime: formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: false }),
                 price: order.price.toString(),
                 amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
-                status: order.status.toLowerCase() as
-                  | 'pending'
-                  | 'partial'
-                  | 'filled'
-                  | 'cancelled',
+                status: normalizeOrderStatus(order.status),
                 filledAmount: filledAmount.toString(), // Filled ใช้ originalAmount - amount
                 filledPercent: filledPercent, // คำนวณเปอร์เซ็นต์จาก (originalAmount - amount) / originalAmount
                 _id: order._id,

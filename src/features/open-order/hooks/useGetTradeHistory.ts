@@ -18,6 +18,33 @@ const DEFAULT_CURRENCY = 'USD';
 const HISTORY_ENDPOINT = '/history';
 const HISTORY_PROXY_ENDPOINT = '/api/history';
 
+function extractStatus(error: unknown): number | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { status?: number } }).response;
+    return response?.status;
+  }
+  return undefined;
+}
+
+function extractMessage(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    return response?.data?.message;
+  }
+  return undefined;
+}
+
+function buildEmptyResponse(params: GetTradeHistoryRequest): GetTradeHistoryResponse {
+  return {
+    page: params.page ?? 1,
+    limit: params.limit ?? 10,
+    total: 0,
+    totalPages: 1,
+    range: params.range ?? 'all',
+    items: [],
+  };
+}
+
 function mapHistoryItemApi(item: TradeHistoryItemApi): GetTradeHistoryResponse['items'][number] {
   const amount =
     typeof item.amount === 'number'
@@ -61,8 +88,24 @@ function transformResponse(api: GetTradeHistoryResponseApi): GetTradeHistoryResp
 async function fetchTradeHistory(params: GetTradeHistoryRequest): Promise<GetTradeHistoryResponse> {
   const hasBaseUrl = Boolean(axiosInstance.defaults.baseURL);
   const url = hasBaseUrl ? HISTORY_ENDPOINT : HISTORY_PROXY_ENDPOINT;
-  const { data } = await axiosInstance.get<GetTradeHistoryResponseApi>(url, { params });
-  return transformResponse(data);
+
+  try {
+    const { data } = await axiosInstance.get<GetTradeHistoryResponseApi>(url, { params });
+    return transformResponse(data);
+  } catch (error: unknown) {
+    const status = extractStatus(error);
+
+    if (status === 401 || status === 403 || status === 404) {
+      return buildEmptyResponse(params);
+    }
+
+    const message = extractMessage(error);
+    if (message) {
+      throw new Error(message);
+    }
+
+    throw new Error('An unexpected error occurred while fetching trade history.');
+  }
 }
 
 function buildMock(params: GetTradeHistoryRequest): GetTradeHistoryResponse {

@@ -28,8 +28,10 @@ const ASK_COLOR = '#D84C4C';
 const LABEL_COLOR = '#7E7E7E';
 const AMOUNT_COLOR = '#FFFFFF';
 const BORDER_COLOR = '#474747';
-const BID_OVERLAY = 'rgba(47, 172, 162, 0.16)';
-const ASK_OVERLAY = 'rgba(47, 172, 162, 0.16)';
+const BID_OVERLAY = 'rgba(255, 255, 255, 0.08)';
+const ASK_OVERLAY = 'rgba(255, 255, 255, 0.08)';
+const BID_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
+const ASK_ACTIVE_OVERLAY = 'rgba(255, 255, 255, 0.16)';
 
 function hasValue(value?: string | null) {
   if (value === null || value === undefined) return false;
@@ -114,6 +116,51 @@ type SideProps = {
 };
 
 function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: SideProps) {
+  const [isPressing, setIsPressing] = React.useState(false);
+
+  const startPress = React.useCallback(() => {
+    if (!disabled) {
+      setIsPressing(true);
+    }
+  }, [disabled]);
+
+  const endPress = React.useCallback(() => {
+    setIsPressing(false);
+  }, []);
+
+  React.useEffect(() => {
+    if (disabled) {
+      setIsPressing(false);
+    }
+  }, [disabled]);
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (disabled || event.repeat) return;
+
+      if (
+        event.key === 'Enter' ||
+        event.key === ' ' ||
+        event.key === 'Space' ||
+        event.key === 'Spacebar'
+      ) {
+        setIsPressing(true);
+      }
+    },
+    [disabled]
+  );
+
+  const handleKeyUp = React.useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' ' ||
+      event.key === 'Space' ||
+      event.key === 'Spacebar'
+    ) {
+      setIsPressing(false);
+    }
+  }, []);
+
   const labelText = content?.label ?? (side === 'bid' ? 'Bid' : 'Ask');
   const priceValue =
     !disabled && hasValue(content?.price) ? (content?.price as string) : PLACEHOLDER;
@@ -127,8 +174,12 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
   const highlightColor = side === 'bid' ? BID_COLOR : ASK_COLOR;
   const priceColor = isPlaceholderPrice ? LABEL_COLOR : highlightColor;
   const amountColor = isPlaceholderAmount ? LABEL_COLOR : AMOUNT_COLOR;
-  const overlayColor = side === 'bid' ? BID_OVERLAY : ASK_OVERLAY;
+  const overlayBaseColor = side === 'bid' ? BID_OVERLAY : ASK_OVERLAY;
+  const overlayActiveColor = side === 'bid' ? BID_ACTIVE_OVERLAY : ASK_ACTIVE_OVERLAY;
+  const overlayColor = isPressing ? overlayActiveColor : overlayBaseColor;
   const roundingClass = side === 'bid' ? 'rounded-l-xl' : 'rounded-r-xl';
+
+  const overlayOpacity = disabled ? 0 : isActive || isPressing ? 1 : undefined;
 
   const overlayStateClass = disabled
     ? 'opacity-0'
@@ -142,6 +193,13 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       aria-pressed={isActive}
+      onPointerDown={startPress}
+      onPointerUp={endPress}
+      onPointerLeave={endPress}
+      onPointerCancel={endPress}
+      onBlur={endPress}
+      onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
       className={clsx(
         'group relative h-full min-w-[176px] flex-1 overflow-hidden px-3 py-1 transition',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
@@ -157,7 +215,7 @@ function OrderBookWidgetSide({ side, content, isActive, disabled, onClick }: Sid
           roundingClass,
           overlayStateClass
         )}
-        style={{ backgroundColor: overlayColor }}
+        style={{ backgroundColor: overlayColor, opacity: overlayOpacity }}
       />
 
       {/* === GRID: 2 rows x 2 cols to lock positions regardless of text length/wrap === */}
@@ -247,7 +305,6 @@ export default function OrderBookWidget({
     <div
       className={clsx(
         'relative inline-flex h-[60px] w-[384px] overflow-hidden rounded-xl bg-[#16171D]',
-        'outline outline-1 outline-[#474747]',
         className
       )}
     >

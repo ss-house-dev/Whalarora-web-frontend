@@ -42,51 +42,50 @@ export default function HoldingAssetsTable({
     }
     if (page === 1) return { slots: [1, 2, 3], activeIndex: 0, fixed: true };
     if (page === totalPages)
-      return { slots: [totalPages - 2, totalPages - 1, totalPages], activeIndex: 2, fixed: true };
+      return {
+        slots: [totalPages - 2, totalPages - 1, totalPages],
+        activeIndex: 2,
+        fixed: true,
+      };
     return { slots: [page - 1, page, page + 1], activeIndex: 1, fixed: true };
   }, [page, totalPages]);
 
   return (
     <section
-      className={`w-[1288px] h-[630px] m-[20px] bg-[#16171D] rounded-2xl px-5 py-3 flex flex-col ${className}`}
+      className={`mx-auto mt-4 w-full max-w-[1288px] rounded-2xl bg-[#16171D] px-3 py-4 sm:mt-6 sm:px-5 sm:py-5 lg:my-5 lg:h-[630px] lg:px-6 lg:py-6 flex flex-col ${className}`}
       role="region"
       aria-label="Holdings table container"
     >
-      {/* Title */}
-      <div className="mb-5 lg:mb-6 flex items-center justify-between">
-        <h3 className="text-white/90 text-xl font pl-1">{title}</h3>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:mb-6">
+        <h3 className="text-xl font-normal text-white/90">{title}</h3>
       </div>
 
-      {/* Content area */}
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 lg:overflow-hidden">
         <div
-          className="h-full overflow-auto pr-4"
+          className="lg:h-full lg:overflow-auto lg:pr-4"
           style={{ scrollbarGutter: 'stable', overscrollBehavior: 'contain' }}
         >
-          <div className="px-0">
-            {totalAssets === 0 ? (
-              <div className="mt-6 flex justify-center">
-                <p className="text-slate-300 text-sm">No holding asset.</p>
-              </div>
-            ) : (
-              children
-            )}
+          <div className="pt-1">
+            {children ??
+              (totalAssets === 0 ? (
+                <div className="mt-6 flex justify-center">
+                  <p className="text-sm text-slate-300">No holding asset.</p>
+                </div>
+              ) : null)}
           </div>
         </div>
       </div>
 
-      {/* Footer - แสดงเสมอไม่ว่า totalAssets จะเป็น 0 หรือไม่ */}
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+      <div className="mt-4 flex flex-col gap-3 text-xs text-[#A4A4A4] sm:flex-row sm:items-center sm:justify-between lg:mt-6">
         <span>Total : {totalAssets} Assets</span>
 
         {showPagination && (
           <div className="flex items-center gap-1 text-xs">
-            {/* Prev */}
             <button
               disabled={page === 1}
               onClick={() => changePage(page - 1)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors border focus:outline-none focus:ring-0 ${
-                page === 1 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white'
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-0 ${
+                page === 1 ? 'cursor-not-allowed text-slate-500' : 'text-slate-300 hover:text-white'
               }`}
               style={{ backgroundColor: '#1F2029', borderColor: '#3A3B44' }}
               aria-label="Previous page"
@@ -94,41 +93,38 @@ export default function HoldingAssetsTable({
               <ChevronLeft size={14} />
             </button>
 
-            {/* Numbered pages (3 ช่องคงที่) */}
-            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map(
-              (keyOrPage, i) => {
-                const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
-                const active = trio.fixed ? i === trio.activeIndex : p === page;
-                const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
-                const isSingle = totalPages === 1;
-                return (
-                  <button
-                    key={stableKey}
-                    onClick={() => !isSingle && changePage(p)}
-                    disabled={isSingle}
-                    aria-disabled={isSingle}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors focus:outline-none focus:ring-0 ${
-                      active ? 'text-white border' : 'text-slate-400 hover:text-white'
-                    }`}
-                    style={{
-                      backgroundColor: '#16171D',
-                      borderColor: active ? '#225FED' : 'transparent',
-                    }}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {p}
-                  </button>
-                );
-              }
-            )}
+            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map((keyOrPage, i) => {
+              const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
+              const active = trio.fixed ? i === trio.activeIndex : p === page;
+              const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
+              const isSingle = totalPages === 1;
 
-            {/* Next */}
+              return (
+                <button
+                  key={stableKey}
+                  onClick={() => !isSingle && changePage(p)}
+                  disabled={isSingle}
+                  aria-disabled={isSingle}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-colors focus:outline-none focus:ring-0 ${
+                    active ? 'border text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                  style={{
+                    backgroundColor: '#16171D',
+                    borderColor: active ? '#225FED' : 'transparent',
+                  }}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
             <button
               disabled={page === totalPages}
               onClick={() => changePage(page + 1)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors border focus:outline-none focus:ring-0 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-0 ${
                 page === totalPages
-                  ? 'text-slate-500 cursor-not-allowed'
+                  ? 'cursor-not-allowed text-slate-500'
                   : 'text-slate-300 hover:text-white'
               }`}
               style={{ backgroundColor: '#1F2029', borderColor: '#3A3B44' }}
