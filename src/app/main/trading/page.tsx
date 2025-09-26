@@ -30,40 +30,28 @@ export default function MarketOrderPage() {
 
   return (
     <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
-      {/* Symbol selector and Order Book Container (xl only) */}
-      <div className="hidden xl:flex xl:flex-row xl:items-start xl:gap-[20px]">
-        <div className="flex w-full justify-start xl:flex-[1.6] xl:min-w-0">
-          <CombinedCombobox className="w-full" />
-        </div>
-
-        <div className="w-full xl:w-[360px] xl:flex-shrink-0">
-          <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
-        </div>
-      </div>
-
-      {/* Symbol selector only (lg and below) */}
-      <div className="flex w-full justify-start xl:hidden">
-        <CombinedCombobox className="w-full" />
-      </div>
-
-      {/* Chart, Order Book, and Order Container */}
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-[20px]">
-        <div className="w-full xl:flex-[1.6] xl:min-w-0">
+      {/* Chart and Order sections */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[20px]">
+        {/* Chart section with CombinedCombobox above */}
+        <div className="w-full lg:flex-[1.6] lg:min-w-0">
           <div className="space-y-4">
+            <CombinedCombobox className="w-full" />
             <AdvancedChart />
-
-            {/* Order Book below chart on lg and below, hidden on xl */}
-            <div className="block xl:hidden">
-              <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
-            </div>
           </div>
         </div>
 
-        <div
-          key={`${selectedCoin.value}-${ordersVersion}-panel`}
-          className="w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 xl:h-[508px] xl:w-[360px] xl:flex-shrink-0"
-        >
-          <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
+        {/* Order Book and Order Container section */}
+        <div className="w-full lg:w-[360px] lg:flex-shrink-0">
+          <div className="space-y-4">
+            <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
+
+            <div
+              key={`${selectedCoin.value}-${ordersVersion}-panel`}
+              className="w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 lg:h-[508px]"
+            >
+              <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
+            </div>
+          </div>
         </div>
       </div>
 
