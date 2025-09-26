@@ -228,7 +228,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
                 {/* เมนูยอดเงินเดิม (mobile) */}
                 {open && (
-                  <div className="absolute right-0 mt-2 top-full w-80 max-w-[calc(100vw-32px)] rounded-xl bg-[#16171D] outline outline-1 outline-offset-[-1px] outline-[#474747] shadow-lg z-50">
+                  <div className="absolute right-0 mt-2 top-full w-80 max-w-[calc(100vw-32px)] rounded-xl bg-[#16171D] outline-offset-[-1px] outline-[#474747] shadow-lg z-50">
                     <div className="flex flex-col gap-4 p-3">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-start justify-between">
@@ -358,7 +358,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-[232px] rounded-xl bg-[#16171D] outline outline-1 outline-offset-[-1px] outline-[#474747] shadow-lg z-[99999]">
+                  <div className="absolute right-0 mt-2 w-[232px] rounded-xl bg-[#16171D] outline-offset-[-1px] outline-[#474747] shadow-lg z-[99999]">
                     <div className="flex items-center gap-3 px-3 py-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3A8AF7]">
                         <span className="text-sm font-normal leading-tight text-white">
@@ -571,7 +571,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-[175px] rounded-xl bg-[#16171D] outline outline-1 outline-offset-[-1px] outline-[#474747] shadow-lg z-50">
+                  <div className="absolute right-0 mt-2 w-[175px] rounded-xl bg-[#16171D] outline-offset-[-1px] outline-[#474747] shadow-lg z-50">
                     <div className="flex items-center gap-3 px-3 py-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3A8AF7]">
                         <span className="text-sm font-normal leading-tight text-white">

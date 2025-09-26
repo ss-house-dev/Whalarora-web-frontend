@@ -17,40 +17,52 @@ export default function MarketOrderPage() {
   const { mutateAsync: cancelOrderAsync } = cancelMutation;
   const { selectedCoin, ordersVersion } = useCoinContext();
 
-  const handleCancelOrder = useCallback(async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
-    try {
-      await cancelOrderAsync(payload);
-    } catch (error) {
-      console.error('Cancel order error:', error);
-    }
-  }, [cancelOrderAsync]);
+  const handleCancelOrder = useCallback(
+    async (payload: { orderRef: string; side: 'BUY' | 'SELL' }) => {
+      try {
+        await cancelOrderAsync(payload);
+      } catch (error) {
+        console.error('Cancel order error:', error);
+      }
+    },
+    [cancelOrderAsync]
+  );
 
   return (
-    <div className="mx-[23px] mt-[20px] space-y-[20px]">
-      {/* Symbol selector & live orderbook */}
-      <div className="flex items-start gap-[17px]">
-        <div className="flex-1">
-          <CombinedCombobox />
+    <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
+      {/* Chart and Order sections */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[20px]">
+        {/* Chart section with CombinedCombobox above */}
+        <div className="w-full lg:flex-[1.6] lg:min-w-0">
+          <div className="flex flex-col space-y-4">
+            {/* ใช้ w-full และ flex-shrink-0 เพื่อให้แน่ใจว่าจะเท่ากับ chart */}
+            <div className="w-full flex-shrink-0">
+              <CombinedCombobox className="w-full min-w-full" />
+            </div>
+            {/* Chart container */}
+            <div className="w-full flex-shrink-0">
+              <AdvancedChart />
+            </div>
+          </div>
         </div>
-        <OrderBookLiveContainer className="w-[384px] mr-22" showMetaInfo={false} />
-      </div>
 
-      {/* Chart and Order Container side by side */}
-      <div className="flex gap-[17px]">
-        <div className="w-[900px] min-h-[508px]">
-          <AdvancedChart />
-        </div>
+        {/* Order Book and Order Container section */}
+        <div className="w-full lg:w-[360px] lg:flex-shrink-0">
+          <div className="space-y-4">
+            <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
 
-        <div
-          key={`${selectedCoin.value}-${ordersVersion}-panel`}
-          className="bg-[#16171D] rounded-lg shadow-md p-5 w-[384px] h-[508px]"
-        >
-          <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
+            <div
+              key={`${selectedCoin.value}-${ordersVersion}-panel`}
+              className="w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 lg:h-[508px]"
+            >
+              <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Tabbed Orders Section */}
-      <div className="flex-1 mb-10">
+      <div className="mb-10 flex-1">
         <OrderTableContainer
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -60,4 +72,3 @@ export default function MarketOrderPage() {
     </div>
   );
 }
-

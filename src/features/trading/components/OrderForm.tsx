@@ -192,7 +192,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             }, 0);
           }
         }}
-        className="w-[220px] h-[32px]"
+        className="h-[32px] w-full sm:w-[220px]"
       >
         <TabsList className="w-full bg-[#121119] h-[32px] p-1">
           <TabsTrigger

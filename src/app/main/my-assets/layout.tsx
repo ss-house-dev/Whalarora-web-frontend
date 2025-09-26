@@ -27,7 +27,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <Sidebar />
 
           {/* Main Content */}
-          <div className="ml-[84px] flex-1 overflow-x-hidden">{children}</div>
+          <div className="md:ml-[84px] flex-1 overflow-x-hidden">{children}</div>
         </div>
       </CoinProvider>
     </div>
