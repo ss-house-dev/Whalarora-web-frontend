@@ -1,8 +1,10 @@
 'use client';
 import { useMemo, useState } from 'react';
+import clsx from 'clsx';
 
 import HoldingAssetsTable from './HoldingAssetsTable';
 import { AssetCard } from './AssetCard';
+import { useHoldingDesktopBreakpoint } from '../hooks/useHoldingDesktopBreakpoint';
 
 type Row = {
   id: string | number;
@@ -31,6 +33,7 @@ export default function HoldingAssetsSection({
   error,
 }: HoldingAssetsSectionProps) {
   const [page, setPage] = useState(1);
+  const isDesktopLayout = useHoldingDesktopBreakpoint();
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
 
@@ -51,6 +54,10 @@ export default function HoldingAssetsSection({
   const isLoadingData = isLoading;
   const hasData = !isLoadingData && !hasError && rows.length > 0;
   const hasNoData = !isLoadingData && !hasError && rows.length === 0;
+
+  const gridClasses = clsx('grid', isDesktopLayout ? 'grid-cols-1 gap-4' : 'gap-3 sm:grid-cols-2');
+
+  const assetCardClassName = clsx('w-full', isDesktopLayout && 'mx-auto max-w-[1220px]');
 
   return (
     <HoldingAssetsTable
@@ -81,7 +88,7 @@ export default function HoldingAssetsSection({
         )}
 
         {hasData && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:gap-4">
+          <div className={gridClasses}>
             {pagedRows.map((row) => (
               <AssetCard
                 key={row.id}
@@ -94,7 +101,8 @@ export default function HoldingAssetsSection({
                 pnlAbs={row.pnlAbs}
                 pnlPct={row.pnlPct}
                 onBuySell={() => handleTradeClick(row.symbol)}
-                className="w-full lg:mx-auto lg:max-w-[1220px]"
+                className={assetCardClassName}
+                isDesktopLayout={isDesktopLayout}
               />
             ))}
           </div>
@@ -103,3 +111,4 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
+

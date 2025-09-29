@@ -1,30 +1,31 @@
 import * as React from 'react';
 
-const MOBILE_BREAKPOINT = 1000;
-const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT}px)`;
+const HOLDING_DESKTOP_BREAKPOINT = 1389;
+const HOLDING_DESKTOP_QUERY = `(min-width: ${HOLDING_DESKTOP_BREAKPOINT}px)`;
 
 function getInitialMatch() {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return false;
   }
-  return window.matchMedia(MOBILE_QUERY).matches;
+
+  return window.matchMedia(HOLDING_DESKTOP_QUERY).matches;
 }
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(getInitialMatch);
+export function useHoldingDesktopBreakpoint() {
+  const [isDesktop, setIsDesktop] = React.useState<boolean>(getInitialMatch);
 
   React.useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
 
-    const mediaQuery = window.matchMedia(MOBILE_QUERY);
+    const mediaQuery = window.matchMedia(HOLDING_DESKTOP_QUERY);
     const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile(event.matches);
+      setIsDesktop(event.matches);
     };
 
-    // Keep state aligned with current viewport on mount.
-    setIsMobile(mediaQuery.matches);
+    // Sync with current viewport on mount.
+    setIsDesktop(mediaQuery.matches);
 
     if (typeof mediaQuery.addEventListener === 'function') {
       mediaQuery.addEventListener('change', handleChange);
@@ -35,5 +36,7 @@ export function useIsMobile() {
     return () => mediaQuery.removeListener(handleChange);
   }, []);
 
-  return isMobile;
+  return isDesktop;
 }
+
+export { HOLDING_DESKTOP_BREAKPOINT };

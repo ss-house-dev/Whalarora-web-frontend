@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { useHoldingDesktopBreakpoint } from '../hooks/useHoldingDesktopBreakpoint';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
@@ -346,6 +347,8 @@ export type AssetCardProps = {
   className?: string;
   /** Enable real-time price updates (default: true) */
   enableRealTimePrice?: boolean;
+  /** Force layout to desktop breakpoint when true */
+  isDesktopLayout?: boolean;
 };
 
 function fmtMoney(n: number) {
@@ -430,8 +433,11 @@ export function AssetCard(props: AssetCardProps) {
     className,
     enableRealTimePrice = true,
     onBuySell, // ใช้ onBuySell prop เพื่อเรียกใช้ฟังก์ชันที่กำหนดเอง
+    isDesktopLayout: desktopLayoutOverride,
   } = props;
 
+  const desktopLayoutMatch = useHoldingDesktopBreakpoint();
+  const isDesktopLayout = desktopLayoutOverride ?? desktopLayoutMatch;
   const { data: precisionMap } = useSymbolPrecisions();
   const symbolPrecision = React.useMemo(
     () => getSymbolPrecision(precisionMap, symbol, 'USDT'),
@@ -517,12 +523,12 @@ export function AssetCard(props: AssetCardProps) {
       animate={{ opacity: 1, y: 0 }}
       className={clsx(
         'w-full rounded-[12px] border border-[#3A3B44] bg-[#1F2029] p-3 shadow-sm outline outline-1 outline-[#3A3B44]',
-        'lg:flex lg:h-[80px] lg:max-w-[1248px] lg:items-center lg:border-[#666] lg:bg-transparent lg:px-4 lg:py-3 lg:shadow-none lg:outline-none',
+        isDesktopLayout && 'flex h-[80px] max-w-[1248px] items-center border-[#666] bg-transparent px-4 py-3 shadow-none outline-none',
         className
       )}
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className="hidden w-full items-stretch lg:flex lg:items-center lg:gap-12">
+      <div className={clsx('w-full items-stretch', isDesktopLayout ? 'flex items-center gap-12' : 'hidden')}>
         {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div className="flex w-[272px] flex-none items-center gap-4 border-r border-[#828282] pr-[16px]">
           <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
@@ -549,7 +555,7 @@ export function AssetCard(props: AssetCardProps) {
         </div>
 
         {/* Middle: stats */}
-        <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-4 lg:gap-3">
+        <div className={clsx('flex min-w-0 flex-1 flex-nowrap items-center gap-4', isDesktopLayout && 'gap-3')}>
           <Stat
             label="Current price"
             value={`$ ${formattedCurrentPrice}`}
@@ -586,13 +592,13 @@ export function AssetCard(props: AssetCardProps) {
         {/* Right: CTA with 16px margin from right edge */}
         <button
           onClick={handleBuySell}
-          className="flex h-[32px] w-[128px] items-center justify-center rounded-lg bg-blue-600 px-6 text-sm text-neutral-100 transition hover:brightness-110 active:brightness-95"
+          className="flex h-[32px] w-[128px] mt-2.5 items-center justify-center rounded-lg bg-blue-600 px-6 text-sm text-neutral-100 transition hover:brightness-110 active:brightness-95"
         >
           Buy/Sell
         </button>
       </div>
 
-      <div className="flex flex-col gap-3 lg:hidden">
+      <div className={clsx('flex flex-col gap-3', isDesktopLayout && 'hidden')}>
         <div className="flex items-center gap-2 sm:gap-2.5">
           <div className="flex h-10 w-10 items-center justify-center">
             {displayIcon}
@@ -653,4 +659,3 @@ export function AssetCard(props: AssetCardProps) {
     </motion.div>
   );
 }
-
