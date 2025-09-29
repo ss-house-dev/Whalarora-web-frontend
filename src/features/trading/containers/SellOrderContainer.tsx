@@ -43,11 +43,19 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
+  const { selectedCoin, marketPrice, chartPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
     useCoinContext();
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  const derivedMarketPrice = useMemo(() => {
+    const normalizedChart = chartPrice?.trim();
+    if (normalizedChart) {
+      return chartPrice;
+    }
+    return marketPrice;
+  }, [chartPrice, marketPrice]);
 
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
@@ -372,14 +380,14 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const handlePriceFocus = () => {
     setPriceLabel('Limit price');
     setIsInputFocused(true);
-    if (marketPrice && !isPriceLoading) {
-      setPrice(marketPrice);
+    if (derivedMarketPrice && !isPriceLoading) {
+      setPrice(derivedMarketPrice);
     }
   };
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    setPrice(marketPrice);
+    setPrice(derivedMarketPrice || '');
     setIsInputFocused(false);
   };
 
@@ -647,11 +655,16 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
   useEffect(() => {
     console.log(
-      `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
+      `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, chartPrice: ${chartPrice}, derivedPrice: ${derivedMarketPrice}, isPriceLoading: ${isPriceLoading}`
     );
     if (priceLabel === 'Price' && !isInputFocused) {
-      if (marketPrice && !isPriceLoading) {
-        setPrice(marketPrice);
+      if (derivedMarketPrice && !isPriceLoading) {
+        setPrice(derivedMarketPrice);
+        console.log(
+          `SellOrderContainer: Set derived price to ${derivedMarketPrice} (chart: ${chartPrice}) for ${selectedCoin.label}`
+        );
+      } else if (isPriceLoading) {
+        setPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
           `SellOrderContainer: Set price to 0.${'0'.repeat(
             priceDecimalPlaces
@@ -660,7 +673,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
     }
   }, [
+    derivedMarketPrice,
     marketPrice,
+    chartPrice,
     priceLabel,
     isInputFocused,
     isPriceLoading,

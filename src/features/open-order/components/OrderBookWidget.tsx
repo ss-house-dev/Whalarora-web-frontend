@@ -1,5 +1,6 @@
 // src/features/open-order/components/OrderBookWidget.tsx
 import React from 'react';
+import { formatCompactNumber } from '@/lib/utils';
 
 type Side = 'bid' | 'ask';
 
@@ -7,8 +8,9 @@ type SideContent = {
   label?: string;
   amountLabel?: string;
   price?: string | null;
-  amount?: string | null;
+  amount?: string | number | null;
   amountSymbol?: string | null;
+  amountPrecision?: number;
 };
 
 export interface OrderBookWidgetProps {
@@ -36,8 +38,62 @@ const COLORS = {
 } as const;
 
 // Utility functions
-function hasValue(value?: string | null): boolean {
-  return value != null && value.trim().length > 0;
+function hasValue(value?: string | number | null): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+
+  return value.trim().length > 0;
+}
+
+function formatAmountValue(value: string | number | null | undefined, precision?: number): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (/[a-zA-Z]/.test(trimmed)) {
+      return trimmed;
+    }
+
+    const parsed = Number(trimmed.replace(/,/g, ''));
+    if (!Number.isFinite(parsed)) {
+      return trimmed;
+    }
+    return formatAmountValue(parsed, precision);
+  }
+
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  const absValue = Math.abs(value);
+  const fractionDigits = Math.max(2, precision ?? 2);
+
+  if (absValue < 1000) {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: fractionDigits,
+    });
+  }
+
+  const compact = formatCompactNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return compact ?? value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: fractionDigits,
+  });
 }
 
 // Components
@@ -122,8 +178,12 @@ function OrderBookSide({
   const labelText = content?.label ?? (side === 'bid' ? 'Bid' : 'Ask');
   const priceValue =
     !disabled && hasValue(content?.price) ? String(content?.price).trim() : PLACEHOLDER;
-  const amountValue =
-    !disabled && hasValue(content?.amount) ? String(content?.amount).trim() : PLACEHOLDER;
+  const formattedAmount =
+    !disabled && hasValue(content?.amount)
+      ? formatAmountValue(content?.amount ?? null, content?.amountPrecision)
+      : null;
+
+  const amountValue = formattedAmount ?? PLACEHOLDER;
 
   // Styling
   const isPlaceholderPrice = priceValue === PLACEHOLDER;

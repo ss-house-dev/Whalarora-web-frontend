@@ -9,7 +9,7 @@ export default function Home() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const handleTradeClick = (event: MouseEvent<HTMLDivElement>) => {
+  const handleTradeClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     router.push('/main/trading');
   };
@@ -37,7 +37,9 @@ export default function Home() {
         padding: 4,
       }}
     >
-      <div
+      <button
+        type="button"
+        onClick={handleTradeClick}
         className={`
           relative flex h-full w-full items-center justify-center
           rounded-[56px]
@@ -56,8 +58,7 @@ export default function Home() {
           transition: 'background 200ms ease, box-shadow 200ms ease, opacity 200ms ease',
         }}
       >
-        <div
-          onClick={handleTradeClick}
+        <span
           className={`
             transition-opacity duration-300
             ${isHoverDemo ? 'opacity-90' : 'opacity-100'}
@@ -67,8 +68,8 @@ export default function Home() {
           `}
         >
           {session ? 'Demo your trading' : 'Demo your trading'}
-        </div>
-      </div>
+        </span>
+      </button>
     </div>
   );
 
