@@ -112,7 +112,7 @@ const OpenOrdersContent: React.FC<Omit<OpenOrdersContainerProps, 'className'>> =
                 id: order._id,
                 side: order.side.toLowerCase() as 'buy' | 'sell',
                 pair: `${order.symbol}/USDT`,
-                datetime: formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: false }),
+                datetime: formatDateTimeWithMonthAbbr(order.createdAt, { includeSeconds: true }),
                 price: order.price.toString(),
                 amount: order.originalAmount.toString(), // Amount ที่แสดงใช้ originalAmount
                 status: normalizeOrderStatus(order.status),
