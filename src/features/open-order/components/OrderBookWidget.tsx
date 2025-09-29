@@ -40,34 +40,6 @@ function hasValue(value?: string | null): boolean {
   return value != null && value.trim().length > 0;
 }
 
-function formatAmount(value?: string | null): string {
-  if (!hasValue(value)) return PLACEHOLDER;
-
-  const sanitized = String(value).replace(/,/g, '').trim();
-  if (sanitized.length === 0) return PLACEHOLDER;
-
-  const n = Number(sanitized);
-  if (!isFinite(n)) return String(value);
-
-  const formatTwoDecimals = (v: number) =>
-    v.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-  const formatTruncated = (v: number) => formatTwoDecimals(Math.trunc(v * 100) / 100);
-
-  const abs = Math.abs(n);
-
-  if (abs < 1_000) return formatTruncated(n);
-  if (abs < 1_000_000) return `${formatTruncated(n / 1_000)}k`;
-  if (abs < 1_000_000_000) return `${formatTruncated(n / 1_000_000)}M`;
-  if (abs < 1_000_000_000_000) return `${formatTruncated(n / 1_000_000_000)}B`;
-  if (abs < 1_000_000_000_000_000) return `${formatTruncated(n / 1_000_000_000_000)}T`;
-
-  return formatTwoDecimals(n);
-}
-
 // Components
 function AmountLabel({
   side,
@@ -149,10 +121,9 @@ function OrderBookSide({
   // Data processing
   const labelText = content?.label ?? (side === 'bid' ? 'Bid' : 'Ask');
   const priceValue =
-    !disabled && hasValue(content?.price) ? (content?.price as string) : PLACEHOLDER;
-  const rawAmount =
-    !disabled && hasValue(content?.amount) ? (content?.amount as string) : PLACEHOLDER;
-  const amountValue = rawAmount === PLACEHOLDER ? PLACEHOLDER : formatAmount(rawAmount);
+    !disabled && hasValue(content?.price) ? String(content?.price).trim() : PLACEHOLDER;
+  const amountValue =
+    !disabled && hasValue(content?.amount) ? String(content?.amount).trim() : PLACEHOLDER;
 
   // Styling
   const isPlaceholderPrice = priceValue === PLACEHOLDER;

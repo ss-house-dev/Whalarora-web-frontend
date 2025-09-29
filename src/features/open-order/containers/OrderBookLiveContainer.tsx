@@ -9,6 +9,13 @@ import {
   OrderBookStreamStatus,
   useOrderBookStream,
 } from '@/features/open-order/hooks/useOrderBookStream';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatPriceWithTick,
+  formatAmountWithStep,
+  type SymbolPrecision,
+} from '@/features/trading/utils/symbolPrecision';
 
 const STATUS_LABEL: Record<OrderBookStreamStatus, string> = {
   idle: 'Idle',
@@ -17,19 +24,34 @@ const STATUS_LABEL: Record<OrderBookStreamStatus, string> = {
   disconnected: 'Disconnected',
 };
 
-function formatPrice(value?: OrderBookSide['price'], quoteSymbol?: string | null) {
+function formatBookPrice(
+  value: OrderBookSide['price'],
+  quoteSymbol: string | null | undefined,
+  precision?: SymbolPrecision
+): string | null {
   if (value === undefined || value === null) return null;
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return String(value);
-  const formatted = numeric.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  const formatted = formatPriceWithTick(value, precision, {
+    locale: 'en-US',
+    fallbackDecimals: 2,
   });
+  if (!formatted) return null;
   if (!quoteSymbol) return formatted;
   if (quoteSymbol === 'USD' || quoteSymbol === 'USDT') {
     return `$ ${formatted}`;
   }
   return `${quoteSymbol} ${formatted}`;
+}
+
+function formatBookAmount(
+  value: OrderBookSide['qty'],
+  precision?: SymbolPrecision
+): string | null {
+  if (value === undefined || value === null) return null;
+  const formatted = formatAmountWithStep(value, precision, {
+    locale: 'en-US',
+    fallbackDecimals: 6,
+  });
+  return formatted?.trim() ? formatted : null;
 }
 
 type SideContent = OrderBookWidgetProps['bid'];
@@ -38,7 +60,8 @@ function toSideContent(
   side: 'bid' | 'ask',
   payload: OrderBookSide | null | undefined,
   baseSymbol: string,
-  quoteSymbol: string
+  quoteSymbol: string,
+  precision?: SymbolPrecision
 ): SideContent {
   if (!payload) {
     return {
@@ -48,12 +71,19 @@ function toSideContent(
     };
   }
 
+  const price =
+    formatBookPrice(payload.price, quoteSymbol, precision) ??
+    (payload.price === undefined || payload.price === null ? null : String(payload.price));
+  const amount =
+    formatBookAmount(payload.qty, precision) ??
+    (payload.qty === undefined || payload.qty === null ? null : String(payload.qty));
+
   return {
     label: side === 'bid' ? 'Bid' : 'Ask',
     amountLabel: `Amount (${baseSymbol})`,
     amountSymbol: baseSymbol,
-    price: formatPrice(payload.price, quoteSymbol),
-    amount: payload.qty === undefined || payload.qty === null ? null : String(payload.qty),
+    price,
+    amount,
   };
 }
 
@@ -95,6 +125,11 @@ export default function OrderBookLiveContainer({
   );
 
   const { data, status, error, activeSymbol } = useOrderBookStream(base);
+  const { data: precisionMap } = useSymbolPrecisions({ enabled: Boolean(base) });
+  const symbolPrecision = React.useMemo(
+    () => (precisionMap ? getSymbolPrecision(precisionMap, base, quote) : undefined),
+    [precisionMap, base, quote]
+  );
 
   const bidPrice = data?.bid?.price;
   const askPrice = data?.ask?.price;
@@ -116,12 +151,12 @@ export default function OrderBookLiveContainer({
   }, [applyOrderBookSelection, askPrice, sanitizedMarketPrice, status]);
 
   const bid = React.useMemo(
-    () => toSideContent('bid', data?.bid, base, quote),
-    [base, quote, data?.bid]
+    () => toSideContent('bid', data?.bid, base, quote, symbolPrecision),
+    [base, quote, data?.bid, symbolPrecision]
   );
   const ask = React.useMemo(
-    () => toSideContent('ask', data?.ask, base, quote),
-    [base, quote, data?.ask]
+    () => toSideContent('ask', data?.ask, base, quote, symbolPrecision),
+    [base, quote, data?.ask, symbolPrecision]
   );
 
   const updatedAt = React.useMemo(() => {
