@@ -256,7 +256,7 @@ function timeFormatterUTC7(time: Time): string {
 }
 
 const AdvancedChart = () => {
-  const { selectedCoin } = useCoinContext();
+  const { selectedCoin, updateChartPrice } = useCoinContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timeTooltipRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -660,6 +660,7 @@ const AdvancedChart = () => {
           barsRef.current = nextBars;
           lastBarRef.current = newBar;
           lastBarTimeRef.current = barTime;
+          updateChartPrice(close);
 
           const volumeValue = Number.parseFloat(k.v);
           if (Number.isFinite(volumeValue)) {
@@ -798,6 +799,10 @@ const AdvancedChart = () => {
         const last = barsRef.current[barsRef.current.length - 1] ?? data[data.length - 1];
         lastBarRef.current = last ?? null;
         lastBarTimeRef.current = (last?.time as UTCTimestamp) ?? null;
+        const lastClose = last?.close;
+        if (typeof lastClose === 'number' && Number.isFinite(lastClose)) {
+          updateChartPrice(lastClose);
+        }
 
         // lock axis label width to fixed baseline to avoid jitter across symbols
         baseIntDigitsRef.current = AXIS_BASE_INT_DIGITS;
@@ -851,6 +856,7 @@ const AdvancedChart = () => {
     chartType,
     showVolume,
     recomputeIndicators,
+    updateChartPrice,
   ]);
 
   // 3) Apply simple visibility/style toggles without reloading data or sockets
