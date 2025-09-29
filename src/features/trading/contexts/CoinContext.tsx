@@ -43,6 +43,7 @@ interface CoinContextType {
   selectedCoin: Coin;
   setSelectedCoin: (coin: Coin) => void;
   marketPrice: string;
+  chartPrice: string;
   isPriceLoading: boolean;
   priceDecimalPlaces: number;
   ordersVersion: number;
@@ -51,6 +52,7 @@ interface CoinContextType {
   setActiveOrderTab: (tab: 'buy' | 'sell') => void;
   orderFormSelection: OrderFormSelection | null;
   applyOrderBookSelection: (payload: OrderBookSelectionPayload) => void;
+  updateChartPrice: (price: number | string | null | undefined) => void;
 }
 
 const CoinContext = createContext<CoinContextType | undefined>(undefined);
@@ -81,6 +83,7 @@ const defaultCoin: Coin = {
 export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCoin, setSelectedCoinState] = useState<Coin>(defaultCoin);
   const [marketPrice, setMarketPrice] = useState<string>('');
+  const [chartPrice, setChartPrice] = useState<string>('');
   const [isPriceLoading, setIsPriceLoading] = useState<boolean>(true);
   const [priceDecimalPlaces, setPriceDecimalPlaces] = useState<number>(2);
   const [ordersVersion, setOrdersVersion] = useState<number>(0);
@@ -180,6 +183,34 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return `${formattedInteger}.${decimalPart || '0'.repeat(places)}`;
   }, []);
 
+  const updateChartPrice = useCallback(
+    (value: number | string | null | undefined) => {
+      if (value === null || value === undefined) {
+        setChartPrice('');
+        return;
+      }
+
+      let numeric: number | null = null;
+
+      if (typeof value === 'number') {
+        numeric = Number.isFinite(value) ? value : null;
+      } else if (typeof value === 'string') {
+        const sanitized = value.replace(/,/g, '');
+        const parsed = Number.parseFloat(sanitized);
+        numeric = Number.isFinite(parsed) ? parsed : null;
+      }
+
+      if (numeric === null || numeric <= 0) {
+        return;
+      }
+
+      const formatted = formatOriginalPrice(numeric, priceDecimalPlaces);
+      setChartPrice(formatted);
+      setIsPriceLoading(false);
+    },
+    [formatOriginalPrice, priceDecimalPlaces]
+  );
+
   const setActiveOrderTab = useCallback((tab: 'buy' | 'sell') => {
     setActiveOrderTabState(tab);
   }, []);
@@ -224,6 +255,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const symbolLabel = selectedCoin.label; // e.g., BTC/USDT
     currentSymbolRef.current = symbolLabel;
     setMarketPrice('');
+    setChartPrice('');
     setIsPriceLoading(true);
 
     // cleanup previous resources
@@ -403,6 +435,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
         selectedCoin,
         setSelectedCoin,
         marketPrice,
+        chartPrice,
         isPriceLoading,
         priceDecimalPlaces,
         ordersVersion,
@@ -411,6 +444,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setActiveOrderTab,
         orderFormSelection,
         applyOrderBookSelection,
+        updateChartPrice,
       }}
     >
       {children}

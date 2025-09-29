@@ -18,7 +18,7 @@ import {
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog-close-order';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { formatDateParts } from '@/features/trading/utils/dateFormat';
+import { formatDateParts, formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 
 const FALLBACK_AMOUNT_PRECISION = 6;
 const MAX_AMOUNT_DIGITS = 10;
@@ -186,6 +186,12 @@ export default function OrderCard({ order, onDelete }: Props) {
       maximumFractionDigits: 2,
     });
   };
+
+  const formattedDesktopDateTime = formatDateTimeWithMonthAbbr(
+    order.createdAt ?? order.datetime,
+    { includeSeconds: true }
+  );
+  const displayDesktopDateTime = formattedDesktopDateTime || order.datetime;
 
   const ConfirmCloseDialog = ({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) => {
     const isMobileVariant = variant === 'mobile';
@@ -399,7 +405,7 @@ export default function OrderCard({ order, onDelete }: Props) {
   const TopRight = () => (
     <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
       <div className="flex items-center gap-x-4 justify-end flex-wrap w-full min-w-0">
-        <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
+        <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
         <div className="flex items-center justify-between w-[213px] gap-2 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
           <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
@@ -421,7 +427,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         {order.status === 'partial' ? (
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
-              <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
+              <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
               <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
