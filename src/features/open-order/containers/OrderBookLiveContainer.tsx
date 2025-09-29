@@ -13,7 +13,6 @@ import {
   useSymbolPrecisions,
   getSymbolPrecision,
   formatPriceWithTick,
-  formatAmountWithStep,
   type SymbolPrecision,
 } from '@/features/trading/utils/symbolPrecision';
 
@@ -42,17 +41,6 @@ function formatBookPrice(
   return `${quoteSymbol} ${formatted}`;
 }
 
-function formatBookAmount(
-  value: OrderBookSide['qty'],
-  precision?: SymbolPrecision
-): string | null {
-  if (value === undefined || value === null) return null;
-  const formatted = formatAmountWithStep(value, precision, {
-    locale: 'en-US',
-    fallbackDecimals: 6,
-  });
-  return formatted?.trim() ? formatted : null;
-}
 
 type SideContent = OrderBookWidgetProps['bid'];
 
@@ -68,20 +56,20 @@ function toSideContent(
       label: side === 'bid' ? 'Bid' : 'Ask',
       amountLabel: `Amount (${baseSymbol})`,
       amountSymbol: baseSymbol,
+      amountPrecision: precision?.quantityPrecision,
     };
   }
 
   const price =
     formatBookPrice(payload.price, quoteSymbol, precision) ??
     (payload.price === undefined || payload.price === null ? null : String(payload.price));
-  const amount =
-    formatBookAmount(payload.qty, precision) ??
-    (payload.qty === undefined || payload.qty === null ? null : String(payload.qty));
+  const amount = payload.qty === undefined || payload.qty === null ? null : payload.qty;
 
   return {
     label: side === 'bid' ? 'Bid' : 'Ask',
     amountLabel: `Amount (${baseSymbol})`,
     amountSymbol: baseSymbol,
+    amountPrecision: precision?.quantityPrecision,
     price,
     amount,
   };
