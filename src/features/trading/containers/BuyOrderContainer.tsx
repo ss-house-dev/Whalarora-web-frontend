@@ -806,16 +806,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
               </div>
               <AlertDialogTitle>{pendingOrder?.title || 'Confirm Transaction'}</AlertDialogTitle>
             </div>
-            {dialogMessage && (
-              <AlertDialogDescription className="whitespace-pre-line">
-                {dialogMessage}
-              </AlertDialogDescription>
-            )}
-            {dialogSubtext && (
-              <AlertDialogSubtext className="whitespace-pre-line">
-                {dialogSubtext}
-              </AlertDialogSubtext>
-            )}
+            <AlertDialogDescription>Do you want to place an order ?</AlertDialogDescription>
+            <AlertDialogSubtext>The asset you want to buy is not available in market right now.</AlertDialogSubtext>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {pendingOrder?.options?.includes('KEEP_OPEN') && (

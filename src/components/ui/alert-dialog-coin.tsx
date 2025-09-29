@@ -129,7 +129,7 @@ function AlertDialogAction({
   return (
     <AlertDialogPrimitive.Action
       className={cn(
-        'order-1 inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#1F5DFB] px-6 text-sm font-["Alexandria"] font-normal leading-tight text-[#F7F7F7] transition-colors duration-200 ease-out hover:bg-[#3B73FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B73FF] sm:order-2 sm:h-8 sm:w-32',
+        'order-1 inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#1F5DFB] px-6 text-sm font-["Alexandria"] font-normal leading-tight text-[#F7F7F7] transition-colors duration-200 ease-out hover:bg-[#3B73FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B73FF] sm:order-2 sm:h-8 sm:w-32',
         className
       )}
       {...props}
@@ -144,7 +144,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Cancel
       className={cn(
-        'order-2 inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#7E7E7E] bg-[#16171D] px-6 text-xs font-["Alexandria"] font-normal leading-none text-white transition-colors duration-200 ease-out hover:bg-[#1F2029] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B73FF] sm:order-1 sm:h-8 sm:w-32',
+        'order-2 inline-flex h-8 w-full items-center justify-center rounded-lg border border-[#7E7E7E] bg-[#16171D] px-6 text-xs font-["Alexandria"] font-normal leading-none text-white transition-colors duration-200 ease-out hover:bg-[#1F2029] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B73FF] sm:order-1 sm:h-8 sm:w-32',
         className
       )}
       {...props}
