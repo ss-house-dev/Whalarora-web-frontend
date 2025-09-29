@@ -17,7 +17,7 @@ export default function Welcome() {
   const username = session?.user?.name || usernameParam || 'User';
 
   const handleGoBack = () => {
-    // ใช้ browser history API แทน Next.js router
+    // Use browser history API instead of Next.js router
     if (typeof window !== 'undefined') {
       window.history.back();
     }
@@ -34,10 +34,10 @@ export default function Welcome() {
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center mt-[28px] overflow-hidden">
-      <div className="w-[492px] h-[560px] rounded-[12px] bg-[#16171D] border border-[#474747] px-8 py-5">
-        <div className="flex flex-col space-y-4 text-white">
-          <div className="mb-[24px]">
+    <div className="flex min-h-screen items-center justify-center px-4 py-8 sm:py-10">
+      <div className="w-full max-w-[492px] rounded-[12px] border border-[#474747] bg-[#16171D] px-6 py-6 sm:px-8 sm:py-5">
+        <div className="flex flex-col text-white">
+          <div className="mb-6 sm:mb-[24px]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="12"
@@ -53,37 +53,42 @@ export default function Welcome() {
               />
             </svg>
           </div>
-          <div className="flex flex-col items-center justify-center text-center space-y-[21px]">
-            {/* Circular background with checkmark */}
+          <div className="flex flex-col items-center justify-center space-y-6 text-center sm:space-y-[21px]">
             <div className="flex items-center justify-center">
               <Image
                 src="/assets/register-success.png"
                 alt="Register success"
                 width={172}
                 height={172}
-                className="w-[172px] h-[172px] rounded-full"
+                className="h-32 w-32 rounded-full sm:h-[172px] sm:w-[172px]"
               />
             </div>
 
-            <div className="space-y-[10px]">
-              <div className="text-[30px] text-[#EDEDED] font-[600]">Welcome to Whalarora !</div>
-              <div className="text-[30px] font-[600] text-[#225FED]">{username}</div>
+            <div className="space-y-2 sm:space-y-[10px]">
+              <div className="text-2xl font-[600] text-[#EDEDED] sm:text-[30px]">
+                Welcome to Whalarora !
+              </div>
+              <div className="text-2xl font-[600] text-[#225FED] sm:text-[30px]">
+                {username}
+              </div>
             </div>
           </div>
-          <div className="space-y-[47px]">
-            <div className="text-[16px] text-center font-[400] text-[#7E7E7E]">
-              Your account has been successfully created. <br />
-              Get $10,000 in your demo account now and start trading with no risk free!
+          <div className="mt-8 space-y-6 sm:mt-[47px] sm:space-y-[47px]">
+            <div className="space-y-2 text-center text-sm font-[400] text-[#7E7E7E] sm:space-y-0 sm:text-[16px]">
+              <p>Your account has been successfully created.</p>
+              <p>
+                Get $10,000 in your demo account now and start trading with no risk free!
+              </p>
             </div>
 
             <Button
-              className="w-[428px] h-[48px] rounded-[12px] cursor-pointer text-[18px] disabled:opacity-50 disabled:cursor-not-allowed bg-[#225FED] flex items-center justify-center"
+              className="flex h-12 w-full items-center justify-center rounded-[12px] bg-[#225FED] text-[18px] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:h-[48px]"
               onClick={handleGetStarted}
               disabled={isNavigating}
             >
               {isNavigating ? (
                 <>
-                  <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                  <Loader2 className="mr-2 h-6 w-6 animate-spin sm:h-8 sm:w-8" />
                   Loading...
                 </>
               ) : (
@@ -96,3 +101,4 @@ export default function Welcome() {
     </div>
   );
 }
+
