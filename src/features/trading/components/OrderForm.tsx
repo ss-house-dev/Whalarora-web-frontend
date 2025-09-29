@@ -321,7 +321,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                     onQuickAdd?.(1000);
                   }}
                 >
-                  +1000
+                  +1,000
                 </button>
                 <button
                   className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
@@ -330,7 +330,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                     onQuickAdd?.(10000);
                   }}
                 >
-                  +10000
+                  +10,000
                 </button>
                 <button
                   className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
