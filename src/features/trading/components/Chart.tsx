@@ -45,17 +45,6 @@ const DEFAULT_INTERVAL = '15m'; // 1m/5m/15m/1h supported
 const AXIS_BASE_INT_DIGITS = 6; // supports up to 999,999 before widening
 const AXIS_DECIMALS_WIDTH = 2; // pad width for up to 8 decimals
 
-function intervalToMs(interval: string): number {
-  const m = interval.match(/^(\d+)([mhd])$/i);
-  if (!m) return 60_000; // default 1m
-  const n = parseInt(m[1], 10);
-  const u = m[2].toLowerCase();
-  if (u === 'm') return n * 60_000;
-  if (u === 'h') return n * 3_600_000;
-  if (u === 'd') return n * 86_400_000;
-  return 60_000;
-}
-
 function parseSymbol(coinValue: string) {
   // input example: BINANCE:BTCUSDT -> BTCUSDT
   const v = coinValue.replace('BINANCE:', '').toUpperCase();
@@ -76,12 +65,32 @@ interface BinanceExchangeInfo {
   symbols?: BinanceSymbolInfo[];
 }
 
-interface BinanceTradeMessage {
-  p: string;
-  q?: string;
-  T: number;
-  E?: number;
+interface BinanceKlineData {
+  e: 'kline';
+  E: number;
+  s: string;
+  k: {
+    t: number;
+    T: number;
+    s: string;
+    i: string;
+    f: number;
+    L: number;
+    o: string;
+    c: string;
+    h: string;
+    l: string;
+    v: string;
+    n: number;
+    x: boolean;
+    q: string;
+    V: string;
+    Q: string;
+    B: string;
+  };
 }
+
+type BinanceKlineMessage = BinanceKlineData | { stream: string; data: BinanceKlineData };
 
 async function fetchPrecision(symbol: string): Promise<number> {
   try {
@@ -197,7 +206,9 @@ const isIntradayInterval = (v: string) => ['1m', '5m', '15m', '1h', '4h'].includ
 
 type TimeWithTimestamp = { timestamp: UTCTimestamp };
 
-function isTimeWithTimestamp(value: Time | BusinessDay | TimeWithTimestamp): value is TimeWithTimestamp {
+function isTimeWithTimestamp(
+  value: Time | BusinessDay | TimeWithTimestamp
+): value is TimeWithTimestamp {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -225,6 +236,11 @@ function toUnixSeconds(time: Time): number | null {
   return null;
 }
 
+function resolveTimestamp(time: Time): UTCTimestamp | null {
+  const unix = toUnixSeconds(time);
+  return unix == null ? null : (unix as UTCTimestamp);
+}
+
 // Crosshair/time tooltip formatter: always UTC+7 as YYYY/MM/DD HH:mm
 function timeFormatterUTC7(time: Time): string {
   const ts = toUnixSeconds(time);
@@ -249,9 +265,8 @@ const AdvancedChart = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const lastBarRef = useRef<CandlestickData | null>(null);
   const lastBarTimeRef = useRef<UTCTimestamp | null>(null);
-  const intervalMsRef = useRef<number>(intervalToMs(DEFAULT_INTERVAL));
   const barsRef = useRef<CandlestickData[]>([]);
-  const volAggRef = useRef<number>(0);
+  const volumeHistoryRef = useRef<Map<UTCTimestamp, number>>(new Map());
   const runSeqRef = useRef(0);
   // baseline for computing compact, fixed-width price labels
   const baseIntDigitsRef = useRef<number>(AXIS_BASE_INT_DIGITS);
@@ -270,7 +285,6 @@ const AdvancedChart = () => {
   const [showVolume] = useState<boolean>(true);
   const setIntervalSafe = (v: string) => {
     setIntervalState(v);
-    intervalMsRef.current = intervalToMs(v);
   };
   const [ready, setReady] = useState(false);
 
@@ -505,6 +519,19 @@ const AdvancedChart = () => {
       // increment run sequence to invalidate older async work
       const myRun = ++runSeqRef.current;
 
+      // Reset cached state so new intervals do not reuse stale bars
+      barsRef.current = [];
+      lastBarRef.current = null;
+      lastBarTimeRef.current = null;
+      volumeHistoryRef.current.clear();
+      candle.setData([]);
+      if (lineRef.current) {
+        lineRef.current.setData([]);
+      }
+      if (volumeRef.current) {
+        volumeRef.current.setData([]);
+      }
+
       // Apply immediate axis/series format using cached precision (fast render)
       const getCachedPrecision = (): number => {
         try {
@@ -580,7 +607,7 @@ const AdvancedChart = () => {
       }
 
       // Connect realtime WS immediately for faster first updates
-      const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@trade`;
+      const wsUrl = `wss://stream.binance.com:9443/ws/${lc}@kline_${interval}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -591,54 +618,78 @@ const AdvancedChart = () => {
         if (!series) return;
         try {
           if (typeof ev.data !== 'string') return;
-          const parsed = JSON.parse(ev.data) as BinanceTradeMessage;
-          const price = Number.parseFloat(parsed.p);
-          const tMs: number = parsed.T || parsed.E || Date.now();
-          if (!isFinite(price) || price <= 0) return;
+          const payload = JSON.parse(ev.data) as BinanceKlineMessage;
+          const message = 'data' in payload ? payload.data : payload;
+          if (!message || message.e !== 'kline') return;
+          const k = message.k;
+          if (!k || k.i !== interval) return;
 
-          const intervalMs = intervalMsRef.current;
-          const barStartMs = Math.floor(tMs / intervalMs) * intervalMs;
-          const barTime = Math.floor(barStartMs / 1000) as UTCTimestamp;
+          const open = Number.parseFloat(k.o);
+          const high = Number.parseFloat(k.h);
+          const low = Number.parseFloat(k.l);
+          const close = Number.parseFloat(k.c);
+          if (![open, high, low, close].every((v) => Number.isFinite(v))) return;
 
-          let bar = lastBarRef.current;
-          if (!bar || (lastBarTimeRef.current ?? 0) < barTime) {
-            bar = {
-              time: barTime,
-              open: price,
-              high: price,
-              low: price,
-              close: price,
-            };
-            lastBarRef.current = bar;
-            lastBarTimeRef.current = barTime;
-            barsRef.current = [...barsRef.current, bar];
-            const initialVolume = parsed.q ? Number.parseFloat(parsed.q) : 0;
-            volAggRef.current = Number.isFinite(initialVolume) ? initialVolume : 0;
+          const barTime = Math.floor(k.t / 1000) as UTCTimestamp;
+          const newBar: CandlestickData = { time: barTime, open, high, low, close };
+
+          const previousBars = barsRef.current;
+          const lastExisting = previousBars[previousBars.length - 1];
+          const lastExistingTs = lastExisting ? resolveTimestamp(lastExisting.time as Time) : null;
+          const isLatestBarUpdate = lastExistingTs == null || lastExistingTs <= barTime;
+          let nextBars: CandlestickData[];
+
+          if (lastExistingTs == null || lastExistingTs < barTime) {
+            nextBars = [...previousBars, newBar];
+            series.update(newBar);
+          } else if (lastExistingTs === barTime) {
+            nextBars = [...previousBars.slice(0, -1), newBar];
+            series.update(newBar);
           } else {
-            bar.close = price;
-            if (price > bar.high) bar.high = price;
-            if (price < bar.low) bar.low = price;
-            const arr = barsRef.current;
-            if (arr.length) arr[arr.length - 1] = { ...bar };
-            const incrementalVolume = parsed.q ? Number.parseFloat(parsed.q) : 0;
-            if (Number.isFinite(incrementalVolume)) {
-              volAggRef.current += incrementalVolume;
+            const adjusted = [...previousBars];
+            const idx = adjusted.findIndex((b) => resolveTimestamp(b.time as Time) === barTime);
+            if (idx >= 0) {
+              adjusted[idx] = newBar;
+              series.setData(adjusted);
+              nextBars = adjusted;
+            } else {
+              return;
             }
           }
 
-          series.update(bar);
-          if (lineRef.current && chartType === 'line') {
-            const linePoint: LineData = { time: bar.time, value: bar.close };
-            lineRef.current.update(linePoint);
+          barsRef.current = nextBars;
+          lastBarRef.current = newBar;
+          lastBarTimeRef.current = barTime;
+
+          const volumeValue = Number.parseFloat(k.v);
+          if (Number.isFinite(volumeValue)) {
+            volumeHistoryRef.current.set(barTime, volumeValue);
+            if (volumeRef.current && showVolume) {
+              if (isLatestBarUpdate) {
+                volumeRef.current.update({
+                  time: barTime,
+                  value: volumeValue,
+                  color: close >= open ? '#26a69a' : '#ef5350',
+                });
+              } else {
+                const volumeSeries: HistogramData[] = nextBars.map((bar) => {
+                  const resolved = resolveTimestamp(bar.time as Time);
+                  const ts = (resolved ?? (bar.time as UTCTimestamp)) as UTCTimestamp;
+                  return {
+                    time: ts,
+                    value: volumeHistoryRef.current.get(ts) ?? 0,
+                    color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
+                  };
+                });
+                volumeRef.current.setData(volumeSeries);
+              }
+            }
           }
-          if (volumeRef.current && showVolume) {
-            const volumePoint: HistogramData = {
-              time: bar.time,
-              value: volAggRef.current,
-              color: bar.close >= bar.open ? '#26a69a' : '#ef5350',
-            };
-            volumeRef.current.update(volumePoint);
+
+          if (lineRef.current && chartType === 'line' && isLatestBarUpdate) {
+            lineRef.current.update({ time: barTime, value: close });
           }
+
           recomputeIndicators();
         } catch {}
       };
@@ -760,13 +811,18 @@ const AdvancedChart = () => {
 
         // set volume from history
         if (volumeRef.current) {
-          const volData: HistogramData[] = rows.map((r) => ({
-            time: Math.floor(r[0] / 1000) as UTCTimestamp,
-            value: Number.parseFloat(r[5]),
-            color: Number.parseFloat(r[4]) >= Number.parseFloat(r[1]) ? '#26a69a' : '#ef5350',
-          }));
+          volumeHistoryRef.current.clear();
+          const volData: HistogramData[] = rows.map((r) => {
+            const time = Math.floor(r[0] / 1000) as UTCTimestamp;
+            const value = Number.parseFloat(r[5]);
+            volumeHistoryRef.current.set(time, value);
+            return {
+              time,
+              value,
+              color: Number.parseFloat(r[4]) >= Number.parseFloat(r[1]) ? '#26a69a' : '#ef5350',
+            };
+          });
           volumeRef.current.setData(volData);
-          volAggRef.current = volData[volData.length - 1]?.value ?? 0;
         }
 
         recomputeIndicators();
@@ -788,7 +844,14 @@ const AdvancedChart = () => {
         wsRef.current = null;
       }
     };
-  }, [selectedCoin.value, selectedCoin.label, interval, chartType, showVolume, recomputeIndicators]);
+  }, [
+    selectedCoin.value,
+    selectedCoin.label,
+    interval,
+    chartType,
+    showVolume,
+    recomputeIndicators,
+  ]);
 
   // 3) Apply simple visibility/style toggles without reloading data or sockets
   useEffect(() => {
