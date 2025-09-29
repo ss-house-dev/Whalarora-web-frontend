@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
+  AlertDialogSubtext,
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog-coin';
@@ -85,6 +86,23 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     options: ('CANCEL' | 'KEEP_OPEN')[];
     originalPayload: OrderPayload;
   } | null>(null);
+
+  const [dialogMessage, dialogSubtext] = useMemo<[string | undefined, string | undefined]>(() => {
+    if (!pendingOrder?.message) {
+      return [undefined, undefined];
+    }
+
+    const parts = pendingOrder.message
+      .split(/\r?\n/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length <= 1) {
+      return [parts[0], undefined];
+    }
+
+    return [parts[0], parts.slice(1).join('\n')];
+  }, [pendingOrder?.message]);
 
   const showAlert = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
     setAlertState({ message, type });
@@ -782,26 +800,26 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white mb-5">
-              {pendingOrder?.title || 'Confirm Transaction'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-300 whitespace-pre-line">
-              {pendingOrder?.message}
-            </AlertDialogDescription>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFB514]">
+                <span className="text-3xl font-semibold leading-none text-[#16171D]">?</span>
+              </div>
+              <AlertDialogTitle>{pendingOrder?.title || 'Confirm Transaction'}</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>Do you want to place an order ?</AlertDialogDescription>
+            <AlertDialogSubtext>The asset you want to buy is not available in market right now.</AlertDialogSubtext>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => handleConfirmationDecision('CANCEL')}
-              className="bg-gray-300 text-gray-700 hover:bg-gray-400 cursor-pointer"
-            >
-              CANCEL
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleConfirmationDecision('KEEP_OPEN')}
-              className="bg-[#309C7D] text-white hover:bg-[#28886C] cursor-pointer"
-            >
-              KEEP OPEN
-            </AlertDialogAction>
+            {pendingOrder?.options?.includes('KEEP_OPEN') && (
+              <AlertDialogAction onClick={() => handleConfirmationDecision('KEEP_OPEN')}>
+                Keep open
+              </AlertDialogAction>
+            )}
+            {pendingOrder?.options?.includes('CANCEL') && (
+              <AlertDialogCancel onClick={() => handleConfirmationDecision('CANCEL')}>
+                Cancel
+              </AlertDialogCancel>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
