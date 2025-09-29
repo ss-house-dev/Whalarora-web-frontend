@@ -216,7 +216,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <Input
             ref={inputRef}
             type="text"
-            className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
+            className="text-sm font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={() => {
               if (priceTab !== 'set') {
                 onPriceFocus();
@@ -286,7 +286,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 ref={amountInputRef}
                 placeholder={spendPlaceholder}
                 type="text"
-                className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                className="text-sm bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
                 value={amount}
                 onChange={onAmountChange}
                 onFocus={onAmountFocus}
@@ -426,7 +426,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <Input
               type="text"
               placeholder={receivePlaceholder}
-              className="w-full text-[16px] font-normal rounded-lg p-1 text-right border-none outline-none"
+              className="w-full text-sm font-normal rounded-lg p-1 text-right border-none outline-none"
               value={receiveAmount}
               onChange={(e) => {
                 e.stopPropagation();
