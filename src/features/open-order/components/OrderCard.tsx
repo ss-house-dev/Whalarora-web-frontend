@@ -389,7 +389,7 @@ export default function OrderCard({ order, onDelete }: Props) {
   }
 
   const MetaLeft = () => (
-    <div className="flex items-center gap-3 ">
+    <div className="flex items-center gap-0 ">
       <div
         className={`w-12 h-7 px-2 rounded-lg inline-flex justify-center items-center 
         ${isBuy ? 'bg-[#217871]' : 'bg-[#D32F2F]'}`}
@@ -404,7 +404,7 @@ export default function OrderCard({ order, onDelete }: Props) {
 
   const TopRight = () => (
     <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
-      <div className="flex items-center gap-x-4 justify-end flex-wrap w-full min-w-0">
+      <div className="flex items-center gap-x-2.5 justify-end flex-wrap w-full min-w-0">
         <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
         <div className="flex items-center justify-between w-[213px] gap-2 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
@@ -426,7 +426,7 @@ export default function OrderCard({ order, onDelete }: Props) {
 
         {order.status === 'partial' ? (
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
-            <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
+            <div className="flex items-center gap-2.5 justify-end flex-wrap w-full min-w-0">
               <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
               <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
