@@ -398,14 +398,34 @@ const OrderForm: React.FC<OrderFormProps> = ({
       <div className="space-y-3">
         {/* arrow */}
         <div className="flex justify-center">
-          <Image
-            src="/assets/exchange.svg"
-            alt="Exchange Button"
-            width={28}
-            height={28}
-            className="cursor-pointer"
-            onClick={() => onExchangeClick?.()}
-          />
+          <div className="relative cursor-pointer group">
+            <div className="absolute inset-0 bg-transparent group-hover:bg-[#474747] group-active:bg-[#474747] rounded-lg transition-colors duration-200" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 28 28"
+              fill="none"
+              className="relative"
+              onClick={() => onExchangeClick?.()}
+            >
+              <rect x="0.5" y="0.5" width="27" height="27" rx="7.5" stroke="#474747" />
+              <path
+                d="M17.5 22.1666V7.76824C17.5 6.59482 17.5 6.0081 17.8601 5.86209C18.2202 5.71607 18.644 6.13095 19.4916 6.96068L22.1667 9.57931"
+                stroke="white"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M10.4999 5.83325V20.2316C10.4999 21.405 10.4999 21.9917 10.1398 22.1378C9.77971 22.2837 9.35591 21.8689 8.50829 21.0391L5.83325 18.4205"
+                stroke="white"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
         </div>
 
         {/* Receive */}
