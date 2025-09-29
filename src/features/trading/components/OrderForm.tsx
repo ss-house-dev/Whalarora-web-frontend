@@ -302,11 +302,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {type === 'buy' ? (
               <>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(500);
@@ -315,7 +315,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   +500
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(1000);
@@ -324,7 +324,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   +1,000
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(10000);
@@ -333,7 +333,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   +10,000
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onMax?.();
@@ -345,7 +345,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             ) : (
               <>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(25);
@@ -354,7 +354,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   25%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(50);
@@ -363,7 +363,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   50%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(75);
@@ -372,7 +372,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   75%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onMax?.();
