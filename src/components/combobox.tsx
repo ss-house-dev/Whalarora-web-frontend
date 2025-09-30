@@ -528,20 +528,20 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
       </svg>
 
       <div className="flex items-center px-2 sm:px-3 flex-1 min-w-0 gap-2 sm:gap-2 md:gap-3 lg:gap-4 sm:justify-start justify-end">
-        <div className="text-[#00D4AA] font-[400] text-[16px] sm:text-[18px] md:text-[20px] whitespace-nowrap flex-shrink-0 tabular-nums">
+        <div className="text-[#2FACA2] text-xl whitespace-nowrap flex-shrink-0 tabular-nums">
           {tickerData ? tickerData.lastPrice : '--'}
         </div>
 
         <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h High</span>
-          <span className="text-white text-[12px] font-medium whitespace-nowrap tabular-nums">
+          <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h High</span>
+          <span className="text-white text-sm font-medium whitespace-nowrap tabular-nums">
             {tickerData ? tickerData.highPrice : '--'}
           </span>
         </div>
 
         <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h Low</span>
-          <span className="text-white text-[12px] font-medium whitespace-nowrap tabular-nums">
+          <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h Low</span>
+          <span className="text-white text-sm font-medium whitespace-nowrap tabular-nums">
             {tickerData ? tickerData.lowPrice : '--'}
           </span>
         </div>
