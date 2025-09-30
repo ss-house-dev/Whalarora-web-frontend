@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import Image from 'next/image';
@@ -33,6 +33,14 @@ interface BinanceExchangeInfo {
 
 interface CombinedComboboxProps {
   className?: string;
+}
+
+interface TickerData {
+  lastPrice: string;
+  highPrice: string;
+  lowPrice: string;
+  volume: string;
+  quoteVolume: string;
 }
 
 const BTCIcon = ({ size = 28 }: { size?: number }) => (
@@ -160,6 +168,40 @@ const binanceCoins = [
   },
 ];
 
+// Format helpers for consistent display
+const formatPrice = (value: number): string => {
+  if (value >= 1000) {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  } else if (value >= 1) {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    });
+  } else if (value >= 0.01) {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 6,
+    });
+  } else {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 6,
+      maximumFractionDigits: 8,
+    });
+  }
+};
+
+const formatVolume = (value: number): string => {
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const SNAPSHOT_REFRESH_MS = 5000;
+
 export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const { selectedCoin, setSelectedCoin } = useCoinContext();
   const [open, setOpen] = React.useState(false);
@@ -167,11 +209,12 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const [loadingPairs, setLoadingPairs] = React.useState<boolean>(true);
   const [searchValue, setSearchValue] = React.useState<string>('');
   const listRef = React.useRef<HTMLDivElement>(null);
+  const [tickerData, setTickerData] = React.useState<TickerData | null>(null);
 
   const fetchUSDTPairs = async () => {
     try {
       const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-      const data = (await response.json()) as BinanceExchangeInfo;
+      const data: BinanceExchangeInfo = await response.json();
       const usdtPairs: USDTPair[] = data.symbols
         .filter((symbol) => symbol.quoteAsset === 'USDT' && symbol.status === 'TRADING')
         .map((symbol) => ({
@@ -184,13 +227,12 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         localStorage.setItem('wl_usdtPairs_v1', JSON.stringify(usdtPairs));
       } catch {}
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error fetching USDT pairs:', err);
     }
     setLoadingPairs(false);
   };
 
   React.useEffect(() => {
-    // hydrate from cache for instant list
     try {
       const cached = localStorage.getItem('wl_usdtPairs_v1');
       if (cached) {
@@ -201,7 +243,6 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         }
       }
     } catch {}
-    // fetch latest in background
     fetchUSDTPairs();
   }, []);
 
@@ -210,6 +251,159 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
       listRef.current.scrollTop = 0;
     }
   }, [searchValue]);
+  React.useEffect(() => {
+    if (!selectedCoin.value) {
+      setTickerData(null);
+      return;
+    }
+
+    let isActive = true;
+    const cleanSymbol = selectedCoin.value.replace('BINANCE:', '');
+    const lowerSymbol = cleanSymbol.toLowerCase();
+
+    setTickerData(null);
+
+    const applyTickerUpdate = (
+      payload: {
+        lastPrice?: string | number;
+        highPrice?: string | number;
+        lowPrice?: string | number;
+        volume?: string | number;
+        quoteVolume?: string | number;
+        c?: string;
+        h?: string;
+        l?: string;
+        v?: string;
+        q?: string;
+      },
+      options: { includeVolumes?: boolean } = {}
+    ) => {
+      const { includeVolumes = true } = options;
+
+      const lastPrice = Number(payload.lastPrice ?? payload.c);
+      const highPrice = Number(payload.highPrice ?? payload.h);
+      const lowPrice = Number(payload.lowPrice ?? payload.l);
+
+      if (
+        !Number.isFinite(lastPrice) ||
+        !Number.isFinite(highPrice) ||
+        !Number.isFinite(lowPrice)
+      ) {
+        return;
+      }
+
+      const volumeRaw = Number(payload.volume ?? payload.v);
+      const quoteVolumeRaw = Number(payload.quoteVolume ?? payload.q);
+      const formattedVolume = Number.isFinite(volumeRaw) ? formatVolume(volumeRaw) : null;
+      const formattedQuoteVolume = Number.isFinite(quoteVolumeRaw)
+        ? formatVolume(quoteVolumeRaw)
+        : null;
+
+      if (includeVolumes && formattedVolume && formattedQuoteVolume) {
+        const next: TickerData = {
+          lastPrice: formatPrice(lastPrice),
+          highPrice: formatPrice(highPrice),
+          lowPrice: formatPrice(lowPrice),
+          volume: formattedVolume,
+          quoteVolume: formattedQuoteVolume,
+        };
+
+        setTickerData((prev) => {
+          if (
+            prev &&
+            prev.lastPrice === next.lastPrice &&
+            prev.highPrice === next.highPrice &&
+            prev.lowPrice === next.lowPrice &&
+            prev.volume === next.volume &&
+            prev.quoteVolume === next.quoteVolume
+          ) {
+            return prev;
+          }
+
+          return next;
+        });
+
+        return;
+      }
+
+      setTickerData((prev) => {
+        const next: TickerData = {
+          lastPrice: formatPrice(lastPrice),
+          highPrice: formatPrice(highPrice),
+          lowPrice: formatPrice(lowPrice),
+          volume: prev?.volume ?? '--',
+          quoteVolume: prev?.quoteVolume ?? '--',
+        };
+
+        if (
+          prev &&
+          prev.lastPrice === next.lastPrice &&
+          prev.highPrice === next.highPrice &&
+          prev.lowPrice === next.lowPrice &&
+          prev.volume === next.volume &&
+          prev.quoteVolume === next.quoteVolume
+        ) {
+          return prev;
+        }
+
+        return next;
+      });
+    };
+
+    const fetchTickerSnapshot = async () => {
+      try {
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/24hr?symbol=${cleanSymbol}`,
+          {
+            cache: 'no-store',
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ticker: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!isActive) return;
+        applyTickerUpdate(data);
+      } catch (error) {
+        console.error('Error fetching ticker snapshot:', error);
+      }
+    };
+
+    fetchTickerSnapshot();
+
+    const snapshotInterval = window.setInterval(() => {
+      if (!isActive) return;
+      fetchTickerSnapshot();
+    }, SNAPSHOT_REFRESH_MS);
+
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${lowerSymbol}@ticker`);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected for', lowerSymbol);
+    };
+
+    ws.onmessage = (event) => {
+      if (!isActive) {
+        return;
+      }
+      const data = JSON.parse(event.data);
+      applyTickerUpdate(data, { includeVolumes: false });
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket closed for', lowerSymbol);
+    };
+
+    return () => {
+      isActive = false;
+      window.clearInterval(snapshotInterval);
+      ws.close();
+    };
+  }, [selectedCoin.value]);
 
   const allCoins = pairs.map((pair) => {
     const matchedCoin = binanceCoins.find((coin) => coin.value === `BINANCE:${pair.symbol}`);
@@ -289,7 +483,7 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
           <Command>
             <CommandInput value={searchValue} onValueChange={setSearchValue} />
             <CommandList ref={listRef} className="max-h-[280px]">
-              <CommandEmpty>{loadingPairs ? 'Loading coins…' : 'Coin not found'}</CommandEmpty>
+              <CommandEmpty>{loadingPairs ? 'Loading coins...' : 'Coin not found'}</CommandEmpty>
               <CommandGroup>
                 {coins.map((coin) => (
                   <CommandItem
@@ -322,7 +516,6 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         </PopoverContent>
       </Popover>
 
-      {/* Divider - แสดงเสมอ */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="3"
@@ -334,44 +527,42 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      {/* Data section - Responsive visibility */}
       <div className="flex items-center px-2 sm:px-3 flex-1 min-w-0 gap-2 sm:gap-2 md:gap-3 lg:gap-4 sm:justify-start justify-end">
-        {/* Last Price - แสดงเสมอ และชิดขวาเมื่อจอเล็ก */}
-        <div className="text-[#00D4AA] font-[400] text-[16px] sm:text-[18px] md:text-[20px] whitespace-nowrap flex-shrink-0">
-          --
+        <div className="text-[#00D4AA] font-[400] text-[16px] sm:text-[18px] md:text-[20px] whitespace-nowrap flex-shrink-0 tabular-nums">
+          {tickerData ? tickerData.lastPrice : '--'}
         </div>
 
-        {/* 24h High - แสดงตั้งแต่ sm ขึ้นไป */}
         <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
           <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h High</span>
-          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap tabular-nums">
+            {tickerData ? tickerData.highPrice : '--'}
+          </span>
         </div>
 
-        {/* 24h Low - แสดงตั้งแต่ sm ขึ้นไป */}
         <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
           <span className="text-[#8B8E93] text-[10px] whitespace-nowrap">24h Low</span>
-          <span className="text-white text-[12px] font-medium whitespace-nowrap">--</span>
+          <span className="text-white text-[12px] font-medium whitespace-nowrap tabular-nums">
+            {tickerData ? tickerData.lowPrice : '--'}
+          </span>
         </div>
 
-        {/* 24h Volume (BTC) - แสดงตั้งแต่ sm ขึ้นไป */}
-        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+        {/* <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
           <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
-            24h Vol (BTC)
+            24h Vol ({selectedCoin.label.split('/')[0]})
           </span>
-          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
-            --
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap tabular-nums">
+            {tickerData ? tickerData.volume : '--'}
           </span>
         </div>
 
-        {/* 24h Volume (USDT) - แสดงตั้งแต่ sm ขึ้นไป */}
         <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
           <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
             24h Vol (USDT)
           </span>
-          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap">
-            --
+          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap tabular-nums">
+            {tickerData ? tickerData.quoteVolume : '--'}
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
