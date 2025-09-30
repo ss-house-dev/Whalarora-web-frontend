@@ -628,9 +628,9 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
             ) : (
               <button
                 onClick={handleSignInClick}
-                className="text-white text-sm px-4 py-2 rounded-lg bg-[#1F4293] hover:bg-[#17306B] transition-all duration-300"
+                className="text-white text-sm px-4 py-2 rounded-lg bg-[#225FED] transition-all duration-300 cursor-pointer"
               >
-                Sign In
+                Log in
               </button>
             )}
           </div>
@@ -639,26 +639,33 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
       {/* Alert Dialog */}
       <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
-        <AlertDialogContent>
-        <AlertDialogHeader>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#D84C4C]">
-              <span className="text-3xl font-semibold leading-none text-[#16171D]">!</span>
-            </div>
-            <AlertDialogTitle>Reset your wallet ?</AlertDialogTitle>
-          </div>
-          <AlertDialogDescription>
-            If you continue, all settings, history and holding assets will be removed. Your Demo Account will
-            restart with default balance.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancelReset}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmReset} disabled={resetPortfolioMutation.isPending}>
-            {resetPortfolioMutation.isPending ? 'Reset' : 'Reset'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#D84C4C]">
+                <span className="text-3xl font-semibold leading-none text-[#16171D]">!</span>
+              </div>
+
+              <AlertDialogTitle>Reset your wallet ?</AlertDialogTitle>
+            </div>
+
+            <AlertDialogDescription>
+              If you continue, all settings, history and holding assets will be removed. Your Demo
+              Account will restart with default balance.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelReset}>Cancel</AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={handleConfirmReset}
+              disabled={resetPortfolioMutation.isPending}
+            >
+              {resetPortfolioMutation.isPending ? 'Reset' : 'Reset'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );
