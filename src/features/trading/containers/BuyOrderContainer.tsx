@@ -90,28 +90,13 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const [pendingOrder, setPendingOrder] = useState<{
     orderRef: string;
-    message: string;
-    title?: string;
+    variant: 'CONFIRMATION' | 'INSUFFICIENT';
+    title: string;
+    description: string;
+    subtext?: string;
     options: ('CANCEL' | 'KEEP_OPEN')[];
     originalPayload: OrderPayload;
   } | null>(null);
-
-  const [dialogMessage, dialogSubtext] = useMemo<[string | undefined, string | undefined]>(() => {
-    if (!pendingOrder?.message) {
-      return [undefined, undefined];
-    }
-
-    const parts = pendingOrder.message
-      .split(/\r?\n/)
-      .map((part) => part.trim())
-      .filter(Boolean);
-
-    if (parts.length <= 1) {
-      return [parts[0], undefined];
-    }
-
-    return [parts[0], parts.slice(1).join('\n')];
-  }, [pendingOrder?.message]);
 
   const showAlert = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
     setAlertState({ message, type });
@@ -155,21 +140,33 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     onSuccess: (data) => {
       console.log('BuyOrderContainer: Buy order response:', data);
       if (data.requiresConfirmation) {
-        let confirmationMessage = '';
-        let dialogTitle = '';
-        if (data.message === 'คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ') {
-          dialogTitle = 'Confirm Transaction';
-          confirmationMessage = `The ${coinSymbol} is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.`;
-        } else if (
-          data.message ===
-          'สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient'
-        ) {
-          dialogTitle = `Not enough ${coinSymbol}`;
-          confirmationMessage = `The ${coinSymbol} you want to buy is not available in market right now.\nDo you want to place an Order?`;
-        } else {
-          dialogTitle = 'Confirm Transaction';
-          confirmationMessage =
-            data.message || `Do you want to proceed with this ${coinSymbol} transaction?`;
+        const normalizedMessage = data.message?.trim() ?? '';
+        const messageParts = normalizedMessage
+          ? normalizedMessage
+              .split(/\r?\n/)
+              .map((part) => part.trim())
+              .filter(Boolean)
+          : [];
+
+        const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
+        const defaultDescription = 'Do you want to place an order ?';
+
+        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage ? 'INSUFFICIENT' : 'CONFIRMATION';
+        let dialogTitle =
+          variant === 'INSUFFICIENT' ? `Not enough ${coinSymbol}` : 'Order confirmation';
+        let description = defaultDescription;
+        let subtext: string | undefined =
+          variant === 'INSUFFICIENT'
+            ? 'The asset you want to buy is not available in market right now.'
+            : 'Your order is ready. Tap \'Confirm\' to finalize your order.';
+
+        if (normalizedMessage && !normalizedMessage.includes('confirm=true')) {
+          if (messageParts.length === 1) {
+            subtext = messageParts[0] || undefined;
+          } else if (messageParts.length > 1) {
+            description = messageParts[0] || defaultDescription;
+            subtext = messageParts.slice(1).join(' ') || undefined;
+          }
         }
 
         const sessionUser = session?.user as SessionUser | undefined;
@@ -177,8 +174,10 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
         setPendingOrder({
           orderRef: data.orderRef,
-          message: confirmationMessage,
+          variant,
           title: dialogTitle,
+          description,
+          subtext,
           options: data.options || ['CANCEL', 'KEEP_OPEN'],
           originalPayload: {
             userId,
@@ -250,8 +249,9 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const confirmPayload = {
       ...pendingOrder.originalPayload,
       confirm: true,
-      onInsufficient: 'KEEP_OPEN',
-      keepOpen: true,
+      ...(pendingOrder.variant === 'INSUFFICIENT'
+        ? { onInsufficient: 'KEEP_OPEN', keepOpen: true }
+        : {}),
     };
 
     createBuyOrderMutation.mutate(confirmPayload);
@@ -791,6 +791,18 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
   const receiveCurrency = coinSymbol;
 
+  const dialogDescription =
+    pendingOrder?.description ?? 'Do you want to place an order ?';
+  const dialogSubtext =
+    pendingOrder?.subtext ??
+    (pendingOrder
+      ? pendingOrder.variant === 'INSUFFICIENT'
+        ? 'The asset you want to buy is not available in market right now.'
+        : 'Your order is ready. Tap \'Confirm\' to finalize your order.'
+      : undefined);
+  const primaryActionLabel =
+    pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
+
   return (
     <div>
       {alertState && (
@@ -815,15 +827,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFB514]">
                 <span className="text-3xl font-semibold leading-none text-[#16171D]">?</span>
               </div>
-              <AlertDialogTitle>{pendingOrder?.title || 'Confirm Transaction'}</AlertDialogTitle>
+              <AlertDialogTitle>{pendingOrder?.title || 'Order confirmation'}</AlertDialogTitle>
             </div>
-            <AlertDialogDescription>Do you want to place an order ?</AlertDialogDescription>
-            <AlertDialogSubtext>The asset you want to buy is not available in market right now.</AlertDialogSubtext>
+            <AlertDialogDescription>{dialogDescription}</AlertDialogDescription>
+            {dialogSubtext && <AlertDialogSubtext>{dialogSubtext}</AlertDialogSubtext>}
           </AlertDialogHeader>
           <AlertDialogFooter>
             {pendingOrder?.options?.includes('KEEP_OPEN') && (
               <AlertDialogAction onClick={() => handleConfirmationDecision('KEEP_OPEN')}>
-                Keep open
+                {primaryActionLabel}
               </AlertDialogAction>
             )}
             {pendingOrder?.options?.includes('CANCEL') && (

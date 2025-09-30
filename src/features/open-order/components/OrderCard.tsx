@@ -187,10 +187,9 @@ export default function OrderCard({ order, onDelete }: Props) {
     });
   };
 
-  const formattedDesktopDateTime = formatDateTimeWithMonthAbbr(
-    order.createdAt ?? order.datetime,
-    { includeSeconds: true }
-  );
+  const formattedDesktopDateTime = formatDateTimeWithMonthAbbr(order.createdAt ?? order.datetime, {
+    includeSeconds: true,
+  });
   const displayDesktopDateTime = formattedDesktopDateTime || order.datetime;
 
   const ConfirmCloseDialog = ({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) => {
@@ -389,16 +388,19 @@ export default function OrderCard({ order, onDelete }: Props) {
   }
 
   const MetaLeft = () => (
-    <div className="flex items-center gap-0 ">
+    <div className="flex w-[9.5rem] shrink-0 items-center gap-0 overflow-hidden">
       <div
-        className={`w-12 h-7 px-2 rounded-lg inline-flex justify-center items-center 
-        ${isBuy ? 'bg-[#217871]' : 'bg-[#D32F2F]'}`}
+        className={`inline-flex h-7 w-12 items-center justify-center rounded-lg px-2 ${
+          isBuy ? 'bg-[#217871]' : 'bg-[#D32F2F]'
+        }`}
       >
-        <span className="text-white text-xs font-normal leading-none ">
+        <span className="text-white text-xs font-normal leading-none">
           {isBuy ? 'Buy' : 'Sell'}
         </span>
       </div>
-      <span className="text-white text-sm font-medium mt-1 ml-5.5 mb-0.5">{order.pair}</span>
+      <span className="ml-5.5 mt-1 mb-0.5 block truncate text-white text-sm font-medium leading-none">
+        {order.pair}
+      </span>
     </div>
   );
 
@@ -427,7 +429,9 @@ export default function OrderCard({ order, onDelete }: Props) {
         {order.status === 'partial' ? (
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
             <div className="flex items-center gap-2.5 justify-end flex-wrap w-full min-w-0">
-              <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
+              <span className="text-slate-400 text-xs whitespace-nowrap">
+                {displayDesktopDateTime}
+              </span>
               <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
@@ -462,7 +466,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         )}
 
         {order.status !== 'partial' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs mt-2">
+          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
             <span className="leading-none">Pending</span>
           </div>
