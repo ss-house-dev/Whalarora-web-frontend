@@ -151,14 +151,16 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
         const defaultDescription = 'Do you want to place an order ?';
 
-        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage ? 'INSUFFICIENT' : 'CONFIRMATION';
-        let dialogTitle =
+        const variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
+          ? 'INSUFFICIENT'
+          : 'CONFIRMATION';
+        const dialogTitle =
           variant === 'INSUFFICIENT' ? `Not enough ${coinSymbol}` : 'Order confirmation';
         let description = defaultDescription;
         let subtext: string | undefined =
           variant === 'INSUFFICIENT'
             ? 'The asset you want to buy is not available in market right now.'
-            : 'Your order is ready. Tap \'Confirm\' to finalize your order.';
+            : "Your order is ready. Tap 'Confirm' to finalize your order.";
 
         if (normalizedMessage && !normalizedMessage.includes('confirm=true')) {
           if (messageParts.length === 1) {
@@ -791,17 +793,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
   const receiveCurrency = coinSymbol;
 
-  const dialogDescription =
-    pendingOrder?.description ?? 'Do you want to place an order ?';
+  const dialogDescription = pendingOrder?.description ?? 'Do you want to place an order ?';
   const dialogSubtext =
     pendingOrder?.subtext ??
     (pendingOrder
       ? pendingOrder.variant === 'INSUFFICIENT'
         ? 'The asset you want to buy is not available in market right now.'
-        : 'Your order is ready. Tap \'Confirm\' to finalize your order.'
+        : "Your order is ready. Tap 'Confirm' to finalize your order."
       : undefined);
-  const primaryActionLabel =
-    pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
+  const primaryActionLabel = pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
 
   return (
     <div>
