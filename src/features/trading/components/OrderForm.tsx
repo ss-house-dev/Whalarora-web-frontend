@@ -252,7 +252,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       </div>
       {/* Available Balance */}
       <div className="flex justify-between mt-4 mb-[6px] px-3">
-        <div className="text-xs text-[#A4A4A4]">Available Balance</div>
+        <div className="text-xs text-[#A4A4A4]">Balance</div>
         <div className="flex flex-row gap-1 text-xs text-[#A4A4A4]">
           <div>{availableBalance}</div>
           <div>{displayBalanceCurrency}</div>

@@ -41,7 +41,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 // Password strength requirements
 const passwordRequirements = [
-  { regex: /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/, text: 'English only (no spaces)' },
+  { regex: /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/, text: 'English only' },
   { regex: /[A-Z]/, text: 'At least one uppercase letter (A–Z)' },
   { regex: /[a-z]/, text: 'At least one lowercase letter (a–z)' },
   { regex: /\d/, text: 'At least one number (0–9)' },
