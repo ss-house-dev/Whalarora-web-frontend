@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
-import AlertBox from '@/components/ui/alert-box-sell';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -16,6 +16,7 @@ import {
   getSymbolPrecision,
   decimalsFromSize,
 } from '@/features/trading/utils/symbolPrecision';
+import AlertBox from '../../../components/ui/alert-box';
 
 interface UserWithId {
   id: string;
@@ -43,8 +44,14 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice, chartPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
-    useCoinContext();
+  const {
+    selectedCoin,
+    marketPrice,
+    chartPrice,
+    isPriceLoading,
+    priceDecimalPlaces,
+    orderFormSelection,
+  } = useCoinContext();
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -107,7 +114,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds: $${new Intl.NumberFormat('en-US', {
+          `Sell order completed successfully!\nProceeds: ${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(data.proceeds)}`
@@ -777,7 +784,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
             message={alertMessage}
             type={alertType}
             onClose={handleAlertClose}
-            duration={5000}
+            duration={3000}
           />
         </div>
       )}
