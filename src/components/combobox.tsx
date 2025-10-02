@@ -390,14 +390,6 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
       applyTickerUpdate(data, { includeVolumes: false });
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket closed for', lowerSymbol);
-    };
-
     return () => {
       isActive = false;
       window.clearInterval(snapshotInterval);

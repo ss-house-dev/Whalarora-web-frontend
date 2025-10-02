@@ -212,7 +212,7 @@ export default function OrderCard({ order, onDelete }: Props) {
             Do you want to close this order ?
           </AlertDialogDescription>
           {isMobileVariant ? (
-            <div className="w-72 p-4 bg-[#16171D] rounded-xl outline outline-1 outline-offset-[-1px] outline-[#474747] flex flex-col items-center gap-4">
+            <div className="w-72 p-4 bg-[#16171D] rounded-xl outline-offset-[-1px] outline-[#474747] flex flex-col items-center gap-4">
               <div className="flex flex-col items-center gap-3 pb-3 border-b border-[#474747]/60 w-full">
                 <div className="flex h-12 w-12 items-center justify-center text-[#C22727]">
                   <Trash2 size={60} strokeWidth={1.8} />
