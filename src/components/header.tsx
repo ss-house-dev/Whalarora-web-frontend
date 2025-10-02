@@ -552,7 +552,7 @@ export default function Header() {
                   onClick={toggleUserMenu}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3A8AF7] text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.45)] transition-transform cursor-pointer"
                 >
-                  ฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎฎ
+                  {userInitials}
                 </button>
 
                 {userMenuOpen && (
