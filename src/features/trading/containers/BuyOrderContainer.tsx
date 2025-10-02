@@ -158,7 +158,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
         const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
         const defaultDescription = 'Do you want to place an order ?';
-
         let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
           ? 'INSUFFICIENT'
           : 'CONFIRMATION';
