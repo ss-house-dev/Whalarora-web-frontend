@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
-import AlertBox from '@/components/ui/alert-box-sell';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -15,7 +15,9 @@ import {
   useSymbolPrecisions,
   getSymbolPrecision,
   decimalsFromSize,
+  formatAmountWithStep,
 } from '@/features/trading/utils/symbolPrecision';
+import AlertBox from '../../../components/ui/alert-box';
 
 interface UserWithId {
   id: string;
@@ -43,8 +45,14 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { selectedCoin, marketPrice, chartPrice, isPriceLoading, priceDecimalPlaces, orderFormSelection } =
-    useCoinContext();
+  const {
+    selectedCoin,
+    marketPrice,
+    chartPrice,
+    isPriceLoading,
+    priceDecimalPlaces,
+    orderFormSelection,
+  } = useCoinContext();
   const { data: session } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -71,6 +79,46 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const symbolPrecision = useMemo(
     () => getSymbolPrecision(precisionMap, coinSymbol, quoteSymbol),
     [precisionMap, coinSymbol, quoteSymbol]
+  );
+
+  const quoteSymbolPrecision = useMemo(() => {
+    if (!quoteSymbol || quoteSymbol === coinSymbol) return symbolPrecision;
+    if (quoteSymbol === 'USDT' || quoteSymbol === 'USD') return undefined;
+    return getSymbolPrecision(precisionMap, quoteSymbol, 'USDT');
+  }, [precisionMap, quoteSymbol, coinSymbol, symbolPrecision]);
+
+  const parseNumeric = useCallback((value: number | string | null | undefined) => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : undefined;
+    }
+    const normalized = value.replace(/,/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, []);
+
+  const formatCoinAmount = useCallback(
+    (value: number | string | null | undefined) =>
+      formatAmountWithStep(value, symbolPrecision, { fallbackDecimals: 6 }),
+    [symbolPrecision]
+  );
+
+  const formatQuoteAmount = useCallback(
+    (value: number | string | null | undefined) => {
+      if (quoteSymbol === 'USDT' || quoteSymbol === 'USD') {
+        const numeric = parseNumeric(value);
+        if (numeric === undefined) return '0.00';
+        return new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(numeric);
+      }
+
+      return formatAmountWithStep(value, quoteSymbolPrecision ?? symbolPrecision, {
+        fallbackDecimals: 6,
+      });
+    },
+    [parseNumeric, quoteSymbol, quoteSymbolPrecision, symbolPrecision]
   );
 
   const quantityPrecision = useMemo(() => {
@@ -107,14 +155,18 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds: $${new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).format(data.proceeds)}`
+          `Order Sell ${coinSymbol}/USDT\nReceived : ${formatQuoteAmount(data.proceeds)} ${quoteSymbol}`
         );
         setAlertType('success');
       } else {
-        setAlertMessage('Sell order created successfully!\nStatus: Pending');
+        const pendingCoinAmount = parseNumeric(sellAmount) ?? 0;
+        const pendingQuoteAmount = formatQuoteAmount(
+          (parseNumeric(price) ?? 0) * pendingCoinAmount
+        );
+
+        setAlertMessage(
+          `Order Sell ${coinSymbol}/USDT submitted successfully\nAmount Remaining : ${pendingQuoteAmount} ${quoteSymbol}\nStatus : Pending`
+        );
         setAlertType('info');
       }
       setShowAlert(true);
@@ -777,7 +829,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
             message={alertMessage}
             type={alertType}
             onClose={handleAlertClose}
-            duration={5000}
+            duration={3000}
           />
         </div>
       )}

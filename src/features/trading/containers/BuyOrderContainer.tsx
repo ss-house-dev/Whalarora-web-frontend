@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
-import AlertBox from '@/components/ui/alert-box';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -25,7 +25,9 @@ import {
   useSymbolPrecisions,
   getSymbolPrecision,
   decimalsFromSize,
+  formatAmountWithStep,
 } from '@/features/trading/utils/symbolPrecision';
+import AlertBox from '../../../components/ui/alert-box';
 
 interface AlertState {
   message: string;
@@ -122,6 +124,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [precisionMap, coinSymbol, quoteSymbol]
   );
 
+  const formatCoinAmount = useCallback(
+    (value: number | string | null | undefined) =>
+      formatAmountWithStep(value, symbolPrecision, { fallbackDecimals: 6 }),
+    [symbolPrecision]
+  );
+
   const quantityPrecision = useMemo(() => {
     const decimals =
       symbolPrecision?.quantityPrecision ??
@@ -151,14 +159,16 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
         const defaultDescription = 'Do you want to place an order ?';
 
-        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage ? 'INSUFFICIENT' : 'CONFIRMATION';
+        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
+          ? 'INSUFFICIENT'
+          : 'CONFIRMATION';
         let dialogTitle =
           variant === 'INSUFFICIENT' ? `Not enough ${coinSymbol}` : 'Order confirmation';
         let description = defaultDescription;
         let subtext: string | undefined =
           variant === 'INSUFFICIENT'
             ? 'The asset you want to buy is not available in market right now.'
-            : 'Your order is ready. Tap \'Confirm\' to finalize your order.';
+            : "Your order is ready. Tap 'Confirm' to finalize your order.";
 
         if (normalizedMessage && !normalizedMessage.includes('confirm=true')) {
           if (messageParts.length === 1) {
@@ -199,31 +209,31 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       if (data.filled && data.filled > 0) {
         const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ''));
         showAlert(
-          `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }).format(filledUSD)} USD submitted successfully`,
+          }).format(filledUSD)} USDT) submitted successfully`,
           'success'
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! Amount remaining: ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus: Pending`,
+          `Order Buy ${coinSymbol}/USDT submitted successfully \nAmount remaining : ${formatCoinAmount(data.remaining)} ${coinSymbol}.\nStatus : Pending`,
           'info'
         );
       } else {
-        let message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+        let message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }).format(usdAmount)} USD submitted successfully`;
+        }).format(usdAmount)} USDT) submitted successfully`;
 
         if (data.refund && data.refund > 0) {
           const actualSpent = usdAmount - data.refund;
-          message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(
             actualSpent
-          )} USD submitted successfully\nRefund: ${data.refund.toFixed(2)} USD`;
+          )} USDT) submitted successfully\nRefund: ${data.refund.toFixed(2)} USDT`;
         }
 
         showAlert(message, 'success');
@@ -791,17 +801,15 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
   const receiveCurrency = coinSymbol;
 
-  const dialogDescription =
-    pendingOrder?.description ?? 'Do you want to place an order ?';
+  const dialogDescription = pendingOrder?.description ?? 'Do you want to place an order ?';
   const dialogSubtext =
     pendingOrder?.subtext ??
     (pendingOrder
       ? pendingOrder.variant === 'INSUFFICIENT'
         ? 'The asset you want to buy is not available in market right now.'
-        : 'Your order is ready. Tap \'Confirm\' to finalize your order.'
+        : "Your order is ready. Tap 'Confirm' to finalize your order."
       : undefined);
-  const primaryActionLabel =
-    pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
+  const primaryActionLabel = pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
 
   return (
     <div>
@@ -811,7 +819,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
             message={alertState.message}
             type={alertState.type}
             onClose={closeAlert}
-            duration={5000}
+            duration={3000}
           />
         </div>
       )}
