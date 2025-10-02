@@ -30,25 +30,25 @@ export default function MarketOrderPage() {
   );
 
   return (
-    <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1.6fr)_360px] lg:items-start lg:gap-x-[20px] lg:gap-y-4">
-        <div className="order-1 lg:order-none lg:col-start-1 lg:row-start-1 lg:min-w-0">
+    <div className="mt-[20px] space-y-[20px] px-4 pb-8 min-[1408px]:px-[23px]">
+      <div className="flex flex-col gap-4 min-[1408px]:grid min-[1408px]:grid-cols-[minmax(0,1.6fr)_360px] min-[1408px]:items-start min-[1408px]:gap-x-[20px] min-[1408px]:gap-y-4">
+        <div className="order-1 min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-1 min-[1408px]:min-w-0">
           <CombinedCombobox className="w-full min-w-full" />
         </div>
 
-        <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-2 lg:min-w-0">
+        <div className="order-2 min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-2 min-[1408px]:min-w-0">
           <AdvancedChart />
         </div>
 
-        <div className="order-4 w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 lg:order-none lg:col-start-2 lg:row-start-2 lg:h-[508px]">
+        <div className="order-4 w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-2 min-[1408px]:h-[508px]">
           <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
         </div>
 
-        <div className="order-5 flex w-full justify-center lg:order-none lg:col-start-2 lg:row-start-3">
+        <div className="order-5 flex w-full justify-center min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-3">
           <MyAssetsWidgetContainer />
         </div>
 
-        <div className="order-6 w-full lg:order-none lg:col-start-1 lg:row-start-3 lg:min-w-0">
+        <div className="order-6 w-full min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-3 min-[1408px]:min-w-0">
           <div className="mb-10">
             <OrderTableContainer
               activeTab={activeTab}
@@ -58,7 +58,7 @@ export default function MarketOrderPage() {
           </div>
         </div>
 
-        <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-1">
+        <div className="order-3 min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-1">
           <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
         </div>
       </div>
