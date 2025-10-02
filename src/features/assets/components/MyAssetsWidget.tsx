@@ -279,7 +279,7 @@ export function MyAssetsWidget({
         </span>
 
         <span className="text-xs font-normal leading-none text-[#A4A4A4] font-['Alexandria'] pr-2">
-          Unrealized pnl (USDT)
+          Unrealized PnL (USDT)
         </span>
       </div>
 

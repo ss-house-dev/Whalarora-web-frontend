@@ -598,7 +598,7 @@ export function AssetCard(props: AssetCardProps) {
             </div>
 
             <div className="flex flex-col gap-1 sm:gap-2">
-              <span className="text-xs text-[#A4A4A4]">Unrealized PNL</span>
+              <span className="text-xs text-[#A4A4A4]">Unrealized PnL</span>
               <span
                 className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
                 style={{

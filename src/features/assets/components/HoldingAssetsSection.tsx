@@ -92,7 +92,7 @@ export default function HoldingAssetsSection({
         {hasData && (
           <div className="flex flex-col gap-3">
             {isDesktopLayout && (
-              <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[9px] uppercase tracking-[0.08em] text-[#A4A4A4]">
+              <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[10.5px] tracking-[0.08em] text-[#A4A4A4]">
                 <span className="text-left font-medium">Symbol</span>
                 <span className="justify-self-center text-center font-medium">
                   Current price (USDT)
