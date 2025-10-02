@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 import { useMemo } from 'react';
 
-import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
+import { useAllMarketPrices } from '../hooks/useAllMarketPrices';
 
 export type MyAssetsWidgetItem = {
   id: string | number;
@@ -121,77 +121,19 @@ const ArrowDownIcon = () => (
   </svg>
 );
 
-const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
-  const { marketPrice, isPriceLoading } = useMarketPrice(item.symbol);
-
-  const fallbackPrice =
-    typeof item.currentPrice === 'number' && Number.isFinite(item.currentPrice)
-      ? item.currentPrice
-      : typeof item.avgPrice === 'number' && Number.isFinite(item.avgPrice)
-        ? item.avgPrice
-        : 0;
-
-  const displayPrice = marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : fallbackPrice;
-
-  const realTimeValue = displayPrice * item.amount;
-
-  const costBasis =
-    typeof item.total === 'number' && Number.isFinite(item.total)
-      ? item.total
-      : typeof item.avgPrice === 'number' && Number.isFinite(item.avgPrice)
-        ? item.avgPrice * item.amount
-        : 0;
-
-  const realTimePnlValue = realTimeValue - costBasis;
-
-  const realTimePnlPct = costBasis > 0 ? realTimePnlValue / costBasis : 0;
-
+const MyAssetsWidgetCard = ({
+  item,
+  realTimePnlValue,
+  realTimePnlPct,
+}: {
+  item: MyAssetsWidgetItem;
+  realTimePnlValue: number;
+  realTimePnlPct: number;
+}) => {
   const trendClass = getTrendClassName(realTimePnlPct);
 
-  if (isPriceLoading) {
-    return (
-      <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4">
-        <div className="flex flex-1 items-center gap-3">
-          {item.iconSrc ? (
-            <Image
-              src={item.iconSrc}
-              alt={`${item.name} icon`}
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F7931A] text-sm font-semibold uppercase text-white">
-              {item.symbol.slice(0, 3)}
-            </div>
-          )}
-
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex items-center gap-1">
-              <span className="truncate text-sm font-medium leading-tight text-white">
-                {item.name}
-              </span>
-              {realTimePnlValue > 0 && <ArrowUpIcon />}
-              {realTimePnlValue < 0 && <ArrowDownIcon />}
-            </div>
-
-            <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
-              {formatAmount(item.amount, item.unit)}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-1 text-right">
-          <div className="h-5 w-20 animate-pulse rounded-md bg-gray-700" />
-
-          <div className="h-4 w-16 animate-pulse rounded-md bg-gray-700" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4">
+    <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4 transition-colors duration-200 hover:bg-[#2A2B35] active:bg-[#3B3C47] cursor-pointer">
       <div className="flex flex-1 items-center gap-3">
         {item.iconSrc ? (
           <Image
@@ -251,19 +193,40 @@ export function MyAssetsWidget({
 }: MyAssetsWidgetProps) {
   const hasItems = items.length > 0;
 
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      const bPnl = getComparablePnl(b.pnlValue);
+  const symbols = useMemo(() => items.map((item) => item.symbol), [items]);
+  const { prices: marketPrices, isLoading: arePricesLoading } = useAllMarketPrices(symbols);
 
-      const aPnl = getComparablePnl(a.pnlValue);
+  const sortedItems = useMemo(() => {
+    const itemsWithPnl = items.map((item) => {
+      const marketPriceString = marketPrices[item.symbol.toUpperCase()];
+      const marketPrice = marketPriceString ? parseFloat(marketPriceString) : item.currentPrice;
+
+      const displayPrice = Number.isFinite(marketPrice) ? marketPrice : item.currentPrice;
+      const realTimeValue = displayPrice * item.amount;
+      const costBasis =
+        typeof item.total === 'number' && Number.isFinite(item.total)
+          ? item.total
+          : (item.avgPrice ?? 0) * item.amount;
+      const realTimePnlValue = realTimeValue - costBasis;
+      const realTimePnlPct = costBasis > 0 ? realTimePnlValue / costBasis : 0;
+
+      return {
+        ...item,
+        realTimePnlValue,
+        realTimePnlPct,
+      };
+    });
+
+    return itemsWithPnl.sort((a, b) => {
+      const bPnl = getComparablePnl(b.realTimePnlValue);
+      const aPnl = getComparablePnl(a.realTimePnlValue);
 
       if (bPnl !== aPnl) {
         return bPnl - aPnl;
       }
-
       return b.name.localeCompare(a.name);
     });
-  }, [items]);
+  }, [items, marketPrices]);
 
   return (
     <div
@@ -297,7 +260,14 @@ export function MyAssetsWidget({
                 {!isLoading &&
                   !error &&
                   hasItems &&
-                  sortedItems.map((item) => <MyAssetsWidgetCard key={item.id} item={item} />)}
+                  sortedItems.map((item) => (
+                    <MyAssetsWidgetCard
+                      key={item.id}
+                      item={item}
+                      realTimePnlValue={item.realTimePnlValue}
+                      realTimePnlPct={item.realTimePnlPct}
+                    />
+                  ))}
               </div>
             </div>
           </div>
