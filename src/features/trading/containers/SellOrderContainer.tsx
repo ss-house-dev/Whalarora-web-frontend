@@ -114,14 +114,14 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
       if (data.filled > 0) {
         setAlertMessage(
-          `Sell order completed successfully!\nProceeds: ${new Intl.NumberFormat('en-US', {
+          `Sell order completed successfully !\nProceeds : ${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(data.proceeds)}`
         );
         setAlertType('success');
       } else {
-        setAlertMessage('Sell order created successfully!\nStatus: Pending');
+        setAlertMessage('Sell order created successfully!\nStatus : Pending');
         setAlertType('info');
       }
       setShowAlert(true);

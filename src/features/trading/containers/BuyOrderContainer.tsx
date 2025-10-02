@@ -202,31 +202,31 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       if (data.filled && data.filled > 0) {
         const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ''));
         showAlert(
-          `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }).format(filledUSD)} USD submitted successfully`,
+          }).format(filledUSD)} USDT) submitted successfully`,
           'success'
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! Amount remaining : ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus : Pending`,
+          `Order created successfully! \nAmount remaining : ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus : Pending`,
           'info'
         );
       } else {
-        let message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+        let message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }).format(usdAmount)} USD submitted successfully`;
+        }).format(usdAmount)} USDT) submitted successfully`;
 
         if (data.refund && data.refund > 0) {
           const actualSpent = usdAmount - data.refund;
-          message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(
             actualSpent
-          )} USD submitted successfully\nRefund: ${data.refund.toFixed(2)} USD`;
+          )} USDT) submitted successfully\nRefund: ${data.refund.toFixed(2)} USDT`;
         }
 
         showAlert(message, 'success');
