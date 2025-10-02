@@ -246,11 +246,11 @@ export function MyAssetsWidget({
         </span>
       </div>
 
-      <div className="flex flex-1 gap-2 overflow-y-auto pr-3">
+      <div className="flex flex-1 gap-2 overflow-y-auto pr-1">
         <div className="flex h-full flex-1 flex-col">
           <div className="flex-1">
-            <div className="-mr-3">
-              <div className="space-y-3 pb-3 pt-3 pr-2">
+            <div>
+              <div className="space-y-3 pb-3 pt-3">
                 {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
 
                 {!isLoading && error && <MyAssetsWidgetState message={error} />}
