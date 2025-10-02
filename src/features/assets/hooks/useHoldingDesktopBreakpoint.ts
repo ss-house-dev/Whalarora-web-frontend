@@ -1,18 +1,10 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 
 const HOLDING_DESKTOP_BREAKPOINT = 1389;
 const HOLDING_DESKTOP_QUERY = `(min-width: ${HOLDING_DESKTOP_BREAKPOINT}px)`;
 
-function getInitialMatch() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-
-  return window.matchMedia(HOLDING_DESKTOP_QUERY).matches;
-}
-
 export function useHoldingDesktopBreakpoint() {
-  const [isDesktop, setIsDesktop] = React.useState<boolean>(getInitialMatch);
+  const [isDesktop, setIsDesktop] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -24,8 +16,7 @@ export function useHoldingDesktopBreakpoint() {
       setIsDesktop(event.matches);
     };
 
-    // Sync with current viewport on mount.
-    setIsDesktop(mediaQuery.matches);
+    handleChange(mediaQuery);
 
     if (typeof mediaQuery.addEventListener === 'function') {
       mediaQuery.addEventListener('change', handleChange);
