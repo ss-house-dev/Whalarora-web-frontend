@@ -5,6 +5,7 @@ import OrderBookLiveContainer from '@/features/open-order/containers/OrderBookLi
 import OrderBookWidget from '@/features/open-order/components/OrderBookWidget';
 import OrderTableContainer from '@/features/open-order/components/OrderTableContainer';
 import { CoinProvider, useCoinContext } from '@/features/trading/contexts/CoinContext';
+import { HoldingAssetsFigmaPreview } from '@/features/assets/components/HoldingAssetsFigmaPreview';
 import {
   HoldingResponsive,
   type HoldingItem,
@@ -305,6 +306,11 @@ function OrderBookTestContent() {
       <section className="flex w-full justify-center px-4">
         <div className="w-full max-w-6xl">
           <OrderTableContainer activeTab={activeTab} setActiveTab={setActiveTab} />
+        </div>
+      </section>
+      <section className="flex w-full justify-center px-4">
+        <div className="w-full max-w-6xl">
+          <HoldingAssetsFigmaPreview />
         </div>
       </section>
       <section className="flex w-full justify-center px-4">
