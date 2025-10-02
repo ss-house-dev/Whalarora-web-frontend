@@ -240,7 +240,7 @@ export function MyAssetsWidget({
 
   return (
     <div
-      className={`flex h-[548px] w-full max-w-96 flex-col gap-6 rounded-xl bg-[#16171D] p-5 text-palatte-color-base-white ${className}`}
+      className={`flex h-[548px] w-full max-w-96 flex-col gap-3 rounded-xl bg-[#16171D] p-5 text-palatte-color-base-white ${className}`}
     >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-normal leading-7 text-palatte-color-base-white">My assets</h3>
@@ -248,15 +248,17 @@ export function MyAssetsWidget({
 
       <div className="flex flex-1 gap-2 overflow-hidden">
         <div className="flex h-full flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto pr-1">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#1F2029] bg-[#16171D] px-4 py-3">
-              <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
-                Symbol
-              </span>
+          <div className="flex-1 overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-[#16171D]">
+              <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
+                <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+                  Symbol
+                </span>
 
-              <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
-                Unrealized pnl (USDT)
-              </span>
+                <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+                  Unrealized pnl (USDT)
+                </span>
+              </div>
             </div>
 
             <div className="space-y-3 pb-3 pt-3">
