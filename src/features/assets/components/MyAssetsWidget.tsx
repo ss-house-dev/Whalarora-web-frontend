@@ -246,22 +246,20 @@ export function MyAssetsWidget({
         <h3 className="text-lg font-normal leading-7 text-palatte-color-base-white">My assets</h3>
       </div>
 
-      <div className="flex flex-1 gap-2 overflow-hidden">
-        <div className="flex h-full flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto pr-3">
+      <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
+        <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+          Symbol
+        </span>
+
+        <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria'] pr-2">
+          Unrealized pnl (USDT)
+        </span>
+      </div>
+
+      <div className="flex flex-1 gap-2 overflow-y-auto pr-3">
+        <div className="flex h-full flex-1 flex-col">
+          <div className="flex-1">
             <div className="-mr-3">
-              <div className="sticky top-0 z-10 bg-[#16171D]">
-                <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
-                  <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
-                    Symbol
-                  </span>
-
-                  <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria'] pr-2">
-                    Unrealized pnl (USDT)
-                  </span>
-                </div>
-              </div>
-
               <div className="space-y-3 pb-3 pt-3 pr-2">
                 {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
 
