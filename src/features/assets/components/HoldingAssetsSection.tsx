@@ -92,12 +92,18 @@ export default function HoldingAssetsSection({
         {hasData && (
           <div className="flex flex-col gap-3">
             {isDesktopLayout && (
-              <div className="grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 px-4 text-[9px] uppercase tracking-[0.08em] text-[#A4A4A4]">
+              <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[9px] uppercase tracking-[0.08em] text-[#A4A4A4]">
                 <span className="text-left font-medium">Symbol</span>
-                <span className="justify-self-center text-center font-medium">Current price (USDT)</span>
-                <span className="justify-self-center text-center font-medium">Average cost (USDT)</span>
+                <span className="justify-self-center text-center font-medium">
+                  Current price (USDT)
+                </span>
+                <span className="justify-self-center text-center font-medium">
+                  Average cost (USDT)
+                </span>
                 <span className="justify-self-center text-center font-medium">Value (USDT)</span>
-                <span className="justify-self-center text-center font-medium">Unrealized PnL (USDT)</span>
+                <span className="justify-self-center text-center font-medium">
+                  Unrealized PnL (USDT)
+                </span>
                 <span aria-hidden className="block" />
               </div>
             )}
@@ -125,4 +131,3 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
-
