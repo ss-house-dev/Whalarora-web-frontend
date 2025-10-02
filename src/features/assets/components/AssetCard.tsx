@@ -501,16 +501,16 @@ export function AssetCard(props: AssetCardProps) {
   const valueText = `$ ${fmtMoney(realTimeValue)}`;
   const pnlDisplayText = isPriceLoading
     ? '$0.00 (+0.00%)'
-    : `${isRealTimeGain ? '' : '-'}$${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${((
+    : `${isRealTimeGain ? '' : '-'}$${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
         Math.abs(realTimePnlPct) * 100
-      ).toFixed(2))}%)`;
+      ).toFixed(2)}%)`;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className={clsx(
-        'w-full rounded-xl border border-[#3A3B44] bg-[#1F2029] shadow-sm outline outline-1 outline-[#3A3B44]',
+        'w-full rounded-xl border border-[#3A3B44] bg-[#16171D] ml-0.5 shadow-sm outline outline-1 outline-[#3A3B44]',
         isDesktopLayout
           ? 'grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 px-4 py-4'
           : 'flex flex-col gap-3 p-3',
@@ -531,7 +531,9 @@ export function AssetCard(props: AssetCardProps) {
                 {symbol} ({name})
               </span>
               <span className="inline-flex items-center gap-2.5 rounded-xl bg-[#1F2029] px-2 py-1">
-                <span className="min-w-[120px] text-left text-base leading-normal text-white">{amountDisplay}</span>
+                <span className="min-w-[120px] text-left text-base leading-normal text-white">
+                  {amountDisplay}
+                </span>
                 <span className="text-base leading-normal text-white">
                   {truncateCode(unit, 4).toUpperCase()}
                 </span>
@@ -550,7 +552,9 @@ export function AssetCard(props: AssetCardProps) {
           </div>
           <div
             className="justify-self-center whitespace-nowrap text-center text-base leading-normal"
-            style={{ color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B' }}
+            style={{
+              color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+            }}
           >
             {pnlDisplayText}
           </div>
@@ -574,7 +578,9 @@ export function AssetCard(props: AssetCardProps) {
               </div>
               <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
                 <span className="text-white">{amountDisplay}</span>
-                <span className="text-right text-[#A4A4A4]">{truncateCode(unit, 4).toUpperCase()}</span>
+                <span className="text-right text-[#A4A4A4]">
+                  {truncateCode(unit, 4).toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
@@ -596,7 +602,11 @@ export function AssetCard(props: AssetCardProps) {
               <span
                 className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
                 style={{
-                  color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+                  color: isPriceLoading
+                    ? colors.white
+                    : isRealTimeGain
+                      ? colors.success
+                      : '#FF6B6B',
                 }}
               >
                 {compactPnlText}
@@ -624,6 +634,3 @@ export function AssetCard(props: AssetCardProps) {
     </motion.div>
   );
 }
-
-
-
