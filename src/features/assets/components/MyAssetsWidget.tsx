@@ -1,12 +1,14 @@
 'use client';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 
 import styles from './MyAssetsWidget.module.css';
 
 import { useAllMarketPrices } from '../hooks/useAllMarketPrices';
+import { useCoinContext, createCoinObject } from '@/features/trading/contexts/CoinContext';
 import {
   type SymbolPrecision,
   formatPriceWithTick,
@@ -130,15 +132,25 @@ const MyAssetsWidgetCard = ({
   item,
   realTimePnlValue,
   realTimePnlPct,
+  onSelect,
 }: {
   item: MyAssetsWidgetItem;
   realTimePnlValue: number;
   realTimePnlPct: number;
+  onSelect: (symbol: string) => void;
 }) => {
   const trendClass = getTrendClassName(realTimePnlPct);
 
+  const handleSelect = () => {
+    onSelect(item.symbol);
+  };
+
   return (
-    <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4 transition-colors duration-200 hover:bg-[#2A2B35] active:bg-[#3B3C47] cursor-pointer">
+    <button
+      type="button"
+      onClick={handleSelect}
+      className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4 text-left transition-colors duration-200 hover:bg-[#2A2B35] active:bg-[#3B3C47] cursor-pointer appearance-none border border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[#225FED]/40 focus-visible:ring-offset-0"
+    >
       <div className="flex flex-1 items-center gap-3">
         {item.iconSrc ? (
           <Image
@@ -177,7 +189,7 @@ const MyAssetsWidgetCard = ({
           ({formatPercent(realTimePnlPct)})
         </span>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -197,6 +209,26 @@ export function MyAssetsWidget({
   className = '',
 }: MyAssetsWidgetProps) {
   const hasItems = items.length > 0;
+
+  const router = useRouter();
+  const { setSelectedCoin } = useCoinContext();
+
+  const handleWidgetSelect = useCallback(
+    (symbol: string) => {
+      if (!symbol) return;
+
+      const coinObject = createCoinObject(symbol);
+      try {
+        setSelectedCoin(coinObject);
+        setTimeout(() => {
+          router.push('/main/trading');
+        }, 100);
+      } catch {
+        router.push('/main/trading');
+      }
+    },
+    [router, setSelectedCoin]
+  );
 
   const symbols = useMemo(() => items.map((item) => item.symbol), [items]);
   const { prices: marketPrices, isLoading: arePricesLoading } = useAllMarketPrices(symbols);
@@ -274,6 +306,7 @@ export function MyAssetsWidget({
                       item={item}
                       realTimePnlValue={item.realTimePnlValue}
                       realTimePnlPct={item.realTimePnlPct}
+                      onSelect={handleWidgetSelect}
                     />
                   ))}
               </div>
