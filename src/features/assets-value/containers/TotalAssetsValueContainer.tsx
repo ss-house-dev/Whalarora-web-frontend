@@ -10,6 +10,7 @@ import {
   type CoinMetadata,
 } from '@/features/assets/utils/coinMetadata';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
+import { useSymbolPrecisions, getSymbolPrecision, decimalsFromSize, type SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
 
 const getUpperSymbol = (symbol: string | undefined | null) => {
   if (!symbol) return '';
@@ -24,6 +25,44 @@ type RealtimeState = {
 type RealtimeUpdate = {
   price: number | null;
   isLoading: boolean;
+};
+
+const MAX_AMOUNT_DIGITS = 10;
+
+const getAmountDecimalPlaces = (value: number, precision?: SymbolPrecision | null) => {
+  const absolute = Math.abs(value);
+  const integerDigits = Math.max(1, Math.floor(absolute).toString().length);
+  const availableDecimals = Math.max(0, MAX_AMOUNT_DIGITS - integerDigits);
+  const quantityDecimals = precision?.quantityPrecision ?? availableDecimals;
+  return Math.min(quantityDecimals, availableDecimals);
+};
+
+const roundAmountForDisplay = (value: number, precision?: SymbolPrecision | null) => {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  const decimals = getAmountDecimalPlaces(value, precision);
+  const factor = 10 ** decimals;
+  const rounded = Math.round(Math.abs(value) * factor) / factor;
+
+  return value < 0 ? -rounded : rounded;
+};
+
+const roundPriceForDisplay = (value: number, precision?: SymbolPrecision | null) => {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  const decimals =
+    precision?.pricePrecision ??
+    (precision?.tickSize ? decimalsFromSize(precision.tickSize) : undefined) ??
+    2;
+
+  const factor = 10 ** decimals;
+  const rounded = Math.round(Math.abs(value) * factor) / factor;
+
+  return value < 0 ? -rounded : rounded;
 };
 
 const PriceSubscriber = ({
@@ -79,6 +118,8 @@ export default function TotalAssetsValueContainer() {
   const [isMetadataLoading, setIsMetadataLoading] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [realtimeState, setRealtimeState] = useState<Record<string, RealtimeState>>({});
+
+  const { data: precisionMap } = useSymbolPrecisions();
 
   const tradableSymbols = useMemo(() => {
     if (!assets || assets.length === 0) {
@@ -183,7 +224,9 @@ export default function TotalAssetsValueContainer() {
         return accumulator;
       }
 
-      const amount = normalizeNumber(asset?.amount);
+      const symbolPrecision = getSymbolPrecision(precisionMap, symbol, 'USDT');
+      const rawAmount = normalizeNumber(asset?.amount);
+      const amount = roundAmountForDisplay(rawAmount, symbolPrecision);
       const realTimePrice = realtimeState[symbol]?.price;
       const metadataPrice = normalizeNumber(coinMetadata[symbol]?.price);
       const apiPrice = normalizeNumber(asset?.currentPrice);
@@ -196,9 +239,42 @@ export default function TotalAssetsValueContainer() {
             : apiPrice
       );
 
-      return accumulator + amount * priceToUse;
+      const price = roundPriceForDisplay(priceToUse, symbolPrecision);
+
+      return accumulator + amount * price;
     }, 0);
-  }, [assets, coinMetadata, realtimeState]);
+  }, [assets, coinMetadata, precisionMap, realtimeState]);
+
+  const totalCost = useMemo(() => {
+    if (!assets || assets.length === 0) {
+      return 0;
+    }
+
+    return assets.reduce((accumulator, asset) => {
+      const symbol = getUpperSymbol(asset?.symbol);
+      if (symbol.length === 0 || symbol === 'CASH') {
+        return accumulator;
+      }
+
+      const symbolPrecision = getSymbolPrecision(precisionMap, symbol, 'USDT');
+      const rawAmount = normalizeNumber(asset?.amount);
+      const amount = roundAmountForDisplay(rawAmount, symbolPrecision);
+      const averageCost = normalizeNumber(asset?.avgPrice);
+      const costPrice = roundPriceForDisplay(averageCost, symbolPrecision);
+
+      return accumulator + amount * costPrice;
+    }, 0);
+  }, [assets, precisionMap]);
+
+  const pnlValue = useMemo(() => totalValue - totalCost, [totalValue, totalCost]);
+
+  const pnlPercent = useMemo(() => {
+    if (totalCost <= 0) {
+      return 0;
+    }
+
+    return (pnlValue / totalCost) * 100;
+  }, [pnlValue, totalCost]);
 
   const combinedError = error?.message || metadataError || undefined;
 
@@ -209,6 +285,9 @@ export default function TotalAssetsValueContainer() {
       ))}
       <TotalAssetsValueCard
         totalValue={totalValue}
+        totalCost={totalCost}
+        pnlValue={pnlValue}
+        pnlPercent={pnlPercent}
         isLoading={isLoading || isMetadataLoading}
         error={combinedError}
       />
