@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useCallback, useState } from 'react';
 import MarketOrderContainer from '@/features/trading/containers/OrderContainer';
@@ -8,6 +8,7 @@ import OrderTableContainer from '@/features/open-order/components/OrderTableCont
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import { useCancelOrder } from '@/features/open-order/hooks/useCancelOrder';
 import OrderBookLiveContainer from '@/features/open-order/containers/OrderBookLiveContainer';
+import MyAssetsWidgetContainer from '@/features/assets/containers/MyAssetsWidgetContainer';
 
 type OrderTabType = 'open' | 'history';
 
@@ -30,23 +31,29 @@ export default function MarketOrderPage() {
 
   return (
     <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
-      {/* Chart and Order sections */}
+      {/* Chart and order sections */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[20px]">
         {/* Chart section with CombinedCombobox above */}
         <div className="w-full lg:flex-[1.6] lg:min-w-0">
           <div className="flex flex-col space-y-4">
-            {/* ใช้ w-full และ flex-shrink-0 เพื่อให้แน่ใจว่าจะเท่ากับ chart */}
             <div className="w-full flex-shrink-0">
               <CombinedCombobox className="w-full min-w-full" />
             </div>
-            {/* Chart container */}
             <div className="w-full flex-shrink-0">
               <AdvancedChart />
+            </div>
+            {/* Tabbed orders section */}
+            <div className="mb-10 flex-1">
+              <OrderTableContainer
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onCancelOrder={handleCancelOrder}
+              />
             </div>
           </div>
         </div>
 
-        {/* Order Book and Order Container section */}
+        {/* Order book, order form, and assets widgets */}
         <div className="w-full lg:w-[360px] lg:flex-shrink-0">
           <div className="space-y-4">
             <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
@@ -57,17 +64,12 @@ export default function MarketOrderPage() {
             >
               <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
             </div>
+
+            <div className="flex w-full justify-center">
+              <MyAssetsWidgetContainer />
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Tabbed Orders Section */}
-      <div className="mb-10 flex-1">
-        <OrderTableContainer
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onCancelOrder={handleCancelOrder}
-        />
       </div>
     </div>
   );
