@@ -445,11 +445,15 @@ export function AssetCard(props: AssetCardProps) {
   );
 
   // Use real-time price if enabled
-  const { marketPrice, isPriceLoading } = useMarketPrice(enableRealTimePrice ? symbol : '');
+  const { numericPrice, isPriceLoading, priceDecimalPlaces } = useMarketPrice(
+    enableRealTimePrice ? symbol : '',
+    { throttleMs: 500 }
+  );
 
-  // Determine which price to display
-  const displayPrice =
-    enableRealTimePrice && marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : currentPrice;
+  const resolvedRealtimePrice =
+    enableRealTimePrice && typeof numericPrice === 'number' ? numericPrice : null;
+  const hasRealtimePrice = resolvedRealtimePrice !== null;
+  const displayPrice = resolvedRealtimePrice ?? currentPrice;
 
   const staticCurrentPriceDisplay = React.useMemo(
     () =>
@@ -461,8 +465,17 @@ export function AssetCard(props: AssetCardProps) {
       formatPriceWithTick(averageCost, symbolPrecision, { locale: 'en-US', fallbackDecimals: 2 }),
     [averageCost, symbolPrecision]
   );
-  const formattedCurrentPrice =
-    enableRealTimePrice && marketPrice ? marketPrice : staticCurrentPriceDisplay;
+  const realtimePriceDisplay = React.useMemo(() => {
+    if (!enableRealTimePrice || typeof numericPrice !== 'number') {
+      return null;
+    }
+
+    return formatPriceWithTick(numericPrice, symbolPrecision, {
+      locale: 'en-US',
+      fallbackDecimals: priceDecimalPlaces,
+    });
+  }, [enableRealTimePrice, numericPrice, symbolPrecision, priceDecimalPlaces]);
+  const formattedCurrentPrice = realtimePriceDisplay ?? staticCurrentPriceDisplay;
   const amountDisplay = React.useMemo(
     () => formatAmount10(amount, { precision: symbolPrecision, maxDigits: 10 }),
     [amount, symbolPrecision]
@@ -471,18 +484,18 @@ export function AssetCard(props: AssetCardProps) {
   // Calculate real-time PnL if we have market price - หากกำลังโหลดอยู่ให้แสดง 0
   const realTimePnlAbs = isPriceLoading
     ? 0
-    : enableRealTimePrice && marketPrice && typeof amount === 'number'
+    : hasRealtimePrice && typeof amount === 'number'
       ? (displayPrice - averageCost) * amount
       : pnlAbs;
 
   const realTimePnlPct = isPriceLoading
     ? 0 // หากกำลังโหลดอยู่ให้แสดง 0
-    : enableRealTimePrice && marketPrice && averageCost > 0
+    : hasRealtimePrice && averageCost > 0
       ? (displayPrice - averageCost) / averageCost
       : pnlPct;
 
   const realTimeValue =
-    enableRealTimePrice && marketPrice && typeof amount === 'number'
+    hasRealtimePrice && typeof amount === 'number'
       ? displayPrice * amount
       : value;
 
@@ -522,13 +535,19 @@ export function AssetCard(props: AssetCardProps) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className={clsx(
-        'w-full rounded-[12px] border border-[#3A3B44] bg-[#1F2029] p-3 shadow-sm outline outline-1 outline-[#3A3B44]',
-        isDesktopLayout && 'flex h-[80px] max-w-[1248px] items-center border-[#666] bg-transparent px-4 py-3 shadow-none outline-none',
+        'w-full rounded-[12px] border border-[#3A3B44] bg-[#1F2029] p-3 shadow-sm outline-[#3A3B44]',
+        isDesktopLayout &&
+          'flex h-[80px] max-w-[1248px] items-center border-[#666] bg-transparent px-4 py-3 shadow-none outline-none',
         className
       )}
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className={clsx('w-full items-stretch', isDesktopLayout ? 'flex items-center gap-12' : 'hidden')}>
+      <div
+        className={clsx(
+          'w-full items-stretch',
+          isDesktopLayout ? 'flex items-center gap-12' : 'hidden'
+        )}
+      >
         {/* Left: Ticker + amount (fixed width so all rows align) */}
         <div className="flex w-[272px] flex-none items-center gap-4 border-r border-[#828282] pr-[16px]">
           <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
@@ -555,7 +574,12 @@ export function AssetCard(props: AssetCardProps) {
         </div>
 
         {/* Middle: stats */}
-        <div className={clsx('flex min-w-0 flex-1 flex-nowrap items-center gap-4', isDesktopLayout && 'gap-3')}>
+        <div
+          className={clsx(
+            'flex min-w-0 flex-1 flex-nowrap items-center gap-4',
+            isDesktopLayout && 'gap-3'
+          )}
+        >
           <Stat
             label="Current price"
             value={`$ ${formattedCurrentPrice}`}
@@ -600,9 +624,7 @@ export function AssetCard(props: AssetCardProps) {
 
       <div className={clsx('flex flex-col gap-3', isDesktopLayout && 'hidden')}>
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center">
-            {displayIcon}
-          </div>
+          <div className="flex h-10 w-10 items-center justify-center">{displayIcon}</div>
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-baseline gap-1 text-sm">
               <span className="text-white">{symbol}</span>
@@ -610,7 +632,9 @@ export function AssetCard(props: AssetCardProps) {
             </div>
             <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
               <span className="text-white">{amountDisplay}</span>
-              <span className="text-right text-[#A4A4A4]">{truncateCode(unit, 4).toUpperCase()}</span>
+              <span className="text-right text-[#A4A4A4]">
+                {truncateCode(unit, 4).toUpperCase()}
+              </span>
             </div>
           </div>
         </div>

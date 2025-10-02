@@ -94,16 +94,13 @@ export const fetchCoinMetadata = async (
   const now = Date.now();
 
   if (shouldUseCache(now)) {
-    const cachedSubset = normalizedSymbols.reduce<Record<string, CoinMetadata>>(
-      (acc, symbol) => {
-        const cached = metadataCache[symbol];
-        if (cached) {
-          acc[symbol] = cached;
-        }
-        return acc;
-      },
-      {}
-    );
+    const cachedSubset = normalizedSymbols.reduce<Record<string, CoinMetadata>>((acc, symbol) => {
+      const cached = metadataCache[symbol];
+      if (cached) {
+        acc[symbol] = cached;
+      }
+      return acc;
+    }, {});
 
     if (Object.keys(cachedSubset).length === normalizedSymbols.length) {
       return cachedSubset;

@@ -10,8 +10,6 @@ import {
   type CoinMetadata,
 } from '@/features/assets/utils/coinMetadata';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
-import { useSymbolPrecisions, getSymbolPrecision, decimalsFromSize, type SymbolPrecision } from '@/features/trading/utils/symbolPrecision';
-
 const getUpperSymbol = (symbol: string | undefined | null) => {
   if (!symbol) return '';
   return symbol.trim().toUpperCase();
@@ -27,44 +25,6 @@ type RealtimeUpdate = {
   isLoading: boolean;
 };
 
-const MAX_AMOUNT_DIGITS = 10;
-
-const getAmountDecimalPlaces = (value: number, precision?: SymbolPrecision | null) => {
-  const absolute = Math.abs(value);
-  const integerDigits = Math.max(1, Math.floor(absolute).toString().length);
-  const availableDecimals = Math.max(0, MAX_AMOUNT_DIGITS - integerDigits);
-  const quantityDecimals = precision?.quantityPrecision ?? availableDecimals;
-  return Math.min(quantityDecimals, availableDecimals);
-};
-
-const roundAmountForDisplay = (value: number, precision?: SymbolPrecision | null) => {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  const decimals = getAmountDecimalPlaces(value, precision);
-  const factor = 10 ** decimals;
-  const rounded = Math.round(Math.abs(value) * factor) / factor;
-
-  return value < 0 ? -rounded : rounded;
-};
-
-const roundPriceForDisplay = (value: number, precision?: SymbolPrecision | null) => {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  const decimals =
-    precision?.pricePrecision ??
-    (precision?.tickSize ? decimalsFromSize(precision.tickSize) : undefined) ??
-    2;
-
-  const factor = 10 ** decimals;
-  const truncated = Math.trunc(Math.abs(value) * factor) / factor;
-
-  return value < 0 ? -truncated : truncated;
-};
-
 const PriceSubscriber = ({
   symbol,
   onUpdate,
@@ -72,20 +32,13 @@ const PriceSubscriber = ({
   symbol: string;
   onUpdate: (symbol: string, update: RealtimeUpdate) => void;
 }) => {
-  const { marketPrice, isPriceLoading } = useMarketPrice(symbol);
-
-  const numericPrice = useMemo(() => {
-    if (!marketPrice) return null;
-    const sanitized = marketPrice.replace(/,/g, '');
-    const parsed = Number.parseFloat(sanitized);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, [marketPrice]);
+  const { numericPrice, isPriceLoading } = useMarketPrice(symbol, { throttleMs: 500 });
 
   const lastPayloadRef = useRef<RealtimeUpdate | null>(null);
 
   useEffect(() => {
     const payload: RealtimeUpdate = {
-      price: numericPrice,
+      price: typeof numericPrice === 'number' ? numericPrice : null,
       isLoading: isPriceLoading,
     };
 
@@ -118,8 +71,6 @@ export default function TotalAssetsValueContainer() {
   const [isMetadataLoading, setIsMetadataLoading] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [realtimeState, setRealtimeState] = useState<Record<string, RealtimeState>>({});
-
-  const { data: precisionMap } = useSymbolPrecisions();
 
   const tradableSymbols = useMemo(() => {
     if (!assets || assets.length === 0) {
@@ -189,29 +140,22 @@ export default function TotalAssetsValueContainer() {
     });
   }, [tradableSymbols]);
 
-  const handleRealtimeUpdate = useCallback(
-    (symbol: string, update: RealtimeUpdate) => {
-      setRealtimeState((prev) => {
-        const previous = prev[symbol];
-        if (
-          previous &&
-          previous.price === update.price &&
-          previous.isLoading === update.isLoading
-        ) {
-          return prev;
-        }
+  const handleRealtimeUpdate = useCallback((symbol: string, update: RealtimeUpdate) => {
+    setRealtimeState((prev) => {
+      const previous = prev[symbol];
+      if (previous && previous.price === update.price && previous.isLoading === update.isLoading) {
+        return prev;
+      }
 
-        return {
-          ...prev,
-          [symbol]: {
-            price: update.price,
-            isLoading: update.isLoading,
-          },
-        };
-      });
-    },
-    []
-  );
+      return {
+        ...prev,
+        [symbol]: {
+          price: update.price,
+          isLoading: update.isLoading,
+        },
+      };
+    });
+  }, []);
 
   const totalValue = useMemo(() => {
     if (!assets || assets.length === 0) {
@@ -224,26 +168,23 @@ export default function TotalAssetsValueContainer() {
         return accumulator;
       }
 
-      const symbolPrecision = getSymbolPrecision(precisionMap, symbol, 'USDT');
-      const rawAmount = normalizeNumber(asset?.amount);
-      const amount = roundAmountForDisplay(rawAmount, symbolPrecision);
+      const amount = normalizeNumber(asset?.amount);
       const realTimePrice = realtimeState[symbol]?.price;
       const metadataPrice = normalizeNumber(coinMetadata[symbol]?.price);
       const apiPrice = normalizeNumber(asset?.currentPrice);
 
-      const priceToUse = normalizeNumber(
-        realTimePrice !== null && realTimePrice !== undefined && realTimePrice > 0
+      const priceCandidate =
+        typeof realTimePrice === 'number' && realTimePrice > 0
           ? realTimePrice
           : metadataPrice > 0
             ? metadataPrice
-            : apiPrice
-      );
+            : apiPrice;
 
-      const price = roundPriceForDisplay(priceToUse, symbolPrecision);
+      const price = normalizeNumber(priceCandidate);
 
       return accumulator + amount * price;
     }, 0);
-  }, [assets, coinMetadata, precisionMap, realtimeState]);
+  }, [assets, coinMetadata, realtimeState]);
 
   const totalCost = useMemo(() => {
     if (!assets || assets.length === 0) {
@@ -256,15 +197,12 @@ export default function TotalAssetsValueContainer() {
         return accumulator;
       }
 
-      const symbolPrecision = getSymbolPrecision(precisionMap, symbol, 'USDT');
-      const rawAmount = normalizeNumber(asset?.amount);
-      const amount = roundAmountForDisplay(rawAmount, symbolPrecision);
+      const amount = normalizeNumber(asset?.amount);
       const averageCost = normalizeNumber(asset?.avgPrice);
-      const costPrice = roundPriceForDisplay(averageCost, symbolPrecision);
 
-      return accumulator + amount * costPrice;
+      return accumulator + amount * averageCost;
     }, 0);
-  }, [assets, precisionMap]);
+  }, [assets]);
 
   const pnlValue = useMemo(() => totalValue - totalCost, [totalValue, totalCost]);
 
