@@ -235,7 +235,7 @@ export function MyAssetsWidget({
 
   return (
     <div
-      className={`flex h-[548px] w-full max-w-96 flex-col gap-3 rounded-xl bg-[#16171D] p-5 text-palatte-color-base-white ${className}`}
+      className={`flex h-[548px] w-full max-w-full min-w-0 flex-col gap-3 rounded-xl bg-[#16171D] p-5 text-palatte-color-base-white ${className}`}
     >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-normal leading-7 text-palatte-color-base-white">My assets</h3>

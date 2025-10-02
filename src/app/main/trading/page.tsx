@@ -44,7 +44,7 @@ export default function MarketOrderPage() {
           <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
         </div>
 
-        <div className="order-5 flex w-full justify-center min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-3">
+        <div className="order-5 flex w-full justify-start min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-3 min-[1408px]:justify-center">
           <MyAssetsWidgetContainer />
         </div>
 
