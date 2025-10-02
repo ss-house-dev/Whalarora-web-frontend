@@ -1,6 +1,13 @@
 'use client';
+import { Anuphan } from 'next/font/google';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+
+const anuphan = Anuphan({
+  subsets: ['latin', 'thai'],
+  weight: ['400', '500', '600', '700'],
+});
+
 interface AlertBoxProps {
   message: string;
   type?: 'success' | 'info' | 'error';
@@ -122,7 +129,7 @@ export default function AlertBox({
   const typeConfig = getTypeConfig();
 
   return (
-    <div className="relative w-[377px] min-h-[131px] bg-[#1F2029] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden pb-[10px] pt-[10px]">
+    <div className={`${anuphan.className} relative w-[377px] min-h-[131px] bg-[#1F2029] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden pb-[10px] pt-[10px]`}>
       {/* Colored sidebar */}
       <div className="absolute left-0 top-0 h-full w-4 bg-[#309C7D] rounded-tl-xl rounded-bl-xl" />
 
