@@ -55,9 +55,11 @@ export default function HoldingAssetsSection({
   const hasData = !isLoadingData && !hasError && rows.length > 0;
   const hasNoData = !isLoadingData && !hasError && rows.length === 0;
 
-  const gridClasses = clsx('grid', isDesktopLayout ? 'grid-cols-1 gap-4' : 'gap-3 sm:grid-cols-2');
+  const rowsContainerClasses = isDesktopLayout
+    ? 'flex flex-col gap-3 pr-1'
+    : 'grid gap-3 sm:grid-cols-2';
 
-  const assetCardClassName = clsx('w-full', isDesktopLayout && 'mx-auto max-w-[1220px]');
+  const assetCardClassName = clsx('w-full', !isDesktopLayout && 'h-full');
 
   return (
     <HoldingAssetsTable
@@ -88,27 +90,44 @@ export default function HoldingAssetsSection({
         )}
 
         {hasData && (
-          <div className={gridClasses}>
-            {pagedRows.map((row) => (
-              <AssetCard
-                key={row.id}
-                symbol={row.symbol}
-                name={row.name}
-                amount={row.amount}
-                currentPrice={row.currentPrice}
-                averageCost={row.averageCost}
-                value={row.value}
-                pnlAbs={row.pnlAbs}
-                pnlPct={row.pnlPct}
-                onBuySell={() => handleTradeClick(row.symbol)}
-                className={assetCardClassName}
-                isDesktopLayout={isDesktopLayout}
-              />
-            ))}
+          <div className="flex flex-col gap-3">
+            {isDesktopLayout && (
+              <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[10.5px] tracking-[0.08em] text-[#A4A4A4]">
+                <span className="text-left font-medium">Symbol</span>
+                <span className="justify-self-center text-center font-medium">
+                  Current price (USDT)
+                </span>
+                <span className="justify-self-center text-center font-medium">
+                  Average cost (USDT)
+                </span>
+                <span className="justify-self-center text-center font-medium">Value (USDT)</span>
+                <span className="justify-self-center text-center font-medium">
+                  Unrealized PnL (USDT)
+                </span>
+                <span aria-hidden className="block" />
+              </div>
+            )}
+            <div className={rowsContainerClasses}>
+              {pagedRows.map((row) => (
+                <AssetCard
+                  key={row.id}
+                  symbol={row.symbol}
+                  name={row.name}
+                  amount={row.amount}
+                  currentPrice={row.currentPrice}
+                  averageCost={row.averageCost}
+                  value={row.value}
+                  pnlAbs={row.pnlAbs}
+                  pnlPct={row.pnlPct}
+                  onBuySell={() => handleTradeClick(row.symbol)}
+                  className={assetCardClassName}
+                  isDesktopLayout={isDesktopLayout}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
     </HoldingAssetsTable>
   );
 }
-

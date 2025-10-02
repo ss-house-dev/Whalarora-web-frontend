@@ -394,27 +394,6 @@ function formatAmount10(value: number | string, options: FormatAmountOptions = {
   return negative ? `-${formatted}` : formatted;
 }
 
-function Stat({
-  label,
-  value,
-  isLoading = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  isLoading?: boolean;
-}) {
-  return (
-    <div className="w-[144px] shrink-0 inline-flex flex-col justify-center items-start rounded-xl gap-1">
-      <div className="w-24 text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
-        {label}
-      </div>
-      <div className="text-[16px] leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
-        {isLoading ? '0.00' : value}
-      </div>
-    </div>
-  );
-}
-
 export function AssetCard(props: AssetCardProps) {
   const router = useRouter();
   const { setSelectedCoin } = useCoinContext(); // ใช้ useCoinContext เพื่อดึงฟังก์ชัน setSelectedCoin
@@ -517,145 +496,141 @@ export function AssetCard(props: AssetCardProps) {
         Math.abs(realTimePnlPct) * 100
       ).toFixed(2)}%)`;
 
+  const currentPriceText = isPriceLoading ? '0.00' : formattedCurrentPrice;
+  const averageCostText = averageCostDisplay;
+  const valueText = fmtMoney(realTimeValue);
+  const pnlDisplayText = isPriceLoading
+    ? '0.00 (+0.00%)'
+    : `${isRealTimeGain ? '' : '-'}${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
+        Math.abs(realTimePnlPct) * 100
+      ).toFixed(2)}%)`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className={clsx(
-        'w-full rounded-[12px] border border-[#3A3B44] bg-[#1F2029] p-3 shadow-sm outline outline-1 outline-[#3A3B44]',
-        isDesktopLayout && 'flex h-[80px] max-w-[1248px] items-center border-[#666] bg-transparent px-4 py-3 shadow-none outline-none',
+        'w-full rounded-xl border border-[#3A3B44] bg-[#16171D] ml-0.5 shadow-sm outline outline-1 outline-[#3A3B44]',
+        isDesktopLayout
+          ? 'grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 px-4 py-4'
+          : 'flex flex-col gap-3 p-3',
         className
       )}
       style={{ outlineColor: colors.gray500 }}
     >
-      <div className={clsx('w-full items-stretch', isDesktopLayout ? 'flex items-center gap-12' : 'hidden')}>
-        {/* Left: Ticker + amount (fixed width so all rows align) */}
-        <div className="flex w-[272px] flex-none items-center gap-4 border-r border-[#828282] pr-[16px]">
-          <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
-            {displayIcon}
-          </div>
+      {isDesktopLayout ? (
+        <>
+          <div className="flex h-full items-center gap-4 border-r border-[#2D3039] pr-8">
+            <div className="flex h-10 w-10 items-center justify-center">{displayIcon}</div>
 
-          <div className="flex flex-col gap-1">
-            <div
-              className="max-w-[240px] truncate text-sm leading-tight text-white"
-              title={`${symbol} (${name})`}
-            >
-              {symbol} ({name})
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-xl bg-[#1F2029] px-2 py-1">
-              <div className="min-w-[120px] whitespace-nowrap text-left text-base leading-normal text-white">
-                {amountDisplay}
-              </div>
-
-              <div className="whitespace-nowrap text-base leading-normal text-white">
-                {truncateCode(unit, 4).toUpperCase()}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Middle: stats */}
-        <div className={clsx('flex min-w-0 flex-1 flex-nowrap items-center gap-4', isDesktopLayout && 'gap-3')}>
-          <Stat
-            label="Current price"
-            value={`$ ${formattedCurrentPrice}`}
-            isLoading={isPriceLoading}
-          />
-          <Stat label="Average cost" value={`$ ${averageCostDisplay}`} />
-          <Stat label="Value" value={`$ ${fmtMoney(realTimeValue)}`} />
-          <div className="inline-flex h-11 shrink-0 flex-col items-start justify-center gap-1">
-            <div className="text-[12px] leading-none" style={{ color: colors.gray600 }}>
-              Unrealized PNL
-            </div>
-
-            <div
-              className="flex w-full items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis text-[16px] leading-normal"
-              style={{
-                color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
-              }}
-            >
-              {isPriceLoading ? (
-                <div className="flex items-center gap-2">
-                  <span>$0.00 (0.00%)</span>
-                </div>
-              ) : (
-                <>
-                  ${fmtMoney(Math.abs(realTimePnlAbs))} ({isRealTimeGain ? '+' : '-'}
-                  {(Math.abs(realTimePnlPct) * 100).toFixed(2)}%)
-                  {isRealTimeGain ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: CTA with 16px margin from right edge */}
-        <button
-          onClick={handleBuySell}
-          className="flex h-[32px] w-[128px] mt-2.5 items-center justify-center rounded-lg bg-blue-600 px-6 text-sm text-neutral-100 transition hover:brightness-110 active:brightness-95"
-        >
-          Buy/Sell
-        </button>
-      </div>
-
-      <div className={clsx('flex flex-col gap-3', isDesktopLayout && 'hidden')}>
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center">
-            {displayIcon}
-          </div>
-          <div className="flex flex-1 flex-col gap-1">
-            <div className="flex flex-wrap items-baseline gap-1 text-sm">
-              <span className="text-white">{symbol}</span>
-              <span className="text-[#A4A4A4]">{name}</span>
-            </div>
-            <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
-              <span className="text-white">{amountDisplay}</span>
-              <span className="text-right text-[#A4A4A4]">{truncateCode(unit, 4).toUpperCase()}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-[#A4A4A4]">Average cost (USDT)</span>
-              <span className="text-sm text-white">{averageCostDisplay}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-[#A4A4A4]">Value</span>
-              <span className="text-sm text-white">{fmtMoney(realTimeValue)}</span>
+              <span
+                className="text-left text-sm font-normal leading-tight text-white"
+                title={`${symbol} (${name})`}
+              >
+                {symbol} ({name})
+              </span>
+              <span className="inline-flex items-center gap-2.5 rounded-xl bg-[#1F2029] px-2 py-1">
+                <span className="min-w-[120px] text-left text-base leading-normal text-white">
+                  {amountDisplay}
+                </span>
+                <span className="text-base leading-normal text-white">
+                  {truncateCode(unit, 4).toUpperCase()}
+                </span>
+              </span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 sm:gap-2">
-            <span className="text-xs text-[#A4A4A4]">Unrealized PNL</span>
-            <span
-              className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
-              style={{
-                color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
-              }}
-            >
-              {compactPnlText}
-              {!isPriceLoading &&
-                (isRealTimeGain ? (
-                  <ArrowUpRight size={16} className="text-[#4ED7B0]" />
-                ) : (
-                  <ArrowDownRight size={16} className="text-[#FF6B6B]" />
-                ))}
-            </span>
+          <div className="justify-self-center text-center text-base leading-normal text-white">
+            {currentPriceText}
           </div>
-        </div>
-
-        <div className="mt-auto">
-          <button
-            type="button"
-            onClick={handleBuySell}
-            className="flex h-8 w-full items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+          <div className="justify-self-center text-center text-base leading-normal text-white">
+            {averageCostText}
+          </div>
+          <div className="justify-self-center text-center text-base leading-normal text-white">
+            {valueText}
+          </div>
+          <div
+            className="justify-self-center whitespace-nowrap text-center text-base leading-normal"
+            style={{
+              color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+            }}
           >
-            Buy/Sell
-          </button>
+            {pnlDisplayText}
+          </div>
+          <div className="justify-self-end">
+            <button
+              onClick={handleBuySell}
+              className="flex h-8 w-[144px] items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+            >
+              Buy/Sell
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center">{displayIcon}</div>
+            <div className="flex flex-1 flex-col gap-1">
+              <div className="flex flex-wrap items-baseline gap-1 text-sm">
+                <span className="text-white">{symbol}</span>
+                <span className="text-[#A4A4A4]">{name}</span>
+              </div>
+              <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
+                <span className="text-white">{amountDisplay}</span>
+                <span className="text-right text-[#A4A4A4]">
+                  {truncateCode(unit, 4).toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-[#A4A4A4]">Average cost (USDT)</span>
+                <span className="text-sm text-white">{averageCostDisplay}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-[#A4A4A4]">Value</span>
+                <span className="text-sm text-white">{fmtMoney(realTimeValue)}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1 sm:gap-2">
+              <span className="text-xs text-[#A4A4A4]">Unrealized PnL</span>
+              <span
+                className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
+                style={{
+                  color: isPriceLoading
+                    ? colors.white
+                    : isRealTimeGain
+                      ? colors.success
+                      : '#FF6B6B',
+                }}
+              >
+                {compactPnlText}
+                {!isPriceLoading &&
+                  (isRealTimeGain ? (
+                    <ArrowUpRight size={16} className="text-[#4ED7B0]" />
+                  ) : (
+                    <ArrowDownRight size={16} className="text-[#FF6B6B]" />
+                  ))}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-auto">
+            <button
+              type="button"
+              onClick={handleBuySell}
+              className="flex h-8 w-full items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+            >
+              Buy/Sell
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 }

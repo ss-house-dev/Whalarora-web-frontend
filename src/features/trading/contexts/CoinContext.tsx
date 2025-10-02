@@ -453,7 +453,7 @@ export const CoinProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 // Helper to build coin object
-const createCoinObject = (symbol: string): Coin => {
+export const createCoinObject = (symbol: string): Coin => {
   const upperSymbol = symbol.toUpperCase();
 
   const getIcon = (sym: string, size: number = 28) => {
