@@ -36,7 +36,7 @@ function formatBookPrice(
   if (!formatted) return null;
   if (!quoteSymbol) return formatted;
   if (quoteSymbol === 'USD' || quoteSymbol === 'USDT') {
-    return `$ ${formatted}`;
+    return `${formatted} ${quoteSymbol}`;
   }
   return `${quoteSymbol} ${formatted}`;
 }

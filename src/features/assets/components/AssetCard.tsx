@@ -496,12 +496,12 @@ export function AssetCard(props: AssetCardProps) {
         Math.abs(realTimePnlPct) * 100
       ).toFixed(2)}%)`;
 
-  const currentPriceText = `$ ${isPriceLoading ? '0.00' : formattedCurrentPrice}`;
-  const averageCostText = `$ ${averageCostDisplay}`;
-  const valueText = `$ ${fmtMoney(realTimeValue)}`;
+  const currentPriceText = isPriceLoading ? '0.00' : formattedCurrentPrice;
+  const averageCostText = averageCostDisplay;
+  const valueText = fmtMoney(realTimeValue);
   const pnlDisplayText = isPriceLoading
-    ? '$0.00 (+0.00%)'
-    : `${isRealTimeGain ? '' : '-'}$${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
+    ? '0.00 (+0.00%)'
+    : `${isRealTimeGain ? '' : '-'}${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
         Math.abs(realTimePnlPct) * 100
       ).toFixed(2)}%)`;
 
