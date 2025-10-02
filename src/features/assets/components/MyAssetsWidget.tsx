@@ -248,30 +248,32 @@ export function MyAssetsWidget({
 
       <div className="flex flex-1 gap-2 overflow-hidden">
         <div className="flex h-full flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            <div className="sticky top-0 z-10 bg-[#16171D]">
-              <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
-                <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
-                  Symbol
-                </span>
+          <div className="flex-1 overflow-y-auto pr-3">
+            <div className="-mr-3">
+              <div className="sticky top-0 z-10 bg-[#16171D]">
+                <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
+                  <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+                    Symbol
+                  </span>
 
-                <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
-                  Unrealized pnl (USDT)
-                </span>
+                  <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria'] pr-2">
+                    Unrealized pnl (USDT)
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 pb-3 pt-3">
-              {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
+              <div className="space-y-3 pb-3 pt-3 pr-2">
+                {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
 
-              {!isLoading && error && <MyAssetsWidgetState message={error} />}
+                {!isLoading && error && <MyAssetsWidgetState message={error} />}
 
-              {!isLoading && !error && !hasItems && <MyAssetsWidgetState message="No assets" />}
+                {!isLoading && !error && !hasItems && <MyAssetsWidgetState message="No assets" />}
 
-              {!isLoading &&
-                !error &&
-                hasItems &&
-                sortedItems.map((item) => <MyAssetsWidgetCard key={item.id} item={item} />)}
+                {!isLoading &&
+                  !error &&
+                  hasItems &&
+                  sortedItems.map((item) => <MyAssetsWidgetCard key={item.id} item={item} />)}
+              </div>
             </div>
           </div>
         </div>
