@@ -1,5 +1,11 @@
 ﻿import React from 'react';
+import { Anuphan } from 'next/font/google';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const anuphan = Anuphan({
+  subsets: ['latin', 'thai'],
+  weight: ['400', '500', '600', '700'],
+});
 
 interface TotalAssetsValueCardProps {
   totalValue: number;
@@ -69,12 +75,12 @@ export default function TotalAssetsValueCard({
 }: TotalAssetsValueCardProps) {
   if (isLoading) {
     return (
-      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg w-[624px]">
+      <section className="mt-6 w-full max-w-[603px] rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-4 shadow-lg sm:p-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
           My assets value
         </h2>
         <div className="mt-4">
-          <Skeleton className="h-10 w-48 rounded-xl" />
+          <Skeleton className="h-10 w-full max-w-[200px] rounded-xl" />
         </div>
       </section>
     );
@@ -82,7 +88,7 @@ export default function TotalAssetsValueCard({
 
   if (error) {
     return (
-      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg w-[624px]">
+      <section className="mt-6 w-full max-w-[603px] rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-4 shadow-lg sm:p-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
           My assets value
         </h2>
@@ -100,29 +106,39 @@ export default function TotalAssetsValueCard({
   })})`;
 
   return (
-    <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#16171D] p-6 shadow-lg w-[603px]">
-      <div className="flex items-center gap-12">
-        <h2 className="text-lg font-medium tracking-wide text-white">My assets value</h2>
-        <span className="rounded-full bg-[#1C2A55] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#4A7CFF]">
+    <section className="mt-6 w-full max-w-[603px] rounded-2xl bg-[#16171D] px-4 py-3 shadow-lg">
+      {/* Header */}
+      <div className="flex flex-row items-start gap-3 sm:flex-row sm:items-center sm:gap-12">
+        <h2 className="text-base tracking-wide text-white sm:text-lg">My assets value</h2>
+        <span
+          className={`${anuphan.className} rounded-full bg-[rgba(31,66,147,0.20)] w-[79px] text-center py-1 text-sm font-medium text-[#225FED]`}
+        >
           Demo
         </span>
       </div>
 
-      <div className="mt-4 rounded-xl border border-[#2A2B38] bg-[#1F2029] px-3 py-5">
-        <span className="text-sm font-medium tracking-wide text-[#7E7E7E]">
+      {/* Total Asset Value */}
+      <div className="mt-3 rounded-xl bg-[#1F2029] px-3 py-2">
+        <span className="text-xs font-medium tracking-wide text-[#7E7E7E] sm:text-sm">
           Total Asset Value (USDT)
         </span>
-        <p className="mt-2 text-xl font-semibold text-white">{formatCurrency(totalValue)}</p>
+        <p className="mt-3 text-lg font-normal text-white sm:mt-4 sm:text-xl">
+          {formatCurrency(totalValue)}
+        </p>
       </div>
 
-      <div className="mt-6 grid gap-6 text-sm text-[#A4A4A4] sm:grid-cols-2">
-        <div>
-          <span className="text-xs font-medium tracking-wide">Total Cost (USDT)</span>
-          <p className="mt-2 text-base text-white">{formatCurrency(totalCost)}</p>
+      {/* Total Cost and PnL */}
+      <div className="mt-3 flex flex-col gap-2 text-sm text-[#A4A4A4] min-[328px]:flex-row min-[328px]:gap-4 sm:gap-8 md:gap-20 lg:gap-39">
+        {/* Total Cost */}
+        <div className="flex-shrink-0">
+          <span className="ml-3 text-xs font-normal">Total Cost (USDT)</span>
+          <p className="ml-3 mt-1 text-xs text-white">{formatCurrency(totalCost)}</p>
         </div>
-        <div className="sm:text-right">
-          <span className="text-xs font-medium tracking-wide">Unrealized PnL (USDT)</span>
-          <p className={`mt-2 text-base font-semibold ${pnlClassName}`}>{pnlText}</p>
+
+        {/* Unrealized PnL */}
+        <div className="flex-1 ml-3 min-[328px]:ml-0">
+          <span className="text-xs font-normal">Unrealized PnL (USDT)</span>
+          <p className={`mt-1 text-xs ${pnlClassName}`}>{pnlText}</p>
         </div>
       </div>
     </section>
