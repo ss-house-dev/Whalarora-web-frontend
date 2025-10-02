@@ -87,7 +87,7 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col min-h-0">
         {/* Mobile / Small */}
-        <div className="flex flex-1 flex-col items-center px-6 pb-16 pt-6 sm:px-8 sm:pt-8 lg:hidden">
+        <div className="flex flex-1 flex-col items-center px-6 pb-16 pt-6 sm:px-8 sm:pt-8 md:hidden">
           <div className="hidden md:flex mt-4 items-center justify-center bg-clip-text text-[22px] font-semibold leading-7 text-[#52BAB2] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)]">
             Whalarora
           </div>
@@ -129,13 +129,13 @@ export default function Home() {
 
         {/* Desktop / Medium+ */}
         <div className="hidden flex-1 flex-col md:flex">
-          <div className="flex mt-24 items-center justify-center bg-clip-text text-[36px] font-[700] leading-relaxed text-[#52BAB2] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)]">
+          <div className="flex mt-24 items-center justify-center bg-clip-text text-[24px] font-[700] leading-relaxed text-[#52BAB2] [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] md:text-[28px] lg:text-[32px] xl:text-[36px]">
             Whalarora
           </div>
 
           <div className="mt-3 flex flex-col items-center">
             <div
-              className="text-center font-black"
+              className="text-center font-black text-[48px] leading-[120%] md:text-[56px] lg:text-[72px] xl:text-[84px]"
               style={{
                 textShadow: '0 4px 4px rgba(0, 0, 0, 0.25)',
                 background:
@@ -144,16 +144,14 @@ export default function Home() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '84px',
                 fontWeight: 900,
-                lineHeight: '140%',
               }}
             >
               Where Giants Rise <br /> Under the Lights
             </div>
 
             <div
-              className="mt-5 text-center text-[20px] font-[400] font-['Alexandria'] leading-6 text-zinc-300 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)]"
+              className="mt-5 text-center text-[16px] font-[400] font-['Alexandria'] leading-6 text-zinc-300 [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.25)] md:text-[18px] md:leading-7 lg:text-[20px]"
               style={{ textShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
             >
               Enter the world of crypto trading. Practice your strategies and <br /> prepare with a
