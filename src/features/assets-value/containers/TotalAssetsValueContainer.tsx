@@ -60,9 +60,9 @@ const roundPriceForDisplay = (value: number, precision?: SymbolPrecision | null)
     2;
 
   const factor = 10 ** decimals;
-  const rounded = Math.round(Math.abs(value) * factor) / factor;
+  const truncated = Math.trunc(Math.abs(value) * factor) / factor;
 
-  return value < 0 ? -rounded : rounded;
+  return value < 0 ? -truncated : truncated;
 };
 
 const PriceSubscriber = ({
