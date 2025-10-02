@@ -32,12 +32,12 @@ const truncateToDecimals = (value: number, decimals = 2) => {
 
 const formatCurrency = (value: number, { showPlus = false }: { showPlus?: boolean } = {}) => {
   if (!Number.isFinite(value)) {
-    return '$0.00';
+    return '0.00';
   }
 
   const truncated = truncateToDecimals(value);
   if (Math.abs(truncated) < Number.EPSILON) {
-    return '$0.00';
+    return '0.00';
   }
 
   const signPrefix = truncated < 0 ? '-' : showPlus ? '+' : '';
