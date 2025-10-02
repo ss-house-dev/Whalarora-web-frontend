@@ -25,6 +25,7 @@ import {
   useSymbolPrecisions,
   getSymbolPrecision,
   decimalsFromSize,
+  formatAmountWithStep,
 } from '@/features/trading/utils/symbolPrecision';
 import AlertBox from '../../../components/ui/alert-box';
 
@@ -123,6 +124,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [precisionMap, coinSymbol, quoteSymbol]
   );
 
+  const formatCoinAmount = useCallback(
+    (value: number | string | null | undefined) =>
+      formatAmountWithStep(value, symbolPrecision, { fallbackDecimals: 6 }),
+    [symbolPrecision]
+  );
+
   const quantityPrecision = useMemo(() => {
     const decimals =
       symbolPrecision?.quantityPrecision ??
@@ -210,7 +217,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! \nAmount remaining : ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus : Pending`,
+          `Order Buy ${coinSymbol}/USDT submitted successfully \nAmount remaining : ${formatCoinAmount(data.remaining)} ${coinSymbol}.\nStatus : Pending`,
           'info'
         );
       } else {
