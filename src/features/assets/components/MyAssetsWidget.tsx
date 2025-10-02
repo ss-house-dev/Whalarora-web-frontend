@@ -1,46 +1,66 @@
 'use client';
 
 import Image from 'next/image';
+
+import { useMemo } from 'react';
+
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
 
 export type MyAssetsWidgetItem = {
   id: string | number;
+
   symbol: string;
+
   name: string;
+
   amount: number;
+
   unit: string;
+
   currentPrice: number;
+
   value: number;
+
   pnlValue: number;
+
   pnlPercent: number;
+
   iconSrc?: string;
+
   // Add cost basis properties for real-time calculation
+
   avgPrice?: number;
+
   total?: number;
 };
 
 interface MyAssetsWidgetProps {
   items: MyAssetsWidgetItem[];
+
   isLoading?: boolean;
+
   error?: string;
+
   className?: string;
 }
 
 const amountFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
+
   maximumFractionDigits: 9,
 });
 
-const valueFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
+const pnlValueFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
+
   maximumFractionDigits: 2,
 });
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
   style: 'percent',
+
   minimumFractionDigits: 2,
+
   maximumFractionDigits: 2,
 });
 
@@ -52,12 +72,14 @@ const formatAmount = (amount: number, unit: string) => {
   return `${amountFormatter.format(amount)} ${unit}`;
 };
 
-const formatValue = (value: number) => {
-  if (!Number.isFinite(value)) {
-    return '$0.00';
+const formatPnlValue = (value: number) => {
+  if (!Number.isFinite(value) || value === 0) {
+    return '+0.00';
   }
 
-  return valueFormatter.format(value);
+  const sign = value >= 0 ? '+' : '-';
+
+  return `${sign}${pnlValueFormatter.format(Math.abs(value))}`;
 };
 
 const formatPercent = (value: number) => {
@@ -66,6 +88,7 @@ const formatPercent = (value: number) => {
   }
 
   const sign = value >= 0 ? '+' : '-';
+
   return `${sign}${percentFormatter.format(Math.abs(value))}`;
 };
 
@@ -77,20 +100,37 @@ const getTrendClassName = (change: number) => {
   return change > 0 ? 'text-[#4ED7B0]' : 'text-[#FF6B6B]';
 };
 
+const getComparablePnl = (value: number | undefined) =>
+  Number.isFinite(value) ? (value as number) : Number.NEGATIVE_INFINITY;
+
 const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
   const { marketPrice, isPriceLoading } = useMarketPrice(item.symbol);
 
-  const displayPrice = marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : 0;
+  const fallbackPrice =
+    typeof item.currentPrice === 'number' && Number.isFinite(item.currentPrice)
+      ? item.currentPrice
+      : typeof item.avgPrice === 'number' && Number.isFinite(item.avgPrice)
+        ? item.avgPrice
+        : 0;
+
+  const displayPrice = marketPrice ? parseFloat(marketPrice.replace(/,/g, '')) : fallbackPrice;
 
   const realTimeValue = displayPrice * item.amount;
 
-  const realTimePnlPct =
-    item.avgPrice && item.avgPrice > 0 ? (displayPrice - item.avgPrice) / item.avgPrice : 0;
+  const costBasis =
+    typeof item.total === 'number' && Number.isFinite(item.total)
+      ? item.total
+      : typeof item.avgPrice === 'number' && Number.isFinite(item.avgPrice)
+        ? item.avgPrice * item.amount
+        : 0;
+
+  const realTimePnlValue = realTimeValue - costBasis;
+
+  const realTimePnlPct = costBasis > 0 ? realTimePnlValue / costBasis : 0;
 
   const trendClass = getTrendClassName(realTimePnlPct);
 
   if (isPriceLoading) {
-    // You can return a skeleton loader here if you want
     return (
       <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4">
         <div className="flex flex-1 items-center gap-3">
@@ -107,18 +147,22 @@ const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
               {item.symbol.slice(0, 3)}
             </div>
           )}
+
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-sm font-medium leading-tight text-white">
               {item.name}
             </span>
+
             <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
               {formatAmount(item.amount, item.unit)}
             </span>
           </div>
         </div>
+
         <div className="flex flex-col items-end gap-1 text-right">
-          <div className="h-5 w-16 animate-pulse rounded-md bg-gray-700" />
           <div className="h-5 w-20 animate-pulse rounded-md bg-gray-700" />
+
+          <div className="h-4 w-16 animate-pulse rounded-md bg-gray-700" />
         </div>
       </div>
     );
@@ -140,19 +184,23 @@ const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
             {item.symbol.slice(0, 3)}
           </div>
         )}
+
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium leading-tight text-white">{item.name}</span>
+
           <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
             {formatAmount(item.amount, item.unit)}
           </span>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1 text-right">
+
+      <div className="flex flex-col items-end text-right">
         <span className={`text-sm font-medium leading-tight ${trendClass}`}>
-          {formatPercent(realTimePnlPct)}
+          {formatPnlValue(realTimePnlValue)}
         </span>
-        <span className="text-sm font-medium leading-tight text-white">
-          {formatValue(realTimeValue)}
+
+        <span className={`text-xs font-normal leading-tight ${trendClass}`}>
+          ({formatPercent(realTimePnlPct)})
         </span>
       </div>
     </div>
@@ -160,18 +208,35 @@ const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
 };
 
 const MyAssetsWidgetState = ({ message }: { message: string }) => (
-  <div className="flex h-full items-center justify-center">
+  <div className="flex min-h-[96px] items-center justify-center rounded-xl bg-[#1F2029] p-6 text-center">
     <span className="text-sm font-normal text-[#A4A4A4]">{message}</span>
   </div>
 );
 
 export function MyAssetsWidget({
   items,
+
   isLoading = false,
+
   error,
+
   className = '',
 }: MyAssetsWidgetProps) {
   const hasItems = items.length > 0;
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const bPnl = getComparablePnl(b.pnlValue);
+
+      const aPnl = getComparablePnl(a.pnlValue);
+
+      if (bPnl !== aPnl) {
+        return bPnl - aPnl;
+      }
+
+      return b.name.localeCompare(a.name);
+    });
+  }, [items]);
 
   return (
     <div
@@ -183,20 +248,31 @@ export function MyAssetsWidget({
 
       <div className="flex flex-1 gap-2 overflow-hidden">
         <div className="flex h-full flex-1 flex-col overflow-hidden">
-          <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-            {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
+          <div className="flex-1 overflow-y-auto pr-1">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#1F2029] bg-[#16171D] px-4 py-3">
+              <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+                Symbol
+              </span>
 
-            {!isLoading && error && <MyAssetsWidgetState message={error} />}
+              <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+                Unrealized pnl (USDT)
+              </span>
+            </div>
 
-            {!isLoading && !error && !hasItems && <MyAssetsWidgetState message="No assets" />}
+            <div className="space-y-3 pb-3 pt-3">
+              {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
 
-            {!isLoading &&
-              !error &&
-              hasItems &&
-              items.map((item) => <MyAssetsWidgetCard key={item.id} item={item} />)}
+              {!isLoading && error && <MyAssetsWidgetState message={error} />}
+
+              {!isLoading && !error && !hasItems && <MyAssetsWidgetState message="No assets" />}
+
+              {!isLoading &&
+                !error &&
+                hasItems &&
+                sortedItems.map((item) => <MyAssetsWidgetCard key={item.id} item={item} />)}
+            </div>
           </div>
         </div>
-        <div className="h-full w-2 rounded-xl bg-[#1F2029]" />
       </div>
     </div>
   );
