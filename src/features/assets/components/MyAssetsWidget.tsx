@@ -74,22 +74,16 @@ const formatAmount = (amount: number, unit: string) => {
 
 const formatPnlValue = (value: number) => {
   if (!Number.isFinite(value) || value === 0) {
-    return '+0.00';
+    return '0.00';
   }
-
-  const sign = value >= 0 ? '+' : '-';
-
-  return `${sign}${pnlValueFormatter.format(Math.abs(value))}`;
+  return `${pnlValueFormatter.format(Math.abs(value))}`;
 };
 
 const formatPercent = (value: number) => {
   if (!Number.isFinite(value) || value === 0) {
-    return '+0.00%';
+    return '0.00%';
   }
-
-  const sign = value >= 0 ? '+' : '-';
-
-  return `${sign}${percentFormatter.format(Math.abs(value))}`;
+  return `${percentFormatter.format(Math.abs(value))}`;
 };
 
 const getTrendClassName = (change: number) => {
@@ -102,6 +96,30 @@ const getTrendClassName = (change: number) => {
 
 const getComparablePnl = (value: number | undefined) =>
   Number.isFinite(value) ? (value as number) : Number.NEGATIVE_INFINITY;
+
+const ArrowUpIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M4.66602 10L7.99935 6.66667L11.3327 10"
+      stroke="#4ED7B0"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ArrowDownIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M11.334 6L8.00065 9.33333L4.66732 6"
+      stroke="#FF6B6B"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
   const { marketPrice, isPriceLoading } = useMarketPrice(item.symbol);
@@ -149,9 +167,13 @@ const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
           )}
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-medium leading-tight text-white">
-              {item.name}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="truncate text-sm font-medium leading-tight text-white">
+                {item.name}
+              </span>
+              {realTimePnlValue > 0 && <ArrowUpIcon />}
+              {realTimePnlValue < 0 && <ArrowDownIcon />}
+            </div>
 
             <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
               {formatAmount(item.amount, item.unit)}
@@ -186,8 +208,13 @@ const MyAssetsWidgetCard = ({ item }: { item: MyAssetsWidgetItem }) => {
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm font-medium leading-tight text-white">{item.name}</span>
-
+          <div className="flex items-center gap-1">
+            <span className="truncate text-sm font-medium leading-tight text-white">
+              {item.name}
+            </span>
+            {realTimePnlValue > 0 && <ArrowUpIcon />}
+            {realTimePnlValue < 0 && <ArrowDownIcon />}
+          </div>
           <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
             {formatAmount(item.amount, item.unit)}
           </span>
@@ -247,11 +274,11 @@ export function MyAssetsWidget({
       </div>
 
       <div className="flex items-center justify-between border-b border-[#1F2029] px-0 pb-2 pt-2">
-        <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria']">
+        <span className="text-xs font-normal leading-none text-[#A4A4A4] font-['Alexandria']">
           Symbol
         </span>
 
-        <span className="text-xs font-normal leading-none text-palatte-color-netural-gray-GR200 font-['Alexandria'] pr-2">
+        <span className="text-xs font-normal leading-none text-[#A4A4A4] font-['Alexandria'] pr-2">
           Unrealized pnl (USDT)
         </span>
       </div>
