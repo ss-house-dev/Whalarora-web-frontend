@@ -56,7 +56,7 @@ export function HoldingAssetsFigmaPreview() {
         </div>
       </header>
 
-      <div className="grid grid-cols-[288px_128px_128px_144px_144px_160px] items-center gap-10 px-2 text-xs uppercase tracking-[0.08em] text-[#A4A4A4]">
+      <div className="grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 px-4 text-[9px] uppercase tracking-[0.08em] text-[#A4A4A4]">
         <span className="text-left font-medium">Symbol</span>
         <span className="justify-self-center text-center font-medium">Current price (USDT)</span>
         <span className="justify-self-center text-center font-normal">Average cost (USDT)</span>
@@ -70,7 +70,7 @@ export function HoldingAssetsFigmaPreview() {
           {PREVIEW_ROWS.map((row) => (
             <div
               key={row.id}
-              className="grid grid-cols-[288px_128px_128px_144px_144px_160px] items-center gap-10 rounded-xl border border-[#3C3F4A] bg-[#191B24] px-2 py-4"
+              className="grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 rounded-xl border border-[#3C3F4A] bg-[#191B24] px-4 py-4"
             >
               <div className="flex h-full items-center gap-4 border-r border-[#2D3039] pr-10">
                 <div className="flex h-10 w-10 items-center justify-center">
@@ -110,7 +110,7 @@ export function HoldingAssetsFigmaPreview() {
               >
                 {row.pnl}
               </div>
-              <div className="justify-self-center">
+              <div className="justify-self-end">
                 <button className="flex h-8 w-[144px] items-center justify-center rounded-lg bg-[#215EEC] text-sm font-normal leading-tight text-neutral-100">
                   Buy/Sell
                 </button>
@@ -118,8 +118,6 @@ export function HoldingAssetsFigmaPreview() {
             </div>
           ))}
         </div>
-
-        <div className="w-2 self-stretch rounded-xl bg-[#4F5160]" aria-hidden />
       </div>
 
       <footer className="mt-4 flex w-full items-start justify-between text-xs text-[#A4A4A4]">
