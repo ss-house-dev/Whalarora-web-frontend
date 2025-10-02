@@ -5,33 +5,27 @@ import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { useAllMarketPrices } from '../hooks/useAllMarketPrices';
+import {
+  type SymbolPrecision,
+  formatPriceWithTick,
+  formatAmountWithStep,
+} from '@/features/trading/utils/symbolPrecision';
 
 export type MyAssetsWidgetItem = {
   id: string | number;
-
   symbol: string;
-
   name: string;
-
   amount: number;
-
   unit: string;
-
   currentPrice: number;
-
   value: number;
-
   pnlValue: number;
-
   pnlPercent: number;
-
   iconSrc?: string;
-
   // Add cost basis properties for real-time calculation
-
   avgPrice?: number;
-
   total?: number;
+  precision?: SymbolPrecision;
 };
 
 interface MyAssetsWidgetProps {
@@ -64,19 +58,12 @@ const percentFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-const formatAmount = (amount: number, unit: string) => {
-  if (!Number.isFinite(amount)) {
-    return `0.00 ${unit}`;
-  }
-
-  return `${amountFormatter.format(amount)} ${unit}`;
+const formatAmount = (amount: number, unit: string, precision?: SymbolPrecision) => {
+  return `${formatAmountWithStep(amount, precision)} ${unit}`;
 };
 
-const formatPnlValue = (value: number) => {
-  if (!Number.isFinite(value) || value === 0) {
-    return '0.00';
-  }
-  return `${pnlValueFormatter.format(Math.abs(value))}`;
+const formatPnlValue = (value: number, precision?: SymbolPrecision) => {
+  return formatPriceWithTick(Math.abs(value), precision);
 };
 
 const formatPercent = (value: number) => {
@@ -158,14 +145,14 @@ const MyAssetsWidgetCard = ({
             {realTimePnlValue < 0 && <ArrowDownIcon />}
           </div>
           <span className="truncate text-sm font-normal leading-tight text-[#A4A4A4]">
-            {formatAmount(item.amount, item.unit)}
+            {formatAmount(item.amount, item.unit, item.precision)}
           </span>
         </div>
       </div>
 
       <div className="flex flex-col items-end text-right">
         <span className={`text-sm font-medium leading-tight ${trendClass}`}>
-          {formatPnlValue(realTimePnlValue)}
+          {formatPnlValue(realTimePnlValue, item.precision)}
         </span>
 
         <span className={`text-xs font-normal leading-tight ${trendClass}`}>

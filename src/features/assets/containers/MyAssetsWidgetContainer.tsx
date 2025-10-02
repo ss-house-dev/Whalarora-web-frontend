@@ -7,6 +7,11 @@ import MyAssetsWidget, { type MyAssetsWidgetItem } from '../components/MyAssetsW
 import { useGetAllAssets } from '../hooks/useGetAllAssets';
 
 import type { Asset } from '../types';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  type SymbolPrecisionMap,
+} from '@/features/trading/utils/symbolPrecision';
 
 const FALLBACK_NAMES: Record<string, string> = {
   BTC: 'Bitcoin',
@@ -68,7 +73,10 @@ const getIconSrc = (symbol: string) => {
   return `/currency-icons/${iconFile}`;
 };
 
-const toWidgetItem = (asset: Asset): MyAssetsWidgetItem => {
+const toWidgetItem = (
+  asset: Asset,
+  precisionMap: SymbolPrecisionMap | undefined
+): MyAssetsWidgetItem => {
   const symbol = asset.symbol?.toUpperCase() ?? 'N/A';
 
   const amount = Number.isFinite(asset.amount) ? asset.amount : 0;
@@ -89,28 +97,18 @@ const toWidgetItem = (asset: Asset): MyAssetsWidgetItem => {
 
   return {
     id: asset._id,
-
     symbol,
-
     name: FALLBACK_NAMES[symbol] ?? symbol,
-
     amount,
-
     unit: symbol,
-
     avgPrice,
-
     total: costBasis,
-
     iconSrc: getIconSrc(symbol),
-
     currentPrice,
-
     value: estimatedValue,
-
     pnlValue,
-
     pnlPercent,
+    precision: getSymbolPrecision(precisionMap, symbol, 'USDT'),
   };
 };
 
@@ -123,27 +121,35 @@ const filterTradableAssets = (assets: Asset[] | undefined): Asset[] => {
 };
 
 export default function MyAssetsWidgetContainer() {
-  const { data, isLoading, error, isFetching } = useGetAllAssets({
+  const {
+    data: assetsData,
+    isLoading: isAssetsLoading,
+    error: assetsError,
+    isFetching: isAssetsFetching,
+  } = useGetAllAssets({
     enabled: true,
-
     refetchInterval: 15000, // Refetch every 15 seconds
   });
 
-  const tradableAssets = useMemo(() => filterTradableAssets(data), [data]);
+  const { data: precisionMap, isLoading: isPrecisionLoading } = useSymbolPrecisions({
+    enabled: true,
+  });
+
+  const tradableAssets = useMemo(() => filterTradableAssets(assetsData), [assetsData]);
 
   const items = useMemo(() => {
-    if (tradableAssets.length === 0) {
+    if (!precisionMap || tradableAssets.length === 0) {
       return [] as MyAssetsWidgetItem[];
     }
 
     // Sort by total value (amount * avgPrice) as a proxy before real-time values are available
-
     const sortedAssets = [...tradableAssets].sort((a, b) => b.total - a.total);
 
-    return sortedAssets.map(toWidgetItem);
-  }, [tradableAssets]);
+    return sortedAssets.map((asset) => toWidgetItem(asset, precisionMap));
+  }, [tradableAssets, precisionMap]);
 
-  const showLoadingState = items.length === 0 && (isLoading || isFetching);
+  const showLoadingState =
+    (isAssetsLoading || isAssetsFetching || isPrecisionLoading) && items.length === 0;
 
-  return <MyAssetsWidget items={items} isLoading={showLoadingState} error={error?.message} />;
+  return <MyAssetsWidget items={items} isLoading={showLoadingState} error={assetsError?.message} />;
 }
