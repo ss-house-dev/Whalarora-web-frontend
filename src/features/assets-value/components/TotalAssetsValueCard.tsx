@@ -36,12 +36,15 @@ const formatCurrency = (value: number, { showPlus = false }: { showPlus?: boolea
 
   const signPrefix = truncated < 0 ? '-' : showPlus ? '+' : '';
   const formatted = numberFormatter.format(Math.abs(truncated));
-  return `${signPrefix}$${formatted}`;
+  return `${signPrefix}${formatted}`;
 };
 
 const formatPercent = (
   value: number,
-  { showPlus = true, spaceBeforePercent = true }: { showPlus?: boolean; spaceBeforePercent?: boolean } = {}
+  {
+    showPlus = true,
+    spaceBeforePercent = true,
+  }: { showPlus?: boolean; spaceBeforePercent?: boolean } = {}
 ) => {
   if (!Number.isFinite(value)) {
     return `0.00${spaceBeforePercent ? ' %' : '%'}`;
@@ -66,7 +69,7 @@ export default function TotalAssetsValueCard({
 }: TotalAssetsValueCardProps) {
   if (isLoading) {
     return (
-      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg">
+      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg w-[624px]">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
           My assets value
         </h2>
@@ -79,7 +82,7 @@ export default function TotalAssetsValueCard({
 
   if (error) {
     return (
-      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg">
+      <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg w-[624px]">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
           My assets value
         </h2>
@@ -97,30 +100,28 @@ export default function TotalAssetsValueCard({
   })})`;
 
   return (
-    <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-6 shadow-lg">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
-          My assets value
-        </h2>
+    <section className="mt-6 rounded-2xl border border-[#2A2B38] bg-[#16171D] p-6 shadow-lg w-[603px]">
+      <div className="flex items-center gap-12">
+        <h2 className="text-lg font-medium tracking-wide text-white">My assets value</h2>
         <span className="rounded-full bg-[#1C2A55] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#4A7CFF]">
           Demo
         </span>
       </div>
 
-      <div className="mt-4 rounded-xl border border-[#2A2B38] bg-[#16171D] px-4 py-5">
-        <span className="text-xs font-medium uppercase tracking-wide text-[#7E7E7E]">
+      <div className="mt-4 rounded-xl border border-[#2A2B38] bg-[#1F2029] px-3 py-5">
+        <span className="text-sm font-medium tracking-wide text-[#7E7E7E]">
           Total Asset Value (USDT)
         </span>
-        <p className="mt-2 text-3xl font-semibold text-white">{formatCurrency(totalValue)}</p>
+        <p className="mt-2 text-xl font-semibold text-white">{formatCurrency(totalValue)}</p>
       </div>
 
       <div className="mt-6 grid gap-6 text-sm text-[#A4A4A4] sm:grid-cols-2">
         <div>
-          <span className="text-xs font-medium uppercase tracking-wide">Total Cost (USDT)</span>
+          <span className="text-xs font-medium tracking-wide">Total Cost (USDT)</span>
           <p className="mt-2 text-base text-white">{formatCurrency(totalCost)}</p>
         </div>
         <div className="sm:text-right">
-          <span className="text-xs font-medium uppercase tracking-wide">Unrealized PnL (USDT)</span>
+          <span className="text-xs font-medium tracking-wide">Unrealized PnL (USDT)</span>
           <p className={`mt-2 text-base font-semibold ${pnlClassName}`}>{pnlText}</p>
         </div>
       </div>

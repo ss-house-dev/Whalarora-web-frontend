@@ -3,7 +3,7 @@ import HoldingAssetsContainer from '@/features/assets/containers/HoldingAssetsCo
 
 export default function MyAssetsPage() {
   return (
-    <div className="px-4 pb-10 pt-6 md:px-8">
+    <div className="px-4 pb-10 mt-[20px] lg:px-[23px]">
       <TotalAssetsValueContainer />
       <div className="mt-6">
         <HoldingAssetsContainer pageSize={10} />
