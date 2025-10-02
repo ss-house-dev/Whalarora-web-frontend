@@ -105,7 +105,7 @@ export function HoldingAssetsFigmaPreview() {
                 {row.value}
               </div>
               <div
-                className="justify-self-center text-base leading-normal text-center"
+                className="justify-self-center text-base leading-normal text-center whitespace-nowrap"
                 style={{ color: row.pnlColor }}
               >
                 {row.pnl}
