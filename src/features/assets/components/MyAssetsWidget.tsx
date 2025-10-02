@@ -4,6 +4,8 @@ import Image from 'next/image';
 
 import { useMemo } from 'react';
 
+import styles from './MyAssetsWidget.module.css';
+
 import { useAllMarketPrices } from '../hooks/useAllMarketPrices';
 import {
   type SymbolPrecision,
@@ -83,6 +85,22 @@ const getTrendClassName = (change: number) => {
 
 const getComparablePnl = (value: number | undefined) =>
   Number.isFinite(value) ? (value as number) : Number.NEGATIVE_INFINITY;
+
+const MyAssetsWidgetSkeleton = () => (
+  <div className="flex w-full items-center justify-between gap-6 rounded-xl bg-[#1F2029] p-4">
+    <div className="flex flex-1 items-center gap-3">
+      <div className={`${styles.skeletonRow} h-10 w-10 rounded-full`} />
+      <div className="flex flex-1 flex-col gap-2">
+        <div className={`${styles.skeletonRow} h-3 w-24 rounded`} />
+        <div className={`${styles.skeletonRow} h-3 w-32 rounded`} />
+      </div>
+    </div>
+    <div className="flex flex-col items-end gap-2">
+      <div className={`${styles.skeletonRow} h-3 w-20 rounded`} />
+      <div className={`${styles.skeletonRow} h-3 w-16 rounded`} />
+    </div>
+  </div>
+);
 
 const ArrowUpIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -238,7 +256,10 @@ export function MyAssetsWidget({
           <div className="flex-1">
             <div>
               <div className="space-y-3 pb-3 pt-3">
-                {isLoading && <MyAssetsWidgetState message="Loading assets..." />}
+                {isLoading &&
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <MyAssetsWidgetSkeleton key={`my-assets-skeleton-${index}`} />
+                  ))}
 
                 {!isLoading && error && <MyAssetsWidgetState message={error} />}
 
