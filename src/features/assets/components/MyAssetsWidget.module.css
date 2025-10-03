@@ -1,7 +1,0 @@
-.skeletonRow { background: linear-gradient(90deg, rgba(35,36,47,0.6) 0%, rgba(74,78,104,0.95) 50%, rgba(35,36,47,0.6) 100%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite;}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-

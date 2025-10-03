@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
-import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 const palette = {
-  card: '#1F2029',
-  surfaceAlt: '#16171D',
-  success: '#4ED7B0',
-  danger: '#FF6B6B',
-  gray400: '#A4A4A4',
-  gray500: '#7E7E7E',
-  stroke: '#3A3B44',
+  card: "#1F2029",
+  surfaceAlt: "#16171D",
+  success: "#4ED7B0",
+  danger: "#FF6B6B",
+  gray400: "#A4A4A4",
+  gray500: "#7E7E7E",
+  stroke: "#3A3B44",
 };
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
+const currencyFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-const amountFormatter = new Intl.NumberFormat('en-US', {
+const amountFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 9,
 });
 
-const percentFormatter = new Intl.NumberFormat('en-US', {
-  style: 'percent',
+const percentFormatter = new Intl.NumberFormat("en-US", {
+  style: "percent",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
@@ -41,23 +41,23 @@ const clampPage = (value: number, total: number) => {
 
 const formatCurrency = (value: number) => {
   if (!Number.isFinite(value)) {
-    return '0.00';
+    return "0.00";
   }
   return currencyFormatter.format(value);
 };
 
 const formatAmount = (value: number) => {
   if (!Number.isFinite(value)) {
-    return '0.00';
+    return "0.00";
   }
   return amountFormatter.format(value);
 };
 
 const formatPercent = (value: number) => {
   if (!Number.isFinite(value)) {
-    return '+0.00%';
+    return "+0.00%";
   }
-  const sign = value >= 0 ? '+' : '-';
+  const sign = value >= 0 ? "+" : "-";
   return `${sign}${percentFormatter.format(Math.abs(value))}`;
 };
 
@@ -128,7 +128,7 @@ const TokenAvatar = ({
   );
 };
 
-const Stat = ({ label, value, className = '' }: StatProps) => (
+const Stat = ({ label, value, className = "" }: StatProps) => (
   <div className={`flex flex-col gap-1 ${className}`}>
     <span className="text-xs text-[#A4A4A4]">{label}</span>
     <span className="text-sm text-white">{value}</span>
@@ -180,8 +180,8 @@ const Pagination = ({ page, totalPages, onSelect }: PaginationProps) => {
             onClick={() => handleChange(slot)}
             className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-semibold transition ${
               isActive
-                ? 'border-[#215EEC] text-white'
-                : 'border-transparent text-[#A4A4A4] hover:text-white'
+                ? "border-[#215EEC] text-white"
+                : "border-transparent text-[#A4A4A4] hover:text-white"
             }`}
             style={{ backgroundColor: palette.card }}
           >
@@ -204,22 +204,24 @@ const Pagination = ({ page, totalPages, onSelect }: PaginationProps) => {
 export function HoldingResponsive({
   holdings,
   isLoading = false,
-  loadingMessage = 'Loading...',
+  loadingMessage = "Loading...",
   error,
   pageSize = 3,
   initialPage = 1,
   currentPage,
   onPageChange,
   onBuySell,
-  buySellLabel = 'Buy/Sell',
-  className = '',
+  buySellLabel = "Buy/Sell",
+  className = "",
 }: HoldingResponsiveProps) {
   const totalAssets = holdings.length;
   const resolvedPageSize = Math.max(1, pageSize);
   const totalPages = Math.max(1, Math.ceil(totalAssets / resolvedPageSize));
-  const isControlled = typeof currentPage === 'number';
+  const isControlled = typeof currentPage === "number";
 
-  const [internalPage, setInternalPage] = useState(() => clampPage(initialPage, totalPages));
+  const [internalPage, setInternalPage] = useState(() =>
+    clampPage(initialPage, totalPages)
+  );
 
   useEffect(() => {
     if (!isControlled) {
@@ -233,7 +235,9 @@ export function HoldingResponsive({
     }
   }, [totalPages, isControlled]);
 
-  const activePage = isControlled ? clampPage(currentPage ?? 1, totalPages) : internalPage;
+  const activePage = isControlled
+    ? clampPage(currentPage ?? 1, totalPages)
+    : internalPage;
 
   const changePage = (nextPage: number) => {
     const next = clampPage(nextPage, totalPages);
@@ -254,18 +258,22 @@ export function HoldingResponsive({
     if (isLoading) {
       return (
         <div className="space-y-3">
-          {loadingMessage && <p className="text-sm text-[#A4A4A4]">{loadingMessage}</p>}
+          {loadingMessage && (
+            <p className="text-sm text-[#A4A4A4]">{loadingMessage}</p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: Math.min(resolvedPageSize, 3) }).map((_, index) => (
-              <div
-                key={`skeleton-${index}`}
-                className="flex h-[252px] w-full flex-col gap-3 rounded-xl border border-[#3A3B44] bg-[#1F2029] p-4"
-              >
-                <div className="h-10 w-full animate-pulse rounded-lg bg-[#262733]" />
-                <div className="hidden flex-1 animate-pulse rounded-lg bg-[#262733] sm:block" />
-                <div className="h-8 animate-pulse rounded-lg bg-[#262733]" />
-              </div>
-            ))}
+            {Array.from({ length: Math.min(resolvedPageSize, 3) }).map(
+              (_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="flex h-[252px] w-full flex-col gap-3 rounded-xl border border-[#3A3B44] bg-[#1F2029] p-4"
+                >
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-[#262733]" />
+                  <div className="hidden flex-1 animate-pulse rounded-lg bg-[#262733] sm:block" />
+                  <div className="h-8 animate-pulse rounded-lg bg-[#262733]" />
+                </div>
+              )
+            )}
           </div>
         </div>
       );
@@ -291,7 +299,7 @@ export function HoldingResponsive({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {pagedHoldings.map((holding) => {
           const isGain = holding.pnlAbs >= 0;
-          const pnlAmountText = `${isGain ? '' : '-'}${formatCurrency(Math.abs(holding.pnlAbs))}`;
+          const pnlAmountText = `${isGain ? "" : "-"}${formatCurrency(Math.abs(holding.pnlAbs))}`;
           return (
             <article
               key={holding.id}
@@ -328,11 +336,15 @@ export function HoldingResponsive({
                     value={formatCurrency(holding.averageCost)}
                     className="sm:w-36"
                   />
-                  <Stat label="Value" value={formatCurrency(holding.value)} className="sm:w-36" />
+                  <Stat
+                    label="Value"
+                    value={formatCurrency(holding.value)}
+                    className="sm:w-36"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1 sm:gap-2">
-                  <span className="text-xs text-[#A4A4A4]">Unrealized PnL</span>
+                  <span className="text-xs text-[#A4A4A4]">Unrealized PNL</span>
                   <span
                     className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
                     style={{
@@ -377,9 +389,15 @@ export function HoldingResponsive({
       <div className="mt-4 space-y-3">{content}</div>
 
       <footer className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-xs font-medium text-[#A4A4A4]">Total : {totalAssets} Assets</span>
+        <span className="text-xs font-medium text-[#A4A4A4]">
+          Total : {totalAssets} Assets
+        </span>
         {showPagination && (
-          <Pagination page={activePage} totalPages={totalPages} onSelect={changePage} />
+          <Pagination
+            page={activePage}
+            totalPages={totalPages}
+            onSelect={changePage}
+          />
         )}
       </footer>
     </section>
@@ -387,3 +405,11 @@ export function HoldingResponsive({
 }
 
 export type { HoldingItem, HoldingResponsiveProps };
+
+
+
+
+
+
+
+

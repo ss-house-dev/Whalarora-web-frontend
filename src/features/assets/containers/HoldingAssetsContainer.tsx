@@ -1,6 +1,5 @@
 ﻿'use client';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
 import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
 import HoldingAssetsSection from '../components/HoldingAssetsSection';
 
@@ -117,18 +116,12 @@ interface HoldingAssetsContainerProps {
 }
 
 export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsContainerProps) {
-  const { status } = useSession();
-  const isSessionLoading = status === 'loading';
-  const isAuthenticated = status === 'authenticated';
-  const shouldSkipQuery = status === 'unauthenticated';
-
   const {
     data: assets,
     isLoading,
     error,
-    isFetching,
   } = useGetAllAssets({
-    enabled: isAuthenticated,
+    enabled: true,
   });
 
   const [rows, setRows] = useState<AssetRow[]>([]);
@@ -206,18 +199,15 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
 
   // กำหนดสถานะสำหรับส่งไปยัง HoldingAssetsSection
   const loadingState: string | undefined = undefined;
-  const queryErrorMessage = error ? error.message : undefined;
-  const effectiveError = shouldSkipQuery ? 'Please log in again' : queryErrorMessage;
-  const showLoadingState = (isAuthenticated && (isLoading || isFetching)) || isProcessing || (isSessionLoading && !shouldSkipQuery);
+  const errorMessage: string | undefined = undefined;
 
   return (
     <HoldingAssetsSection
       rows={rows}
       pageSize={pageSize}
-      isLoading={showLoadingState}
+      isLoading={isLoading || isProcessing}
       loadingMessage={loadingState}
-      error={effectiveError}
+      error={error ? error.message : errorMessage}
     />
   );
 }
-
