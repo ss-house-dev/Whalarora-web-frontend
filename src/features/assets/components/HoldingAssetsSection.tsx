@@ -76,7 +76,7 @@ export default function HoldingAssetsSection({
       onPageChange={setPage}
       showPagination
     >
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-3">
         {isLoadingData && (
           <div className="flex h-64 items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -84,14 +84,12 @@ export default function HoldingAssetsSection({
         )}
 
         {shouldShowDesktopHeader && (
-          <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[10.5px] tracking-[0.08em] text-[#A4A4A4] font-['Alexandria']">
+          <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 pt-0 pb-3 text-[10.5px] tracking-[0.08em] text-[#A4A4A4] font-['Alexandria']">
             <span className="text-left font-medium">Symbol</span>
             <span className="justify-self-center text-center font-medium">
               Current price (USDT)
             </span>
-            <span className="justify-self-center text-center font-medium">
-              Average cost (USDT)
-            </span>
+            <span className="justify-self-center text-center font-medium">Average cost (USDT)</span>
             <span className="justify-self-center text-center font-medium">Value (USDT)</span>
             <span className="justify-self-center text-center font-medium">
               Unrealized PnL (USDT)
@@ -108,7 +106,9 @@ export default function HoldingAssetsSection({
 
         {unauthorizedError && (
           <div className="flex h-64 items-center justify-center">
-            <p className="text-base font-normal leading-normal text-[#A4A4A4] font-['Alexandria']">No holding assets.</p>
+            <p className="text-sm font-normal leading-normal text-[#A4A4A4] font-['Alexandria']">
+              No holding assets.
+            </p>
           </div>
         )}
 
@@ -144,4 +144,5 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
+
 
