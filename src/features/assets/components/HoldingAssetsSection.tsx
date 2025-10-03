@@ -140,10 +140,3 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
-
-
-
-
-
-
-

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 
 import MyAssetsWidget, { type MyAssetsWidgetItem } from '../components/MyAssetsWidget';
 
@@ -121,35 +122,41 @@ const filterTradableAssets = (assets: Asset[] | undefined): Asset[] => {
 };
 
 export default function MyAssetsWidgetContainer() {
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  const shouldSkipQuery = status === 'unauthenticated';
+
   const {
     data: assetsData,
     isLoading: isAssetsLoading,
     error: assetsError,
     isFetching: isAssetsFetching,
   } = useGetAllAssets({
-    enabled: true,
-    refetchInterval: 15000, // Refetch every 15 seconds
+    enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 15000 : false,
   });
 
   const { data: precisionMap, isLoading: isPrecisionLoading } = useSymbolPrecisions({
-    enabled: true,
+    enabled: isAuthenticated,
   });
 
   const tradableAssets = useMemo(() => filterTradableAssets(assetsData), [assetsData]);
 
   const items = useMemo(() => {
-    if (!precisionMap || tradableAssets.length === 0) {
+    if (!isAuthenticated || !precisionMap || tradableAssets.length === 0) {
       return [] as MyAssetsWidgetItem[];
     }
 
-    // Sort by total value (amount * avgPrice) as a proxy before real-time values are available
     const sortedAssets = [...tradableAssets].sort((a, b) => b.total - a.total);
 
     return sortedAssets.map((asset) => toWidgetItem(asset, precisionMap));
-  }, [tradableAssets, precisionMap]);
+  }, [isAuthenticated, tradableAssets, precisionMap]);
 
   const showLoadingState =
-    (isAssetsLoading || isAssetsFetching || isPrecisionLoading) && items.length === 0;
+    isAuthenticated && (isAssetsLoading || isAssetsFetching || isPrecisionLoading) && items.length === 0;
 
-  return <MyAssetsWidget items={items} isLoading={showLoadingState} error={assetsError?.message} />;
+  const effectiveError = shouldSkipQuery ? 'Please log in again' : assetsError?.message;
+
+  return <MyAssetsWidget items={items} isLoading={showLoadingState} error={effectiveError} />;
 }
+
