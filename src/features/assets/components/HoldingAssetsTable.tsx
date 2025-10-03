@@ -75,7 +75,7 @@ export default function HoldingAssetsTable({
   return (
     <section className={sectionClasses} role="region" aria-label="Holdings table container">
       <div className={headerClasses}>
-        <h3 className="text-xl font-normal text-white/90">{title}</h3>
+        <h3 className="text-xl font-normal text-white/90 font-['Alexandria']">{title}</h3>
       </div>
 
       <div className={contentWrapperClasses}>
