@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import { useRouter } from 'next/navigation';
 
 import HoldingAssetsTable from './HoldingAssetsTable';
 import { AssetCard } from './AssetCard';
@@ -32,6 +33,7 @@ export default function HoldingAssetsSection({
   isLoading = false,
   error,
 }: HoldingAssetsSectionProps) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const isDesktopLayout = useHoldingDesktopBreakpoint();
 
@@ -47,10 +49,15 @@ export default function HoldingAssetsSection({
     console.log('Opening trade modal for:', symbol);
   };
 
+  const handleStartTrading = () => {
+    router.push('/main/trading');
+  };
+
   const containerClass =
     'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
 
   const hasError = Boolean(error);
+  const unauthorizedError = error === 'Please log in again';
   const isLoadingData = isLoading;
   const hasData = !isLoadingData && !hasError && rows.length > 0;
   const hasNoData = !isLoadingData && !hasError && rows.length === 0;
@@ -77,9 +84,24 @@ export default function HoldingAssetsSection({
           </div>
         )}
 
-        {hasError && (
+        {hasError && !unauthorizedError && (
           <div className={containerClass}>
             <div className="text-sm text-red-400">Error: {error}</div>
+          </div>
+        )}
+
+        {unauthorizedError && (
+          <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+            <p className="text-sm font-normal text-[#D1D1D1] font-['Alexandria']">
+              No assets yet? Begin trading and grow your portfolio.
+            </p>
+            <button
+              type="button"
+              onClick={handleStartTrading}
+              className="rounded-lg bg-[#215EEC] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3C6CFF] focus:outline-none focus:ring-2 focus:ring-[#215EEC]/70 focus:ring-offset-0 active:brightness-95"
+            >
+              Start Trading !
+            </button>
           </div>
         )}
 
