@@ -30,7 +30,7 @@ export default function Home() {
         rounded-[60px] p-1
         ${isHoverDemo ? 'bg-gradient-to-b from-[#F7F7F7] to-[#215EEC]' : 'bg-[#225FED]'}
         shadow-[0_0_12px_0_rgba(34,95,237,1)]
-        outline outline-4 outline-offset-[-4px] outline-[#215EEC]
+        outline-offset-[-4px] outline-[#215EEC]
       `}
       style={{
         borderRadius: 60,

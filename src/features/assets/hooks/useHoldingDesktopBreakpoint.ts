@@ -3,31 +3,35 @@ import * as React from 'react';
 const HOLDING_DESKTOP_BREAKPOINT = 1389;
 const HOLDING_DESKTOP_QUERY = `(min-width: ${HOLDING_DESKTOP_BREAKPOINT}px)`;
 
-const useIsomorphicLayoutEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
+function getMediaQuery(): MediaQueryList | null {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return null;
+  }
+
+  return window.matchMedia(HOLDING_DESKTOP_QUERY);
+}
 
 export function useHoldingDesktopBreakpoint() {
   const [isDesktop, setIsDesktop] = React.useState<boolean>(false);
 
-  useIsomorphicLayoutEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  React.useEffect(() => {
+    const mediaQuery = getMediaQuery();
+
+    if (!mediaQuery) {
       return;
     }
 
-    const mediaQuery = window.matchMedia(HOLDING_DESKTOP_QUERY);
-    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
-      setIsDesktop(event.matches);
-    };
+    const updateMatch = () => setIsDesktop(mediaQuery.matches);
 
-    // Sync with current viewport on mount.
-    setIsDesktop(mediaQuery.matches);
+    updateMatch();
 
     if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener('change', updateMatch);
+      return () => mediaQuery.removeEventListener('change', updateMatch);
     }
 
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
+    mediaQuery.addListener(updateMatch);
+    return () => mediaQuery.removeListener(updateMatch);
   }, []);
 
   return isDesktop;
