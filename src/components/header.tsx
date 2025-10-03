@@ -1,4 +1,7 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { LogOut, Menu } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
@@ -19,65 +22,16 @@ import { useNavbar } from '@/features/wallet/hooks/useNavbar';
 import Sidebar from '@/components/Sidebar';
 
 export default function Header() {
-  const {
-    open,
-    userMenuOpen,
-    session,
-    mobileBalanceMenuRef,
-    desktopBalanceMenuRef,
-    mobileUserMenuRef,
-    desktopUserMenuRef,
-    handleSignOut,
-    handleLogoClick,
-    handleSignInClick,
-    handleSignUpClick,
-    toggleBalanceMenu,
-    closeBalanceMenu,
-    toggleUserMenu,
-  } = useNavbar();
-  // State สำหรับ AlertDialog
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  // ใช้ hook เพื่อดึงยอดเงินจริง
-  const { data: cashBalance, error } = useGetCashBalance({
-    enabled: !!session, // เรียก API เฉพาะเมื่อมี session
-  });
-
-  // ใช้ mutation สำหรับเพิ่มเงิน
-  const addCashMutation = useAddCashToTrade();
-
-  // ใช้ mutation สำหรับรีเซ็ตพอร์ต
-  const resetPortfolioMutation = useResetPortfolio();
-
-  // Handle add cash
-  const handleAddCash = () => {
-    if (!addCashMutation.isPending) {
-      addCashMutation.mutate();
-    }
-  };
-
-  // Handle reset portfolio - เปิด AlertDialog
-  const handleResetPortfolio = () => {
-    if (resetPortfolioMutation.isPending) {
-      return; // ป้องกันการเรียกซ้ำ
-    }
-    setShowResetConfirm(true);
-  };
-
-  // Handle confirm reset
-  const handleConfirmReset = () => {
-    resetPortfolioMutation.mutate(undefined, {
-      onSuccess: () => {
-        // ปิด dropdown menu หลังจาก reset สำเร็จ
-        if (open) {
-          closeBalanceMenu();
-        }
-        setShowResetConfirm(false);
-      },
-      onError: () => {
-        setShowResetConfirm(false);
-      },
-    });
+  const handleGetStartClick = () =>
+    session ? router.push('/main/trading') : router.push('/auth/sign-in');
+  const handleLogoClick = () => router.push('/');
+  const handleSignUpClick = () => router.push('/auth/sign-up');
+  const handleMobileMenuToggle = () => {
+    const eventName = session ? 'auth-drawer:toggle' : 'guest-drawer:toggle';
+    window.dispatchEvent(new Event(eventName));
   };
 
   // Handle cancel reset

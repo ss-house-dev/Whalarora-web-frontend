@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
-import AlertBox from '@/components/ui/alert-box';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
+  AlertDialogSubtext,
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog-coin';
@@ -24,7 +25,9 @@ import {
   useSymbolPrecisions,
   getSymbolPrecision,
   decimalsFromSize,
+  formatAmountWithStep,
 } from '@/features/trading/utils/symbolPrecision';
+import AlertBox from '../../../components/ui/alert-box';
 
 interface AlertState {
   message: string;
@@ -69,6 +72,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const {
     selectedCoin,
     marketPrice,
+    chartPrice,
     isPriceLoading,
     priceDecimalPlaces,
     orderFormSelection,
@@ -77,11 +81,21 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const derivedMarketPrice = useMemo(() => {
+    const normalizedChart = chartPrice?.trim();
+    if (normalizedChart) {
+      return chartPrice;
+    }
+    return marketPrice;
+  }, [chartPrice, marketPrice]);
+
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const [pendingOrder, setPendingOrder] = useState<{
     orderRef: string;
-    message: string;
-    title?: string;
+    variant: 'CONFIRMATION' | 'INSUFFICIENT';
+    title: string;
+    description: string;
+    subtext?: string;
     options: ('CANCEL' | 'KEEP_OPEN')[];
     originalPayload: OrderPayload;
   } | null>(null);
@@ -110,6 +124,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     [precisionMap, coinSymbol, quoteSymbol]
   );
 
+  const formatCoinAmount = useCallback(
+    (value: number | string | null | undefined) =>
+      formatAmountWithStep(value, symbolPrecision, { fallbackDecimals: 6 }),
+    [symbolPrecision]
+  );
+
   const quantityPrecision = useMemo(() => {
     const decimals =
       symbolPrecision?.quantityPrecision ??
@@ -128,21 +148,34 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     onSuccess: (data) => {
       console.log('BuyOrderContainer: Buy order response:', data);
       if (data.requiresConfirmation) {
-        let confirmationMessage = '';
-        let dialogTitle = '';
-        if (data.message === 'คาดว่าจะเติมเต็มได้ ส่ง confirm=true เพื่อยืนยันทำรายการ') {
-          dialogTitle = 'Confirm Transaction';
-          confirmationMessage = `The ${coinSymbol} is expected to be fulfilled.\nClick "KEEP OPEN" to confirm the transaction.`;
-        } else if (
-          data.message ===
-          'สภาพคล่องไม่พอ จะให้ทำอย่างไรต่อ? (CANCEL หรือ KEEP_OPEN) ส่ง confirm=true พร้อม onInsufficient'
-        ) {
-          dialogTitle = `Not enough ${coinSymbol}`;
-          confirmationMessage = `The ${coinSymbol} you want to buy is not available in market right now.\nDo you want to place an Order?`;
-        } else {
-          dialogTitle = 'Confirm Transaction';
-          confirmationMessage =
-            data.message || `Do you want to proceed with this ${coinSymbol} transaction?`;
+        const normalizedMessage = data.message?.trim() ?? '';
+        const messageParts = normalizedMessage
+          ? normalizedMessage
+              .split(/\r?\n/)
+              .map((part) => part.trim())
+              .filter(Boolean)
+          : [];
+
+        const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
+        const defaultDescription = 'Do you want to place an order ?';
+        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
+          ? 'INSUFFICIENT'
+          : 'CONFIRMATION';
+        let dialogTitle =
+          variant === 'INSUFFICIENT' ? `Not enough ${coinSymbol}` : 'Order confirmation';
+        let description = defaultDescription;
+        let subtext: string | undefined =
+          variant === 'INSUFFICIENT'
+            ? 'The asset you want to buy is not available in market right now.'
+            : "Your order is ready. Tap 'Confirm' to finalize your order.";
+
+        if (normalizedMessage && !normalizedMessage.includes('confirm=true')) {
+          if (messageParts.length === 1) {
+            subtext = messageParts[0] || undefined;
+          } else if (messageParts.length > 1) {
+            description = messageParts[0] || defaultDescription;
+            subtext = messageParts.slice(1).join(' ') || undefined;
+          }
         }
 
         const sessionUser = session?.user as SessionUser | undefined;
@@ -150,8 +183,10 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
         setPendingOrder({
           orderRef: data.orderRef,
-          message: confirmationMessage,
+          variant,
           title: dialogTitle,
+          description,
+          subtext,
           options: data.options || ['CANCEL', 'KEEP_OPEN'],
           originalPayload: {
             userId,
@@ -173,31 +208,31 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       if (data.filled && data.filled > 0) {
         const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ''));
         showAlert(
-          `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }).format(filledUSD)} USD submitted successfully`,
+          }).format(filledUSD)} USDT) submitted successfully`,
           'success'
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
         showAlert(
-          `Order created successfully! Amount remaining: ${data.remaining.toFixed(8)} ${coinSymbol}.\nStatus: Pending`,
+          `Order Buy ${coinSymbol}/USDT submitted successfully \nAmount remaining : ${formatCoinAmount(data.remaining)} ${coinSymbol}.\nStatus : Pending`,
           'info'
         );
       } else {
-        let message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+        let message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }).format(usdAmount)} USD submitted successfully`;
+        }).format(usdAmount)} USDT) submitted successfully`;
 
         if (data.refund && data.refund > 0) {
           const actualSpent = usdAmount - data.refund;
-          message = `Buy ${coinSymbol}/USDT Amount ${new Intl.NumberFormat('en-US', {
+          message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(
             actualSpent
-          )} USD submitted successfully\nRefund: ${data.refund.toFixed(2)} USD`;
+          )} USDT) submitted successfully\nRefund: ${data.refund.toFixed(2)} USDT`;
         }
 
         showAlert(message, 'success');
@@ -223,8 +258,9 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     const confirmPayload = {
       ...pendingOrder.originalPayload,
       confirm: true,
-      onInsufficient: 'KEEP_OPEN',
-      keepOpen: true,
+      ...(pendingOrder.variant === 'INSUFFICIENT'
+        ? { onInsufficient: 'KEEP_OPEN', keepOpen: true }
+        : {}),
     };
 
     createBuyOrderMutation.mutate(confirmPayload);
@@ -482,14 +518,14 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const handlePriceFocus = () => {
     setPriceLabel('Limit price');
     setIsInputFocused(true);
-    if (marketPrice && !isPriceLoading) {
-      setPrice(marketPrice);
+    if (derivedMarketPrice && !isPriceLoading) {
+      setPrice(derivedMarketPrice);
     }
   };
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    setPrice(marketPrice);
+    setPrice(derivedMarketPrice || '');
     setIsInputFocused(false);
   };
 
@@ -708,13 +744,13 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   useEffect(() => {
     console.log(
-      `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, isPriceLoading: ${isPriceLoading}`
+      `BuyOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, chartPrice: ${chartPrice}, derivedPrice: ${derivedMarketPrice}, isPriceLoading: ${isPriceLoading}`
     );
     if (priceLabel === 'Price' && !isInputFocused) {
-      if (marketPrice && !isPriceLoading) {
-        setPrice(marketPrice);
+      if (derivedMarketPrice && !isPriceLoading) {
+        setPrice(derivedMarketPrice);
         console.log(
-          `BuyOrderContainer: Set market price to ${marketPrice} for ${selectedCoin.label}`
+          `BuyOrderContainer: Set derived price to ${derivedMarketPrice} (chart: ${chartPrice}) for ${selectedCoin.label}`
         );
       } else if (isPriceLoading) {
         setPrice('0.' + '0'.repeat(priceDecimalPlaces));
@@ -726,7 +762,9 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       }
     }
   }, [
+    derivedMarketPrice,
     marketPrice,
+    chartPrice,
     priceLabel,
     isInputFocused,
     isPriceLoading,
@@ -762,6 +800,16 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const receiveIcon = `/currency-icons/${coinSymbolMap[coinSymbol] || 'default-coin.svg'}`;
   const receiveCurrency = coinSymbol;
 
+  const dialogDescription = pendingOrder?.description ?? 'Do you want to place an order ?';
+  const dialogSubtext =
+    pendingOrder?.subtext ??
+    (pendingOrder
+      ? pendingOrder.variant === 'INSUFFICIENT'
+        ? 'The asset you want to buy is not available in market right now.'
+        : "Your order is ready. Tap 'Confirm' to finalize your order."
+      : undefined);
+  const primaryActionLabel = pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
+
   return (
     <div>
       {alertState && (
@@ -770,7 +818,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
             message={alertState.message}
             type={alertState.type}
             onClose={closeAlert}
-            duration={5000}
+            duration={3000}
           />
         </div>
       )}
@@ -782,26 +830,26 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white mb-5">
-              {pendingOrder?.title || 'Confirm Transaction'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-300 whitespace-pre-line">
-              {pendingOrder?.message}
-            </AlertDialogDescription>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFB514]">
+                <span className="text-3xl font-semibold leading-none text-[#16171D]">?</span>
+              </div>
+              <AlertDialogTitle>{pendingOrder?.title || 'Order confirmation'}</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>{dialogDescription}</AlertDialogDescription>
+            {dialogSubtext && <AlertDialogSubtext>{dialogSubtext}</AlertDialogSubtext>}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => handleConfirmationDecision('CANCEL')}
-              className="bg-gray-300 text-gray-700 hover:bg-gray-400 cursor-pointer"
-            >
-              CANCEL
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleConfirmationDecision('KEEP_OPEN')}
-              className="bg-[#309C7D] text-white hover:bg-[#28886C] cursor-pointer"
-            >
-              KEEP OPEN
-            </AlertDialogAction>
+            {pendingOrder?.options?.includes('KEEP_OPEN') && (
+              <AlertDialogAction onClick={() => handleConfirmationDecision('KEEP_OPEN')}>
+                {primaryActionLabel}
+              </AlertDialogAction>
+            )}
+            {pendingOrder?.options?.includes('CANCEL') && (
+              <AlertDialogCancel onClick={() => handleConfirmationDecision('CANCEL')}>
+                Cancel
+              </AlertDialogCancel>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

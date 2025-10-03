@@ -57,9 +57,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   amount,
   receiveAmount,
   isAmountValid,
-  isInputFocused,
-  isAmountFocused,
-  sliderValue,
   availableBalance,
   balanceCurrency,
   buttonColor,
@@ -78,7 +75,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   onAmountChange,
   onAmountFocus,
   onAmountBlur,
-  onSliderChange,
   onMarketClick,
   onSubmit,
   onLoginClick,
@@ -220,7 +216,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
           <Input
             ref={inputRef}
             type="text"
-            className="text-[14px] font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
+            className="text-sm font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={() => {
               if (priceTab !== 'set') {
                 onPriceFocus();
@@ -290,7 +286,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 ref={amountInputRef}
                 placeholder={spendPlaceholder}
                 type="text"
-                className="bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
+                className="text-sm bg-transparent p-1 text-white text-right border-none outline-none focus:outline-none"
                 value={amount}
                 onChange={onAmountChange}
                 onFocus={onAmountFocus}
@@ -306,11 +302,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {type === 'buy' ? (
               <>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(500);
@@ -319,25 +315,25 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   +500
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(1000);
                   }}
                 >
-                  +1000
+                  +1,000
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(10000);
                   }}
                 >
-                  +10000
+                  +10,000
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onMax?.();
@@ -349,7 +345,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             ) : (
               <>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(25);
@@ -358,7 +354,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   25%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(50);
@@ -367,7 +363,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   50%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onQuickAdd?.(75);
@@ -376,7 +372,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                   75%
                 </button>
                 <button
-                  className="w-[74px] h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
+                  className="w-full h-[24px] text-xs text-[#A4A4A4] bg-transparent border border-[#474747] rounded-[8px] cursor-pointer hover:border-white/60 hover:text-white/70"
                   onClick={(e) => {
                     e.stopPropagation();
                     onMax?.();
@@ -402,14 +398,34 @@ const OrderForm: React.FC<OrderFormProps> = ({
       <div className="space-y-3">
         {/* arrow */}
         <div className="flex justify-center">
-          <Image
-            src="/assets/exchange.svg"
-            alt="Exchange Button"
-            width={28}
-            height={28}
-            className="cursor-pointer"
-            onClick={() => onExchangeClick?.()}
-          />
+          <div className="relative cursor-pointer group">
+            <div className="absolute inset-0 bg-transparent group-hover:bg-[#474747] group-active:bg-[#474747] rounded-lg transition-colors duration-200" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 28 28"
+              fill="none"
+              className="relative"
+              onClick={() => onExchangeClick?.()}
+            >
+              <rect x="0.5" y="0.5" width="27" height="27" rx="7.5" stroke="#474747" />
+              <path
+                d="M17.5 22.1666V7.76824C17.5 6.59482 17.5 6.0081 17.8601 5.86209C18.2202 5.71607 18.644 6.13095 19.4916 6.96068L22.1667 9.57931"
+                stroke="white"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M10.4999 5.83325V20.2316C10.4999 21.405 10.4999 21.9917 10.1398 22.1378C9.77971 22.2837 9.35591 21.8689 8.50829 21.0391L5.83325 18.4205"
+                stroke="white"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
         </div>
 
         {/* Receive */}
@@ -430,7 +446,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <Input
               type="text"
               placeholder={receivePlaceholder}
-              className="w-full text-[16px] font-normal rounded-lg p-1 text-right border-none outline-none"
+              className="w-full text-sm font-normal rounded-lg p-1 text-right border-none outline-none"
               value={receiveAmount}
               onChange={(e) => {
                 e.stopPropagation();

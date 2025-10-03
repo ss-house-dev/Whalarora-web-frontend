@@ -1,5 +1,6 @@
 // src/features/open-order/components/OrderBookWidget.tsx
 import React from 'react';
+import { formatCompactNumber } from '@/lib/utils';
 
 type Side = 'bid' | 'ask';
 
@@ -7,8 +8,9 @@ type SideContent = {
   label?: string;
   amountLabel?: string;
   price?: string | null;
-  amount?: string | null;
+  amount?: string | number | null;
   amountSymbol?: string | null;
+  amountPrecision?: number;
 };
 
 export interface OrderBookWidgetProps {
@@ -36,36 +38,62 @@ const COLORS = {
 } as const;
 
 // Utility functions
-function hasValue(value?: string | null): boolean {
-  return value != null && value.trim().length > 0;
+function hasValue(value?: string | number | null): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+
+  return value.trim().length > 0;
 }
 
-function formatAmount(value?: string | null): string {
-  if (!hasValue(value)) return PLACEHOLDER;
+function formatAmountValue(value: string | number | null | undefined, precision?: number): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
 
-  const sanitized = String(value).replace(/,/g, '').trim();
-  if (sanitized.length === 0) return PLACEHOLDER;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (/[a-zA-Z]/.test(trimmed)) {
+      return trimmed;
+    }
 
-  const n = Number(sanitized);
-  if (!isFinite(n)) return String(value);
+    const parsed = Number(trimmed.replace(/,/g, ''));
+    if (!Number.isFinite(parsed)) {
+      return trimmed;
+    }
+    return formatAmountValue(parsed, precision);
+  }
 
-  const formatTwoDecimals = (v: number) =>
-    v.toLocaleString('en-US', {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  const absValue = Math.abs(value);
+  const fractionDigits = Math.max(2, precision ?? 2);
+
+  if (absValue < 1000) {
+    return value.toLocaleString('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: fractionDigits,
     });
+  }
 
-  const formatTruncated = (v: number) => formatTwoDecimals(Math.trunc(v * 100) / 100);
+  const compact = formatCompactNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-  const abs = Math.abs(n);
-
-  if (abs < 1_000) return formatTruncated(n);
-  if (abs < 1_000_000) return `${formatTruncated(n / 1_000)}k`;
-  if (abs < 1_000_000_000) return `${formatTruncated(n / 1_000_000)}M`;
-  if (abs < 1_000_000_000_000) return `${formatTruncated(n / 1_000_000_000)}B`;
-  if (abs < 1_000_000_000_000_000) return `${formatTruncated(n / 1_000_000_000_000)}T`;
-
-  return formatTwoDecimals(n);
+  return compact ?? value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: fractionDigits,
+  });
 }
 
 // Components
@@ -149,10 +177,13 @@ function OrderBookSide({
   // Data processing
   const labelText = content?.label ?? (side === 'bid' ? 'Bid' : 'Ask');
   const priceValue =
-    !disabled && hasValue(content?.price) ? (content?.price as string) : PLACEHOLDER;
-  const rawAmount =
-    !disabled && hasValue(content?.amount) ? (content?.amount as string) : PLACEHOLDER;
-  const amountValue = rawAmount === PLACEHOLDER ? PLACEHOLDER : formatAmount(rawAmount);
+    !disabled && hasValue(content?.price) ? String(content?.price).trim() : PLACEHOLDER;
+  const formattedAmount =
+    !disabled && hasValue(content?.amount)
+      ? formatAmountValue(content?.amount ?? null, content?.amountPrecision)
+      : null;
+
+  const amountValue = formattedAmount ?? PLACEHOLDER;
 
   // Styling
   const isPlaceholderPrice = priceValue === PLACEHOLDER;

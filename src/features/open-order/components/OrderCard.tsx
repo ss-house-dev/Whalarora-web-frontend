@@ -18,7 +18,7 @@ import {
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog-close-order';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { formatDateParts } from '@/features/trading/utils/dateFormat';
+import { formatDateParts, formatDateTimeWithMonthAbbr } from '@/features/trading/utils/dateFormat';
 
 const FALLBACK_AMOUNT_PRECISION = 6;
 const MAX_AMOUNT_DIGITS = 10;
@@ -187,6 +187,11 @@ export default function OrderCard({ order, onDelete }: Props) {
     });
   };
 
+  const formattedDesktopDateTime = formatDateTimeWithMonthAbbr(order.createdAt ?? order.datetime, {
+    includeSeconds: true,
+  });
+  const displayDesktopDateTime = formattedDesktopDateTime || order.datetime;
+
   const ConfirmCloseDialog = ({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) => {
     const isMobileVariant = variant === 'mobile';
     const triggerClassName = isMobileVariant
@@ -207,7 +212,7 @@ export default function OrderCard({ order, onDelete }: Props) {
             Do you want to close this order ?
           </AlertDialogDescription>
           {isMobileVariant ? (
-            <div className="w-72 p-4 bg-[#16171D] rounded-xl outline outline-1 outline-offset-[-1px] outline-[#474747] flex flex-col items-center gap-4">
+            <div className="w-72 p-4 bg-[#16171D] rounded-xl outline-offset-[-1px] outline-[#474747] flex flex-col items-center gap-4">
               <div className="flex flex-col items-center gap-3 pb-3 border-b border-[#474747]/60 w-full">
                 <div className="flex h-12 w-12 items-center justify-center text-[#C22727]">
                   <Trash2 size={60} strokeWidth={1.8} />
@@ -383,23 +388,26 @@ export default function OrderCard({ order, onDelete }: Props) {
   }
 
   const MetaLeft = () => (
-    <div className="flex items-center gap-3 ">
+    <div className="flex w-[9.5rem] shrink-0 items-center gap-0 overflow-hidden">
       <div
-        className={`w-12 h-7 px-2 rounded-lg inline-flex justify-center items-center 
-        ${isBuy ? 'bg-[#217871]' : 'bg-[#D32F2F]'}`}
+        className={`inline-flex h-7 w-12 items-center justify-center rounded-lg px-2 ${
+          isBuy ? 'bg-[#217871]' : 'bg-[#D32F2F]'
+        }`}
       >
-        <span className="text-white text-xs font-normal leading-none ">
+        <span className="text-white text-xs font-normal leading-none">
           {isBuy ? 'Buy' : 'Sell'}
         </span>
       </div>
-      <span className="text-white text-sm font-medium mt-1 ml-5.5 mb-0.5">{order.pair}</span>
+      <span className="ml-5.5 mt-1 mb-0.5 block truncate text-white text-sm font-medium leading-none">
+        {order.pair}
+      </span>
     </div>
   );
 
   const TopRight = () => (
     <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
-      <div className="flex items-center gap-x-4 justify-end flex-wrap w-full min-w-0">
-        <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
+      <div className="flex items-center gap-x-2.5 justify-end flex-wrap w-full min-w-0">
+        <span className="text-slate-400 text-xs whitespace-nowrap">{displayDesktopDateTime}</span>
         <div className="flex items-center justify-between w-[213px] gap-2 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
           <span className="text-slate-400 text-xs">Price</span>
           <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
@@ -420,8 +428,10 @@ export default function OrderCard({ order, onDelete }: Props) {
 
         {order.status === 'partial' ? (
           <div className="row-span-2 grid grid-cols-[1fr_auto] items-center gap-x-4">
-            <div className="flex items-center gap-4 justify-end flex-wrap w-full min-w-0">
-              <span className="text-slate-400 text-xs whitespace-nowrap">{order.datetime}</span>
+            <div className="flex items-center gap-2.5 justify-end flex-wrap w-full min-w-0">
+              <span className="text-slate-400 text-xs whitespace-nowrap">
+                {displayDesktopDateTime}
+              </span>
               <div className="flex items-center justify-between w-[213px] gap-12 bg-[#1F2029] px-3 py-1 rounded-md whitespace-nowrap">
                 <span className="text-slate-400 text-xs">Price</span>
                 <span className="text-[12px] font-medium text-white">{priceWithCurrency}</span>
@@ -456,7 +466,7 @@ export default function OrderCard({ order, onDelete }: Props) {
         )}
 
         {order.status !== 'partial' && (
-          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs mt-2">
+          <div className="col-span-2 flex justify-center items-center gap-2 text-blue-400 text-xs">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 translate-y-[0px]" />
             <span className="leading-none">Pending</span>
           </div>

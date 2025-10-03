@@ -2,6 +2,8 @@
 
 import { useMemo, useState, ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import clsx from 'clsx';
+import { useHoldingDesktopBreakpoint } from '../hooks/useHoldingDesktopBreakpoint';
 
 type Props = {
   title?: string;
@@ -25,6 +27,7 @@ export default function HoldingAssetsTable({
   className = '',
 }: Props) {
   const [page, setPage] = useState(initialPage);
+  const isDesktopLayout = useHoldingDesktopBreakpoint();
 
   const changePage = (p: number) => {
     const next = Math.min(Math.max(1, p), totalPages);
@@ -50,19 +53,34 @@ export default function HoldingAssetsTable({
     return { slots: [page - 1, page, page + 1], activeIndex: 1, fixed: true };
   }, [page, totalPages]);
 
+  const sectionClasses = clsx(
+    'mt-4 w-full max-w-[1304px] rounded-2xl bg-[#16171D] px-3 py-4 sm:mt-6 sm:px-5 sm:py-5 flex flex-col',
+    isDesktopLayout && 'mx-auto h-[460px] w-[1304px] px-5 py-3',
+    className
+  );
+
+  const headerClasses = clsx(
+    'mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
+    isDesktopLayout && 'mb-6'
+  );
+
+  const contentWrapperClasses = clsx('relative flex-1', isDesktopLayout && 'overflow-hidden');
+  const scrollRegionClasses = clsx(isDesktopLayout && 'h-full overflow-auto pr-4');
+
+  const footerClasses = clsx(
+    'mt-4 flex flex-col gap-3 text-xs text-[#A4A4A4] sm:flex-row sm:items-center sm:justify-between',
+    isDesktopLayout && 'mt-6'
+  );
+
   return (
-    <section
-      className={`mx-auto mt-4 w-full max-w-[1288px] rounded-2xl bg-[#16171D] px-3 py-4 sm:mt-6 sm:px-5 sm:py-5 lg:my-5 lg:h-[630px] lg:px-6 lg:py-6 flex flex-col ${className}`}
-      role="region"
-      aria-label="Holdings table container"
-    >
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:mb-6">
+    <section className={sectionClasses} role="region" aria-label="Holdings table container">
+      <div className={headerClasses}>
         <h3 className="text-xl font-normal text-white/90">{title}</h3>
       </div>
 
-      <div className="relative flex-1 lg:overflow-hidden">
+      <div className={contentWrapperClasses}>
         <div
-          className="lg:h-full lg:overflow-auto lg:pr-4"
+          className={scrollRegionClasses}
           style={{ scrollbarGutter: 'stable', overscrollBehavior: 'contain' }}
         >
           <div className="pt-1">
@@ -76,7 +94,7 @@ export default function HoldingAssetsTable({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 text-xs text-[#A4A4A4] sm:flex-row sm:items-center sm:justify-between lg:mt-6">
+      <div className={footerClasses}>
         <span>Total : {totalAssets} Assets</span>
 
         {showPagination && (
@@ -138,3 +156,4 @@ export default function HoldingAssetsTable({
     </section>
   );
 }
+
