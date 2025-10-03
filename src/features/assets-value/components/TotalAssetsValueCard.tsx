@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import { Anuphan } from 'next/font/google';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const anuphan = Anuphan({
   subsets: ['latin', 'thai'],
@@ -70,22 +69,8 @@ export default function TotalAssetsValueCard({
   totalCost,
   pnlValue,
   pnlPercent,
-  isLoading,
   error,
 }: TotalAssetsValueCardProps) {
-  if (isLoading) {
-    return (
-      <section className="mt-6 w-full max-w-[603px] rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-4 shadow-lg sm:p-6">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
-          My assets value
-        </h2>
-        <div className="mt-4">
-          <Skeleton className="h-10 w-full max-w-[200px] rounded-xl" />
-        </div>
-      </section>
-    );
-  }
-
   if (error) {
     return (
       <section className="mt-6 w-full max-w-[603px] rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-4 shadow-lg sm:p-6">
