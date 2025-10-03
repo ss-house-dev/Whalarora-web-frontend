@@ -8,6 +8,7 @@ import OrderTableContainer from '@/features/open-order/components/OrderTableCont
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import { useCancelOrder } from '@/features/open-order/hooks/useCancelOrder';
 import OrderBookLiveContainer from '@/features/open-order/containers/OrderBookLiveContainer';
+import MyAssetsWidgetContainer from '@/features/assets/containers/MyAssetsWidgetContainer';
 
 type OrderTabType = 'open' | 'history';
 
@@ -29,45 +30,37 @@ export default function MarketOrderPage() {
   );
 
   return (
-    <div className="mt-[20px] space-y-[20px] px-4 pb-8 lg:px-[23px]">
-      {/* Chart and Order sections */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-[20px]">
-        {/* Chart section with CombinedCombobox above */}
-        <div className="w-full lg:flex-[1.6] lg:min-w-0">
-          <div className="flex flex-col space-y-4">
-            {/* ใช้ w-full และ flex-shrink-0 เพื่อให้แน่ใจว่าจะเท่ากับ chart */}
-            <div className="w-full flex-shrink-0">
-              <CombinedCombobox className="w-full min-w-full" />
-            </div>
-            {/* Chart container */}
-            <div className="w-full flex-shrink-0">
-              <AdvancedChart />
-            </div>
+    <div className="mt-[20px] space-y-[20px] px-4 pb-8 min-[1408px]:px-[23px]">
+      <div className="flex flex-col gap-4 min-[1408px]:grid min-[1408px]:grid-cols-[minmax(0,1.6fr)_360px] min-[1408px]:items-start min-[1408px]:gap-x-[20px] min-[1408px]:gap-y-4">
+        <div className="order-1 min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-1 min-[1408px]:min-w-0">
+          <CombinedCombobox className="w-full min-w-full" />
+        </div>
+
+        <div className="order-2 min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-2 min-[1408px]:min-w-0">
+          <AdvancedChart />
+        </div>
+
+        <div className="order-4 w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-2 min-[1408px]:h-[508px]">
+          <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
+        </div>
+
+        <div className="order-5 flex w-full justify-start min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-3 min-[1408px]:justify-center">
+          <MyAssetsWidgetContainer />
+        </div>
+
+        <div className="order-6 w-full min-[1408px]:order-none min-[1408px]:col-start-1 min-[1408px]:row-start-3 min-[1408px]:min-w-0">
+          <div className="mb-10">
+            <OrderTableContainer
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onCancelOrder={handleCancelOrder}
+            />
           </div>
         </div>
 
-        {/* Order Book and Order Container section */}
-        <div className="w-full lg:w-[360px] lg:flex-shrink-0">
-          <div className="space-y-4">
-            <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
-
-            <div
-              key={`${selectedCoin.value}-${ordersVersion}-panel`}
-              className="w-full rounded-lg bg-[#16171D] p-4 shadow-md sm:p-5 lg:h-[508px]"
-            >
-              <MarketOrderContainer key={`${selectedCoin.value}-${ordersVersion}-orders`} />
-            </div>
-          </div>
+        <div className="order-3 min-[1408px]:order-none min-[1408px]:col-start-2 min-[1408px]:row-start-1">
+          <OrderBookLiveContainer className="h-full w-full" showMetaInfo={false} />
         </div>
-      </div>
-
-      {/* Tabbed Orders Section */}
-      <div className="mb-10 flex-1">
-        <OrderTableContainer
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onCancelOrder={handleCancelOrder}
-        />
       </div>
     </div>
   );

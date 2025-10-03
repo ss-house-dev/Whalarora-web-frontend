@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-const MOBILE_BREAKPOINT = 1000;
+const MOBILE_BREAKPOINT = 1408;
 const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT}px)`;
 
 function getMediaQuery(): MediaQueryList | null {
