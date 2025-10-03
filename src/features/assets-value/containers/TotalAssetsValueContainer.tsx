@@ -10,7 +10,6 @@ import {
   type CoinMetadata,
 } from '@/features/assets/utils/coinMetadata';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
-
 const getUpperSymbol = (symbol: string | undefined | null) => {
   if (!symbol) return '';
   return symbol.trim().toUpperCase();
@@ -24,15 +23,6 @@ type RealtimeState = {
 type RealtimeUpdate = {
   price: number | null;
   isLoading: boolean;
-};
-
-// ฟังก์ชันตัดทศนิยม (เหมือนกับที่ใช้ใน TotalAssetsValueCard)
-const truncateToDecimals = (value: number, decimals = 2) => {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-  const factor = 10 ** decimals;
-  return Math.trunc(value * factor) / factor;
 };
 
 const PriceSubscriber = ({
@@ -167,8 +157,7 @@ export default function TotalAssetsValueContainer() {
     });
   }, []);
 
-  // คำนวณ totalValue แบบดิบก่อน
-  const totalValueRaw = useMemo(() => {
+  const totalValue = useMemo(() => {
     if (!assets || assets.length === 0) {
       return 0;
     }
@@ -197,8 +186,7 @@ export default function TotalAssetsValueContainer() {
     }, 0);
   }, [assets, coinMetadata, realtimeState]);
 
-  // คำนวณ totalCost แบบดิบก่อน
-  const totalCostRaw = useMemo(() => {
+  const totalCost = useMemo(() => {
     if (!assets || assets.length === 0) {
       return 0;
     }
@@ -216,25 +204,15 @@ export default function TotalAssetsValueContainer() {
     }, 0);
   }, [assets]);
 
-  // ตัดทศนิยมค่าที่จะแสดงผล (เหมือนกับที่ TotalAssetsValueCard จะทำ)
-  const totalValue = useMemo(() => truncateToDecimals(totalValueRaw, 2), [totalValueRaw]);
-  const totalCost = useMemo(() => truncateToDecimals(totalCostRaw, 2), [totalCostRaw]);
+  const pnlValue = useMemo(() => totalValue - totalCost, [totalValue, totalCost]);
 
-  // คำนวณ PnL จากค่าที่ตัดทศนิยมแล้ว
-  const pnlValue = useMemo(() => {
-    const result = totalValue - totalCost;
-    return truncateToDecimals(result, 2);
-  }, [totalValue, totalCost]);
-
-  // คำนวณ PnL Percent จากค่าดิบเพื่อความแม่นยำ
   const pnlPercent = useMemo(() => {
-    if (totalCostRaw <= 0) {
+    if (totalCost <= 0) {
       return 0;
     }
-    const pnlRaw = totalValueRaw - totalCostRaw;
-    const result = (pnlRaw / totalCostRaw) * 100;
-    return truncateToDecimals(result, 4);
-  }, [totalValueRaw, totalCostRaw]);
+
+    return (pnlValue / totalCost) * 100;
+  }, [pnlValue, totalCost]);
 
   const combinedError = error?.message || metadataError || undefined;
 

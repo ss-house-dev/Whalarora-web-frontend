@@ -27,7 +27,7 @@ const truncateToDecimals = (value: number, decimals = 2) => {
   }
 
   const factor = 10 ** decimals;
-  return Math.trunc(value * factor) / factor;
+  return Math.round((value + Number.EPSILON * Math.sign(value)) * factor) / factor;
 };
 
 const formatCurrency = (value: number, { showPlus = false }: { showPlus?: boolean } = {}) => {
@@ -122,7 +122,7 @@ export default function TotalAssetsValueCard({
         <span className="text-xs font-medium tracking-wide text-[#7E7E7E] sm:text-sm">
           Total Asset Value (USDT)
         </span>
-        <p className="mt-3 text-lg font-normal text-white sm:mt-4 sm:text-xl">
+        <p className="mt-3 text-lg font-normal text-white sm:text-xl">
           {formatCurrency(totalValue)}
         </p>
       </div>
