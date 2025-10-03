@@ -194,8 +194,10 @@ const MyAssetsWidgetCard = ({
 };
 
 const MyAssetsWidgetState = ({ message }: { message: string }) => (
-  <div className="flex min-h-[96px] items-center justify-center rounded-xl bg-[#1F2029] p-6 text-center">
-    <span className="text-sm font-normal text-[#A4A4A4]">{message}</span>
+  <div className="flex min-h-[64px] items-center justify-center py-6 text-center">
+    <span className="text-sm font-normal leading-normal text-[#7E7E7E] font-['Alexandria']">
+      {message}
+    </span>
   </div>
 );
 
@@ -210,6 +212,7 @@ export function MyAssetsWidget({
 }: MyAssetsWidgetProps) {
   const hasItems = items.length > 0;
 
+  const unauthorized = error === 'Please log in again';
   const router = useRouter();
   const { setSelectedCoin } = useCoinContext();
 
@@ -231,7 +234,7 @@ export function MyAssetsWidget({
   );
 
   const symbols = useMemo(() => items.map((item) => item.symbol), [items]);
-  const { prices: marketPrices, isLoading: arePricesLoading } = useAllMarketPrices(symbols);
+  const { prices: marketPrices } = useAllMarketPrices(symbols);
 
   const sortedItems = useMemo(() => {
     const itemsWithPnl = items.map((item) => {
@@ -293,12 +296,17 @@ export function MyAssetsWidget({
                     <MyAssetsWidgetSkeleton key={`my-assets-skeleton-${index}`} />
                   ))}
 
-                {!isLoading && error && <MyAssetsWidgetState message={error} />}
+                {!isLoading && unauthorized && <MyAssetsWidgetState message="No holding assets." />}
 
-                {!isLoading && !error && !hasItems && <MyAssetsWidgetState message="No assets" />}
+                {!isLoading && !unauthorized && error && <MyAssetsWidgetState message={error} />}
+
+                {!isLoading && !error && !hasItems && (
+                  <MyAssetsWidgetState message="No holding assets." />
+                )}
 
                 {!isLoading &&
                   !error &&
+                  !unauthorized &&
                   hasItems &&
                   sortedItems.map((item) => (
                     <MyAssetsWidgetCard
