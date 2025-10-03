@@ -3,27 +3,29 @@ import * as React from 'react';
 const MOBILE_BREAKPOINT = 1000;
 const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT}px)`;
 
-function getInitialMatch() {
+function getMediaQuery(): MediaQueryList | null {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
+    return null;
   }
-  return window.matchMedia(MOBILE_QUERY).matches;
+
+  return window.matchMedia(MOBILE_QUERY);
 }
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(getInitialMatch);
+  const [isMobile, setIsMobile] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    const mediaQuery = getMediaQuery();
+
+    if (!mediaQuery) {
       return;
     }
 
-    const mediaQuery = window.matchMedia(MOBILE_QUERY);
     const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
       setIsMobile(event.matches);
     };
 
-    // Keep state aligned with current viewport on mount.
+    // Align state with the viewport after mount to avoid SSR mismatches.
     setIsMobile(mediaQuery.matches);
 
     if (typeof mediaQuery.addEventListener === 'function') {

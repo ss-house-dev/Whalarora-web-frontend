@@ -55,7 +55,7 @@ export default function HoldingAssetsTable({
 
   const sectionClasses = clsx(
     'mt-4 w-full max-w-[1288px] rounded-2xl bg-[#16171D] px-3 py-4 sm:mt-6 sm:px-5 sm:py-5 flex flex-col',
-    isDesktopLayout && 'ml-5 my-5 h-[630px] px-6 py-6',
+    isDesktopLayout && ' my-5 h-[630px] px-6 py-6',
     className
   );
 
@@ -111,31 +111,33 @@ export default function HoldingAssetsTable({
               <ChevronLeft size={14} />
             </button>
 
-            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map((keyOrPage, i) => {
-              const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
-              const active = trio.fixed ? i === trio.activeIndex : p === page;
-              const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
-              const isSingle = totalPages === 1;
+            {(trio.fixed ? (['left', 'center', 'right'] as const) : trio.slots).map(
+              (keyOrPage, i) => {
+                const p = trio.fixed ? trio.slots[i] : (keyOrPage as number);
+                const active = trio.fixed ? i === trio.activeIndex : p === page;
+                const stableKey = trio.fixed ? ['left', 'center', 'right'][i] : String(p);
+                const isSingle = totalPages === 1;
 
-              return (
-                <button
-                  key={stableKey}
-                  onClick={() => !isSingle && changePage(p)}
-                  disabled={isSingle}
-                  aria-disabled={isSingle}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-colors focus:outline-none focus:ring-0 ${
-                    active ? 'border text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: '#16171D',
-                    borderColor: active ? '#225FED' : 'transparent',
-                  }}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {p}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={stableKey}
+                    onClick={() => !isSingle && changePage(p)}
+                    disabled={isSingle}
+                    aria-disabled={isSingle}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-colors focus:outline-none focus:ring-0 ${
+                      active ? 'border text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                    style={{
+                      backgroundColor: '#16171D',
+                      borderColor: active ? '#225FED' : 'transparent',
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                );
+              }
+            )}
 
             <button
               disabled={page === totalPages}
@@ -156,4 +158,3 @@ export default function HoldingAssetsTable({
     </section>
   );
 }
-

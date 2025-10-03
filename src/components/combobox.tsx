@@ -519,42 +519,37 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
         <path d="M1.69824 1V35" stroke="#474747" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      <div className="flex items-center px-2 sm:px-3 flex-1 min-w-0 gap-2 sm:gap-2 md:gap-3 lg:gap-4 sm:justify-start justify-end">
-        <div className="text-[#2FACA2] text-xl whitespace-nowrap flex-shrink-0 tabular-nums">
+      <div className="flex items-center flex-1 min-w-0 sm:justify-start justify-end">
+        <div className="text-[#2FACA2] text-xl whitespace-nowrap flex-shrink-0 min-w-[150px] text-center">
           {tickerData ? tickerData.lastPrice : '--'}
         </div>
+        <div className="flex flex-row gap-6">
+          <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+            <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h High</span>
+            <span className="text-white text-sm font-medium whitespace-nowrap">
+              {tickerData ? tickerData.highPrice : '--'}
+            </span>
+          </div>
 
-        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h High</span>
-          <span className="text-white text-sm font-medium whitespace-nowrap tabular-nums">
-            {tickerData ? tickerData.highPrice : '--'}
-          </span>
+          <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
+            <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h Low</span>
+            <span className="text-white text-sm font-medium whitespace-nowrap ">
+              {tickerData ? tickerData.lowPrice : '--'}
+            </span>
+          </div>
+
+          <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
+            <span className="text-[#7E7E7E] text-xs whitespace-nowrap">
+              24h Vol ({selectedCoin.label.split('/')[0]})
+            </span>
+            <span className="text-white text-sm">--</span>
+          </div>
+
+          <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
+            <span className="text-[#8B8E93] text-xs whitespace-nowrap">24h Vol (USDT)</span>
+            <span className="text-white text-sm">--</span>
+          </div>
         </div>
-
-        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#7E7E7E] text-xs whitespace-nowrap">24h Low</span>
-          <span className="text-white text-sm font-medium whitespace-nowrap tabular-nums">
-            {tickerData ? tickerData.lowPrice : '--'}
-          </span>
-        </div>
-
-        {/* <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
-            24h Vol ({selectedCoin.label.split('/')[0]})
-          </span>
-          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap tabular-nums">
-            {tickerData ? tickerData.volume : '--'}
-          </span>
-        </div>
-
-        <div className="hidden sm:flex flex-col items-start flex-shrink-0 min-w-0">
-          <span className="text-[#8B8E93] text-[9px] md:text-[10px] whitespace-nowrap">
-            24h Vol (USDT)
-          </span>
-          <span className="text-white text-[11px] md:text-[12px] font-medium whitespace-nowrap tabular-nums">
-            {tickerData ? tickerData.quoteVolume : '--'}
-          </span>
-        </div> */}
       </div>
     </div>
   );
