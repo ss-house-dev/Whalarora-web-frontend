@@ -17,7 +17,8 @@ interface ExchangeInfoResponse {
 interface UseMarketPriceOptions {
   throttleMs?: number;
 }
-type TimeoutHandle = ReturnType<typeof setTimeout>;
+
+type TimeoutHandle = ReturnType<typeof setTimeout>;
 
 
 export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) {
@@ -197,7 +198,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
 
     fetchPrecision();
 
-    const wsStream = `${coinSymbol.toLowerCase()}usdt@trade`;
+    const wsStream = `${coinSymbol.toLowerCase()}usdt@ticker`;
     console.log(`useMarketPrice: Connecting to WebSocket ${wsStream}`);
     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsStream}`);
 
@@ -207,17 +208,18 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        console.log(`Raw WebSocket data.p for ${coinSymbol}:`, data.p);
-        const priceValue = Number.parseFloat(data.p);
-        if (Number.isNaN(priceValue) || priceValue <= 0) {
-          console.warn(`useMarketPrice: Invalid or zero price received: ${data.p}`);
+        const data = JSON.parse(event.data) as { c?: string; p?: string; lastPrice?: string };
+        const priceRaw = typeof data.c === 'string' ? data.c : typeof data.p === 'string' ? data.p : data.lastPrice;
+        console.log(`Raw WebSocket close price for ${coinSymbol}:`, priceRaw);
+        const priceValue = typeof priceRaw === 'string' ? Number.parseFloat(priceRaw) : Number(priceRaw);
+        if (!Number.isFinite(priceValue) || priceValue <= 0) {
+          console.warn(`useMarketPrice: Invalid or zero price received: ${priceRaw}`);
           return;
         }
         if (currentSymbolRef.current === symbol) {
           const decimalsHint =
-            typeof data.p === 'string' && data.p.includes('.')
-              ? Math.min(8, Math.max(0, (data.p.split('.')[1] ?? '').length))
+            typeof priceRaw === 'string' && priceRaw.includes('.')
+              ? Math.min(8, Math.max(0, (priceRaw.split('.')[1] ?? '').length))
               : undefined;
           schedulePrice(priceValue, decimalsHint);
           console.log(`useMarketPrice: Price updated for ${coinSymbol}: ${priceValue}`);
