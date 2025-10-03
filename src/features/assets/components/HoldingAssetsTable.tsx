@@ -14,6 +14,8 @@ type Props = {
   onPageChange?: (page: number) => void;
   totalAssets?: number;
   className?: string;
+  showDesktopHeader?: boolean;
+  desktopHeader?: ReactNode;
 };
 
 export default function HoldingAssetsTable({
@@ -25,6 +27,8 @@ export default function HoldingAssetsTable({
   onPageChange,
   totalAssets = 0,
   className = '',
+  showDesktopHeader = false,
+  desktopHeader,
 }: Props) {
   const [page, setPage] = useState(initialPage);
   const isDesktopLayout = useHoldingDesktopBreakpoint();
@@ -60,12 +64,13 @@ export default function HoldingAssetsTable({
   );
 
   const headerClasses = clsx(
-    'mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
-    isDesktopLayout && 'mb-6'
+    'mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
+    isDesktopLayout && 'mb-3'
   );
 
   const contentWrapperClasses = clsx('relative flex-1', isDesktopLayout && 'overflow-hidden');
   const scrollRegionClasses = clsx(isDesktopLayout && 'h-full overflow-auto pr-4');
+  const shouldRenderDesktopHeader = Boolean(isDesktopLayout && showDesktopHeader && desktopHeader);
 
   const footerClasses = clsx(
     'mt-4 flex flex-col gap-3 text-xs text-[#A4A4A4] sm:flex-row sm:items-center sm:justify-between',
@@ -75,7 +80,7 @@ export default function HoldingAssetsTable({
   return (
     <section className={sectionClasses} role="region" aria-label="Holdings table container">
       <div className={headerClasses}>
-        <h3 className="text-xl font-normal text-white/90">{title}</h3>
+        <h3 className="text-xl font-normal text-white/90 font-['Alexandria']">{title}</h3>
       </div>
 
       <div className={contentWrapperClasses}>
@@ -83,6 +88,12 @@ export default function HoldingAssetsTable({
           className={scrollRegionClasses}
           style={{ scrollbarGutter: 'stable', overscrollBehavior: 'contain' }}
         >
+          {shouldRenderDesktopHeader && (
+            <div className="sticky top-0 z-10 bg-[#16171D]">
+              <div className="h-3 bg-[#16171D]" aria-hidden />
+              {desktopHeader}
+            </div>
+          )}
           <div className="pt-1">
             {children ??
               (totalAssets === 0 ? (
