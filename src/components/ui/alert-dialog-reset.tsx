@@ -45,7 +45,7 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 inline-flex w-[calc(100%-2rem)] max-w-[304px] -translate-x-1/2 -translate-y-1/2 flex-col items-stretch gap-7 rounded-xl bg-[#16171D] px-4 pt-4 pb-3 outline outline-1 outline-offset-[-1px] outline-[#D84C4C] shadow-[0px_32px_64px_-24px_rgba(0,0,0,0.75)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          'fixed left-1/2 top-1/2 z-50 inline-flex w-[calc(100%-2rem)] max-w-[304px] -translate-x-1/2 -translate-y-1/2 flex-col items-stretch gap-7 rounded-xl bg-[#16171D] px-4 pt-4 pb-3 outline-offset-[-1px] outline-[#D84C4C] shadow-[0px_32px_64px_-24px_rgba(0,0,0,0.75)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           className
         )}
         {...props}
@@ -116,7 +116,7 @@ function AlertDialogAction({
   return (
     <AlertDialogPrimitive.Action
       className={cn(
-        'order-1 inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#C22727] px-6 text-sm font-["Alexandria"] font-normal leading-tight text-[#F7F7F7] transition-colors duration-200 ease-out hover:bg-[#D84C4C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D84C4C] sm:order-2 sm:h-8 sm:w-32',
+        'order-1 inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#C22727] px-6 text-sm font-["Alexandria"] font-normal leading-tight text-[#F7F7F7] transition-colors duration-200 ease-out hover:bg-[#D84C4C] focus-visible:outline-offset-2 focus-visible:outline-[#D84C4C] sm:order-2 sm:h-8 sm:w-32',
         className
       )}
       {...props}
@@ -131,7 +131,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Cancel
       className={cn(
-        'order-2 inline-flex h-8 w-full items-center justify-center rounded-lg border border-[#7E7E7E] bg-[#16171D] px-6 text-xs font-["Alexandria"] font-normal leading-none text-white transition-colors duration-200 ease-out hover:bg-[#1F2029] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D84C4C] sm:order-1 sm:h-8 sm:w-32',
+        'order-2 inline-flex h-8 w-full items-center justify-center rounded-lg border border-[#7E7E7E] bg-[#16171D] px-6 text-xs font-["Alexandria"] font-normal leading-none text-white transition-colors duration-200 ease-out hover:bg-[#1F2029] focus-visible:outline-offset-2 focus-visible:outline-[#D84C4C] sm:order-1 sm:h-8 sm:w-32',
         className
       )}
       {...props}

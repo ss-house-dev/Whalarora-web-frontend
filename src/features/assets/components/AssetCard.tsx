@@ -394,6 +394,27 @@ function formatAmount10(value: number | string, options: FormatAmountOptions = {
   return negative ? `-${formatted}` : formatted;
 }
 
+function Stat({
+  label,
+  value,
+  isLoading = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  isLoading?: boolean;
+}) {
+  return (
+    <div className="w-[144px] shrink-0 inline-flex flex-col justify-center items-start rounded-xl gap-1">
+      <div className="w-24 text-[12px] sm:text-xs leading-none" style={{ color: colors.gray600 }}>
+        {label}
+      </div>
+      <div className="text-[16px] leading-normal text-white whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-2">
+        {isLoading ? '0.00' : value}
+      </div>
+    </div>
+  );
+}
+
 export function AssetCard(props: AssetCardProps) {
   const router = useRouter();
   const { setSelectedCoin } = useCoinContext(); // ใช้ useCoinContext เพื่อดึงฟังก์ชัน setSelectedCoin
@@ -474,9 +495,7 @@ export function AssetCard(props: AssetCardProps) {
       : pnlPct;
 
   const realTimeValue =
-    hasRealtimePrice && typeof amount === 'number'
-      ? displayPrice * amount
-      : value;
+    hasRealtimePrice && typeof amount === 'number' ? displayPrice * amount : value;
 
   const isRealTimeGain = realTimePnlAbs >= 0;
 
@@ -504,15 +523,6 @@ export function AssetCard(props: AssetCardProps) {
   };
 
   const compactPnlText = isPriceLoading
-    ? '0.00 (+0.00%)'
-    : `${isRealTimeGain ? '' : '-'}${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
-        Math.abs(realTimePnlPct) * 100
-      ).toFixed(2)}%)`;
-
-  const currentPriceText = isPriceLoading ? '0.00' : formattedCurrentPrice;
-  const averageCostText = averageCostDisplay;
-  const valueText = fmtMoney(realTimeValue);
-  const pnlDisplayText = isPriceLoading
     ? '0.00 (+0.00%)'
     : `${isRealTimeGain ? '' : '-'}${fmtMoney(Math.abs(realTimePnlAbs))} (${isRealTimeGain ? '+' : '-'}${(
         Math.abs(realTimePnlPct) * 100
@@ -554,23 +564,12 @@ export function AssetCard(props: AssetCardProps) {
                 {amountDisplay}
               </div>
 
-            <div className="flex flex-col gap-1">
-              <span
-                className="text-left text-sm font-normal leading-tight text-white"
-                title={`${symbol} (${name})`}
-              >
-                {symbol} ({name})
-              </span>
-              <span className="inline-flex items-center gap-2.5 rounded-xl bg-[#1F2029] px-2 py-1">
-                <span className="min-w-[120px] text-left text-base leading-normal text-white">
-                  {amountDisplay}
-                </span>
-                <span className="text-base leading-normal text-white">
-                  {truncateCode(unit, 4).toUpperCase()}
-                </span>
-              </span>
+              <div className="whitespace-nowrap text-base leading-normal text-white">
+                {truncateCode(unit, 4).toUpperCase()}
+              </div>
             </div>
           </div>
+        </div>
 
         {/* Middle: stats */}
         <div
@@ -636,53 +635,49 @@ export function AssetCard(props: AssetCardProps) {
               </span>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-[#A4A4A4]">Average cost (USDT)</span>
-                <span className="text-sm text-white">{averageCostDisplay}</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-[#A4A4A4]">Value</span>
-                <span className="text-sm text-white">{fmtMoney(realTimeValue)}</span>
-              </div>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-3 sm:gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-[#A4A4A4]">Average cost (USDT)</span>
+              <span className="text-sm text-white">{averageCostDisplay}</span>
             </div>
-
-            <div className="flex flex-col gap-1 sm:gap-2">
-              <span className="text-xs text-[#A4A4A4]">Unrealized PnL</span>
-              <span
-                className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
-                style={{
-                  color: isPriceLoading
-                    ? colors.white
-                    : isRealTimeGain
-                      ? colors.success
-                      : '#FF6B6B',
-                }}
-              >
-                {compactPnlText}
-                {!isPriceLoading &&
-                  (isRealTimeGain ? (
-                    <ArrowUpRight size={16} className="text-[#4ED7B0]" />
-                  ) : (
-                    <ArrowDownRight size={16} className="text-[#FF6B6B]" />
-                  ))}
-              </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-[#A4A4A4]">Value</span>
+              <span className="text-sm text-white">{fmtMoney(realTimeValue)}</span>
             </div>
           </div>
 
-          <div className="mt-auto">
-            <button
-              type="button"
-              onClick={handleBuySell}
-              className="flex h-8 w-full items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+          <div className="flex flex-col gap-1 sm:gap-2">
+            <span className="text-xs text-[#A4A4A4]">Unrealized PNL</span>
+            <span
+              className="inline-flex items-center gap-1 text-sm whitespace-nowrap"
+              style={{
+                color: isPriceLoading ? colors.white : isRealTimeGain ? colors.success : '#FF6B6B',
+              }}
             >
-              Buy/Sell
-            </button>
+              {compactPnlText}
+              {!isPriceLoading &&
+                (isRealTimeGain ? (
+                  <ArrowUpRight size={16} className="text-[#4ED7B0]" />
+                ) : (
+                  <ArrowDownRight size={16} className="text-[#FF6B6B]" />
+                ))}
+            </span>
           </div>
         </div>
-      )}
+
+        <div className="mt-auto">
+          <button
+            type="button"
+            onClick={handleBuySell}
+            className="flex h-8 w-full items-center justify-center rounded-lg bg-[#215EEC] text-sm font-medium text-neutral-100 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#215EEC]/60 focus:ring-offset-0 active:brightness-95"
+          >
+            Buy/Sell
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }
