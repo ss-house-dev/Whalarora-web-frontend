@@ -42,7 +42,7 @@ export default function Home() {
         onClick={handleTradeClick}
         className={`
           relative flex h-full w-full items-center justify-center
-          rounded-[56px]
+          rounded-[56px] cursor-pointer
           ${
             isHoverDemo
               ? 'ring-4 ring-[#215EEC]/70 drop-shadow-[0_0_22px_rgba(33,94,236,0.75)]'
