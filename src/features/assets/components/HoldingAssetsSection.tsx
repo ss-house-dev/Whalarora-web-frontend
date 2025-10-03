@@ -49,10 +49,6 @@ export default function HoldingAssetsSection({
     console.log('Opening trade modal for:', symbol);
   };
 
-  const handleStartTrading = () => {
-    router.push('/main/trading');
-  };
-
   const containerClass =
     'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
 
@@ -67,6 +63,9 @@ export default function HoldingAssetsSection({
     : 'grid gap-3 sm:grid-cols-2';
 
   const assetCardClassName = clsx('w-full', !isDesktopLayout && 'h-full');
+
+  const shouldShowDesktopHeader =
+    isDesktopLayout && !isLoadingData && (hasData || hasNoData || unauthorizedError);
 
   return (
     <HoldingAssetsTable
@@ -84,6 +83,23 @@ export default function HoldingAssetsSection({
           </div>
         )}
 
+        {shouldShowDesktopHeader && (
+          <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[10.5px] tracking-[0.08em] text-[#A4A4A4] font-['Alexandria']">
+            <span className="text-left font-medium">Symbol</span>
+            <span className="justify-self-center text-center font-medium">
+              Current price (USDT)
+            </span>
+            <span className="justify-self-center text-center font-medium">
+              Average cost (USDT)
+            </span>
+            <span className="justify-self-center text-center font-medium">Value (USDT)</span>
+            <span className="justify-self-center text-center font-medium">
+              Unrealized PnL (USDT)
+            </span>
+            <span aria-hidden className="block" />
+          </div>
+        )}
+
         {hasError && !unauthorizedError && (
           <div className={containerClass}>
             <div className="text-sm text-red-400">Error: {error}</div>
@@ -91,17 +107,8 @@ export default function HoldingAssetsSection({
         )}
 
         {unauthorizedError && (
-          <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-            <p className="text-sm font-normal text-[#D1D1D1] font-['Alexandria']">
-              No assets yet? Begin trading and grow your portfolio.
-            </p>
-            <button
-              type="button"
-              onClick={handleStartTrading}
-              className="rounded-lg bg-[#215EEC] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3C6CFF] focus:outline-none focus:ring-2 focus:ring-[#215EEC]/70 focus:ring-offset-0 active:brightness-95"
-            >
-              Start Trading !
-            </button>
+          <div className="flex h-64 items-center justify-center">
+            <p className="text-base font-normal leading-normal text-[#A4A4A4] font-['Alexandria']">No holding assets.</p>
           </div>
         )}
 
@@ -113,22 +120,6 @@ export default function HoldingAssetsSection({
 
         {hasData && (
           <div className="flex flex-col gap-3">
-            {isDesktopLayout && (
-              <div className="sticky top-[-1] z-10 grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 border-b border-[#2D3039] bg-[#16171D] px-4 py-2 text-[10.5px] tracking-[0.08em] text-[#A4A4A4] font-['Alexandria']">
-                <span className="text-left font-medium">Symbol</span>
-                <span className="justify-self-center text-center font-medium">
-                  Current price (USDT)
-                </span>
-                <span className="justify-self-center text-center font-medium">
-                  Average cost (USDT)
-                </span>
-                <span className="justify-self-center text-center font-medium">Value (USDT)</span>
-                <span className="justify-self-center text-center font-medium">
-                  Unrealized PnL (USDT)
-                </span>
-                <span aria-hidden className="block" />
-              </div>
-            )}
             <div className={rowsContainerClasses}>
               {pagedRows.map((row) => (
                 <AssetCard
@@ -153,3 +144,4 @@ export default function HoldingAssetsSection({
     </HoldingAssetsTable>
   );
 }
+
