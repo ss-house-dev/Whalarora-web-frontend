@@ -68,17 +68,13 @@ export default function Welcome() {
               <div className="text-2xl font-[600] text-[#EDEDED] sm:text-[30px]">
                 Welcome to Whalarora !
               </div>
-              <div className="text-2xl font-[600] text-[#225FED] sm:text-[30px]">
-                {username}
-              </div>
+              <div className="text-2xl font-[600] text-[#225FED] sm:text-[30px]">{username}</div>
             </div>
           </div>
           <div className="mt-8 space-y-6 sm:mt-[47px] sm:space-y-[47px]">
             <div className="space-y-2 text-center text-sm font-[400] text-[#7E7E7E] sm:space-y-0 sm:text-[16px]">
               <p>Your account has been successfully created.</p>
-              <p>
-                Get $10,000 in your demo account now and start trading with no risk free!
-              </p>
+              <p>Get 10,000 USDT in your demo account now and start trading with no risk free!</p>
             </div>
 
             <Button
@@ -101,4 +97,3 @@ export default function Welcome() {
     </div>
   );
 }
-
