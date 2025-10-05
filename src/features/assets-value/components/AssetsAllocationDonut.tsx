@@ -148,7 +148,7 @@ export function AssetsAllocationDonut({
   return (
     <section className={mergeClassNames(SECTION_CLASS, className)}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="relative mx-auto flex w-[240px] flex-shrink-0 items-center justify-center lg:mx-0">
+        <div className="relative ml-[72px] flex w-[240px] flex-shrink-0 items-center justify-center">
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}

@@ -117,7 +117,7 @@ export default function TotalAssetsValueCard({
         {/* Unrealized PnL */}
         <div className="flex-1 ml-3 min-[328px]:ml-0">
           <span className="text-xs font-normal">Unrealized PnL (USDT)</span>
-          <p className={`mt-1 text-xs text-white ${pnlClassName}`}>
+          <p className={`mt-1 text-xs ${isLoading ? 'text-white' : pnlClassName}`}>
             {isLoading ? '0.00 (0.00 %)' : pnlText}
           </p>
         </div>

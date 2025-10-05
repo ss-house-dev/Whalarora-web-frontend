@@ -351,7 +351,7 @@ export default function TotalAssetsValueContainer() {
       {tradableSymbols.map((symbol) => (
         <PriceSubscriber key={symbol} symbol={symbol} onUpdate={handleRealtimeUpdate} />
       ))}
-      <div className="mt-6 flex flex-col gap-[72px] lg:flex-row lg:items-stretch">
+      <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-stretch">
         <TotalAssetsValueCard
           totalValue={totalValue}
           totalCost={totalCost}
