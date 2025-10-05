@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
@@ -40,7 +41,7 @@ const formatPercent = (ratio: number) => `${percentFormatter.format(ratio)}%`;
 const formatCurrencyValue = (value: number) => currencyFormatter.format(value);
 
 const formatSignedCurrency = (value: number) => {
-  const base = formatCurrencyValue(value);
+  const base = formatCurrencyValue(Math.abs(value));
   if (value > 0) return `+${base}`;
   if (value < 0) return `-${base}`;
   return base;
@@ -79,7 +80,7 @@ export function AssetsAllocationDonut({
     );
   }
 
-  const TooltipContent = ({ itemData }: ChartsItemContentProps<'pie'>) => {
+  const CustomTooltip = ({ itemData }: ChartsItemContentProps<'pie'>) => {
     const slice = slices[itemData.dataIndex];
     if (!slice) return null;
 
@@ -130,38 +131,60 @@ export function AssetsAllocationDonut({
                   label: slice.symbol,
                   color: slice.color,
                 })),
-                innerRadius: 88,
+                innerRadius: 75,
                 outerRadius: 118,
-                cornerRadius: 6,
-                paddingAngle: 1.2,
-                highlightScope: { faded: 'global', highlighted: 'item' },
-                faded: { innerRadius: 82, color: 'rgba(52, 60, 71, 0.55)' },
+                cornerRadius: 0,
+                paddingAngle: 0.5,
+                highlightScope: { faded: 'none', highlighted: 'item' },
+                highlighted: { additionalRadius: 10 },
               },
             ]}
+            tooltip={{ trigger: 'item' }}
+            slots={{
+              itemContent: CustomTooltip,
+            }}
             slotProps={{
               legend: { hidden: true },
-              pieArc: { className: 'allocation-donut-arc' },
-            }}
-            tooltip={{
-              trigger: 'item',
-              slots: { itemContent: TooltipContent },
+              popper: {
+                sx: {
+                  '& .MuiChartsTooltip-root': {
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                  },
+                  '& .MuiChartsTooltip-table': {
+                    display: 'none',
+                  },
+                },
+              },
+              pieArc: {
+                style: {
+                  stroke: 'none',
+                  strokeWidth: 0,
+                },
+              },
             }}
             sx={{
-              '& .allocation-donut-arc path': {
-                stroke: 'transparent',
-                transition: 'stroke 0.2s ease, stroke-width 0.2s ease',
+              '& .MuiChartsTooltip-root': {
+                backgroundColor: 'transparent !important',
+                border: 'none !important',
+                boxShadow: 'none !important',
               },
-              '& .allocation-donut-arc:hover path': {
-                stroke: '#FFFFFF',
-                strokeWidth: 2,
+              '& .MuiChartsTooltip-table': {
+                display: 'none !important',
               },
-              '& .MuiPieArc-root.MuiChartsHighlighted path': {
-                stroke: '#FFFFFF',
-                strokeWidth: 2,
-              },
-              '& .MuiPieArc-root.MuiCharts-highlighted path': {
-                stroke: '#FFFFFF',
-                strokeWidth: 2,
+              '& .MuiPieArc-root': {
+                cursor: 'pointer',
+                '& path': {
+                  stroke: 'none !important',
+                  strokeWidth: '0 !important',
+                  transition: 'stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease',
+                },
+                '&:hover path': {
+                  stroke: '#FFFFFF !important',
+                  strokeWidth: '2px !important',
+                  filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))',
+                },
               },
             }}
           />
@@ -184,7 +207,12 @@ export function AssetsAllocationDonut({
                 />
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1B1D26]">
                   {slice.iconUrl ? (
-                    <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
+                    <Image
+                      src={slice.iconUrl}
+                      alt={`${slice.symbol} icon`}
+                      width={24}
+                      height={24}
+                    />
                   ) : (
                     <span className="text-xs font-semibold text-white">?</span>
                   )}
