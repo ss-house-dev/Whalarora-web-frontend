@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
@@ -85,29 +84,24 @@ export function AssetsAllocationDonut({
     if (!slice) return null;
 
     return (
-      <div className="flex w-[224px] flex-col gap-2 rounded-2xl border border-[#3A3B44] bg-[#1B1C24] px-4 py-3 text-white shadow-2xl">
+      <div className="flex w-[150px] flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#151620]">
+            <span className="flex h-9 w-9 items-center justify-center">
               {slice.iconUrl ? (
                 <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
               ) : (
-                <span className="text-sm font-medium text-white">?</span>
+                <span className="text-xs font-medium text-white">?</span>
               )}
             </span>
             <span className="text-sm font-medium text-white">{slice.symbol}</span>
           </div>
-          <span className="rounded-full bg-[rgba(42,76,181,0.45)] px-2.5 py-1 text-[11px] font-medium text-white">
+          <span className="rounded-full bg-[rgba(42,76,181,0.45)] p-1.5 text-[10px] font-medium text-white">
             {formatPercent(slice.percentage)}
           </span>
         </div>
-        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
-          Value (USDT)
-        </div>
+        <div className="text-[10px] text-[#7E7E7E]">Value (USDT)</div>
         <div className="text-sm font-semibold text-white">{formatCurrencyValue(slice.value)}</div>
-        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
-          Unrealized PnL (USDT)
-        </div>
         <div className="text-xs font-semibold" style={{ color: getPnlColor(slice.pnlValue) }}>
           {formatSignedCurrency(slice.pnlValue)} ({formatSignedPercent(slice.pnlPercent)})
         </div>
@@ -205,7 +199,7 @@ export function AssetsAllocationDonut({
                   style={{ backgroundColor: slice.color }}
                   aria-hidden
                 />
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1B1D26]">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
                   {slice.iconUrl ? (
                     <Image
                       src={slice.iconUrl}
