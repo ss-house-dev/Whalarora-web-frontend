@@ -1,12 +1,7 @@
-'use client';
-import { Anuphan } from 'next/font/google';
+﻿'use client';
+import { anuphan } from '@/fonts/anuphan';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-
-const anuphan = Anuphan({
-  subsets: ['latin', 'thai'],
-  weight: ['400', '500', '600', '700'],
-});
 
 interface AlertBoxProps {
   message: string;
@@ -163,7 +158,7 @@ export default function AlertBox({
         {/* Dynamic message */}
         <div className="text-white text-[14px] font-[400] whitespace-pre-line">{message}</div>
 
-        {/* Gradient bar - ระยะห่างซ้ายขวาเท่ากัน */}
+        {/* Gradient bar - à¸£à¸°à¸¢à¸°à¸«à¹ˆà¸²à¸‡à¸‹à¹‰à¸²à¸¢à¸‚à¸§à¸²à¹€à¸—à¹ˆà¸²à¸à¸±à¸™ */}
         <div className=" mr-[10px] flex items-center h-[7px] relative">
           <div
             className="h-[4px] transition-all duration-200"
@@ -181,3 +176,4 @@ export default function AlertBox({
     </div>
   );
 }
+

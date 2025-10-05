@@ -1,10 +1,5 @@
 ﻿import React from 'react';
-import { Anuphan } from 'next/font/google';
-
-const anuphan = Anuphan({
-  subsets: ['latin', 'thai'],
-  weight: ['400', '500', '600', '700'],
-});
+import { anuphan } from '@/fonts/anuphan';
 
 interface TotalAssetsValueCardProps {
   totalValue: number;
@@ -129,3 +124,5 @@ export default function TotalAssetsValueCard({
     </section>
   );
 }
+
+
