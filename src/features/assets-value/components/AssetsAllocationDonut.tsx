@@ -62,7 +62,7 @@ const getPnlColor = (pnlValue: number) => {
 const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
-const CHART_SIZE = 200;
+const CHART_SIZE = 190;
 
 export function AssetsAllocationDonut({
   slices,
@@ -202,16 +202,16 @@ export function AssetsAllocationDonut({
           </div>
         </div>
 
-        <div className="flex w-full max-w-[208px] flex-col gap-4">
+        <div className="flex w-full max-w-[208px] flex-col gap-4 py-0">
           <ul className="space-y-2">
             {slices.map((slice) => (
               <li key={slice.id} className="flex items-center gap-2 text-sm text-white">
                 <span
-                  className="flex h-3 w-3 flex-shrink-0 rounded-sm"
+                  className="flex h-3 w-3 border rounded-[4px]"
                   style={{ backgroundColor: slice.color }}
                   aria-hidden
                 />
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
+                <span className="flex flex-shrink-0 items-center justify-center">
                   {slice.iconUrl ? (
                     <Image
                       src={slice.iconUrl}
@@ -223,7 +223,7 @@ export function AssetsAllocationDonut({
                     <span className="text-xs font-semibold text-white">?</span>
                   )}
                 </span>
-                <span className="text-[10px] font-medium text-white">{slice.symbol}</span>
+                <span className="text-[10px] text-white">{slice.symbol}</span>
               </li>
             ))}
           </ul>
