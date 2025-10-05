@@ -1,15 +1,18 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TotalAssetsValueCard from '../components/TotalAssetsValueCard';
+import AssetsAllocationDonut, { AllocationSlice } from '../components/AssetsAllocationDonut';
 import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
 import {
   fetchCoinMetadata,
   getFallbackMetadata,
+  getFallbackName,
   normalizeNumber,
   type CoinMetadata,
 } from '@/features/assets/utils/coinMetadata';
 import { useMarketPrice } from '@/features/trading/hooks/useMarketPrice';
+
 const getUpperSymbol = (symbol: string | undefined | null) => {
   if (!symbol) return '';
   return symbol.trim().toUpperCase();
@@ -23,6 +26,16 @@ type RealtimeState = {
 type RealtimeUpdate = {
   price: number | null;
   isLoading: boolean;
+};
+
+const COLOR_PALETTE = ['#142968', '#2141B0', '#2E59F4', '#4E6CFF', '#6F7CFF', '#8D7BFF', '#3ADDD0'];
+
+type AssetValuation = {
+  symbol: string;
+  name: string;
+  amount: number;
+  price: number;
+  value: number;
 };
 
 const PriceSubscriber = ({
@@ -56,6 +69,25 @@ const PriceSubscriber = ({
   }, [symbol, numericPrice, isPriceLoading, onUpdate]);
 
   return null;
+};
+
+const selectBestPrice = (
+  symbol: string,
+  asset: { currentPrice?: number; avgPrice: number },
+  metadata: Record<string, CoinMetadata>,
+  realtime: Record<string, RealtimeState>
+) => {
+  const upperSymbol = getUpperSymbol(symbol);
+  const realTimePrice = normalizeNumber(realtime[upperSymbol]?.price);
+  const metadataPrice = normalizeNumber(metadata[upperSymbol]?.price);
+  const apiPrice = normalizeNumber(asset.currentPrice);
+  const averageCost = normalizeNumber(asset.avgPrice);
+
+  if (realTimePrice > 0) return realTimePrice;
+  if (metadataPrice > 0) return metadataPrice;
+  if (apiPrice > 0) return apiPrice;
+  if (averageCost > 0) return averageCost;
+  return 0;
 };
 
 export default function TotalAssetsValueContainer() {
@@ -157,34 +189,41 @@ export default function TotalAssetsValueContainer() {
     });
   }, []);
 
-  const totalValue = useMemo(() => {
+  const assetValuations = useMemo<AssetValuation[]>(() => {
     if (!assets || assets.length === 0) {
+      return [];
+    }
+
+    return assets
+      .map((asset) => {
+        const symbol = getUpperSymbol(asset.symbol);
+        if (!symbol || symbol === 'CASH') {
+          return null;
+        }
+
+        const amount = normalizeNumber(asset.amount);
+        const price = selectBestPrice(symbol, asset, coinMetadata, realtimeState);
+        const value = amount * price;
+        const name = coinMetadata[symbol]?.name ?? getFallbackName(symbol);
+
+        return {
+          symbol,
+          name,
+          amount,
+          price,
+          value,
+        } satisfies AssetValuation;
+      })
+      .filter((entry): entry is AssetValuation => Boolean(entry));
+  }, [assets, coinMetadata, realtimeState]);
+
+  const totalValue = useMemo(() => {
+    if (assetValuations.length === 0) {
       return 0;
     }
 
-    return assets.reduce((accumulator, asset) => {
-      const symbol = getUpperSymbol(asset?.symbol);
-      if (symbol.length === 0 || symbol === 'CASH') {
-        return accumulator;
-      }
-
-      const amount = normalizeNumber(asset?.amount);
-      const realTimePrice = realtimeState[symbol]?.price;
-      const metadataPrice = normalizeNumber(coinMetadata[symbol]?.price);
-      const apiPrice = normalizeNumber(asset?.currentPrice);
-
-      const priceCandidate =
-        typeof realTimePrice === 'number' && realTimePrice > 0
-          ? realTimePrice
-          : metadataPrice > 0
-            ? metadataPrice
-            : apiPrice;
-
-      const price = normalizeNumber(priceCandidate);
-
-      return accumulator + amount * price;
-    }, 0);
-  }, [assets, coinMetadata, realtimeState]);
+    return assetValuations.reduce((accumulator, asset) => accumulator + asset.value, 0);
+  }, [assetValuations]);
 
   const totalCost = useMemo(() => {
     if (!assets || assets.length === 0) {
@@ -214,21 +253,74 @@ export default function TotalAssetsValueContainer() {
     return (pnlValue / totalCost) * 100;
   }, [pnlValue, totalCost]);
 
+  const { slices: allocationSlices, assetCount: allocationAssetCount } = useMemo(() => {
+    const positiveAssets = assetValuations.filter((asset) => asset.value > 0);
+    if (positiveAssets.length === 0) {
+      return { slices: [] as AllocationSlice[], assetCount: 0 };
+    }
+
+    const sorted = [...positiveAssets].sort((a, b) => b.value - a.value);
+    const aggregateValue = sorted.reduce((acc, item) => acc + item.value, 0);
+
+    if (aggregateValue <= 0) {
+      return { slices: [] as AllocationSlice[], assetCount: 0 };
+    }
+
+    const topSlices = sorted.slice(0, 6);
+    const remainder = sorted.slice(6);
+
+    const slices: AllocationSlice[] = topSlices.map((item, index) => ({
+      id: item.symbol,
+      symbol: item.symbol,
+      name: item.name,
+      value: item.value,
+      percentage: (item.value / aggregateValue) * 100,
+      color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+    }));
+
+    if (remainder.length > 0) {
+      const otherValue = remainder.reduce((acc, item) => acc + item.value, 0);
+      if (otherValue > 0) {
+        const index = slices.length % COLOR_PALETTE.length;
+        slices.push({
+          id: 'other',
+          symbol: 'Other',
+          name: `${remainder.length} assets`,
+          value: otherValue,
+          percentage: (otherValue / aggregateValue) * 100,
+          color: COLOR_PALETTE[index],
+          isOther: true,
+        });
+      }
+    }
+
+    return { slices, assetCount: positiveAssets.length };
+  }, [assetValuations]);
+
   const combinedError = error?.message || metadataError || undefined;
+  const isSummaryLoading = isLoading || isMetadataLoading;
 
   return (
     <>
       {tradableSymbols.map((symbol) => (
         <PriceSubscriber key={symbol} symbol={symbol} onUpdate={handleRealtimeUpdate} />
       ))}
-      <TotalAssetsValueCard
-        totalValue={totalValue}
-        totalCost={totalCost}
-        pnlValue={pnlValue}
-        pnlPercent={pnlPercent}
-        isLoading={isLoading || isMetadataLoading}
-        error={combinedError}
-      />
+      <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-stretch">
+        <TotalAssetsValueCard
+          totalValue={totalValue}
+          totalCost={totalCost}
+          pnlValue={pnlValue}
+          pnlPercent={pnlPercent}
+          isLoading={isSummaryLoading}
+          error={combinedError}
+          className="lg:max-w-[603px] lg:flex-[2]"
+        />
+        <AssetsAllocationDonut
+          slices={allocationSlices}
+          totalAssetCount={allocationAssetCount}
+          className="lg:max-w-[360px] lg:flex-1"
+        />
+      </div>
     </>
   );
 }
