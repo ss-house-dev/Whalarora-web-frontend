@@ -20,12 +20,12 @@ interface UseMarketPriceOptions {
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 
-
 export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) {
   const throttleMs = Math.max(0, options?.throttleMs ?? 0);
   const [marketPrice, setMarketPrice] = useState<string>('');
   const [isPriceLoading, setIsPriceLoading] = useState<boolean>(true);
   const [priceDecimalPlaces, setPriceDecimalPlaces] = useState<number>(2);
+  const [hasTickPrecision, setHasTickPrecision] = useState<boolean>(false);
   const [numericPrice, setNumericPrice] = useState<number | null>(null);
   const currentSymbolRef = useRef<string>('');
   const priceCache = useRef<{ [key: string]: string }>({});
@@ -34,14 +34,34 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
   const throttleTimerRef = useRef<TimeoutHandle | null>(null);
   const pendingPriceRef = useRef<{ value: number; places?: number } | null>(null);
   const lastEmitRef = useRef<number>(0);
+  const deriveDecimalsFromPrice = useCallback((price: string | number | null | undefined) => {
+    if (typeof price !== 'string') {
+      return undefined;
+    }
+    const dotIndex = price.indexOf('.');
+    if (dotIndex === -1) {
+      return undefined;
+    }
+    const decimalPart = price.slice(dotIndex + 1);
+    const trimmed = decimalPart.replace(/0+$/, '');
+    if (trimmed.length === 0) {
+      return 0;
+    }
+    return Math.min(8, trimmed.length);
+  }, []);
 
   const formatOriginalPrice = useCallback(
     (value: number, overridePlaces?: number): string => {
       const basePlaces = Math.max(0, priceDecimalPlaces);
       const override = overridePlaces !== undefined ? Math.max(0, overridePlaces) : undefined;
-      const places = Math.min(8, override !== undefined ? Math.max(basePlaces, override) : basePlaces);
+      const places = hasTickPrecision
+        ? Math.min(8, basePlaces)
+        : Math.min(8, override ?? basePlaces);
 
-      if (isNaN(value) || value <= 0) {
+      if (Number.isNaN(value) || value <= 0) {
+        if (places <= 0) {
+          return '0';
+        }
         return `0.${'0'.repeat(places)}`;
       }
 
@@ -50,7 +70,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
       const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
     },
-    [priceDecimalPlaces]
+    [priceDecimalPlaces, hasTickPrecision]
   );
 
   useEffect(() => {
@@ -58,12 +78,14 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
       currentSymbolRef.current = '';
       setMarketPrice('');
       setNumericPrice(null);
+      setHasTickPrecision(false);
       setIsPriceLoading(false);
       return;
     }
 
     console.log(`useMarketPrice: Symbol changed to ${symbol}`);
     currentSymbolRef.current = symbol;
+    setHasTickPrecision(false);
 
     pendingPriceRef.current = null;
     if (throttleTimerRef.current) {
@@ -80,6 +102,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
 
     if (typeof cachedPrecision === 'number') {
       setPriceDecimalPlaces(cachedPrecision);
+      setHasTickPrecision(true);
     }
 
     if (cachedPrice) {
@@ -173,13 +196,16 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
         const symInfo = data.symbols.find((s: SymbolInfo) => s.symbol === apiSymbol);
 
         if (symInfo) {
-          const priceFilter = symInfo.filters.find((f: PriceFilter) => f.filterType === 'PRICE_FILTER');
+          const priceFilter = symInfo.filters.find(
+            (f: PriceFilter) => f.filterType === 'PRICE_FILTER'
+          );
           if (priceFilter && priceFilter.tickSize) {
             const tickSize = parseFloat(priceFilter.tickSize);
             if (!Number.isNaN(tickSize) && tickSize > 0) {
               const places = Math.max(0, Math.round(-Math.log10(tickSize)));
               precisionCache.current[symbol] = places;
               setPriceDecimalPlaces(places);
+              setHasTickPrecision(true);
               console.log(`useMarketPrice: Set decimal places for ${symbol} to ${places}`);
             } else {
               console.warn(`useMarketPrice: Invalid tickSize for ${symbol}`);
@@ -193,6 +219,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
       } catch (error) {
         console.error('useMarketPrice: Error fetching exchangeInfo:', error);
         setPriceDecimalPlaces(2);
+        setHasTickPrecision(false);
       }
     };
 
@@ -209,18 +236,21 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as { c?: string; p?: string; lastPrice?: string };
-        const priceRaw = typeof data.c === 'string' ? data.c : typeof data.p === 'string' ? data.p : data.lastPrice;
+        const priceRaw =
+          typeof data.c === 'string'
+            ? data.c
+            : typeof data.p === 'string'
+              ? data.p
+              : data.lastPrice;
         console.log(`Raw WebSocket close price for ${coinSymbol}:`, priceRaw);
-        const priceValue = typeof priceRaw === 'string' ? Number.parseFloat(priceRaw) : Number(priceRaw);
+        const priceValue =
+          typeof priceRaw === 'string' ? Number.parseFloat(priceRaw) : Number(priceRaw);
         if (!Number.isFinite(priceValue) || priceValue <= 0) {
           console.warn(`useMarketPrice: Invalid or zero price received: ${priceRaw}`);
           return;
         }
         if (currentSymbolRef.current === symbol) {
-          const decimalsHint =
-            typeof priceRaw === 'string' && priceRaw.includes('.')
-              ? Math.min(8, Math.max(0, (priceRaw.split('.')[1] ?? '').length))
-              : undefined;
+          const decimalsHint = deriveDecimalsFromPrice(priceRaw);
           schedulePrice(priceValue, decimalsHint);
           console.log(`useMarketPrice: Price updated for ${coinSymbol}: ${priceValue}`);
         } else {
@@ -245,7 +275,9 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
       if (!currentMarketPrice && currentSymbolRef.current === symbol) {
         console.log(`useMarketPrice: WebSocket timeout, using HTTP fallback for ${coinSymbol}`);
         try {
-          const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${coinSymbol}USDT`);
+          const response = await fetch(
+            `https://api.binance.com/api/v3/ticker/price?symbol=${coinSymbol}USDT`
+          );
           const data = await response.json();
           if (currentSymbolRef.current === symbol) {
             const priceValue = Number.parseFloat(data.price);
@@ -253,10 +285,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
               console.warn(`useMarketPrice: Invalid HTTP price for ${coinSymbol}: ${data.price}`);
               return;
             }
-            const decimalsHint =
-              typeof data.price === 'string' && data.price.includes('.')
-                ? Math.min(8, Math.max(0, (data.price.split('.')[1] ?? '').length))
-                : undefined;
+            const decimalsHint = deriveDecimalsFromPrice(data.price);
             schedulePrice(priceValue, decimalsHint);
             console.log(`useMarketPrice: Fallback HTTP price for ${coinSymbol}: ${priceValue}`);
           }
@@ -280,9 +309,7 @@ export function useMarketPrice(symbol: string, options?: UseMarketPriceOptions) 
       }
       ws.close();
     };
-  }, [symbol, formatOriginalPrice, throttleMs]);
+  }, [symbol, formatOriginalPrice, throttleMs, deriveDecimalsFromPrice]);
 
   return { marketPrice, isPriceLoading, priceDecimalPlaces, numericPrice };
 }
-
-
