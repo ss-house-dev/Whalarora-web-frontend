@@ -62,7 +62,7 @@ const getPnlColor = (pnlValue: number) => {
 const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
-const CHART_SIZE = 260;
+const CHART_SIZE = 200;
 
 export function AssetsAllocationDonut({
   slices,
@@ -125,11 +125,11 @@ export function AssetsAllocationDonut({
   return (
     <section className={mergeClassNames(SECTION_CLASS, className)}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="relative mx-auto flex h-[260px] w-[260px] flex-shrink-0 items-center justify-center lg:mx-0">
+        <div className="relative mx-auto flex w-[240px] flex-shrink-0 items-center justify-center lg:mx-0">
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}
-            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
             series={[
               {
                 data: slices.map((slice) => ({
@@ -138,8 +138,8 @@ export function AssetsAllocationDonut({
                   label: slice.symbol,
                   color: slice.color,
                 })),
-                innerRadius: 75,
-                outerRadius: 118,
+                innerRadius: 55,
+                outerRadius: 90,
                 cornerRadius: 0,
                 paddingAngle: 0.5,
                 highlightScope: { faded: 'none', highlighted: 'item' },
@@ -197,16 +197,15 @@ export function AssetsAllocationDonut({
           />
 
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
-            <span className="text-base font-medium text-white">Allocation</span>
-            <span className="text-sm font-medium text-[#73747C]">{totalAssetCount} Assets</span>
+            <span className="text-sm font-medium text-white">Allocation</span>
+            <span className="text-xs font-medium text-[#73747C]">{totalAssetCount} Assets</span>
           </div>
         </div>
 
         <div className="flex w-full max-w-[208px] flex-col gap-4">
-          <h3 className="text-base font-medium text-white">Allocation</h3>
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {slices.map((slice) => (
-              <li key={slice.id} className="flex items-center gap-3 text-sm text-white">
+              <li key={slice.id} className="flex items-center gap-2 text-sm text-white">
                 <span
                   className="flex h-3 w-3 flex-shrink-0 rounded-sm"
                   style={{ backgroundColor: slice.color }}
@@ -224,7 +223,7 @@ export function AssetsAllocationDonut({
                     <span className="text-xs font-semibold text-white">?</span>
                   )}
                 </span>
-                <span className="text-sm font-medium text-white">{slice.symbol}</span>
+                <span className="text-[10px] font-medium text-white">{slice.symbol}</span>
               </li>
             ))}
           </ul>
