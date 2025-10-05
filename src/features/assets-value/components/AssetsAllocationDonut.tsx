@@ -118,16 +118,18 @@ export function AssetsAllocationDonut({
     if (!slice) return null;
 
     return (
-      <div className="flex w-[126px] flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
+      <div className="flex flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center">
-              {slice.iconUrl ? (
-                <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
-              ) : (
-                <span className="text-xs font-medium text-white">?</span>
-              )}
-            </span>
+            {!isOtherSlice(slice) && (
+              <span className="flex h-6 w-6 items-center justify-center">
+                {slice.iconUrl ? (
+                  <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
+                ) : (
+                  <span className="text-xs font-medium text-white">?</span>
+                )}
+              </span>
+            )}
             <span className="text-xs text-white">{slice.symbol}</span>
           </div>
           <span className="rounded-lg bg-[rgba(34,95,237,0.20)] px-2 py-1 text-[10px] text-white">
@@ -237,18 +239,20 @@ export function AssetsAllocationDonut({
                   style={{ backgroundColor: slice.color }}
                   aria-hidden
                 />
-                <span className="flex flex-shrink-0 items-center justify-center">
-                  {slice.iconUrl ? (
-                    <Image
-                      src={slice.iconUrl}
-                      alt={`${slice.symbol} icon`}
-                      width={24}
-                      height={24}
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-white">?</span>
-                  )}
-                </span>
+                {!isOtherSlice(slice) && (
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                    {slice.iconUrl ? (
+                      <Image
+                        src={slice.iconUrl}
+                        alt={`${slice.symbol} icon`}
+                        width={24}
+                        height={24}
+                      />
+                    ) : (
+                      <span className="text-xs font-semibold text-white">?</span>
+                    )}
+                  </span>
+                )}
                 <span className="text-[10px] text-white">{slice.symbol}</span>
               </li>
             ))}
