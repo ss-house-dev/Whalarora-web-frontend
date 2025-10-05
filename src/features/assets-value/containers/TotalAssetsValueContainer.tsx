@@ -364,7 +364,7 @@ export default function TotalAssetsValueContainer() {
         <AssetsAllocationDonut
           slices={allocationSlices}
           totalAssetCount={allocationAssetCount}
-          className="lg:max-w-[360px] lg:flex-1"
+          className="lg:max-w-[678px] lg:flex-1"
         />
       </div>
     </>

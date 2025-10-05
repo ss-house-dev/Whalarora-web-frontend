@@ -60,8 +60,8 @@ const getPnlColor = (pnlValue: number) => {
 };
 
 const EMPTY_SECTION_CLASS =
-  'w-full rounded-2xl bg-[#16171D] px-4 py-3 text-center text-sm text-[#A4A4A4] shadow-lg';
-const SECTION_CLASS = 'w-full rounded-2xl bg-[#16171D] px-6 py-5 text-white shadow-lg';
+  'w-full rounded-2xl bg-[#16171D] text-center text-sm text-[#A4A4A4] shadow-lg';
+const SECTION_CLASS = 'w-full text-white';
 const CHART_SIZE = 260;
 
 export function AssetsAllocationDonut({
@@ -72,8 +72,8 @@ export function AssetsAllocationDonut({
   if (slices.length === 0) {
     return (
       <section className={mergeClassNames(EMPTY_SECTION_CLASS, className)}>
-        <div className="flex h-full min-h-[216px] items-center justify-center">
-          <p>No holding asset.</p>
+        <div className="flex w-full h-full min-h-[216px]  items-center justify-center">
+          <p>No holding Assets ! Start your trading journey now.</p>
         </div>
       </section>
     );
@@ -84,25 +84,25 @@ export function AssetsAllocationDonut({
     if (!slice) return null;
 
     return (
-      <div className="flex w-[150px] flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
+      <div className="flex w-[126px] flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center">
+            <span className="flex items-center justify-center">
               {slice.iconUrl ? (
                 <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
               ) : (
                 <span className="text-xs font-medium text-white">?</span>
               )}
             </span>
-            <span className="text-sm font-medium text-white">{slice.symbol}</span>
+            <span className="text-xs text-white">{slice.symbol}</span>
           </div>
-          <span className="rounded-full bg-[rgba(42,76,181,0.45)] p-1.5 text-[10px] font-medium text-white">
+          <span className="rounded-lg bg-[rgba(34,95,237,0.20)] px-2 py-1 text-[10px] text-white">
             {formatPercent(slice.percentage)}
           </span>
         </div>
         <div className="text-[10px] text-[#7E7E7E]">Value (USDT)</div>
-        <div className="text-sm font-semibold text-white">{formatCurrencyValue(slice.value)}</div>
-        <div className="text-xs font-semibold" style={{ color: getPnlColor(slice.pnlValue) }}>
+        <div className="text-[10px] text-white">{formatCurrencyValue(slice.value)}</div>
+        <div className="text-[10px] " style={{ color: getPnlColor(slice.pnlValue) }}>
           {formatSignedCurrency(slice.pnlValue)} ({formatSignedPercent(slice.pnlPercent)})
         </div>
       </div>
