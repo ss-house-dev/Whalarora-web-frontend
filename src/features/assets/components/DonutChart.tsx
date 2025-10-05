@@ -191,10 +191,10 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, totalHoldingValue }) => {
       </svg>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
-        <span className="font-['Alexandria'] text-sm font-normal leading-tight text-white">
+        <span className="font-['Alexandria'] text-xs font-normal leading-tight text-white">
           Allocation
         </span>
-        <span className="font-['Alexandria'] text-xs font-normal leading-none text-palatte-color-netural-gray-GR300">
+        <span className="font-['Alexandria'] text-[11px] font-normal leading-none text-[#7E7E7E]">
           {totalAssets} Assets
         </span>
       </div>
