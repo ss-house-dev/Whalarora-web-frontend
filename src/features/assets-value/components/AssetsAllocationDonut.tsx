@@ -60,7 +60,7 @@ const getPnlColor = (pnlValue: number) => {
 };
 
 const EMPTY_SECTION_CLASS =
-  'w-full rounded-2xl bg-[#16171D] text-center text-sm text-[#A4A4A4] shadow-lg';
+  'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
 const CHART_SIZE = 260;
 
@@ -72,8 +72,21 @@ export function AssetsAllocationDonut({
   if (slices.length === 0) {
     return (
       <section className={mergeClassNames(EMPTY_SECTION_CLASS, className)}>
-        <div className="flex w-full h-full min-h-[216px]  items-center justify-center">
-          <p>No holding Assets ! Start your trading journey now.</p>
+        <div className="flex flex-col w-full h-full min-h-[196px] items-center justify-center space-y-3">
+          <Image
+            src="/assets/empty-state-port.svg"
+            alt="Bitcoin"
+            width={88}
+            height={88}
+            className="rounded-full"
+          />
+          <p className="text-xs">
+            No holding Assets !<br />
+            Start your trading journey now.
+          </p>
+          <button className="py-2 px-4 bg-[#225FED] text-white text-sm rounded-lg cursor-pointer">
+            Start trading
+          </button>
         </div>
       </section>
     );

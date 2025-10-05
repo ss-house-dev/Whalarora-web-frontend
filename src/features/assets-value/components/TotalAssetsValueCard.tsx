@@ -8,6 +8,7 @@ interface TotalAssetsValueCardProps {
   pnlValue: number;
   pnlPercent: number;
   isLoading?: boolean;
+  error?: string;
   className?: string;
 }
 
@@ -79,7 +80,7 @@ export default function TotalAssetsValueCard({
   return (
     <section
       className={clsx(
-        'w-full max-w-[603px] rounded-2xl bg-[#16171D] px-4 py-3 shadow-lg',
+        'w-full max-w-[603px] h-[196px] rounded-xl bg-[#16171D] px-4 py-3',
         className
       )}
     >
