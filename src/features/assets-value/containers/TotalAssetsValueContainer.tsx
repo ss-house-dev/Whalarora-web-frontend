@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import TotalAssetsValueCard from '../components/TotalAssetsValueCard';
 import AssetsAllocationDonut, { AllocationSlice } from '../components/AssetsAllocationDonut';
 import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
@@ -116,12 +117,14 @@ const selectBestPrice = (
 };
 
 export default function TotalAssetsValueContainer() {
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const {
     data: assets,
     isLoading,
     error,
   } = useGetAllAssets({
-    enabled: true,
+    enabled: isAuthenticated,
   });
 
   const [coinMetadata, setCoinMetadata] = useState<Record<string, CoinMetadata>>({});
@@ -129,8 +132,19 @@ export default function TotalAssetsValueContainer() {
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [realtimeState, setRealtimeState] = useState<Record<string, RealtimeState>>({});
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      return;
+    }
+
+    setCoinMetadata({});
+    setRealtimeState({});
+    setMetadataError(null);
+    setIsMetadataLoading(false);
+  }, [isAuthenticated]);
+
   const tradableSymbols = useMemo(() => {
-    if (!assets || assets.length === 0) {
+    if (!isAuthenticated || !assets || assets.length === 0) {
       return [];
     }
 
@@ -141,11 +155,12 @@ export default function TotalAssetsValueContainer() {
           .filter((symbol): symbol is string => symbol.length > 0 && symbol !== 'CASH')
       )
     );
-  }, [assets]);
+  }, [assets, isAuthenticated]);
 
   useEffect(() => {
     if (tradableSymbols.length === 0) {
       setMetadataError(null);
+      setIsMetadataLoading(false);
       return;
     }
 
@@ -215,7 +230,7 @@ export default function TotalAssetsValueContainer() {
   }, []);
 
   const assetValuations = useMemo<AssetValuation[]>(() => {
-    if (!assets || assets.length === 0) {
+    if (!isAuthenticated || !assets || assets.length === 0) {
       return [];
     }
 
@@ -249,18 +264,18 @@ export default function TotalAssetsValueContainer() {
         } satisfies AssetValuation;
       })
       .filter((entry): entry is AssetValuation => Boolean(entry));
-  }, [assets, coinMetadata, realtimeState]);
+  }, [assets, coinMetadata, realtimeState, isAuthenticated]);
 
   const totalValue = useMemo(() => {
-    if (assetValuations.length === 0) {
+    if (!isAuthenticated || assetValuations.length === 0) {
       return 0;
     }
 
     return assetValuations.reduce((accumulator, asset) => accumulator + asset.value, 0);
-  }, [assetValuations]);
+  }, [assetValuations, isAuthenticated]);
 
   const totalCost = useMemo(() => {
-    if (!assets || assets.length === 0) {
+    if (!isAuthenticated || !assets || assets.length === 0) {
       return 0;
     }
 
@@ -275,7 +290,7 @@ export default function TotalAssetsValueContainer() {
 
       return accumulator + amount * averageCost;
     }, 0);
-  }, [assets]);
+  }, [assets, isAuthenticated]);
 
   const pnlValue = useMemo(() => totalValue - totalCost, [totalValue, totalCost]);
 
@@ -288,6 +303,10 @@ export default function TotalAssetsValueContainer() {
   }, [pnlValue, totalCost]);
 
   const { slices: allocationSlices, assetCount: allocationAssetCount } = useMemo(() => {
+    if (!isAuthenticated) {
+      return { slices: [] as AllocationSlice[], assetCount: 0 };
+    }
+
     const positiveAssets = assetValuations.filter((asset) => asset.value > 0);
     if (positiveAssets.length === 0) {
       return { slices: [] as AllocationSlice[], assetCount: 0 };
@@ -341,10 +360,10 @@ export default function TotalAssetsValueContainer() {
     }
 
     return { slices, assetCount: slices.length };
-  }, [assetValuations]);
+  }, [assetValuations, isAuthenticated]);
 
   const combinedError = error?.message || metadataError || undefined;
-  const isSummaryLoading = isLoading || isMetadataLoading;
+  const isSummaryLoading = isAuthenticated && (isLoading || isMetadataLoading);
 
   return (
     <>
