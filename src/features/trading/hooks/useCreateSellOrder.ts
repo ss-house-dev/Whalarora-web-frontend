@@ -4,6 +4,7 @@ import createSellOrder, {
   CreateSellOrderResponse,
 } from '@/features/trading/services/createSellOrder';
 import { TradeQueryKeys as WalletTradeQueryKeys } from '@/features/trading/constants';
+import { TradeQueryKeys as AssetTradeQueryKeys } from '@/features/assets/constants';
 
 export const useCreateSellOrder = (
   options?: UseMutationOptions<CreateSellOrderResponse, Error, CreateSellOrderRequest>
@@ -23,6 +24,16 @@ export const useCreateSellOrder = (
       // Force refetch cash balance immediately
       queryClient.refetchQueries({
         queryKey: [WalletTradeQueryKeys.GET_CASH_BALANCE],
+      });
+
+      // Refresh asset list to reflect updated holdings after selling
+      queryClient.invalidateQueries({
+        queryKey: [AssetTradeQueryKeys.GET_ALL_ASSETS],
+      });
+
+      queryClient.refetchQueries({
+        queryKey: [AssetTradeQueryKeys.GET_ALL_ASSETS],
+        type: 'inactive',
       });
 
       if (options?.onSuccess) {

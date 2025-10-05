@@ -5,6 +5,7 @@ import createBuyOrder, {
 } from '@/features/trading/services/createBuyOrder';
 
 import { TradeQueryKeys as WalletTradeQueryKeys } from '@/features/trading/constants';
+import { TradeQueryKeys as AssetTradeQueryKeys } from '@/features/assets/constants';
 
 export const useCreateBuyOrder = (
   options?: UseMutationOptions<CreateBuyOrderResponse, Error, CreateBuyOrderRequest>
@@ -24,6 +25,16 @@ export const useCreateBuyOrder = (
       // Force refetch cash balance immediately
       queryClient.refetchQueries({
         queryKey: [WalletTradeQueryKeys.GET_CASH_BALANCE],
+      });
+
+      // Refresh asset list so newly purchased coins appear without manual reload
+      queryClient.invalidateQueries({
+        queryKey: [AssetTradeQueryKeys.GET_ALL_ASSETS],
+      });
+
+      queryClient.refetchQueries({
+        queryKey: [AssetTradeQueryKeys.GET_ALL_ASSETS],
+        type: 'inactive',
       });
 
       if (options?.onSuccess) {
