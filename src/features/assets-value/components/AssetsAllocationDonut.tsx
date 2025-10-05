@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
 import clsx from 'clsx';
@@ -10,6 +11,9 @@ export type AllocationSlice = {
   name?: string;
   value: number;
   percentage: number;
+  pnlValue: number;
+  pnlPercent: number;
+  iconUrl?: string;
   color: string;
   isOther?: boolean;
 };
@@ -31,7 +35,27 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 });
 
 const formatPercent = (ratio: number) => `${percentFormatter.format(ratio)}%`;
-const formatCurrency = (value: number) => `${currencyFormatter.format(value)} USDT`;
+const formatCurrencyValue = (value: number) => currencyFormatter.format(value);
+
+const formatSignedCurrency = (value: number) => {
+  const base = formatCurrencyValue(value);
+  if (value > 0) return `+${base}`;
+  if (value < 0) return `-${base}`;
+  return base;
+};
+
+const formatSignedPercent = (value: number) => {
+  const base = percentFormatter.format(Math.abs(value));
+  if (value > 0) return `+${base}%`;
+  if (value < 0) return `-${base}%`;
+  return `${base}%`;
+};
+
+const getPnlColor = (pnlValue: number) => {
+  if (pnlValue > 0) return '#4ED7B0';
+  if (pnlValue < 0) return '#FF6B6B';
+  return '#A4A4A4';
+};
 
 export function AssetsAllocationDonut({
   slices,
@@ -55,17 +79,39 @@ export function AssetsAllocationDonut({
     );
   }
 
-
   const TooltipContent = ({ itemData }: ChartsItemContentProps<'pie'>) => {
     const slice = slices[itemData.dataIndex];
     if (!slice) return null;
 
     return (
-      <div className="rounded-lg bg-[#1F2029] px-3 py-2 text-xs text-white shadow-lg">
-        <p className="font-medium">{slice.symbol}</p>
-        <p className="text-[#7E7E7E]">{slice.name ?? slice.symbol}</p>
-        <p className="mt-1">{formatCurrency(slice.value)}</p>
-        <p className="text-[#4ED7B0]">{formatPercent(slice.percentage)}</p>
+      <div className="flex w-[224px] flex-col gap-2 rounded-2xl border border-[#3A3B44] bg-[#1B1C24] px-4 py-3 text-white shadow-2xl">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#151620]">
+              {slice.iconUrl ? (
+                <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
+              ) : (
+                <span className="text-sm font-medium text-white">?</span>
+              )}
+            </span>
+            <span className="text-sm font-medium text-white">{slice.symbol}</span>
+          </div>
+          <span className="rounded-full bg-[rgba(42,76,181,0.45)] px-2.5 py-1 text-[11px] font-medium text-white">
+            {formatPercent(slice.percentage)}
+          </span>
+        </div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
+          Value (USDT)
+        </div>
+        <div className="text-sm font-semibold text-white">
+          {formatCurrencyValue(slice.value)}
+        </div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
+          Unrealized PnL (USDT)
+        </div>
+        <div className="text-xs font-semibold" style={{ color: getPnlColor(slice.pnlValue) }}>
+          {formatSignedCurrency(slice.pnlValue)} ({formatSignedPercent(slice.pnlPercent)})
+        </div>
       </div>
     );
   };
@@ -73,15 +119,15 @@ export function AssetsAllocationDonut({
   return (
     <section
       className={clsx(
-        'w-full rounded-2xl bg-[#16171D] px-4 py-5 shadow-lg text-white',
+        'w-full rounded-2xl bg-[#16171D] px-6 py-5 shadow-lg text-white',
         className
       )}
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
         <div className="relative mx-auto flex items-center justify-center lg:mx-0">
           <PieChart
-            width={240}
-            height={240}
+            width={260}
+            height={260}
             series={[
               {
                 data: slices.map((slice) => ({
@@ -90,12 +136,12 @@ export function AssetsAllocationDonut({
                   label: slice.symbol,
                   color: slice.color,
                 })),
-                innerRadius: 78,
-                outerRadius: 110,
-                cornerRadius: 4,
-                paddingAngle: 1.5,
+                innerRadius: 88,
+                outerRadius: 118,
+                cornerRadius: 6,
+                paddingAngle: 1.2,
                 highlightScope: { faded: 'global', highlighted: 'item' },
-                faded: { innerRadius: 70, color: 'rgba(52, 60, 71, 0.55)' },
+                faded: { innerRadius: 82, color: 'rgba(52, 60, 71, 0.55)' },
               },
             ]}
             slotProps={{
@@ -107,32 +153,30 @@ export function AssetsAllocationDonut({
             }}
           />
 
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-sm text-[#A4A4A4]">Allocation</span>
-            <span className="text-lg font-semibold text-white">{totalAssetCount} Assets</span>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <span className="text-base font-medium text-white">Allocation</span>
+            <span className="text-sm font-medium text-[#73747C]">{totalAssetCount} Assets</span>
           </div>
         </div>
 
-        <div className="flex-1">
+        <div className="flex w-full max-w-[208px] flex-col gap-4">
           <h3 className="text-base font-medium text-white">Allocation</h3>
-          <ul className="mt-4 space-y-3">
+          <ul className="space-y-3">
             {slices.map((slice) => (
-              <li key={slice.id} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="inline-flex h-3 w-3 rounded-full"
-                    style={{ backgroundColor: slice.color }}
-                    aria-hidden
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-medium text-white">{slice.symbol}</span>
-                    <span className="text-xs text-[#7E7E7E]">{slice.name ?? slice.symbol}</span>
-                  </div>
-                </div>
-                <div className="text-right text-xs text-[#A4A4A4]">
-                  <p className="font-medium text-white">{formatPercent(slice.percentage)}</p>
-                  <p>{formatCurrency(slice.value)}</p>
-                </div>
+              <li key={slice.id} className="flex items-center gap-3 text-sm text-white">
+                <span
+                  className="flex h-3 w-3 flex-shrink-0 rounded-sm"
+                  style={{ backgroundColor: slice.color }}
+                  aria-hidden
+                />
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1B1D26]">
+                  {slice.iconUrl ? (
+                    <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
+                  ) : (
+                    <span className="text-xs font-semibold text-white">?</span>
+                  )}
+                </span>
+                <span className="text-sm font-medium text-white">{slice.symbol}</span>
               </li>
             ))}
           </ul>

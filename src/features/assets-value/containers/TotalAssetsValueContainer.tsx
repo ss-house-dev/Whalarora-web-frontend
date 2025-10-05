@@ -29,6 +29,27 @@ type RealtimeUpdate = {
 };
 
 const COLOR_PALETTE = ['#142968', '#2141B0', '#2E59F4', '#4E6CFF', '#6F7CFF', '#8D7BFF', '#3ADDD0'];
+const MAX_VISIBLE_SEGMENTS = 6;
+
+const ICON_MAP: Record<string, string> = {
+  BTC: '/currency-icons/bitcoin-icon.svg',
+  ETH: '/currency-icons/ethereum-icon.svg',
+  BNB: '/currency-icons/bnb-coin.svg',
+  SOL: '/currency-icons/solana-icon.svg',
+  USDT: '/currency-icons/dollar-icon.svg',
+  USDC: '/currency-icons/dollar-icon.svg',
+  XRP: '/currency-icons/xrp-coin.svg',
+  DOGE: '/currency-icons/doge-coin.svg',
+  ADA: '/currency-icons/ada-coin.svg',
+};
+
+const DEFAULT_ICON = '/currency-icons/default-coin.svg';
+
+const getAssetIconPath = (symbol: string) => {
+  const upper = getUpperSymbol(symbol);
+  if (!upper) return DEFAULT_ICON;
+  return ICON_MAP[upper] ?? DEFAULT_ICON;
+};
 
 type AssetValuation = {
   symbol: string;
@@ -36,6 +57,10 @@ type AssetValuation = {
   amount: number;
   price: number;
   value: number;
+  cost: number;
+  pnlValue: number;
+  pnlPercent: number;
+  iconUrl: string;
 };
 
 const PriceSubscriber = ({
@@ -204,7 +229,12 @@ export default function TotalAssetsValueContainer() {
         const amount = normalizeNumber(asset.amount);
         const price = selectBestPrice(symbol, asset, coinMetadata, realtimeState);
         const value = amount * price;
+        const averageCost = normalizeNumber(asset.avgPrice);
+        const cost = amount * averageCost;
+        const pnlValue = value - cost;
+        const pnlPercent = cost > 0 ? (pnlValue / cost) * 100 : 0;
         const name = coinMetadata[symbol]?.name ?? getFallbackName(symbol);
+        const iconUrl = getAssetIconPath(symbol);
 
         return {
           symbol,
@@ -212,6 +242,10 @@ export default function TotalAssetsValueContainer() {
           amount,
           price,
           value,
+          cost,
+          pnlValue,
+          pnlPercent,
+          iconUrl,
         } satisfies AssetValuation;
       })
       .filter((entry): entry is AssetValuation => Boolean(entry));
@@ -266,8 +300,10 @@ export default function TotalAssetsValueContainer() {
       return { slices: [] as AllocationSlice[], assetCount: 0 };
     }
 
-    const topSlices = sorted.slice(0, 6);
-    const remainder = sorted.slice(6);
+    const shouldGroupIntoOther = sorted.length >= MAX_VISIBLE_SEGMENTS;
+    const visibleCount = shouldGroupIntoOther ? MAX_VISIBLE_SEGMENTS - 1 : sorted.length;
+    const topSlices = sorted.slice(0, visibleCount);
+    const remainder = shouldGroupIntoOther ? sorted.slice(visibleCount) : [];
 
     const slices: AllocationSlice[] = topSlices.map((item, index) => ({
       id: item.symbol,
@@ -275,26 +311,36 @@ export default function TotalAssetsValueContainer() {
       name: item.name,
       value: item.value,
       percentage: (item.value / aggregateValue) * 100,
+      pnlValue: item.pnlValue,
+      pnlPercent: item.pnlPercent,
+      iconUrl: item.iconUrl,
       color: COLOR_PALETTE[index % COLOR_PALETTE.length],
     }));
 
-    if (remainder.length > 0) {
+    if (shouldGroupIntoOther && remainder.length > 0) {
       const otherValue = remainder.reduce((acc, item) => acc + item.value, 0);
+      const otherPnlValue = remainder.reduce((acc, item) => acc + item.pnlValue, 0);
+      const otherCost = remainder.reduce((acc, item) => acc + item.cost, 0);
+
       if (otherValue > 0) {
-        const index = slices.length % COLOR_PALETTE.length;
+        const otherColor =
+          COLOR_PALETTE[Math.min(MAX_VISIBLE_SEGMENTS - 1, COLOR_PALETTE.length - 1)];
         slices.push({
           id: 'other',
           symbol: 'Other',
           name: `${remainder.length} assets`,
           value: otherValue,
           percentage: (otherValue / aggregateValue) * 100,
-          color: COLOR_PALETTE[index],
+          pnlValue: otherPnlValue,
+          pnlPercent: otherCost > 0 ? (otherPnlValue / otherCost) * 100 : 0,
+          iconUrl: DEFAULT_ICON,
+          color: otherColor,
           isOther: true,
         });
       }
     }
 
-    return { slices, assetCount: positiveAssets.length };
+    return { slices, assetCount: slices.length };
   }, [assetValuations]);
 
   const combinedError = error?.message || metadataError || undefined;
