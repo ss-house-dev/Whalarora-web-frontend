@@ -129,17 +129,6 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, totalHoldingValue }) => {
         setTooltipPos(null);
       }}
     >
-      <div
-        className="absolute left-1/2 top-1/2 size-48 -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          backgroundColor: BASE_BACKGROUND_COLOR,
-          boxShadow: BASE_SHADOW,
-          outline: `1px solid ${OUTLINE_RING_COLOR}`,
-          outlineOffset: -0.5,
-        }}
-        aria-hidden
-      />
-
       <svg
         className="absolute left-1/2 top-1/2 size-48 -translate-x-1/2 -translate-y-1/2"
         height={CHART_SIZE}
