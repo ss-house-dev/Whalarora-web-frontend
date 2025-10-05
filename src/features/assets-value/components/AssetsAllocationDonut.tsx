@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
-import clsx from 'clsx';
 
 export type AllocationSlice = {
   id: string;
@@ -17,6 +16,9 @@ export type AllocationSlice = {
   color: string;
   isOther?: boolean;
 };
+
+const mergeClassNames = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
 
 type AssetsAllocationDonutProps = {
   slices: AllocationSlice[];
@@ -57,21 +59,19 @@ const getPnlColor = (pnlValue: number) => {
   return '#A4A4A4';
 };
 
+const EMPTY_SECTION_CLASS =
+  'w-full rounded-2xl bg-[#16171D] px-4 py-3 text-center text-sm text-[#A4A4A4] shadow-lg';
+const SECTION_CLASS = 'w-full rounded-2xl bg-[#16171D] px-6 py-5 text-white shadow-lg';
+const CHART_SIZE = 260;
+
 export function AssetsAllocationDonut({
   slices,
   totalAssetCount,
-  className = '',
+  className,
 }: AssetsAllocationDonutProps) {
-  const hasSlices = slices.length > 0;
-
-  if (!hasSlices) {
+  if (slices.length === 0) {
     return (
-      <section
-        className={clsx(
-          'w-full rounded-2xl bg-[#16171D] px-4 py-3 text-center text-sm text-[#A4A4A4] shadow-lg',
-          className
-        )}
-      >
+      <section className={mergeClassNames(EMPTY_SECTION_CLASS, className)}>
         <div className="flex h-full min-h-[216px] items-center justify-center">
           <p>No holding asset.</p>
         </div>
@@ -103,9 +103,7 @@ export function AssetsAllocationDonut({
         <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
           Value (USDT)
         </div>
-        <div className="text-sm font-semibold text-white">
-          {formatCurrencyValue(slice.value)}
-        </div>
+        <div className="text-sm font-semibold text-white">{formatCurrencyValue(slice.value)}</div>
         <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7E7E7E]">
           Unrealized PnL (USDT)
         </div>
@@ -117,17 +115,13 @@ export function AssetsAllocationDonut({
   };
 
   return (
-    <section
-      className={clsx(
-        'w-full rounded-2xl bg-[#16171D] px-6 py-5 shadow-lg text-white',
-        className
-      )}
-    >
+    <section className={mergeClassNames(SECTION_CLASS, className)}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="relative mx-auto flex items-center justify-center lg:mx-0">
+        <div className="relative mx-auto flex h-[260px] w-[260px] flex-shrink-0 items-center justify-center lg:mx-0">
           <PieChart
-            width={260}
-            height={260}
+            width={CHART_SIZE}
+            height={CHART_SIZE}
+            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
             series={[
               {
                 data: slices.map((slice) => ({
@@ -146,14 +140,33 @@ export function AssetsAllocationDonut({
             ]}
             slotProps={{
               legend: { hidden: true },
+              pieArc: { className: 'allocation-donut-arc' },
             }}
             tooltip={{
               trigger: 'item',
               slots: { itemContent: TooltipContent },
             }}
+            sx={{
+              '& .allocation-donut-arc path': {
+                stroke: 'transparent',
+                transition: 'stroke 0.2s ease, stroke-width 0.2s ease',
+              },
+              '& .allocation-donut-arc:hover path': {
+                stroke: '#FFFFFF',
+                strokeWidth: 2,
+              },
+              '& .MuiPieArc-root.MuiChartsHighlighted path': {
+                stroke: '#FFFFFF',
+                strokeWidth: 2,
+              },
+              '& .MuiPieArc-root.MuiCharts-highlighted path': {
+                stroke: '#FFFFFF',
+                strokeWidth: 2,
+              },
+            }}
           />
 
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
             <span className="text-base font-medium text-white">Allocation</span>
             <span className="text-sm font-medium text-[#73747C]">{totalAssetCount} Assets</span>
           </div>
