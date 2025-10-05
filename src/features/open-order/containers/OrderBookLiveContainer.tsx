@@ -2,7 +2,9 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import OrderBookWidget, { OrderBookWidgetProps } from '@/features/open-order/components/OrderBookWidget';
+import OrderBookWidget, {
+  OrderBookWidgetProps,
+} from '@/features/open-order/components/OrderBookWidget';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import {
   OrderBookSide,
@@ -36,11 +38,10 @@ function formatBookPrice(
   if (!formatted) return null;
   if (!quoteSymbol) return formatted;
   if (quoteSymbol === 'USD' || quoteSymbol === 'USDT') {
-    return `${formatted} ${quoteSymbol}`;
+    return formatted;
   }
-  return `${quoteSymbol} ${formatted}`;
+  return `${formatted} ${quoteSymbol}`;
 }
-
 
 type SideContent = OrderBookWidgetProps['bid'];
 
@@ -89,7 +90,9 @@ function ExtractedSymbol({ status, symbol }: { status: OrderBookStreamStatus; sy
     <span
       className={clsx(
         'rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide',
-        status === 'connected' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-500/10 text-slate-300'
+        status === 'connected'
+          ? 'bg-emerald-500/10 text-emerald-300'
+          : 'bg-slate-500/10 text-slate-300'
       )}
     >
       {symbol}
