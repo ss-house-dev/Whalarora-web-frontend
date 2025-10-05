@@ -59,10 +59,17 @@ const getPnlColor = (pnlValue: number) => {
   return '#A4A4A4';
 };
 
+const isOtherSlice = (slice: AllocationSlice) =>
+  slice.isOther === true || slice.symbol.toLowerCase() === 'other';
+
 const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
-const CHART_SIZE = 190;
+const OUTER_RADIUS = 90;
+const HIGHLIGHT_RADIUS = 10;
+const CHART_MARGIN = 0;
+const CHART_SIZE = (OUTER_RADIUS + HIGHLIGHT_RADIUS + CHART_MARGIN) * 2;
+const COLOR_PRIORITY = ['#133482', '#5490D9', '#225FED', '#715AFF', '#A682FF', '#57CFE1'];
 
 export function AssetsAllocationDonut({
   slices,
@@ -92,8 +99,22 @@ export function AssetsAllocationDonut({
     );
   }
 
+  const orderedSlices = [...slices]
+    .sort((a, b) => {
+      const aIsOther = isOtherSlice(a);
+      const bIsOther = isOtherSlice(b);
+
+      if (aIsOther && !bIsOther) return 1;
+      if (!aIsOther && bIsOther) return -1;
+      return b.percentage - a.percentage;
+    })
+    .map((slice, index) => ({
+      ...slice,
+      color: COLOR_PRIORITY[index] ?? slice.color,
+    }));
+
   const CustomTooltip = ({ itemData }: ChartsItemContentProps<'pie'>) => {
-    const slice = slices[itemData.dataIndex];
+    const slice = orderedSlices[itemData.dataIndex];
     if (!slice) return null;
 
     return (
@@ -129,21 +150,26 @@ export function AssetsAllocationDonut({
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            margin={{
+              top: CHART_MARGIN,
+              right: CHART_MARGIN,
+              bottom: CHART_MARGIN,
+              left: CHART_MARGIN,
+            }}
             series={[
               {
-                data: slices.map((slice) => ({
+                data: orderedSlices.map((slice) => ({
                   id: String(slice.id),
                   value: slice.value,
                   label: slice.symbol,
                   color: slice.color,
                 })),
                 innerRadius: 55,
-                outerRadius: 90,
+                outerRadius: OUTER_RADIUS,
                 cornerRadius: 0,
                 paddingAngle: 0.5,
                 highlightScope: { faded: 'none', highlighted: 'item' },
-                highlighted: { additionalRadius: 10 },
+                highlighted: { additionalRadius: HIGHLIGHT_RADIUS },
               },
             ]}
             tooltip={{ trigger: 'item' }}
@@ -204,7 +230,7 @@ export function AssetsAllocationDonut({
 
         <div className="flex w-full max-w-[208px] flex-col gap-4 py-0">
           <ul className="space-y-2">
-            {slices.map((slice) => (
+            {orderedSlices.map((slice) => (
               <li key={slice.id} className="flex items-center gap-2 text-sm text-white">
                 <span
                   className="flex h-3 w-3 border rounded-[4px]"
