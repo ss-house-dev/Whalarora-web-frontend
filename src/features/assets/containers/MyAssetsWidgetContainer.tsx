@@ -153,10 +153,11 @@ export default function MyAssetsWidgetContainer() {
   }, [isAuthenticated, tradableAssets, precisionMap]);
 
   const showLoadingState =
-    isAuthenticated && (isAssetsLoading || isAssetsFetching || isPrecisionLoading) && items.length === 0;
+    isAuthenticated &&
+    (isAssetsLoading || isAssetsFetching || isPrecisionLoading) &&
+    items.length === 0;
 
   const effectiveError = shouldSkipQuery ? 'Please log in again' : assetsError?.message;
 
   return <MyAssetsWidget items={items} isLoading={showLoadingState} error={effectiveError} />;
 }
-

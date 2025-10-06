@@ -14,7 +14,7 @@ import { HoldingAssetsFigmaPreview } from '@/features/assets/components/HoldingA
 import MyAssetsWidget from '@/features/assets/components/MyAssetsWidget';
 import MyAssetsWidgetContainer from '@/features/assets/containers/MyAssetsWidgetContainer';
 import DonutChart from '@/features/assets/components/DonutChart';
-import { useAssetsDonutData } from '@/features/assets/hooks/useAssetsDonutData';
+import { useDonutChartAssets } from '@/features/assets/hooks/useDonutChartAssets';
 import { Asset, DonutChartData } from '@/features/assets/types/donut-chart';
 import { formatCurrency, formatPercentage } from '@/features/assets/utils/donut-chart-utils';
 
@@ -326,10 +326,22 @@ function OrderBookTestContent() {
   const { selectedCoin } = useCoinContext();
 
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
-  const [donutDataMode, setDonutDataMode] = useState<'mock' | 'excel'>('mock');
+  const [donutDataMode, setDonutDataMode] = useState<'mock' | 'live'>('mock');
 
-  const assetsToDisplay = donutDataMode === 'mock' ? MOCK_ASSETS_DATA : EXCEL_ASSETS_DATA;
-  const { data: donutChartData, totalHoldingValue } = useAssetsDonutData(assetsToDisplay);
+  const {
+    donutData: liveDonutData,
+    isLoading: isDonutLoading,
+    isError: isDonutError,
+  } = useDonutChartAssets();
+
+  const assetsToDisplay = donutDataMode === 'mock' ? MOCK_ASSETS_DATA : liveDonutData.data;
+  const totalHoldingValueToDisplay =
+    donutDataMode === 'mock'
+      ? MOCK_ASSETS_DATA.reduce((acc, asset) => acc + asset.amount * asset.currentPrice, 0)
+      : liveDonutData.totalHoldingValue;
+
+  const donutChartData = liveDonutData.data;
+  const totalHoldingValue = liveDonutData.totalHoldingValue;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-start gap-12 bg-[#0F0F0F] py-10">
@@ -360,31 +372,53 @@ function OrderBookTestContent() {
             </button>
             <button
               type="button"
-              onClick={() => setDonutDataMode('excel')}
+              onClick={() => setDonutDataMode('live')}
               className={`rounded-full px-3 py-1 text-sm transition ${
-                donutDataMode === 'excel'
-                  ? 'bg-[#23242F] text-white'
-                  : 'bg-[#111218] text-[#A4A4A4]'
+                donutDataMode === 'live' ? 'bg-[#23242F] text-white' : 'bg-[#111218] text-[#A4A4A4]'
               }`}
             >
-              Excel Data
+              Live Data
             </button>
           </div>
           <div className="w-full max-w-xl">
-            <DonutChart data={donutChartData} totalHoldingValue={totalHoldingValue} />
+            <DonutChart
+              data={
+                donutDataMode === 'mock'
+                  ? MOCK_ASSETS_DATA.map((asset) => ({
+                      id: asset.id,
+                      label: asset.name,
+                      value: asset.amount * asset.currentPrice,
+                      ratio: (asset.amount * asset.currentPrice) / totalHoldingValueToDisplay,
+                      rank: 0, // Rank is calculated in transformToDonut
+                      color: '', // Color is assigned in getAssetColor
+                    }))
+                  : liveDonutData.data
+              }
+              totalHoldingValue={totalHoldingValueToDisplay}
+            />
+            {isDonutLoading && donutDataMode === 'live' && (
+              <div className="mt-2 text-center text-sm text-[#7E7E7E]">
+                Loading live donut chart data...
+              </div>
+            )}
+            {isDonutError && donutDataMode === 'live' && (
+              <div className="mt-2 text-center text-sm text-[#FF6B6B]">
+                Error loading live donut chart data.
+              </div>
+            )}
           </div>
-          {donutChartData.length > 0 && (
+          {liveDonutData.data.length > 0 && donutDataMode === 'live' && (
             <div className="w-full max-w-xl text-white">
-              <h3 className="text-md font-semibold mb-2">Top 5 Assets:</h3>
+              <h3 className="mb-2 text-md font-semibold">Top 5 Assets:</h3>
               <ul className="space-y-1">
-                {donutChartData
+                {liveDonutData.data
                   .filter((item) => item.rank <= 5)
                   .map((item) => (
-                    <li key={item.id} className="flex justify-between items-center">
+                    <li key={item.id} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <span
                           style={{ backgroundColor: item.color }}
-                          className="w-3 h-3 rounded-full inline-block"
+                          className="inline-block h-3 w-3 rounded-full"
                         ></span>
                         {item.label}
                       </span>
