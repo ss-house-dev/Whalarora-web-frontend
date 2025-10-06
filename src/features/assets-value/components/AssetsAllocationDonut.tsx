@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
+import Link from 'next/link';
 
 export type AllocationSlice = {
   id: string;
@@ -91,9 +92,11 @@ export function AssetsAllocationDonut({
             No holding Assets !<br />
             Start your trading journey now.
           </p>
-          <button className="py-2 px-4 bg-[#225FED] text-white text-sm rounded-lg cursor-pointer">
-            Start trading
-          </button>
+          <Link href="/main/trading">
+            <button className="py-2 px-4 bg-[#225FED] text-white text-sm rounded-lg cursor-pointer">
+              Start trading
+            </button>
+          </Link>
         </div>
       </section>
     );
