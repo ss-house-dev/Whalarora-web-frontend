@@ -4,19 +4,9 @@ import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
 import Link from 'next/link';
+import React from 'react';
+import type { AllocationSlice } from '../types';
 
-export type AllocationSlice = {
-  id: string;
-  symbol: string;
-  name?: string;
-  value: number;
-  percentage: number;
-  pnlValue: number;
-  pnlPercent: number;
-  iconUrl?: string;
-  color: string;
-  isOther?: boolean;
-};
 
 const mergeClassNames = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
@@ -37,20 +27,25 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-const formatPercent = (ratio: number) => `${percentFormatter.format(ratio)}%`;
-const formatCurrencyValue = (value: number) => currencyFormatter.format(value);
+const sanitizeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
+
+const formatPercent = (ratio: number) => `${percentFormatter.format(sanitizeNumber(ratio))}%`;
+
+const formatCurrencyValue = (value: number) => currencyFormatter.format(sanitizeNumber(value));
 
 const formatSignedCurrency = (value: number) => {
-  const base = formatCurrencyValue(Math.abs(value));
-  if (value > 0) return `+${base}`;
-  if (value < 0) return `-${base}`;
+  const normalized = sanitizeNumber(value);
+  const base = currencyFormatter.format(Math.abs(normalized));
+  if (normalized > 0) return `+${base}`;
+  if (normalized < 0) return `-${base}`;
   return base;
 };
 
 const formatSignedPercent = (value: number) => {
-  const base = percentFormatter.format(Math.abs(value));
-  if (value > 0) return `+${base}%`;
-  if (value < 0) return `-${base}%`;
+  const normalized = sanitizeNumber(value);
+  const base = percentFormatter.format(Math.abs(normalized));
+  if (normalized > 0) return `+${base}%`;
+  if (normalized < 0) return `-${base}%`;
   return `${base}%`;
 };
 
@@ -85,7 +80,23 @@ export function AssetsAllocationDonut({
   totalAssetCount,
   className,
 }: AssetsAllocationDonutProps) {
-  if (slices.length === 0) {
+  const orderedSlices = React.useMemo(() => {
+    return [...slices]
+      .sort((a, b) => {
+        const aIsOther = isOtherSlice(a);
+        const bIsOther = isOtherSlice(b);
+
+        if (aIsOther && !bIsOther) return 1;
+        if (!aIsOther && bIsOther) return -1;
+        return b.percentage - a.percentage;
+      })
+      .map((slice, index) => ({
+        ...slice,
+        color: COLOR_PRIORITY[index] ?? slice.color,
+      }));
+  }, [slices]);
+
+  if (orderedSlices.length === 0) {
     return (
       <section className={mergeClassNames(EMPTY_SECTION_CLASS, className)}>
         <div className="flex flex-col w-full h-full min-h-[196px] items-center justify-center space-y-3">
@@ -110,20 +121,6 @@ export function AssetsAllocationDonut({
     );
   }
 
-  const orderedSlices = [...slices]
-    .sort((a, b) => {
-      const aIsOther = isOtherSlice(a);
-      const bIsOther = isOtherSlice(b);
-
-      if (aIsOther && !bIsOther) return 1;
-      if (!aIsOther && bIsOther) return -1;
-      return b.percentage - a.percentage;
-    })
-    .map((slice, index) => ({
-      ...slice,
-      color: COLOR_PRIORITY[index] ?? slice.color,
-    }));
-
   const renderSliceIcon = (slice: AllocationSlice) => {
     const iconUrl = getSliceIconUrl(slice);
     if (iconUrl) {
@@ -135,6 +132,27 @@ export function AssetsAllocationDonut({
   const CustomTooltip = ({ itemData }: ChartsItemContentProps<'pie'>) => {
     const slice = orderedSlices[itemData.dataIndex];
     if (!slice) return null;
+
+    let tooltipValue = slice.value;
+    let tooltipPnlValue = slice.pnlValue;
+    let tooltipPnlPercent = slice.pnlPercent;
+
+    if (isOtherSlice(slice) && slice.otherHoldings && slice.otherHoldings.length > 0) {
+      const totalValue = slice.otherHoldings.reduce(
+        (acc, holding) => acc + sanitizeNumber(holding.value),
+        0
+      );
+      const totalCost = slice.otherHoldings.reduce(
+        (acc, holding) => acc + sanitizeNumber(holding.cost),
+        0
+      );
+      const calculatedPnlValue = totalValue - totalCost;
+      const calculatedPnlPercent = totalCost > 0 ? (calculatedPnlValue / totalCost) * 100 : 0;
+
+      tooltipValue = totalValue;
+      tooltipPnlValue = calculatedPnlValue;
+      tooltipPnlPercent = calculatedPnlPercent;
+    }
 
     return (
       <div className="flex flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
@@ -150,9 +168,9 @@ export function AssetsAllocationDonut({
           </span>
         </div>
         <div className="text-[10px] text-[#7E7E7E]">Value (USDT)</div>
-        <div className="text-[10px] text-white">{formatCurrencyValue(slice.value)}</div>
-        <div className="text-[10px] " style={{ color: getPnlColor(slice.pnlValue) }}>
-          {formatSignedCurrency(slice.pnlValue)} ({formatSignedPercent(slice.pnlPercent)})
+        <div className="text-[10px] text-white">{formatCurrencyValue(tooltipValue)}</div>
+        <div className="text-[10px] " style={{ color: getPnlColor(tooltipPnlValue) }}>
+          {formatSignedCurrency(tooltipPnlValue)} ({formatSignedPercent(tooltipPnlPercent)})
         </div>
       </div>
     );
@@ -280,3 +298,4 @@ export function AssetsAllocationDonut({
 }
 
 export default AssetsAllocationDonut;
+

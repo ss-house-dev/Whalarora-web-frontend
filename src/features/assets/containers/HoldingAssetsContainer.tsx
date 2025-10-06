@@ -1,19 +1,12 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
-import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
-import HoldingAssetsSection from '../components/HoldingAssetsSection';
+import { useMemo, useState } from 'react';
 
-let coinNameCache: Record<string, string> = {};
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-let cacheTimestamp = 0;
+import HoldingAssetsTable from '../components/HoldingAssetsTable';
+import { AssetCard } from '../components/AssetCard';
+import { useHoldingDesktopBreakpoint } from '../hooks/useHoldingDesktopBreakpoint';
+import { useAssetValuations } from '@/features/assets-value/contexts/AssetValuationContext';
 
-interface CoinGeckoCoin {
-  symbol: string;
-  name: string;
-}
-
-interface AssetRow {
+export type HoldingAssetRow = {
   id: string;
   symbol: string;
   name: string;
@@ -23,88 +16,6 @@ interface AssetRow {
   value: number;
   pnlAbs: number;
   pnlPct: number;
-}
-
-const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>> => {
-  try {
-    const now = Date.now();
-    if (now - cacheTimestamp < CACHE_DURATION && Object.keys(coinNameCache).length > 0) {
-      return coinNameCache;
-    }
-
-    const symbolList = symbols.join(',');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&symbols=${symbolList}&order=market_cap_desc&per_page=250&page=1&sparkline=false`,
-      {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-        signal: controller.signal,
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data: CoinGeckoCoin[] = await response.json();
-    const nameMap: Record<string, string> = {};
-
-    data.forEach((coin: CoinGeckoCoin) => {
-      if (coin.symbol && coin.name) {
-        nameMap[coin.symbol.toUpperCase()] = coin.name;
-      }
-    });
-
-    if (Object.keys(nameMap).length > 0) {
-      coinNameCache = { ...coinNameCache, ...nameMap };
-      cacheTimestamp = now;
-    }
-
-    return nameMap;
-  } catch (error) {
-    console.error('Error fetching coin names from CoinGecko:', error);
-    return {};
-  }
-};
-
-const getBasicAssetName = (symbol: string): string => {
-  const basicNameMap: Record<string, string> = {
-    BTC: 'Bitcoin',
-    ETH: 'Ethereum',
-    USDT: 'Tether',
-    BNB: 'BNB',
-    SOL: 'Solana',
-    USDC: 'USD Coin',
-    XRP: 'XRP',
-    DOGE: 'Dogecoin',
-    ADA: 'Cardano',
-    SHIB: 'Shiba Inu',
-    AVAX: 'Avalanche',
-    DOT: 'Polkadot',
-    LINK: 'Chainlink',
-    MATIC: 'Polygon',
-    LTC: 'Litecoin',
-    UNI: 'Uniswap',
-    ATOM: 'Cosmos',
-  };
-
-  return basicNameMap[symbol.toUpperCase()] || symbol;
-};
-
-const getBasicAssetMapping = (symbols: string[]): Record<string, string> => {
-  const mapping: Record<string, string> = {};
-  symbols.forEach((symbol) => {
-    mapping[symbol.toUpperCase()] = getBasicAssetName(symbol);
-  });
-  return mapping;
 };
 
 interface HoldingAssetsContainerProps {
@@ -112,107 +23,132 @@ interface HoldingAssetsContainerProps {
 }
 
 export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsContainerProps) {
-  const { status } = useSession();
-  const isSessionLoading = status === 'loading';
-  const isAuthenticated = status === 'authenticated';
-  const shouldSkipQuery = status === 'unauthenticated';
-
   const {
-    data: assets,
-    isLoading,
-    error,
-    isFetching,
-  } = useGetAllAssets({
-    enabled: isAuthenticated,
-  });
+    isAuthenticated,
+    assetValuations,
+    isSummaryLoading,
+    combinedError,
+  } = useAssetValuations();
 
-  const [rows, setRows] = useState<AssetRow[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [coinNames, setCoinNames] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const isDesktopLayout = useHoldingDesktopBreakpoint();
 
-  const tradableAssets = useMemo(() => {
-    if (!assets || assets.length === 0) return [];
-    return assets.filter((asset) => asset.symbol !== 'CASH');
-  }, [assets]);
+  const handleTradeClick = (symbol: string) => {
+    console.log('Opening trade modal for:', symbol);
+  };
 
-  // ดึงชื่อเหรียญจาก API
-  useEffect(() => {
-    const loadCoinNames = async () => {
-      if (tradableAssets.length === 0) return;
+  const rows = useMemo<HoldingAssetRow[]>(() => {
+    return assetValuations.map((asset) => ({
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      amount: asset.amount,
+      currentPrice: asset.price,
+      averageCost: asset.averageCost,
+      value: asset.value,
+      pnlAbs: asset.pnlValue,
+      pnlPct: asset.cost > 0 ? asset.pnlValue / asset.cost : 0,
+    }));
+  }, [assetValuations]);
 
-      try {
-        const symbols = tradableAssets.map((asset) => asset.symbol);
-        const uniqueSymbols = [...new Set(symbols)];
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
 
-        const nameMap = await fetchCoinNames(uniqueSymbols);
-        setCoinNames(nameMap);
-      } catch (error) {
-        console.error('Failed to load coin names:', error);
-        const fallbackMap = getBasicAssetMapping(tradableAssets.map((asset) => asset.symbol));
-        setCoinNames(fallbackMap);
-      }
-    };
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
-    loadCoinNames();
-  }, [tradableAssets]);
+  const containerClass =
+    'flex h-64 items-center justify-center rounded-xl border border-[#3A3B44] bg-[#1F2029]';
 
-  useEffect(() => {
-    const processData = async () => {
-      if (tradableAssets.length === 0) {
-        setRows([]);
-        setIsProcessing(false);
-        return;
-      }
+  const unauthorizedError = combinedError === 'Please log in again';
+  const hasError = Boolean(combinedError) && !unauthorizedError;
+  const isLoadingData = isSummaryLoading;
+  const hasData = !isLoadingData && !hasError && rows.length > 0;
+  const hasNoData = !isLoadingData && !hasError && rows.length === 0;
 
-      setIsProcessing(true);
-      try {
-        const processedData = tradableAssets.map((asset) => {
-          const currentPrice = 0.0; // ????????????
-          const value = asset.amount * currentPrice;
-          const pnlAbs = value - asset.total;
-          const pnlPct = asset.total > 0 ? pnlAbs / asset.total : 0;
+  const rowsContainerClasses = isDesktopLayout
+    ? 'flex flex-col gap-3 pr-1'
+    : 'grid gap-3 sm:grid-cols-2';
 
-          return {
-            id: asset._id,
-            symbol: asset.symbol,
-            name: coinNames[asset.symbol.toUpperCase()] || asset.symbol,
-            amount: asset.amount,
-            currentPrice,
-            averageCost: asset.avgPrice,
-            value,
-            pnlAbs,
-            pnlPct,
-          };
-        });
+  const assetCardClassName = `${!isDesktopLayout ? 'h-full ' : ''}w-full`;
 
-        setRows(processedData);
-      } catch (err) {
-        console.error('Error processing asset data:', err);
-        setRows([]);
-      } finally {
-        setIsProcessing(false);
-      }
-    };
+  const shouldShowDesktopHeader =
+    isDesktopLayout && !isLoadingData && (hasData || hasNoData || unauthorizedError);
 
-    processData();
-  }, [tradableAssets, coinNames]);
-
-  // กำหนดสถานะสำหรับส่งไปยัง HoldingAssetsSection
-  const loadingState: string | undefined = undefined;
-  const queryErrorMessage = error ? error.message : undefined;
-  const effectiveError = shouldSkipQuery ? 'Please log in again' : queryErrorMessage;
-  const showLoadingState =
-    (isAuthenticated && (isLoading || (!assets && isFetching))) ||
-    isProcessing ||
-    (isSessionLoading && !shouldSkipQuery);
+  const desktopHeader = (
+    <div className="grid grid-cols-[288px_128px_128px_144px_144px_1fr] items-center gap-10 bg-[#16171D] px-4 pb-3 text-[10.5px] tracking-[0.08em] text-[#A4A4A4] font-['Alexandria']">
+      <span className="text-left font-medium">Symbol</span>
+      <span className="justify-self-center text-center font-medium">Current price (USDT)</span>
+      <span className="justify-self-center text-center font-medium">Average cost (USDT)</span>
+      <span className="justify-self-center text-center font-medium">Value (USDT)</span>
+      <span className="justify-self-center text-center font-medium">Unrealized PnL (USDT)</span>
+      <span aria-hidden className="block" />
+    </div>
+  );
 
   return (
-    <HoldingAssetsSection
-      rows={rows}
-      pageSize={pageSize}
-      isLoading={showLoadingState}
-      loadingMessage={loadingState}
-      error={effectiveError}
-    />
+    <HoldingAssetsTable
+      title="My holding assets"
+      totalAssets={rows.length}
+      totalPages={totalPages}
+      initialPage={1}
+      onPageChange={setPage}
+      showPagination
+      showDesktopHeader={shouldShowDesktopHeader}
+      desktopHeader={desktopHeader}
+    >
+      <div className="flex flex-col space-y-3">
+        {isLoadingData && (
+          <div className="flex h-64 items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        )}
+
+        {hasError && (
+          <div className={containerClass}>
+            <div className="text-sm text-red-400">Error: {combinedError}</div>
+          </div>
+        )}
+
+        {unauthorizedError && !isAuthenticated && (
+          <div className="flex h-64 items-center justify-center">
+            <p className="text-base font-normal leading-normal text-[#A4A4A4] font-['Alexandria']">
+              No holding assets.
+            </p>
+          </div>
+        )}
+
+        {hasNoData && (
+          <div className={containerClass}>
+            <p className="text-sm text-slate-300">No holding asset.</p>
+          </div>
+        )}
+
+        {hasData && (
+          <div className="flex flex-col gap-3">
+            <div className={rowsContainerClasses}>
+              {pagedRows.map((row) => (
+                <AssetCard
+                  key={row.id}
+                  symbol={row.symbol}
+                  name={row.name}
+                  amount={row.amount}
+                  currentPrice={row.currentPrice}
+                  averageCost={row.averageCost}
+                  value={row.value}
+                  pnlAbs={row.pnlAbs}
+                  pnlPct={row.pnlPct}
+                  onBuySell={() => handleTradeClick(row.symbol)}
+                  className={assetCardClassName}
+                  isDesktopLayout={isDesktopLayout}
+                  enableRealTimePrice={false}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </HoldingAssetsTable>
   );
 }
