@@ -14,6 +14,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SelectCoin } from './ui/select-coin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
+import getVolume24h from '@/features/market-over-view/service/getVolume24h';
+import { useSymbolPrecisions, getSymbolPrecision, formatAmountWithStep, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
 
 interface USDTPair {
   symbol: string;
@@ -211,6 +213,30 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const listRef = React.useRef<HTMLDivElement>(null);
   const [tickerData, setTickerData] = React.useState<TickerData | null>(null);
 
+  const [volume24h, setVolume24h] = React.useState<{ amount: number | null; usdt: number | null }>(() => ({
+    amount: null,
+    usdt: null,
+  }));
+  const { data: symbolPrecisionMap } = useSymbolPrecisions();
+  const baseAssetSymbol = React.useMemo(() => {
+    const [labelBase] = selectedCoin.label.split('/');
+    if (labelBase) {
+      return labelBase.trim();
+    }
+
+    const valueWithoutPrefix = selectedCoin.value.replace('BINANCE:', '').toUpperCase();
+    if (!valueWithoutPrefix) {
+      return '';
+    }
+
+    if (valueWithoutPrefix.endsWith('USDT')) {
+      return valueWithoutPrefix.slice(0, -4);
+    }
+
+    return valueWithoutPrefix;
+  }, [selectedCoin.label, selectedCoin.value]);
+
+
   const fetchUSDTPairs = async () => {
     try {
       const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
@@ -397,6 +423,69 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
     };
   }, [selectedCoin.value]);
 
+  React.useEffect(() => {
+    if (!baseAssetSymbol) {
+      setVolume24h((prev) => {
+        if (prev.amount === null && prev.usdt === null) {
+          return prev;
+        }
+        return { amount: null, usdt: null };
+      });
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchVolume = async () => {
+      try {
+        const data = await getVolume24h(baseAssetSymbol);
+        if (!isActive) {
+          return;
+        }
+
+        const amountValueRaw = Number(data.volumeAmount);
+        const usdtValueRaw = Number(data.volumeUSDT);
+
+        const amountValue = Number.isFinite(amountValueRaw) ? amountValueRaw : null;
+        const usdtValue = Number.isFinite(usdtValueRaw) ? usdtValueRaw : null;
+
+        setVolume24h((prev) => {
+          if (prev.amount === amountValue && prev.usdt === usdtValue) {
+            return prev;
+          }
+
+          return {
+            amount: amountValue,
+            usdt: usdtValue,
+          };
+        });
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        console.error('Error fetching 24h volume:', error);
+
+        setVolume24h((prev) => {
+          if (prev.amount === null && prev.usdt === null) {
+            return prev;
+          }
+
+          return { amount: null, usdt: null };
+        });
+      }
+    };
+
+    void fetchVolume();
+
+    const intervalId = window.setInterval(fetchVolume, SNAPSHOT_REFRESH_MS);
+
+    return () => {
+      isActive = false;
+      window.clearInterval(intervalId);
+    };
+  }, [baseAssetSymbol]);
+
   const allCoins = pairs.map((pair) => {
     const matchedCoin = binanceCoins.find((coin) => coin.value === `BINANCE:${pair.symbol}`);
     return {
@@ -430,6 +519,35 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
 
   const selectedCoinData =
     allCoins.find((coin) => coin.value === selectedCoin.value) || selectedCoin;
+
+  const symbolPrecision = React.useMemo(() => {
+    if (!symbolPrecisionMap || !baseAssetSymbol) {
+      return undefined;
+    }
+    return getSymbolPrecision(symbolPrecisionMap, baseAssetSymbol, 'USDT');
+  }, [symbolPrecisionMap, baseAssetSymbol]);
+
+  const formattedVolumeAmount = React.useMemo(() => {
+    if (volume24h.amount === null) {
+      return '--';
+    }
+    const formatted = formatAmountWithStep(volume24h.amount, symbolPrecision, {
+      fallbackDecimals: 6,
+    });
+    return formatted || volume24h.amount.toString();
+  }, [volume24h.amount, symbolPrecision]);
+
+  const formattedVolumeUsdt = React.useMemo(() => {
+    if (volume24h.usdt === null) {
+      return '--';
+    }
+    const formatted = formatPriceWithTick(volume24h.usdt, symbolPrecision, {
+      fallbackDecimals: 2,
+    });
+    return formatted || volume24h.usdt.toString();
+  }, [volume24h.usdt, symbolPrecision]);
+
+  const volumeSymbolLabel = baseAssetSymbol || selectedCoinData.label.split('/')[0] || '--';
 
   return (
     <div
@@ -540,14 +658,14 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
 
           <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
             <span className="text-[#7E7E7E] text-xs whitespace-nowrap">
-              24h Vol ({selectedCoin.label.split('/')[0]})
+              24h Vol ({volumeSymbolLabel})
             </span>
-            <span className="text-white text-sm">--</span>
+            <span className="text-white text-sm">{formattedVolumeAmount}</span>
           </div>
 
           <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
             <span className="text-[#8B8E93] text-xs whitespace-nowrap">24h Vol (USDT)</span>
-            <span className="text-white text-sm">--</span>
+            <span className="text-white text-sm">{formattedVolumeUsdt}</span>
           </div>
         </div>
       </div>
