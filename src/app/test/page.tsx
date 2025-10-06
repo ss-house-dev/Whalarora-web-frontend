@@ -10,6 +10,8 @@ import OrderTableContainer from '@/features/open-order/components/OrderTableCont
 
 import { CoinProvider, useCoinContext } from '@/features/trading/contexts/CoinContext';
 
+import Image from 'next/image'; // Import Image component
+
 import { HoldingAssetsFigmaPreview } from '@/features/assets/components/HoldingAssetsFigmaPreview';
 import MyAssetsWidget from '@/features/assets/components/MyAssetsWidget';
 import MyAssetsWidgetContainer from '@/features/assets/containers/MyAssetsWidgetContainer';
@@ -67,6 +69,22 @@ const MOCK_ASSETS_DATA: Asset[] = [
   { id: 'amzn', name: 'Amazon', amount: 2, currentPrice: 185, category: 'stock' },
   { id: 'vmfxx', name: 'Vanguard Money Market', amount: 5000, currentPrice: 1, category: 'fund' },
 ];
+
+const ICON_MAP: Record<string, string> = {
+  BTC: 'bitcoin-icon.svg',
+  ETH: 'ethereum-icon.svg',
+  BNB: 'bnb-coin.svg',
+  SOL: 'solana-icon.svg',
+  XRP: 'xrp-coin.svg',
+  ADA: 'ada-coin.svg',
+  DOGE: 'doge-coin.svg',
+};
+
+const getIconSrc = (symbol: string) => {
+  const normalized = symbol.toUpperCase();
+  const iconFile = ICON_MAP[normalized] ?? 'default-coin.svg';
+  return `/currency-icons/${iconFile}`;
+};
 
 const EXCEL_ASSETS_DATA: Asset[] = [
   { id: 'btc', name: 'Bitcoin', amount: 0.8, currentPrice: 68000, category: 'crypto' },
@@ -418,8 +436,17 @@ function OrderBookTestContent() {
                       <span className="flex items-center gap-2">
                         <span
                           style={{ backgroundColor: item.color }}
-                          className="inline-block h-3 w-3 rounded-full"
+                          className="inline-block h-3 w-3 rounded-sm border border-white"
                         ></span>
+                        {item.label !== 'Other' && (
+                          <Image
+                            src={getIconSrc(item.label)}
+                            alt={`${item.label} icon`}
+                            width={20}
+                            height={20}
+                            className="h-5 w-5 rounded-full object-cover"
+                          />
+                        )}
                         {item.label}
                       </span>
                       <span>
