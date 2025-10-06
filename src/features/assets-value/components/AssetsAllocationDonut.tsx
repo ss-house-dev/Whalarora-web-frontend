@@ -140,10 +140,16 @@ export function AssetsAllocationDonut({
       <div className="flex flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center">
-              {renderSliceIcon(slice)}
-            </span>
-            <span className="text-xs text-white">{slice.symbol}</span>
+            {slice.symbol !== 'Other' ? (
+              <>
+                <span className="flex h-6 w-6 items-center justify-center">
+                  {renderSliceIcon(slice)}
+                </span>
+                <span className="text-xs text-white">{slice.symbol}</span>
+              </>
+            ) : (
+              <span className="text-xs text-white w-[3.5rem] text-left">{slice.symbol}</span>
+            )}
           </div>
           <span className="rounded-lg bg-[rgba(34,95,237,0.20)] px-2 py-1 text-[10px] text-white">
             {formatPercent(slice.percentage)}
