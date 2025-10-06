@@ -63,6 +63,14 @@ const getPnlColor = (pnlValue: number) => {
 const isOtherSlice = (slice: AllocationSlice) =>
   slice.isOther === true || slice.symbol.toLowerCase() === 'other';
 
+const DEFAULT_OTHER_ICON = '/currency-icons/default-coin.svg';
+
+const getSliceIconUrl = (slice: AllocationSlice) => {
+  if (slice.iconUrl) return slice.iconUrl;
+  if (isOtherSlice(slice)) return DEFAULT_OTHER_ICON;
+  return undefined;
+};
+
 const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
@@ -116,6 +124,14 @@ export function AssetsAllocationDonut({
       color: COLOR_PRIORITY[index] ?? slice.color,
     }));
 
+  const renderSliceIcon = (slice: AllocationSlice) => {
+    const iconUrl = getSliceIconUrl(slice);
+    if (iconUrl) {
+      return <Image src={iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />;
+    }
+    return <span className="text-xs font-medium text-white">?</span>;
+  };
+
   const CustomTooltip = ({ itemData }: ChartsItemContentProps<'pie'>) => {
     const slice = orderedSlices[itemData.dataIndex];
     if (!slice) return null;
@@ -124,15 +140,9 @@ export function AssetsAllocationDonut({
       <div className="flex flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            {!isOtherSlice(slice) && (
-              <span className="flex h-6 w-6 items-center justify-center">
-                {slice.iconUrl ? (
-                  <Image src={slice.iconUrl} alt={`${slice.symbol} icon`} width={24} height={24} />
-                ) : (
-                  <span className="text-xs font-medium text-white">?</span>
-                )}
-              </span>
-            )}
+            <span className="flex h-6 w-6 items-center justify-center">
+              {renderSliceIcon(slice)}
+            </span>
             <span className="text-xs text-white">{slice.symbol}</span>
           </div>
           <span className="rounded-lg bg-[rgba(34,95,237,0.20)] px-2 py-1 text-[10px] text-white">
@@ -150,8 +160,8 @@ export function AssetsAllocationDonut({
 
   return (
     <section className={mergeClassNames(SECTION_CLASS, className)}>
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="relative ml-[72px] flex w-[240px] flex-shrink-0 items-center justify-center">
+      <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-10">
+        <div className="relative mx-auto flex w-[200px] flex-shrink-0 items-center justify-center sm:w-[220px] lg:mx-0 lg:ml-[72px] lg:w-[240px]">
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}
@@ -233,12 +243,15 @@ export function AssetsAllocationDonut({
           </div>
         </div>
 
-        <div className="flex w-full max-w-[208px] flex-col gap-4 py-0">
-          <ul className="space-y-2">
+        <div className="flex w-full flex-col items-center gap-4 py-0 lg:max-w-[208px] lg:items-start">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-2 justify-items-start mx-auto lg:mx-0 lg:w-full lg:grid-cols-1 lg:gap-y-2">
             {orderedSlices.map((slice) => (
-              <li key={slice.id} className="flex items-center gap-2 text-sm text-white">
+              <li
+                key={slice.id}
+                className="flex items-center gap-2 text-[10px] text-white sm:text-sm"
+              >
                 <span
-                  className="flex h-3 w-3 border rounded-[4px]"
+                  className="flex h-3 w-3 rounded-[4px] border"
                   style={{ backgroundColor: slice.color }}
                   aria-hidden
                 />
@@ -251,12 +264,12 @@ export function AssetsAllocationDonut({
                         width={24}
                         height={24}
                       />
-                    ) : (
-                      <span className="text-xs font-semibold text-white">?</span>
-                    )}
+                    ) : null}
                   </span>
                 )}
-                <span className="text-[10px] text-white">{slice.symbol}</span>
+                <span className={`text-[10px] text-white ${isOtherSlice(slice) ? 'ml-2' : ''}`}>
+                  {slice.symbol}
+                </span>
               </li>
             ))}
           </ul>
