@@ -378,7 +378,7 @@ export default function TotalAssetsValueContainer() {
           pnlPercent={pnlPercent}
           isLoading={isSummaryLoading}
           error={combinedError}
-          className="lg:max-w-[603px] lg:flex-[2]"
+          className="w-full sm:max-w-none lg:max-w-[603px] lg:flex-[2]"
         />
         <AssetsAllocationDonut
           slices={allocationSlices}
