@@ -430,7 +430,7 @@ function OrderBookTestContent() {
               <h3 className="mb-2 text-md font-semibold">Top 5 Assets:</h3>
               <ul className="space-y-1">
                 {liveDonutData.data
-                  .filter((item) => item.rank <= 5)
+                  .filter((item) => item.rank <= 6)
                   .map((item) => (
                     <li key={item.id} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
