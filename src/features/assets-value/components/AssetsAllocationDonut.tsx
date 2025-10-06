@@ -160,8 +160,8 @@ export function AssetsAllocationDonut({
 
   return (
     <section className={mergeClassNames(SECTION_CLASS, className)}>
-      <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-10">
-        <div className="relative mx-auto flex w-[200px] flex-shrink-0 items-center justify-center sm:w-[220px] lg:mx-0 lg:ml-[72px] lg:w-[240px]">
+      <div className="allocation-layout flex flex-col items-center gap-5 lg:flex-row lg:items-start lg:gap-4 xl:items-center xl:gap-10">
+        <div className="chart-container relative mx-auto flex w-[200px] flex-shrink-0 items-center justify-center sm:w-[220px] lg:mx-0 lg:ml-0 lg:w-[184px] xl:ml-[72px] xl:w-[240px]">
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}
@@ -243,8 +243,8 @@ export function AssetsAllocationDonut({
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-center gap-4 py-0 lg:max-w-[208px] lg:items-start">
-          <ul className="grid grid-cols-2 gap-x-6 gap-y-2 justify-items-start mx-auto lg:mx-0 lg:w-full lg:grid-cols-1 lg:gap-y-2">
+        <div className="allocation-legend flex w-full flex-col items-center gap-4 py-0 lg:max-w-[208px] lg:items-start">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-4 justify-items-start mx-auto sm:gap-x-8 sm:gap-y-5 lg:mx-0 lg:w-full lg:grid-cols-1 lg:gap-y-2">
             {orderedSlices.map((slice) => (
               <li
                 key={slice.id}
