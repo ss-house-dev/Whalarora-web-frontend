@@ -435,8 +435,8 @@ function OrderBookTestContent() {
                     <li key={item.id} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <span
-                          style={{ backgroundColor: item.color }}
-                          className="inline-block h-3 w-3 rounded-sm border border-white"
+                          style={{ backgroundColor: item.color, borderRadius: '4px' }}
+                          className="inline-block h-3 w-3 border border-white"
                         ></span>
                         {item.label !== 'Other' && (
                           <Image
