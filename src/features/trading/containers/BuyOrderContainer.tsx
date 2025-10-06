@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
@@ -158,10 +158,10 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
         const isInsufficientMessage = normalizedMessage.includes('onInsufficient');
         const defaultDescription = 'Do you want to place an order ?';
-        let variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
+        const variant: 'CONFIRMATION' | 'INSUFFICIENT' = isInsufficientMessage
           ? 'INSUFFICIENT'
           : 'CONFIRMATION';
-        let dialogTitle =
+        const dialogTitle =
           variant === 'INSUFFICIENT' ? `Not enough ${coinSymbol}` : 'Order confirmation';
         let description = defaultDescription;
         let subtext: string | undefined =
@@ -896,3 +896,4 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     </div>
   );
 }
+

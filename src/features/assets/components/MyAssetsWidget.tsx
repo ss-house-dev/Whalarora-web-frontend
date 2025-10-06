@@ -42,18 +42,6 @@ interface MyAssetsWidgetProps {
   className?: string;
 }
 
-const amountFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-
-  maximumFractionDigits: 9,
-});
-
-const pnlValueFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-
-  maximumFractionDigits: 2,
-});
-
 const percentFormatter = new Intl.NumberFormat('en-US', {
   style: 'percent',
 

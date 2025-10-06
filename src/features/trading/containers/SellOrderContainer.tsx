@@ -97,12 +97,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     return Number.isFinite(parsed) ? parsed : undefined;
   }, []);
 
-  const formatCoinAmount = useCallback(
-    (value: number | string | null | undefined) =>
-      formatAmountWithStep(value, symbolPrecision, { fallbackDecimals: 6 }),
-    [symbolPrecision]
-  );
-
   const formatQuoteAmount = useCallback(
     (value: number | string | null | undefined) => {
       if (quoteSymbol === 'USDT' || quoteSymbol === 'USD') {
@@ -545,7 +539,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     }
     setIsInputFocused(false);
   };
-
 
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsReceiveUSDEditing(false);
