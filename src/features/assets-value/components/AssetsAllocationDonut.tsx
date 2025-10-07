@@ -273,7 +273,7 @@ export function AssetsAllocationDonut({
                     ) : null}
                   </span>
                 )}
-                <span className={`text-[10px] text-white ${isOtherSlice(slice) ? 'ml-2' : ''}`}>
+                <span className={`text-[10px] text-white ${isOtherSlice(slice) ? '' : ''}`}>
                   {slice.symbol}
                 </span>
               </li>
