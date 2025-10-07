@@ -75,7 +75,7 @@ const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
 const OUTER_RADIUS = 90;
-const HIGHLIGHT_RADIUS = 10;
+const HIGHLIGHT_RADIUS = 4; // ลดจาก 10 เป็น 4 เพื่อให้ชิ้นที่ hover ขยายน้อยลง
 const CHART_MARGIN = 0;
 const CHART_SIZE = (OUTER_RADIUS + HIGHLIGHT_RADIUS + CHART_MARGIN) * 2;
 const COLOR_PRIORITY = ['#133482', '#5490D9', '#225FED', '#715AFF', '#A682FF', '#57CFE1'];
@@ -189,8 +189,8 @@ export function AssetsAllocationDonut({
                 outerRadius: OUTER_RADIUS,
                 cornerRadius: 0,
                 paddingAngle: 0.5,
-                highlightScope: { faded: 'none', highlighted: 'item' },
-                highlighted: { additionalRadius: HIGHLIGHT_RADIUS },
+                highlightScope: { faded: 'series', highlighted: 'item' },
+                highlighted: { additionalRadius: HIGHLIGHT_RADIUS }, // ใช้ค่า HIGHLIGHT_RADIUS = 4
               },
             ]}
             tooltip={{ trigger: 'item' }}
@@ -232,12 +232,16 @@ export function AssetsAllocationDonut({
                 '& path': {
                   stroke: 'none !important',
                   strokeWidth: '0 !important',
-                  transition: 'stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease',
+                  transition:
+                    'stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease, opacity 0.3s ease',
                 },
                 '&:hover path': {
                   stroke: '#FFFFFF !important',
                   strokeWidth: '2px !important',
                   filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))',
+                },
+                '&.Mui-faded path': {
+                  opacity: 0.3,
                 },
               },
             }}
