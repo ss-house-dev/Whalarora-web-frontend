@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import React from 'react';
+import clsx from 'clsx';
 import { anuphan } from '@/fonts/anuphan';
 
 interface TotalAssetsValueCardProps {
@@ -8,6 +9,7 @@ interface TotalAssetsValueCardProps {
   pnlPercent: number;
   isLoading?: boolean;
   error?: string;
+  className?: string;
 }
 
 const numberFormatter = new Intl.NumberFormat('en-US', {
@@ -64,19 +66,9 @@ export default function TotalAssetsValueCard({
   totalCost,
   pnlValue,
   pnlPercent,
-  error,
+  isLoading = false,
+  className = '',
 }: TotalAssetsValueCardProps) {
-  if (error) {
-    return (
-      <section className="mt-6 w-full max-w-[603px] rounded-2xl border border-[#2A2B38] bg-[#1F2029] p-4 shadow-lg sm:p-6">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[#A4A4A4]">
-          My assets value
-        </h2>
-        <p className="mt-4 text-sm text-[#FF6B6B]">{error}</p>
-      </section>
-    );
-  }
-
   const pnlClassName =
     pnlValue > 0 ? 'text-[#4ED7B0]' : pnlValue < 0 ? 'text-[#FF6B6B]' : 'text-[#A4A4A4]';
 
@@ -86,7 +78,12 @@ export default function TotalAssetsValueCard({
   })})`;
 
   return (
-    <section className="mt-6 w-full max-w-[603px] rounded-2xl bg-[#16171D] px-4 py-3 shadow-lg">
+    <section
+      className={clsx(
+        'w-full max-w-[603px] h-[196px] rounded-xl bg-[#16171D] px-4 py-3',
+        className
+      )}
+    >
       {/* Header */}
       <div className="flex flex-row items-start gap-3 sm:flex-row sm:items-center sm:gap-12">
         <h2 className="text-base tracking-wide text-white sm:text-lg">My assets value</h2>
@@ -103,7 +100,7 @@ export default function TotalAssetsValueCard({
           Total Asset Value (USDT)
         </span>
         <p className="mt-3 text-lg font-normal text-white sm:text-xl">
-          {formatCurrency(totalValue)}
+          {isLoading ? '0.00' : formatCurrency(totalValue)}
         </p>
       </div>
 
@@ -112,17 +109,19 @@ export default function TotalAssetsValueCard({
         {/* Total Cost */}
         <div className="flex-shrink-0">
           <span className="ml-3 text-xs font-normal">Total Cost (USDT)</span>
-          <p className="ml-3 mt-1 text-xs text-white">{formatCurrency(totalCost)}</p>
+          <p className="ml-3 mt-1 text-xs text-white">
+            {isLoading ? '0.00' : formatCurrency(totalCost)}
+          </p>
         </div>
 
         {/* Unrealized PnL */}
         <div className="flex-1 ml-3 min-[328px]:ml-0">
           <span className="text-xs font-normal">Unrealized PnL (USDT)</span>
-          <p className={`mt-1 text-xs ${pnlClassName}`}>{pnlText}</p>
+          <p className={`mt-1 text-xs ${isLoading ? 'text-white' : pnlClassName}`}>
+            {isLoading ? '0.00 (0.00 %)' : pnlText}
+          </p>
         </div>
       </div>
     </section>
   );
 }
-
-

@@ -58,7 +58,7 @@ export default function HoldingAssetsTable({
   }, [page, totalPages]);
 
   const sectionClasses = clsx(
-    'mt-4 w-full max-w-[1304px] rounded-2xl bg-[#16171D] px-3 py-3 sm:mt-6 sm:px-5 sm:py-4 flex flex-col',
+    'w-full max-w-[1304px] rounded-2xl bg-[#16171D] px-3 py-3 sm:px-5 sm:py-4 flex flex-col',
     isDesktopLayout && 'h-[460px] w-[1304px] px-5 py-3',
     className
   );
