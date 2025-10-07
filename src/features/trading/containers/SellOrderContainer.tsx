@@ -66,7 +66,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   }, [chartPrice, marketPrice]);
 
   const [alertMessage, setAlertMessage] = useState<string>('');
-  const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
   const [coinSymbol, quoteSymbol] = useMemo(() => {
@@ -153,29 +152,35 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, selectedCoin.label.split('/')[0]],
       });
 
-      if (data.filled > 0) {
-        setAlertMessage(
-          `Order Sell ${coinSymbol}/USDT\nReceived : ${formatQuoteAmount(data.proceeds)} ${quoteSymbol}`
-        );
-        setAlertType('success');
-      } else {
-        const pendingCoinAmount = parseNumeric(sellAmount) ?? 0;
-        const pendingQuoteAmount = formatQuoteAmount(
-          (parseNumeric(price) ?? 0) * pendingCoinAmount
-        );
+      // คำนวณจำนวนเงิน USDT ที่ได้รับจริง
+      let receivedUSDT = 0;
 
-        setAlertMessage(
-          `Order Sell ${coinSymbol}/USDT submitted successfully\nAmount Remaining : ${pendingQuoteAmount} ${quoteSymbol}\nStatus : Pending`
-        );
-        setAlertType('info');
+      if (data.filled > 0) {
+        // กรณีที่มี order ถูก fill (ขายได้)
+        receivedUSDT = data.proceeds || 0;
+      } else {
+        // กรณีที่ order ยังไม่ถูก fill (pending)
+        // คำนวณจากจำนวน coin ที่ขาย * ราคา
+        const coinAmount = parseNumeric(sellAmount) ?? 0;
+        const pricePerCoin = parseNumeric(price) ?? 0;
+        receivedUSDT = coinAmount * pricePerCoin;
       }
+
+      // แสดง alert ในรูปแบบเดียวกันทั้งหมด
+      setAlertMessage(
+        `Order Sell ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(receivedUSDT)} USDT) submitted successfully`
+      );
+      // ลบ setAlertType ออก
       setShowAlert(true);
       handleSubmitSuccess();
     },
     onError: (error) => {
       console.error('SellOrderContainer: Sell order error:', error);
       setAlertMessage(`Error creating sell order: ${error.message}`);
-      setAlertType('error');
+      // ลบ setAlertType ออก
       setShowAlert(true);
     },
   });
@@ -546,7 +551,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     setIsInputFocused(false);
   };
 
-
   const handleSellAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsReceiveUSDEditing(false);
     setIsReceiveUSDUserInput(false); // reset flag เมื่อ user เปลี่ยน sell amount
@@ -860,12 +864,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
       {showAlert && (
         <div className="fixed bottom-4 right-4 z-50">
-          <AlertBox
-            message={alertMessage}
-            type={alertType}
-            onClose={handleAlertClose}
-            duration={3000}
-          />
+          <AlertBox message={alertMessage} onClose={handleAlertClose} duration={3000} />
         </div>
       )}
     </div>
