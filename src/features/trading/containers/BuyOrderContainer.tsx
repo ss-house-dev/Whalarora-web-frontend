@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import OrderForm from '@/features/trading/components/OrderForm';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
@@ -31,7 +30,7 @@ import AlertBox from '../../../components/ui/alert-box';
 
 interface AlertState {
   message: string;
-  type: 'success' | 'info' | 'error';
+  type: 'success';
 }
 
 interface OrderPayload {
@@ -100,8 +99,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     originalPayload: OrderPayload;
   } | null>(null);
 
-  const showAlert = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
-    setAlertState({ message, type });
+  const showAlert = (message: string) => {
+    setAlertState({ message, type: 'success' });
   };
 
   const closeAlert = () => {
@@ -206,43 +205,41 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       const usdAmount = parseFloat(amount.replace(/,/g, ''));
 
       if (data.filled && data.filled > 0) {
+        // กรณีที่มี order ถูก fill
         const filledUSD = data.spent || data.filled * parseFloat(price.replace(/,/g, ''));
         showAlert(
           `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }).format(filledUSD)} USDT) submitted successfully`,
-          'success'
+          }).format(filledUSD)} USDT) submitted successfully`
         );
       } else if (data.remaining && data.remaining > 0 && (!data.filled || data.filled === 0)) {
+        // กรณีที่ order ยังไม่ถูก fill เลย (pending ทั้งหมด)
+        const spentUSD = usdAmount; // ใช้จำนวนเงินที่ user ป้อนเข้ามา
         showAlert(
-          `Order Buy ${coinSymbol}/USDT submitted successfully \nAmount remaining : ${formatCoinAmount(data.remaining)} ${coinSymbol}.\nStatus : Pending`,
-          'info'
-        );
-      } else {
-        let message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(usdAmount)} USDT) submitted successfully`;
-
-        if (data.refund && data.refund > 0) {
-          const actualSpent = usdAmount - data.refund;
-          message = `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
+          `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }).format(
-            actualSpent
-          )} USDT) submitted successfully\nRefund: ${data.refund.toFixed(2)} USDT`;
+          }).format(spentUSD)} USDT) submitted successfully`
+        );
+      } else {
+        // กรณีอื่นๆ
+        let spentUSD = usdAmount;
+
+        // ถ้ามี refund ให้หัก refund ออก
+        if (data.refund && data.refund > 0) {
+          spentUSD = usdAmount - data.refund;
         }
 
-        showAlert(message, 'success');
+        showAlert(
+          `Order Buy ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(spentUSD)} USDT) submitted successfully`
+        );
       }
 
       handleSubmitSuccess();
-    },
-    onError: (error) => {
-      console.error('BuyOrderContainer: Buy order error:', error);
-      showAlert(`Error: ${error.message}`, 'error');
     },
   });
 
@@ -250,7 +247,6 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     if (!pendingOrder) return;
 
     if (decision === 'CANCEL') {
-      showAlert('Order cancelled', 'info');
       setPendingOrder(null);
       return;
     }
@@ -469,6 +465,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
       priceDecimalPlaces,
     ]
   );
+
   const calculateSliderPercentage = useCallback(
     (amountValue: string): number => {
       if (!amountValue) return 0;
@@ -814,12 +811,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     <div>
       {alertState && (
         <div className="fixed bottom-4 right-4 z-50">
-          <AlertBox
-            message={alertState.message}
-            type={alertState.type}
-            onClose={closeAlert}
-            duration={3000}
-          />
+          <AlertBox message={alertState.message} onClose={closeAlert} duration={3000} />
         </div>
       )}
       <AlertDialog

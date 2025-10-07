@@ -40,7 +40,7 @@ function OrderTableContainer({ activeTab, setActiveTab, onCancelOrder }: OrderTa
 
   const containerClasses = isMobile
     ? 'w-full flex flex-col gap-4 rounded-3xl bg-[#16171D] p-4 text-white shadow-lg shadow-black/20'
-    : 'w-[900px] h-[540px] flex flex-col gap-0 rounded-3xl bg-[#16171D] px-5 pt-4 pb-4 text-white shadow-lg shadow-black/20';
+    : 'w-[900px] h-[548px] flex flex-col gap-0 rounded-3xl bg-[#16171D] px-5 pt-4 pb-4 text-white shadow-lg shadow-black/20';
 
   const tabRowClasses = isMobile
     ? 'relative flex items-center gap-3 border-b border-[#ffffff]/5 pb-3 px-1'

@@ -293,7 +293,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                           className={`flex flex-1 items-center justify-between rounded-lg border-b border-b-[#215EEC] bg-[#1F2029] px-4 py-2 text-sm font-normal leading-tight text-[#E9E9E9] transition ${
                             addCashMutation.isPending
                               ? 'cursor-not-allowed opacity-60'
-                              : 'hover:bg-[#1B2236]'
+                              : 'hover:bg-[#31323A] active:bg-[#3A3B43]'
                           }`}
                         >
                           <span>Deposit</span>
@@ -504,8 +504,10 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                 <div className="absolute right-0 mt-2 top-full w-[184px] bg-[#474747] rounded-lg shadow-lg overflow-hidden z-50">
                   <div
                     onClick={handleAddCash}
-                    className={`h-10 px-[14px] flex items-center justify-between hover:bg-[#1F2029] text-base cursor-pointer border-b border-[#225FED] group ${
-                      addCashMutation.isPending ? 'cursor-not-allowed' : ''
+                    className={`h-10 px-[14px] flex items-center justify-between bg-[#1F2029] text-base cursor-pointer border-b border-[#225FED] group transition-colors ${
+                      addCashMutation.isPending
+                        ? 'cursor-not-allowed'
+                        : 'hover:bg-[#31323A] active:bg-[#3A3B43]'
                     }`}
                   >
                     <span className="text-[16px] font-normal">Deposit</span>
@@ -527,7 +529,7 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
                     className={`h-10 px-[14px] flex items-center justify-between text-base cursor-pointer group ${
                       showResetConfirm || resetPortfolioMutation.isPending
                         ? 'bg-[#17306B] cursor-not-allowed'
-                        : 'hover:bg-[#1F2029]'
+                        : ''
                     }`}
                   >
                     <span className="text-[16px] text-[#7E7E7E] font-normal">Withdraw</span>

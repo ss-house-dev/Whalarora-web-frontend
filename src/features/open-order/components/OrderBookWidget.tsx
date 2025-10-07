@@ -1,6 +1,6 @@
 // src/features/open-order/components/OrderBookWidget.tsx
 import React from 'react';
-import { formatCompactNumber } from '@/lib/utils';
+import { formatAmountAbbreviation } from '@/lib/amountAbbreviation';
 
 type Side = 'bid' | 'ask';
 
@@ -50,7 +50,10 @@ function hasValue(value?: string | number | null): boolean {
   return value.trim().length > 0;
 }
 
-function formatAmountValue(value: string | number | null | undefined, precision?: number): string | null {
+function formatAmountValue(
+  value: string | number | null | undefined,
+  precision?: number
+): string | null {
   if (value === undefined || value === null) {
     return null;
   }
@@ -85,15 +88,7 @@ function formatAmountValue(value: string | number | null | undefined, precision?
     });
   }
 
-  const compact = formatCompactNumber(value, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-  return compact ?? value.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: fractionDigits,
-  });
+  return formatAmountAbbreviation(value);
 }
 
 // Components

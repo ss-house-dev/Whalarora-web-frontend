@@ -1,21 +1,18 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
 import HoldingAssetsSection from '../components/HoldingAssetsSection';
 
-// Cache สำหรับเก็บชื่อเหรียญที่ดึงมาแล้ว
 let coinNameCache: Record<string, string> = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 let cacheTimestamp = 0;
 
-// Interface สำหรับข้อมูลจาก CoinGecko
 interface CoinGeckoCoin {
   symbol: string;
   name: string;
 }
 
-// Interface สำหรับ rows
 interface AssetRow {
   id: string;
   symbol: string;
@@ -28,7 +25,6 @@ interface AssetRow {
   pnlPct: number;
 }
 
-// Helper function สำหรับดึงชื่อเหรียญจาก CoinGecko API
 const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>> => {
   try {
     const now = Date.now();
@@ -79,7 +75,6 @@ const fetchCoinNames = async (symbols: string[]): Promise<Record<string, string>
   }
 };
 
-// Mapping พื้นฐานสำหรับ fallback
 const getBasicAssetName = (symbol: string): string => {
   const basicNameMap: Record<string, string> = {
     BTC: 'Bitcoin',
@@ -135,7 +130,6 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
   const [isProcessing, setIsProcessing] = useState(false);
   const [coinNames, setCoinNames] = useState<Record<string, string>>({});
 
-  // กรอง CASH และเตรียมข้อมูลพื้นฐาน
   const tradableAssets = useMemo(() => {
     if (!assets || assets.length === 0) return [];
     return assets.filter((asset) => asset.symbol !== 'CASH');
@@ -162,7 +156,6 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
     loadCoinNames();
   }, [tradableAssets]);
 
-  // ประมวลผลข้อมูล
   useEffect(() => {
     const processData = async () => {
       if (tradableAssets.length === 0) {
@@ -174,7 +167,7 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
       setIsProcessing(true);
       try {
         const processedData = tradableAssets.map((asset) => {
-          const currentPrice = 0.0; // ตัวอย่างราคา
+          const currentPrice = 0.0; // ????????????
           const value = asset.amount * currentPrice;
           const pnlAbs = value - asset.total;
           const pnlPct = asset.total > 0 ? pnlAbs / asset.total : 0;
@@ -208,7 +201,10 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
   const loadingState: string | undefined = undefined;
   const queryErrorMessage = error ? error.message : undefined;
   const effectiveError = shouldSkipQuery ? 'Please log in again' : queryErrorMessage;
-  const showLoadingState = (isAuthenticated && (isLoading || isFetching)) || isProcessing || (isSessionLoading && !shouldSkipQuery);
+  const showLoadingState =
+    (isAuthenticated && (isLoading || (!assets && isFetching))) ||
+    isProcessing ||
+    (isSessionLoading && !shouldSkipQuery);
 
   return (
     <HoldingAssetsSection
@@ -220,4 +216,3 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
     />
   );
 }
-
