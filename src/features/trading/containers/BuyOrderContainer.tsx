@@ -8,6 +8,7 @@ import { useGetCashBalance } from '@/features/wallet/hooks/useGetCash';
 import { useCreateBuyOrder } from '@/features/trading/hooks/useCreateBuyOrder';
 import { useQueryClient } from '@tanstack/react-query';
 import { TradeQueryKeys } from '@/features/wallet/constants';
+import Image from 'next/image';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -166,7 +167,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
         let subtext: string | undefined =
           variant === 'INSUFFICIENT'
             ? 'The asset you want to buy is not available in market right now.'
-            : "Your order is ready. Tap 'Confirm' to finalize your order.";
+            : "Your order is ready. Tap 'Confirm' to place your order.";
 
         if (normalizedMessage && !normalizedMessage.includes('confirm=true')) {
           if (messageParts.length === 1) {
@@ -803,7 +804,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     (pendingOrder
       ? pendingOrder.variant === 'INSUFFICIENT'
         ? 'The asset you want to buy is not available in market right now.'
-        : "Your order is ready. Tap 'Confirm' to finalize your order."
+        : "Your order is ready. Tap 'Confirm' to place your order."
       : undefined);
   const primaryActionLabel = pendingOrder?.variant === 'INSUFFICIENT' ? 'Keep order' : 'Confirm';
 
@@ -820,25 +821,47 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
           if (!open) setPendingOrder(null);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="border border-[#4F4F4F]">
           <AlertDialogHeader>
             <div className="flex flex-col items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFB514]">
-                <span className="text-3xl font-semibold leading-none text-[#16171D]">?</span>
-              </div>
-              <AlertDialogTitle>{pendingOrder?.title || 'Order confirmation'}</AlertDialogTitle>
+              {pendingOrder?.variant === 'INSUFFICIENT' ? (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFB514]">
+                  <span className="text-3xl font-semibold leading-none text-[#16171D]">?</span>
+                </div>
+              ) : (
+                <Image
+                  src="/assets/order-confirmation.svg"
+                  alt="Bitcoin"
+                  width={70}
+                  height={70}
+                  className="rounded-full"
+                />
+              )}
+              <AlertDialogTitle className="text-sm">
+                {pendingOrder?.title || 'Order confirmation'}
+              </AlertDialogTitle>
             </div>
-            <AlertDialogDescription>{dialogDescription}</AlertDialogDescription>
-            {dialogSubtext && <AlertDialogSubtext>{dialogSubtext}</AlertDialogSubtext>}
+            <AlertDialogDescription className="text-sm">{dialogDescription}</AlertDialogDescription>
+            {dialogSubtext && (
+              <AlertDialogSubtext className="w-[230px] whitespace-pre-line">
+                {dialogSubtext}
+              </AlertDialogSubtext>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             {pendingOrder?.options?.includes('KEEP_OPEN') && (
-              <AlertDialogAction onClick={() => handleConfirmationDecision('KEEP_OPEN')}>
+              <AlertDialogAction
+                className="cursor-pointer"
+                onClick={() => handleConfirmationDecision('KEEP_OPEN')}
+              >
                 {primaryActionLabel}
               </AlertDialogAction>
             )}
             {pendingOrder?.options?.includes('CANCEL') && (
-              <AlertDialogCancel onClick={() => handleConfirmationDecision('CANCEL')}>
+              <AlertDialogCancel
+                className="cursor-pointer"
+                onClick={() => handleConfirmationDecision('CANCEL')}
+              >
                 Cancel
               </AlertDialogCancel>
             )}

@@ -45,7 +45,7 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 inline-flex w-[calc(100%-2rem)] max-w-[304px] -translate-x-1/2 -translate-y-1/2 flex-col items-stretch gap-7 rounded-xl bg-[#16171D] px-4 pt-4 pb-3 outline outline-1 outline-offset-[-1px] outline-[#7E7E7E] shadow-[0px_32px_64px_-24px_rgba(0,0,0,0.75)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          'fixed left-1/2 top-1/2 z-50 inline-flex w-[calc(100%-2rem)] max-w-[304px] -translate-x-1/2 -translate-y-1/2 flex-col items-stretch gap-7 rounded-xl bg-[#16171D] px-4 pt-4 pb-3 outline-offset-[-1px] outline-[#7E7E7E] shadow-[0px_32px_64px_-24px_rgba(0,0,0,0.75)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           className
         )}
         {...props}

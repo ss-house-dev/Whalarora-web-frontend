@@ -576,7 +576,7 @@ export function AssetCard(props: AssetCardProps) {
                 <span className="text-white">{symbol}</span>
                 <span className="text-[#A4A4A4]">{name}</span>
               </div>
-              <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
+              <div className="flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-2 py-1 text-sm">
                 <span className="text-white">{amountDisplay}</span>
                 <span className="text-right text-[#A4A4A4]">
                   {truncateCode(unit, 4).toUpperCase()}

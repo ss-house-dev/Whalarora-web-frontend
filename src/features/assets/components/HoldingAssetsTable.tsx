@@ -113,7 +113,7 @@ export default function HoldingAssetsTable({
             <button
               disabled={page === 1}
               onClick={() => changePage(page - 1)}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-0 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-0 ${
                 page === 1 ? 'cursor-not-allowed text-slate-500' : 'text-slate-300 hover:text-white'
               }`}
               style={{ backgroundColor: '#1F2029', borderColor: '#3A3B44' }}
@@ -153,7 +153,7 @@ export default function HoldingAssetsTable({
             <button
               disabled={page === totalPages}
               onClick={() => changePage(page + 1)}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-0 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-0 ${
                 page === totalPages
                   ? 'cursor-not-allowed text-slate-500'
                   : 'text-slate-300 hover:text-white'

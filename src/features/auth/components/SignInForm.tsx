@@ -131,8 +131,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                 />
               </div>
 
-              <div className="flex w-full items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
+              {/* <div className="flex w-full items-center justify-between text-sm"> */}
+              {/* <div className="flex items-center gap-2">
                   <Checkbox
                     id="remember-me"
                     checked={formData.rememberMe}
@@ -148,8 +148,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   >
                     Remember me
                   </Label>
-                </div>
-                <button
+                </div> */}
+              {/* <button
                   type="button"
                   className={`text-sm font-medium text-[#B0B0B0] transition-colors hover:text-white ${
                     isLoading ? 'pointer-events-none opacity-50' : ''
@@ -157,8 +157,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                   onClick={onForgotPassword}
                 >
                   Forgot password?
-                </button>
-              </div>
+                </button> */}
+              {/* </div> */}
             </div>
 
             <div className="flex w-full justify-center">

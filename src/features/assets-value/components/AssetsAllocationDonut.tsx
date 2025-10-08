@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { PieChart } from '@mui/x-charts/PieChart';
 import type { ChartsItemContentProps } from '@mui/x-charts/ChartsTooltip';
 import Link from 'next/link';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 
 export type AllocationSlice = {
   id: string;
@@ -75,16 +76,118 @@ const EMPTY_SECTION_CLASS =
   'w-full rounded-xl text-center text-sm text-[#A4A4A4] bg-[linear-gradient(84deg,#16171D_63.73%,#225FED_209.1%)]';
 const SECTION_CLASS = 'w-full text-white';
 const OUTER_RADIUS = 90;
-const HIGHLIGHT_RADIUS = 4; // ลดจาก 10 เป็น 4 เพื่อให้ชิ้นที่ hover ขยายน้อยลง
+const HIGHLIGHT_RADIUS = 4;
 const CHART_MARGIN = 0;
 const CHART_SIZE = (OUTER_RADIUS + HIGHLIGHT_RADIUS + CHART_MARGIN) * 2;
 const COLOR_PRIORITY = ['#133482', '#5490D9', '#225FED', '#715AFF', '#A682FF', '#57CFE1'];
+const TOOLTIP_MARGIN = 12;
 
 export function AssetsAllocationDonut({
   slices,
   totalAssetCount,
   className,
 }: AssetsAllocationDonutProps) {
+  const [lockedIndex, setLockedIndex] = useState<number | null>(null);
+  const [targetTooltipPosition, setTargetTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [displayTooltipPosition, setDisplayTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [tooltipPlacement, setTooltipPlacement] = useState<'above' | 'below'>('above');
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastInteractionRef = useRef<{ type: string; time: number } | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        lockedIndex !== null &&
+        chartContainerRef.current &&
+        !chartContainerRef.current.contains(event.target as Node)
+      ) {
+        setLockedIndex(null);
+        setTargetTooltipPosition(null);
+        setDisplayTooltipPosition(null);
+      }
+    };
+
+    if (lockedIndex !== null) {
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      };
+    }
+  }, [lockedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+      lastInteractionRef.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (
+      lockedIndex === null ||
+      !targetTooltipPosition ||
+      !chartContainerRef.current ||
+      !tooltipRef.current
+    ) {
+      return;
+    }
+
+    // Keep tooltip inside the chart and flip below when there is not enough room above
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const containerRect = chartContainerRef.current.getBoundingClientRect();
+
+    let nextPlacement: 'above' | 'below' = 'above';
+    const projectedTop =
+      containerRect.top + targetTooltipPosition.y - tooltipRect.height - TOOLTIP_MARGIN;
+    if (projectedTop < TOOLTIP_MARGIN) {
+      nextPlacement = 'below';
+    }
+
+    const minX = TOOLTIP_MARGIN + tooltipRect.width / 2;
+    const maxX = containerRect.width - TOOLTIP_MARGIN - tooltipRect.width / 2;
+    const clampedX = Math.min(Math.max(targetTooltipPosition.x, minX), Math.max(minX, maxX));
+
+    let clampedY = targetTooltipPosition.y;
+    if (nextPlacement === 'above') {
+      const minY = tooltipRect.height + TOOLTIP_MARGIN;
+      clampedY = Math.max(targetTooltipPosition.y, minY);
+    } else {
+      const maxY = containerRect.height - TOOLTIP_MARGIN - tooltipRect.height;
+      clampedY = Math.min(
+        Math.max(targetTooltipPosition.y, TOOLTIP_MARGIN),
+        Math.max(TOOLTIP_MARGIN, maxY)
+      );
+    }
+
+    if (
+      !displayTooltipPosition ||
+      displayTooltipPosition.x !== clampedX ||
+      displayTooltipPosition.y !== clampedY
+    ) {
+      setDisplayTooltipPosition({ x: clampedX, y: clampedY });
+    }
+
+    if (tooltipPlacement !== nextPlacement) {
+      setTooltipPlacement(nextPlacement);
+    }
+  }, [displayTooltipPosition, lockedIndex, targetTooltipPosition, tooltipPlacement]);
+
   if (slices.length === 0) {
     return (
       <section className={mergeClassNames(EMPTY_SECTION_CLASS, className)}>
@@ -114,7 +217,6 @@ export function AssetsAllocationDonut({
     .sort((a, b) => {
       const aIsOther = isOtherSlice(a);
       const bIsOther = isOtherSlice(b);
-
       if (aIsOther && !bIsOther) return 1;
       if (!aIsOther && bIsOther) return -1;
       return b.percentage - a.percentage;
@@ -164,10 +266,93 @@ export function AssetsAllocationDonut({
     );
   };
 
+  const handleSliceClick = (
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+  ) => {
+    // Prevent default touch behavior (e.g., scrolling)
+    event.preventDefault();
+
+    // Prevent duplicate events on touch devices (touch + click firing together)
+    const eventType = 'touches' in event ? 'touch' : 'mouse';
+    const now = Date.now();
+
+    if (lastInteractionRef.current) {
+      const timeDiff = now - lastInteractionRef.current.time;
+      // If same event type within 50ms or different event type within 500ms, ignore
+      if (
+        (lastInteractionRef.current.type === eventType && timeDiff < 50) ||
+        (lastInteractionRef.current.type !== eventType && timeDiff < 500)
+      ) {
+        return;
+      }
+    }
+
+    lastInteractionRef.current = { type: eventType, time: now };
+
+    // If tooltip is locked, close it
+    if (lockedIndex !== null) {
+      setLockedIndex(null);
+      setTargetTooltipPosition(null);
+      setDisplayTooltipPosition(null);
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.tagName !== 'path') return;
+
+    const arcElement = target.closest('.MuiPieArc-root');
+    if (!arcElement || !arcElement.parentElement) return;
+
+    const allArcs = arcElement.parentElement.querySelectorAll('.MuiPieArc-root');
+    const clickedIdx = Array.from(allArcs).indexOf(arcElement);
+
+    if (clickedIdx === -1) return;
+
+    if (chartContainerRef.current) {
+      // Wait for MUI tooltip to position itself, then capture its position
+      setTimeout(() => {
+        const muiTooltip = document.querySelector('.MuiChartsTooltip-root');
+        if (muiTooltip && chartContainerRef.current) {
+          const tooltipRect = muiTooltip.getBoundingClientRect();
+          const containerRect = chartContainerRef.current.getBoundingClientRect();
+
+          // Calculate center of tooltip relative to container
+          const x = tooltipRect.left + tooltipRect.width / 2 - containerRect.left;
+          const y = tooltipRect.top + tooltipRect.height / 2 - containerRect.top;
+
+          const position = { x, y };
+          setTargetTooltipPosition(position);
+          setDisplayTooltipPosition(position);
+          setTooltipPlacement('above');
+        }
+      }, 10);
+    }
+
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    clickTimeoutRef.current = setTimeout(() => {
+      setLockedIndex((prevIndex) => {
+        if (prevIndex === clickedIdx) {
+          setTargetTooltipPosition(null);
+          setDisplayTooltipPosition(null);
+          return null;
+        }
+        return clickedIdx;
+      });
+    }, 50);
+  };
+
   return (
     <section className={mergeClassNames(SECTION_CLASS, className)}>
       <div className="allocation-layout flex flex-col items-center gap-5 lg:flex-row lg:items-start lg:gap-4 xl:items-center xl:gap-10">
-        <div className="chart-container relative mx-auto flex w-[200px] flex-shrink-0 items-center justify-center sm:w-[220px] lg:mx-0 lg:ml-0 lg:w-[184px] xl:ml-[72px] xl:w-[240px]">
+        <div
+          ref={chartContainerRef}
+          className="chart-container relative mx-auto flex w-[200px] flex-shrink-0 items-center justify-center sm:w-[220px] lg:mx-0 lg:ml-0 lg:w-[184px] xl:ml-[72px] xl:w-[240px]"
+          onTouchStart={handleSliceClick}
+          onClick={handleSliceClick}
+        >
           <PieChart
             width={CHART_SIZE}
             height={CHART_SIZE}
@@ -179,21 +364,22 @@ export function AssetsAllocationDonut({
             }}
             series={[
               {
-                data: orderedSlices.map((slice) => ({
+                data: orderedSlices.map((slice, index) => ({
                   id: String(slice.id),
                   value: slice.value,
                   label: slice.symbol,
                   color: slice.color,
+                  ...(lockedIndex !== null && lockedIndex !== index ? { faded: true } : {}),
                 })),
                 innerRadius: 55,
                 outerRadius: OUTER_RADIUS,
                 cornerRadius: 0,
                 paddingAngle: 0.5,
                 highlightScope: { faded: 'series', highlighted: 'item' },
-                highlighted: { additionalRadius: HIGHLIGHT_RADIUS }, // ใช้ค่า HIGHLIGHT_RADIUS = 4
+                highlighted: { additionalRadius: HIGHLIGHT_RADIUS },
               },
             ]}
-            tooltip={{ trigger: 'item' }}
+            tooltip={{ trigger: lockedIndex === null ? 'item' : 'none' }}
             slots={{
               itemContent: CustomTooltip,
             }}
@@ -246,6 +432,60 @@ export function AssetsAllocationDonut({
               },
             }}
           />
+
+          {lockedIndex !== null && orderedSlices[lockedIndex] && displayTooltipPosition && (
+            <div
+              ref={tooltipRef}
+              className="absolute"
+              style={{
+                top: displayTooltipPosition.y,
+                left: displayTooltipPosition.x,
+                transform:
+                  tooltipPlacement === 'above'
+                    ? `translate(-50%, calc(-100% - ${TOOLTIP_MARGIN}px))`
+                    : `translate(-50%, ${TOOLTIP_MARGIN}px)`,
+                zIndex: 1000,
+                pointerEvents: 'none',
+              }}
+            >
+              <div className="flex flex-col gap-2 rounded-lg border border-[#A4A4A4] bg-[#1F2029] p-2 text-white shadow-2xl">
+                {(() => {
+                  const slice = orderedSlices[lockedIndex];
+                  return (
+                    <>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {slice.symbol !== 'Other' ? (
+                            <>
+                              <span className="flex h-6 w-6 items-center justify-center">
+                                {renderSliceIcon(slice)}
+                              </span>
+                              <span className="text-xs text-white">{slice.symbol}</span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-white w-[3.5rem] text-left">
+                              {slice.symbol}
+                            </span>
+                          )}
+                        </div>
+                        <span className="rounded-lg bg-[rgba(34,95,237,0.20)] px-2 py-1 text-[10px] text-white">
+                          {formatPercent(slice.percentage)}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-[#7E7E7E]">Value (USDT)</div>
+                      <div className="text-[10px] text-white">
+                        {formatCurrencyValue(slice.value)}
+                      </div>
+                      <div className="text-[10px]" style={{ color: getPnlColor(slice.pnlValue) }}>
+                        {formatSignedCurrency(slice.pnlValue)} (
+                        {formatSignedPercent(slice.pnlPercent)})
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
             <span className="text-sm font-medium text-white">Allocation</span>
