@@ -295,7 +295,7 @@ export function HoldingResponsive({
           return (
             <article
               key={holding.id}
-              className="flex h-full w-full flex-col gap-3 rounded-xl bg-[#1F2029] p-3 shadow-sm outline outline-1"
+              className="flex h-full w-full flex-col gap-3 rounded-xl bg-[#1F2029] p-3 shadow-sm"
               style={{
                 outlineColor: palette.stroke,
                 outlineOffset: -1,
@@ -312,7 +312,7 @@ export function HoldingResponsive({
                     <span className="text-white">{holding.symbol}</span>
                     <span className="text-[#A4A4A4]">{holding.name}</span>
                   </div>
-                  <div className="flex w-full items-center justify-between rounded-lg bg-[#16171D] px-2 py-1 text-sm">
+                  <div className="flex w-full items-center justify-between rounded-lg bg-[#1F2029] px-2 py-1 text-sm">
                     <span className="text-white">{formatAmount(holding.amount)}</span>
                     <span className="text-right text-[#A4A4A4]">
                       {(holding.unit ?? holding.symbol).toUpperCase()}

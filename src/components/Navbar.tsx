@@ -641,26 +641,32 @@ export const NavbarUI: React.FC<NavbarUIProps> = ({
 
       {/* Alert Dialog */}
       <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border border-[#D84C4C]">
           <AlertDialogHeader>
             <div className="flex flex-col items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#D84C4C]">
-                <span className="text-3xl font-semibold leading-none text-[#16171D]">!</span>
-              </div>
-
-              <AlertDialogTitle>Reset your wallet ?</AlertDialogTitle>
+              <Image
+                src="/assets/reset-account.svg"
+                alt="Bitcoin"
+                width={70}
+                height={70}
+                className="rounded-full"
+              />
+              <AlertDialogTitle>Reset your Account ?</AlertDialogTitle>
             </div>
 
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-sm">
               If you continue, all settings, history and holding assets will be removed. Your Demo
               Account will restart with default balance.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelReset}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="cursor-pointer" onClick={handleCancelReset}>
+              Cancel
+            </AlertDialogCancel>
 
             <AlertDialogAction
+              className="cursor-pointer"
               onClick={handleConfirmReset}
               disabled={resetPortfolioMutation.isPending}
             >
