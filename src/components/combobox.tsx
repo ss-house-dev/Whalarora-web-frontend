@@ -15,7 +15,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { SelectCoin } from './ui/select-coin';
 import { useCoinContext } from '@/features/trading/contexts/CoinContext';
 import getVolume24h from '@/features/market-over-view/service/getVolume24h';
-import { useSymbolPrecisions, getSymbolPrecision, formatAmountWithStep, formatPriceWithTick } from '@/features/trading/utils/symbolPrecision';
+import {
+  useSymbolPrecisions,
+  getSymbolPrecision,
+  formatAmountWithStep,
+  formatPriceWithTick,
+} from '@/features/trading/utils/symbolPrecision';
 
 interface USDTPair {
   symbol: string;
@@ -213,10 +218,12 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
   const listRef = React.useRef<HTMLDivElement>(null);
   const [tickerData, setTickerData] = React.useState<TickerData | null>(null);
 
-  const [volume24h, setVolume24h] = React.useState<{ amount: number | null; usdt: number | null }>(() => ({
-    amount: null,
-    usdt: null,
-  }));
+  const [volume24h, setVolume24h] = React.useState<{ amount: number | null; usdt: number | null }>(
+    () => ({
+      amount: null,
+      usdt: null,
+    })
+  );
   const { data: symbolPrecisionMap } = useSymbolPrecisions();
   const baseAssetSymbol = React.useMemo(() => {
     const [labelBase] = selectedCoin.label.split('/');
@@ -235,7 +242,6 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
 
     return valueWithoutPrefix;
   }, [selectedCoin.label, selectedCoin.value]);
-
 
   const fetchUSDTPairs = async () => {
     try {
@@ -656,14 +662,14 @@ export function CombinedCombobox({ className = '' }: CombinedComboboxProps) {
             </span>
           </div>
 
-          <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
+          <div className="hidden min-[640px]:flex flex-col items-start flex-shrink-0 min-w-0">
             <span className="text-[#7E7E7E] text-xs whitespace-nowrap">
               24h Vol ({volumeSymbolLabel})
             </span>
             <span className="text-white text-sm">{formattedVolumeAmount}</span>
           </div>
 
-          <div className="hidden xl:flex flex-col items-start flex-shrink-0 min-w-0">
+          <div className="hidden min-[835px]:flex flex-col items-start flex-shrink-0 min-w-0">
             <span className="text-[#8B8E93] text-xs whitespace-nowrap">24h Vol (USDT)</span>
             <span className="text-white text-sm">{formattedVolumeUsdt}</span>
           </div>
