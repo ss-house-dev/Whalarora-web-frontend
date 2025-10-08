@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useGetAllAssets } from '@/features/assets/hooks/useGetAllAssets';
+import { useAllMarketPrices } from '@/features/assets/hooks/useAllMarketPrices';
 import HoldingAssetsSection from '../components/HoldingAssetsSection';
 
 let coinNameCache: Record<string, string> = {};
@@ -130,6 +131,14 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
   const [isProcessing, setIsProcessing] = useState(false);
   const [coinNames, setCoinNames] = useState<Record<string, string>>({});
 
+  const tradableAssetSymbols = useMemo(() => {
+    if (!assets || assets.length === 0) return [];
+    return assets.filter((asset) => asset.symbol !== 'CASH').map((asset) => asset.symbol);
+  }, [assets]);
+
+  const { prices: marketPrices, isLoading: isMarketPricesLoading } =
+    useAllMarketPrices(tradableAssetSymbols);
+
   const tradableAssets = useMemo(() => {
     if (!assets || assets.length === 0) return [];
     return assets.filter((asset) => asset.symbol !== 'CASH');
@@ -167,7 +176,7 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
       setIsProcessing(true);
       try {
         const processedData = tradableAssets.map((asset) => {
-          const currentPrice = 0.0; // ????????????
+          const currentPrice = parseFloat(marketPrices[asset.symbol.toUpperCase()] || '0.0');
           const value = asset.amount * currentPrice;
           const pnlAbs = value - asset.total;
           const pnlPct = asset.total > 0 ? pnlAbs / asset.total : 0;
@@ -185,7 +194,8 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
           };
         });
 
-        setRows(processedData);
+        const sortedData = processedData.sort((a, b) => b.value - a.value);
+        setRows(sortedData);
       } catch (err) {
         console.error('Error processing asset data:', err);
         setRows([]);
@@ -195,7 +205,7 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
     };
 
     processData();
-  }, [tradableAssets, coinNames]);
+  }, [tradableAssets, coinNames, marketPrices]);
 
   // กำหนดสถานะสำหรับส่งไปยัง HoldingAssetsSection
   const loadingState: string | undefined = undefined;
@@ -204,7 +214,8 @@ export default function HoldingAssetsContainer({ pageSize = 10 }: HoldingAssetsC
   const showLoadingState =
     (isAuthenticated && (isLoading || (!assets && isFetching))) ||
     isProcessing ||
-    (isSessionLoading && !shouldSkipQuery);
+    (isSessionLoading && !shouldSkipQuery) ||
+    (rows.length === 0 && isMarketPricesLoading);
 
   return (
     <HoldingAssetsSection
