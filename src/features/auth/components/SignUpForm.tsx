@@ -217,7 +217,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               {/* Logo and Text Create */}
               <div className="flex flex-col items-center">
                 <Image src="/assets/whalarora-logo.svg" alt="Logo" width={130} height={110} />
-                <p className="text-transparent bg-clip-text bg-white from-[#1F4293] to-[#43E9DD] text-[32px] font-bold">
+                <p className="text-transparent bg-clip-text bg-white from-[#1F4293] to-[#43E9DD] text-[28px] font-bold">
                   Create an account
                 </p>
               </div>
