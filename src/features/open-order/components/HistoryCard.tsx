@@ -8,7 +8,7 @@ type HistorySide = 'buy' | 'sell';
 
 const HISTORY_STATUS_META: Record<HistoryStatus, { label: string; dotColor: string; textColor: string }> = {
   complete: { label: 'Complete', dotColor: '#4ED7B0', textColor: '#4ED7B0' },
-  closed: { label: 'Closed', dotColor: '#474747', textColor: '#A4A4A4' },
+  closed: { label: 'Closed', dotColor: '#4ED7B0', textColor: '#4ED7B0' },
 };
 
 const SIDE_META: Record<HistorySide, { label: string; badgeColor: string }> = {
