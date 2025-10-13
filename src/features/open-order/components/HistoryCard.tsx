@@ -84,7 +84,9 @@ export default function HistoryCard({
             </span>
             <div className="flex flex-col">
               <span className="text-sm font-medium leading-tight text-white">{pair}</span>
-              <span className="text-xs text-[#A4A4A4]">Order ID : {shortenedOrderId}</span>
+              <span className="text-xs text-[#A4A4A4]" title={orderId}>
+                Order ID : {shortenedOrderId}
+              </span>
             </div>
           </div>
         </div>
@@ -150,7 +152,10 @@ export default function HistoryCard({
             <span className="text-[#A4A4A4] text-xs font-normal font-[Alexandria] leading-none">
               Order ID :
             </span>
-            <span className="text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none">
+            <span
+              className="text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none"
+              title={orderId}
+            >
               {shortenedOrderId}
             </span>
           </div>
