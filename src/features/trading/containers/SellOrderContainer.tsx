@@ -812,19 +812,32 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   useEffect(() => {
     if (!orderFormSelection) return;
     if (orderFormSelection.side !== 'sell') return;
-    if (orderFormSelection.token && lastSelectionTokenRef.current === orderFormSelection.token) {
-      return;
+
+    const token = orderFormSelection.token ?? null;
+    const selectionPrice = orderFormSelection.price;
+    const currentPrice = price;
+    const isSameToken = token !== null && lastSelectionTokenRef.current === token;
+
+    if (isSameToken) {
+      const sanitizedSelectionPrice = selectionPrice?.replace(/,/g, '');
+      const sanitizedCurrentPrice = currentPrice?.replace(/,/g, '');
+      if (
+        sanitizedSelectionPrice === sanitizedCurrentPrice ||
+        isPriceUserEdited
+      ) {
+        return;
+      }
     }
 
-    lastSelectionTokenRef.current = orderFormSelection.token ?? null;
+    lastSelectionTokenRef.current = token;
 
     const isMarketMode = orderFormSelection.mode === 'market';
     setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
     setIsPriceUserEdited(false);
-    setPrice(orderFormSelection.price);
-    recalcLinkedFields(orderFormSelection.price);
+    setPrice(selectionPrice);
+    recalcLinkedFields(selectionPrice);
     setIsInputFocused(false);
-  }, [orderFormSelection, recalcLinkedFields]);
+  }, [orderFormSelection, recalcLinkedFields, price, isPriceUserEdited]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',

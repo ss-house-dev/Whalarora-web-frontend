@@ -139,7 +139,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }, 0);
     }
 
-    if (priceTab !== 'set') {
+    if (priceTab !== 'set' && priceLabel === 'Price') {
       onPriceFocus();
     }
     setPriceTab('set');
@@ -182,7 +182,9 @@ const OrderForm: React.FC<OrderFormProps> = ({
           if (value === 'current') {
             handleMarketClick();
           } else {
-            onPriceFocus();
+            if (priceLabel === 'Price') {
+              onPriceFocus();
+            }
             setTimeout(() => {
               focusInputWithCursorAtEnd();
             }, 0);
@@ -218,7 +220,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             type="text"
             className="text-sm font-normal rounded-lg bg-[#1F2029] p-1 text-white text-right border-none outline-none"
             onFocus={() => {
-              if (priceTab !== 'set') {
+              if (priceTab !== 'set' && priceLabel === 'Price') {
                 onPriceFocus();
               }
               setPriceTab('set');
