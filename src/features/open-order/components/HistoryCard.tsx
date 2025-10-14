@@ -1,19 +1,52 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, useAnimation, useReducedMotion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 type HistoryStatus = 'closed' | 'complete';
 type HistorySide = 'buy' | 'sell';
 
-const HISTORY_STATUS_META: Record<HistoryStatus, { label: string; dotColor: string; textColor: string }> = {
+const HISTORY_STATUS_META: Record<
+  HistoryStatus,
+  { label: string; dotColor: string; textColor: string }
+> = {
   complete: { label: 'Complete', dotColor: '#4ED7B0', textColor: '#4ED7B0' },
-  closed: { label: 'Closed', dotColor: '#474747', textColor: '#A4A4A4' },
+  closed: { label: 'Closed', dotColor: '#4ED7B0', textColor: '#4ED7B0' },
 };
 
 const SIDE_META: Record<HistorySide, { label: string; badgeColor: string }> = {
   buy: { label: 'Buy', badgeColor: '#217871' },
   sell: { label: 'Sell', badgeColor: '#D84C4C' },
+};
+
+const COPY_RESET_TIMEOUT_MS = 1600;
+const CLIP_DURATION_MS = 320;
+const CLIP_TRANSITION = {
+  duration: CLIP_DURATION_MS / 1000,
+  ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
+};
+const CLIP_VISIBLE = { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1 };
+const CLIP_HIDDEN = { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0 };
+const FEEDBACK_SUCCESS_TEXT = 'Copied!';
+const FEEDBACK_FAILURE_TEXT = 'Copy failed';
+const TEXT_CONTAINER_CLASSES =
+  'relative inline-flex items-center justify-start overflow-hidden align-middle';
+const TEXT_LAYER_CLASSES =
+  'absolute inset-0 flex items-center text-current whitespace-nowrap pointer-events-none';
+const TEXT_LAYER_STYLE: React.CSSProperties = {
+  willChange: 'clip-path, opacity',
+};
+const VISUALLY_HIDDEN_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
 };
 
 export interface HistoryCardProps {
@@ -53,6 +86,143 @@ export default function HistoryCard({
   const rightTopLabel = status === 'complete' ? 'Matched' : 'Amount';
   const shortenedOrderId = shortenId(orderId);
   const hasDateInfo = Boolean(date || time);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const orderTextControls = useAnimation();
+  const feedbackTextControls = useAnimation();
+  const shouldReduceMotion = useReducedMotion();
+  const copyResetRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copyResetRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(copyResetRef.current);
+        copyResetRef.current = null;
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    orderTextControls.set(CLIP_VISIBLE);
+    feedbackTextControls.set(CLIP_HIDDEN);
+  }, [orderTextControls, feedbackTextControls]);
+
+  const showCopyFeedback = useCallback(
+    async (nextState: 'copied' | 'error') => {
+      orderTextControls.stop();
+      feedbackTextControls.stop();
+      setCopyState(nextState);
+      if (shouldReduceMotion) {
+        await orderTextControls.set(CLIP_HIDDEN);
+        await feedbackTextControls.set(CLIP_VISIBLE);
+        return;
+      }
+
+      await feedbackTextControls.set(CLIP_HIDDEN);
+      await orderTextControls.start({
+        ...CLIP_HIDDEN,
+        transition: CLIP_TRANSITION,
+      });
+      await feedbackTextControls.start({
+        ...CLIP_VISIBLE,
+        transition: CLIP_TRANSITION,
+      });
+    },
+    [feedbackTextControls, orderTextControls, shouldReduceMotion]
+  );
+
+  const resetCopyFeedback = useCallback(async () => {
+    orderTextControls.stop();
+    feedbackTextControls.stop();
+    if (shouldReduceMotion) {
+      await feedbackTextControls.set(CLIP_HIDDEN);
+      setCopyState('idle');
+      await orderTextControls.set(CLIP_VISIBLE);
+      return;
+    }
+
+    await feedbackTextControls.start({
+      ...CLIP_HIDDEN,
+      transition: CLIP_TRANSITION,
+    });
+    setCopyState('idle');
+    await orderTextControls.start({
+      ...CLIP_VISIBLE,
+      transition: CLIP_TRANSITION,
+    });
+  }, [feedbackTextControls, orderTextControls, shouldReduceMotion]);
+
+  const scheduleCopyReset = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (copyResetRef.current !== null) {
+      window.clearTimeout(copyResetRef.current);
+    }
+
+    copyResetRef.current = window.setTimeout(() => {
+      void resetCopyFeedback();
+      copyResetRef.current = null;
+    }, COPY_RESET_TIMEOUT_MS);
+  }, [resetCopyFeedback]);
+
+  const copyOrderIdToClipboard = async () => {
+    if (!orderId) {
+      return;
+    }
+
+    let didCopy = false;
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(orderId);
+        didCopy = true;
+      } else if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = orderId;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        didCopy = document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+    } catch {
+      didCopy = false;
+    }
+
+    void showCopyFeedback(didCopy ? 'copied' : 'error');
+    scheduleCopyReset();
+  };
+
+  const copyFeedback = useMemo(() => {
+    if (copyState === 'copied') {
+      return FEEDBACK_SUCCESS_TEXT;
+    }
+    if (copyState === 'error') {
+      return FEEDBACK_FAILURE_TEXT;
+    }
+    return '';
+  }, [copyState]);
+  const maxDisplayCharacters = useMemo(
+    () =>
+      Math.max(shortenedOrderId.length, FEEDBACK_SUCCESS_TEXT.length, FEEDBACK_FAILURE_TEXT.length),
+    [shortenedOrderId]
+  );
+  const textContainerStyle = useMemo(
+    () => ({
+      width: `${maxDisplayCharacters}ch`,
+      minHeight: '1.2em',
+      flex: '0 0 auto',
+    }),
+    [maxDisplayCharacters]
+  );
+  const liveRegionMessage = copyFeedback;
+  const copyButtonClasses =
+    'inline-flex items-center gap-1 px-0 py-0 text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none bg-transparent transition-colors hover:text-[#225FED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4ED7B0]';
+  const copyButtonAriaLabel = orderId ? `Copy full order ID ${orderId}` : 'Copy full order ID';
 
   if (isMobile) {
     return (
@@ -84,7 +254,39 @@ export default function HistoryCard({
             </span>
             <div className="flex flex-col">
               <span className="text-sm font-medium leading-tight text-white">{pair}</span>
-              <span className="text-xs text-[#A4A4A4]">Order ID : {shortenedOrderId}</span>
+              <div className="flex flex-wrap items-center gap-1 text-xs text-[#A4A4A4]">
+                <span>Order ID :</span>
+                <button
+                  type="button"
+                  onClick={copyOrderIdToClipboard}
+                  title={orderId}
+                  aria-label={copyButtonAriaLabel}
+                  className={`${copyButtonClasses} cursor-pointer`}
+                >
+                  <span className={TEXT_CONTAINER_CLASSES} style={textContainerStyle}>
+                    <motion.span
+                      initial={CLIP_VISIBLE}
+                      animate={orderTextControls}
+                      className={TEXT_LAYER_CLASSES}
+                      style={TEXT_LAYER_STYLE}
+                    >
+                      {shortenedOrderId}
+                    </motion.span>
+                    <motion.span
+                      initial={CLIP_HIDDEN}
+                      animate={feedbackTextControls}
+                      className={TEXT_LAYER_CLASSES}
+                      style={TEXT_LAYER_STYLE}
+                    >
+                      {copyFeedback}
+                    </motion.span>
+                  </span>
+
+                  <span style={VISUALLY_HIDDEN_STYLE} aria-live="polite">
+                    {liveRegionMessage}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -150,9 +352,36 @@ export default function HistoryCard({
             <span className="text-[#A4A4A4] text-xs font-normal font-[Alexandria] leading-none">
               Order ID :
             </span>
-            <span className="text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none">
-              {shortenedOrderId}
-            </span>
+            <button
+              type="button"
+              onClick={copyOrderIdToClipboard}
+              title={orderId}
+              aria-label={copyButtonAriaLabel}
+              className={`${copyButtonClasses} cursor-pointer`}
+            >
+              <span className={TEXT_CONTAINER_CLASSES} style={textContainerStyle}>
+                <motion.span
+                  initial={CLIP_VISIBLE}
+                  animate={orderTextControls}
+                  className={TEXT_LAYER_CLASSES}
+                  style={TEXT_LAYER_STYLE}
+                >
+                  {shortenedOrderId}
+                </motion.span>
+                <motion.span
+                  initial={CLIP_HIDDEN}
+                  animate={feedbackTextControls}
+                  className={TEXT_LAYER_CLASSES}
+                  style={TEXT_LAYER_STYLE}
+                >
+                  {copyFeedback}
+                </motion.span>
+              </span>
+
+              <span style={VISUALLY_HIDDEN_STYLE} aria-live="polite">
+                {liveRegionMessage}
+              </span>
+            </button>
           </div>
         </div>
 
