@@ -579,8 +579,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   }, [amount, getAvailableBalance]);
 
   const handlePriceFocus = () => {
-    setPriceLabel('Limit price');
     setIsInputFocused(true);
+    if (priceLabel !== 'Price') {
+      return;
+    }
+
+    setPriceLabel('Limit price');
     if (derivedMarketPrice && !isPriceLoading) {
       setPrice(derivedMarketPrice);
       if (isReceiveUserInput && receiveCoin) {

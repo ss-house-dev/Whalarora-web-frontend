@@ -45,6 +45,7 @@ const createStepSizePlaceholder = (stepSize?: string) => {
 export default function SellOrderContainer({ onExchangeClick }: SellOrderContainerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const lastSelectionTokenRef = useRef<number | null>(null);
   const {
     selectedCoin,
     marketPrice,
@@ -181,7 +182,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
 
   const [priceLabel, setPriceLabel] = useState('Price');
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [price, setPrice] = useState<string>('0.' + '0'.repeat(priceDecimalPlaces));
+  const [price, setPrice] = useState<string>(''); // เปลี่ยน initial เป็น '' เพื่อให้ลบง่าย
   const [sellAmount, setSellAmount] = useState<string>('');
   const [isSellAmountValid, setIsSellAmountValid] = useState(true);
   const [sellAmountErrorMessage, setSellAmountErrorMessage] = useState('');
@@ -191,6 +192,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   const [isReceiveUSDEditing, setIsReceiveUSDEditing] = useState(false);
   const [isReceiveUSDUserInput, setIsReceiveUSDUserInput] = useState(false);
   const [lastPercentage, setLastPercentage] = useState<number | null>(null);
+  const [isPriceUserEdited, setIsPriceUserEdited] = useState<boolean>(false); // เพิ่ม flag เพื่อป้องกัน override จาก orderbook
 
   const truncateToDecimals = useCallback((num: number, decimals: number): string => {
     if (isNaN(num) || !Number.isFinite(num)) return '0';
@@ -417,6 +419,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     },
     [getAvailableCoinBalance, quantityPrecision, symbolPrecision, truncateToDecimals]
   );
+
   const recalcLinkedFields = useCallback(
     (priceValue: string, options?: { allowClearReceive?: boolean }) => {
       const allowClearReceive = options?.allowClearReceive ?? true;
@@ -523,6 +526,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     const marketValue = derivedMarketPrice || '';
     setPrice(marketValue);
     setIsInputFocused(false);
+    setIsPriceUserEdited(false); // reset flag เมื่อสลับโหมด market
     recalcLinkedFields(marketValue);
   };
 
@@ -531,6 +535,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = inputValue === '' ? '' : formatPriceWithComma(inputValue);
       setPrice(formattedValue);
+      setIsPriceUserEdited(true); // set flag เมื่อ user แก้ไข
       const cleanPrice = formattedValue.replace(/,/g, '');
       const numericPrice = parseFloat(cleanPrice);
       const hasValidPrice = formattedValue !== '' && !isNaN(numericPrice) && numericPrice > 0;
@@ -544,6 +549,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       setPrice(formattedPrice);
       recalcLinkedFields(formattedPrice, { allowClearReceive: false });
     } else {
+      setPrice(''); // คงค่าว่างถ้าลบหมด
       recalcLinkedFields('', { allowClearReceive: true });
     }
     setIsInputFocused(false);
@@ -613,6 +619,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     const isValid = !isNaN(num) && num <= availableCoin;
     setIsSellAmountValid(isValid);
     setSellAmountErrorMessage(isValid ? '' : 'Insufficient balance');
+    // ใช้ price ปัจจุบัน (ที่ user กรอก) ในการ recalc
     const calculatedReceiveUSD = calculateReceiveUSD(newCoinAmount, price);
     setReceiveUSD(calculatedReceiveUSD);
   };
@@ -733,6 +740,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     setSellAmountErrorMessage('');
     setIsReceiveUSDUserInput(false); // reset flag
     setLastPercentage(null);
+    setIsPriceUserEdited(false); // reset flag หลัง submit
   };
 
   const handleAlertClose = () => {
@@ -743,7 +751,8 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     console.log(
       `SellOrderContainer: selectedCoin.label changed to ${selectedCoin.label}, marketPrice: ${marketPrice}, chartPrice: ${chartPrice}, derivedPrice: ${derivedMarketPrice}, isPriceLoading: ${isPriceLoading}`
     );
-    if (priceLabel === 'Price' && !isInputFocused) {
+    if (priceLabel === 'Price' && !isInputFocused && !isPriceUserEdited) {
+      // เพิ่ม !isPriceUserEdited
       if (derivedMarketPrice && !isPriceLoading) {
         setPrice(derivedMarketPrice);
         console.log(
@@ -751,11 +760,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         );
         recalcLinkedFields(derivedMarketPrice, { allowClearReceive: false });
       } else if (isPriceLoading) {
-        setPrice('0.' + '0'.repeat(priceDecimalPlaces));
+        setPrice(''); // เปลี่ยนเป็น '' เพื่อให้ลบง่าย
         console.log(
-          `SellOrderContainer: Set price to 0.${'0'.repeat(
-            priceDecimalPlaces
-          )} due to loading for ${selectedCoin.label}`
+          `SellOrderContainer: Set price to empty due to loading for ${selectedCoin.label}`
         );
       }
     }
@@ -769,6 +776,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     selectedCoin.label,
     priceDecimalPlaces,
     recalcLinkedFields,
+    isPriceUserEdited,
   ]);
 
   useEffect(() => {
@@ -799,12 +807,31 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (!orderFormSelection) return;
     if (orderFormSelection.side !== 'sell') return;
 
+    const token = orderFormSelection.token ?? null;
+    const selectionPrice = orderFormSelection.price;
+    const currentPrice = price;
+    const isSameToken = token !== null && lastSelectionTokenRef.current === token;
+
+    if (isSameToken) {
+      const sanitizedSelectionPrice = selectionPrice?.replace(/,/g, '');
+      const sanitizedCurrentPrice = currentPrice?.replace(/,/g, '');
+      if (
+        sanitizedSelectionPrice === sanitizedCurrentPrice ||
+        isPriceUserEdited
+      ) {
+        return;
+      }
+    }
+
+    lastSelectionTokenRef.current = token;
+
     const isMarketMode = orderFormSelection.mode === 'market';
     setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
-    setPrice(orderFormSelection.price);
-    recalcLinkedFields(orderFormSelection.price);
+    setIsPriceUserEdited(false);
+    setPrice(selectionPrice);
+    recalcLinkedFields(selectionPrice);
     setIsInputFocused(false);
-  }, [orderFormSelection, recalcLinkedFields]);
+  }, [orderFormSelection, recalcLinkedFields, price, isPriceUserEdited]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
