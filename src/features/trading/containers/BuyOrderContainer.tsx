@@ -274,6 +274,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [receiveCoin, setReceiveCoin] = useState<string>('');
   const [isReceiveEditing, setIsReceiveEditing] = useState(false);
+  const [isReceiveUserInput, setIsReceiveUserInput] = useState(false);
 
   const getAvailableBalance = useCallback(() => {
     if (!session || !cashBalance) return 0;
@@ -467,6 +468,70 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     ]
   );
 
+  const updateAmountFromReceive = useCallback(
+    (coinValue: string, priceValue: string) => {
+      const cleanPrice = priceValue?.replace(/,/g, '') ?? '';
+      const priceNum = parseFloat(cleanPrice);
+      const coinNum = parseFloat((coinValue || '').replace(/,/g, ''));
+
+      if (!coinValue || isNaN(coinNum) || coinNum <= 0 || isNaN(priceNum) || priceNum <= 0) {
+        setAmount('');
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        setSliderValue(0);
+        return;
+      }
+
+      const effectivePriceDecimals = priceDecimalPlaces ?? 2;
+      const coinDecimals =
+        symbolPrecision?.quantityPrecision ??
+        (symbolPrecision?.stepSize
+          ? decimalsFromSize(symbolPrecision.stepSize)
+          : quantityPrecision) ??
+        6;
+
+      const truncatedCoin = truncateToDecimals(coinNum, coinDecimals);
+      const truncatedPrice = truncateToDecimals(priceNum, effectivePriceDecimals);
+      const usd = parseFloat(truncatedCoin) * parseFloat(truncatedPrice);
+
+      if (!Number.isFinite(usd)) {
+        setAmount('');
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        setSliderValue(0);
+        return;
+      }
+
+      const formattedUsd = truncateToDecimals(usd, effectivePriceDecimals);
+      const [integerPart, decimalPart] = formattedUsd.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const newAmount =
+        decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+
+      setAmount(newAmount);
+
+      const availableBalance = getAvailableBalance();
+      if (usd > availableBalance) {
+        setIsAmountValid(false);
+        setAmountErrorMessage('Insufficient balance');
+        setSliderValue(0);
+      } else {
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        const sliderPercentage =
+          availableBalance > 0 ? Math.min((usd / availableBalance) * 100, 100) : 0;
+        setSliderValue(sliderPercentage);
+      }
+    },
+    [
+      getAvailableBalance,
+      priceDecimalPlaces,
+      quantityPrecision,
+      symbolPrecision,
+      truncateToDecimals,
+    ]
+  );
+
   const calculateSliderPercentage = useCallback(
     (amountValue: string): number => {
       if (!amountValue) return 0;
@@ -518,6 +583,12 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setIsInputFocused(true);
     if (derivedMarketPrice && !isPriceLoading) {
       setPrice(derivedMarketPrice);
+      if (isReceiveUserInput && receiveCoin) {
+        const numericDerived = parseFloat(derivedMarketPrice.replace(/,/g, ''));
+        if (!Number.isNaN(numericDerived) && numericDerived > 0) {
+          updateAmountFromReceive(receiveCoin, derivedMarketPrice);
+        }
+      }
     }
   };
 
@@ -525,6 +596,18 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setPriceLabel('Price');
     setPrice(derivedMarketPrice || '');
     setIsInputFocused(false);
+    if (isReceiveUserInput && receiveCoin) {
+      const targetPrice = derivedMarketPrice || '';
+      const numericTarget = parseFloat((targetPrice || '').replace(/,/g, ''));
+      if (targetPrice === '') {
+        setAmount('');
+        setIsAmountValid(true);
+        setAmountErrorMessage('');
+        setSliderValue(0);
+      } else if (!Number.isNaN(numericTarget) && numericTarget > 0) {
+        updateAmountFromReceive(receiveCoin, targetPrice);
+      }
+    }
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -532,6 +615,18 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = inputValue === '' ? '' : formatPriceWithComma(inputValue);
       setPrice(formattedValue);
+      if (isReceiveUserInput) {
+        const cleanPrice = formattedValue.replace(/,/g, '');
+        const numericPrice = parseFloat(cleanPrice);
+        if (formattedValue === '') {
+          setAmount('');
+          setIsAmountValid(true);
+          setAmountErrorMessage('');
+          setSliderValue(0);
+        } else if (!Number.isNaN(numericPrice) && numericPrice > 0 && receiveCoin) {
+          updateAmountFromReceive(receiveCoin, formattedValue);
+        }
+      }
     }
   };
 
@@ -539,12 +634,24 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     if (price) {
       const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
+      if (isReceiveUserInput && receiveCoin) {
+        const numericPrice = parseFloat(formattedPrice.replace(/,/g, ''));
+        if (!Number.isNaN(numericPrice) && numericPrice > 0) {
+          updateAmountFromReceive(receiveCoin, formattedPrice);
+        }
+      }
+    } else if (isReceiveUserInput) {
+      setAmount('');
+      setIsAmountValid(true);
+      setAmountErrorMessage('');
+      setSliderValue(0);
     }
     setIsInputFocused(false);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
     const inputValue = e.target.value;
     if (inputValue === '' || isValidNumberFormat(inputValue)) {
       const formattedValue = formatNumberWithComma(inputValue);
@@ -574,6 +681,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   const handleSliderChange = (percentage: number) => {
     setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
     setSliderValue(percentage);
     const newAmount = calculateAmountFromPercentage(percentage);
     setAmount(newAmount);
@@ -591,6 +699,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   const handleQuickAdd = (delta: number) => {
     setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
     const current = parseFloat((amount || '0').replace(/,/g, '')) || 0;
     const available = getAvailableBalance();
     const next = current + delta;
@@ -619,6 +728,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   const handleMax = () => {
     setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
     const available = getAvailableBalance();
 
     const formatted = truncateToDecimals(available, priceDecimalPlaces);
@@ -638,6 +748,7 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   const handleAmountBlur = () => {
     setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
     setIsAmountFocused(false);
 
     if (amount) {
@@ -658,45 +769,24 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
 
   const handleReceiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    if (inputValue === '' || isValidCoinFormatForBuy(inputValue)) {
+
+    if (inputValue === '') {
+      setIsReceiveEditing(false);
+      setIsReceiveUserInput(false);
+      setReceiveCoin('');
+      setAmount('');
+      setIsAmountValid(true);
+      setAmountErrorMessage('');
+      setSliderValue(0);
+      return;
+    }
+
+    if (isValidCoinFormatForBuy(inputValue)) {
       setIsReceiveEditing(true);
-      const formattedValue = inputValue === '' ? '' : formatReceiveCoinWithComma(inputValue);
+      setIsReceiveUserInput(true);
+      const formattedValue = formatReceiveCoinWithComma(inputValue);
       setReceiveCoin(formattedValue);
-
-      const priceNum = parseFloat(price.replace(/,/g, ''));
-      const coinNum = parseFloat((inputValue || '0').replace(/,/g, ''));
-
-      if (!inputValue || isNaN(coinNum) || coinNum === 0 || isNaN(priceNum) || priceNum <= 0) {
-        setAmount('');
-        setIsAmountValid(true);
-        setAmountErrorMessage('');
-        setSliderValue(0);
-        return;
-      }
-
-      // Truncate coinNum and priceNum before calculation
-      const truncatedCoin = truncateToDecimals(coinNum, quantityPrecision);
-      const truncatedPrice = truncateToDecimals(priceNum, priceDecimalPlaces);
-      const usd = parseFloat(truncatedCoin) * parseFloat(truncatedPrice);
-
-      const formattedUsd = truncateToDecimals(usd, priceDecimalPlaces);
-      const [integerPart, decimalPart] = formattedUsd.split('.');
-      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const newAmount = `${formattedInteger}.${decimalPart}`;
-
-      setAmount(newAmount);
-
-      const availableBalance = getAvailableBalance();
-      if (usd > availableBalance) {
-        setIsAmountValid(false);
-        setAmountErrorMessage('Insufficient balance');
-        setSliderValue(0);
-      } else {
-        setIsAmountValid(true);
-        setAmountErrorMessage('');
-        const sliderPercentage = Math.min((usd / availableBalance) * 100, 100);
-        setSliderValue(sliderPercentage);
-      }
+      updateAmountFromReceive(formattedValue, price);
     }
   };
 
@@ -738,6 +828,8 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     setReceiveCoin('');
     setIsAmountValid(true);
     setAmountErrorMessage('');
+    setIsReceiveEditing(false);
+    setIsReceiveUserInput(false);
   };
 
   useEffect(() => {
@@ -768,6 +860,27 @@ export default function BuyOrderContainer({ onExchangeClick }: BuyOrderContainer
     isPriceLoading,
     selectedCoin.label,
     priceDecimalPlaces,
+  ]);
+
+  useEffect(() => {
+    if (!isReceiveUserInput) return;
+    if (!receiveCoin) return;
+    if (price === '') {
+      setAmount('');
+      setIsAmountValid(true);
+      setAmountErrorMessage('');
+      setSliderValue(0);
+      return;
+    }
+    const cleanPrice = price.replace(/,/g, '');
+    const numericPrice = parseFloat(cleanPrice);
+    if (Number.isNaN(numericPrice) || numericPrice <= 0) return;
+    updateAmountFromReceive(receiveCoin, price);
+  }, [
+    price,
+    receiveCoin,
+    isReceiveUserInput,
+    updateAmountFromReceive,
   ]);
 
   useEffect(() => {
