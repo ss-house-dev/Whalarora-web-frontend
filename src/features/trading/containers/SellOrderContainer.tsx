@@ -431,8 +431,12 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         return;
       }
 
+      if (isReceiveUSDUserInput) {
+        updateSellAmountFromReceive(receiveUSD, priceValue);
+        return;
+      }
+
       if (sellAmount) {
-        setIsReceiveUSDUserInput(false);
         const recalculatedReceive = calculateReceiveUSD(sellAmount, priceValue);
         if (recalculatedReceive !== receiveUSD) {
           setReceiveUSD(recalculatedReceive);

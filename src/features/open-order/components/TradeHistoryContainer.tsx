@@ -22,6 +22,37 @@ const filters: { key: FilterKey; label: string }[] = [
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
 ];
+const CLOSED_STATUS_TOKENS = ['CLOSE', 'CLOSED', 'CANCEL'];
+
+function resolveHistoryCardStatus(status: string | undefined | null): 'complete' | 'closed' {
+  if (!status) {
+    return 'complete';
+  }
+
+  const upper = status.trim().toUpperCase();
+  if (!upper) {
+    return 'complete';
+  }
+
+  if (CLOSED_STATUS_TOKENS.some((token) => upper.includes(token))) {
+    return 'closed';
+  }
+
+  if (upper.includes('MATCH') || upper === 'COMPLETE' || upper === 'FILLED') {
+    return 'complete';
+  }
+
+  return 'complete';
+}
+
+function isFilledHistoryStatus(status: string): boolean {
+  if (!status) {
+    return false;
+  }
+
+  const upper = status.trim().toUpperCase();
+  return upper.includes('MATCH') || upper === 'COMPLETE' || upper === 'FILLED';
+}
 
 export default function TradeHistoryContainer() {
   const [page, setPage] = useState(1);
@@ -125,20 +156,20 @@ export default function TradeHistoryContainer() {
               }`}
             >
               {items.map((it, idx) => {
-                const statusRaw = typeof it.status === 'string' ? it.status.toUpperCase() : '';
-                const cardStatus = statusRaw === 'MATCHED' ? 'complete' : 'closed';
+                const statusValue = typeof it.status === 'string' ? it.status : '';
+                const statusRaw = statusValue.trim().toUpperCase();
+                const cardStatus = resolveHistoryCardStatus(statusValue);
+                const fillCompleted = isFilledHistoryStatus(statusRaw);
                 const sideRaw = typeof it.side === 'string' ? it.side.toUpperCase() : '';
                 const timestampSource = it.createdAt ?? it.matchedAt ?? '';
                 const { date, time } = formatDateParts(timestampSource, { includeSeconds: true });
                 let displayOrderId = it.tradeRef;
-                if (statusRaw === 'MATCHED') {
+                if (fillCompleted) {
                   if (sideRaw === 'SELL' && it.sellOrderRef) {
                     displayOrderId = it.sellOrderRef;
                   } else if (sideRaw === 'BUY' && it.buyOrderRef) {
                     displayOrderId = it.buyOrderRef;
                   }
-                } else if (statusRaw === 'CANCELLED') {
-                  displayOrderId = it.tradeRef;
                 }
                 const baseSymbol = it.baseSymbol ?? it.symbol;
                 const quoteSymbol = it.quoteSymbol ?? 'USDT';
