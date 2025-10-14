@@ -66,7 +66,6 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
   }, [chartPrice, marketPrice]);
 
   const [alertMessage, setAlertMessage] = useState<string>('');
-  const [alertType, setAlertType] = useState<'success' | 'info' | 'error'>('success');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
   const [coinSymbol, quoteSymbol] = useMemo(() => {
@@ -153,30 +152,35 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         queryKey: [TradeQueryKeys.GET_COIN_ASSET, selectedCoin.label.split('/')[0]],
       });
 
-      const fallbackSpentUSD = (parseNumeric(price) ?? 0) * (parseNumeric(sellAmount) ?? 0);
-      const spentUSD =
-        parseNumeric(
-          (data as { proceeds?: number | string } | null | undefined)?.proceeds ?? undefined
-        ) ?? fallbackSpentUSD;
-      const receiveAmountNumeric = parseNumeric(receiveUSD);
-      const amountToDisplay =
-        receiveAmountNumeric !== undefined ? receiveAmountNumeric : (spentUSD ?? 0);
-      const formattedReceiveAmount = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(amountToDisplay);
+      // คำนวณจำนวนเงิน USDT ที่ได้รับจริง
+      let receivedUSDT = 0;
 
+      if (data.filled > 0) {
+        // กรณีที่มี order ถูก fill (ขายได้)
+        receivedUSDT = data.proceeds || 0;
+      } else {
+        // กรณีที่ order ยังไม่ถูก fill (pending)
+        // คำนวณจากจำนวน coin ที่ขาย * ราคา
+        const coinAmount = parseNumeric(sellAmount) ?? 0;
+        const pricePerCoin = parseNumeric(price) ?? 0;
+        receivedUSDT = coinAmount * pricePerCoin;
+      }
+
+      // แสดง alert ในรูปแบบเดียวกันทั้งหมด
       setAlertMessage(
-        `Order Buy ${coinSymbol}/USDT (${formattedReceiveAmount} USDT) submitted successfully`
+        `Order Sell ${coinSymbol}/USDT (${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(receivedUSDT)} USDT) submitted successfully`
       );
-      setAlertType('success');
+      // ลบ setAlertType ออก
       setShowAlert(true);
       handleSubmitSuccess();
     },
     onError: (error) => {
       console.error('SellOrderContainer: Sell order error:', error);
       setAlertMessage(`Error creating sell order: ${error.message}`);
-      setAlertType('error');
+      // ลบ setAlertType ออก
       setShowAlert(true);
     },
   });
@@ -378,6 +382,83 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     [priceDecimalPlaces, truncateToDecimals]
   );
 
+  const updateSellAmountFromReceive = useCallback(
+    (usdValue: string, priceValue: string) => {
+      const cleanPrice = priceValue.replace(/,/g, '');
+      const priceNum = parseFloat(cleanPrice);
+      const usdNum = parseFloat((usdValue || '').replace(/,/g, ''));
+      if (!usdValue || isNaN(usdNum) || usdNum <= 0 || isNaN(priceNum) || priceNum <= 0) {
+        setSellAmount('');
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        setSellSliderValue(0);
+        return;
+      }
+
+      const decimals = symbolPrecision?.quantityPrecision ?? quantityPrecision ?? 6;
+      const truncatedCoinAmount = truncateToDecimals(usdNum / priceNum, decimals);
+      const parts = truncatedCoinAmount.split('.');
+      const integerPart = parts[0] ?? '';
+      const decimalPart = parts[1];
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const newAmount =
+        decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+
+      setSellAmount(newAmount);
+
+      const availableCoin = getAvailableCoinBalance();
+      const numericCoinAmount = parseFloat(truncatedCoinAmount);
+
+      if (numericCoinAmount > availableCoin) {
+        setIsSellAmountValid(false);
+        setSellAmountErrorMessage('Insufficient balance');
+        setSellSliderValue(0);
+      } else {
+        setIsSellAmountValid(true);
+        setSellAmountErrorMessage('');
+        const sliderPercentage =
+          availableCoin > 0 ? Math.min((numericCoinAmount / availableCoin) * 100, 100) : 0;
+        setSellSliderValue(sliderPercentage);
+      }
+    },
+    [getAvailableCoinBalance, quantityPrecision, symbolPrecision, truncateToDecimals]
+  );
+  const recalcLinkedFields = useCallback(
+    (priceValue: string, options?: { allowClearReceive?: boolean }) => {
+      const allowClearReceive = options?.allowClearReceive ?? true;
+      const cleanPrice = priceValue.replace(/,/g, '');
+      const priceNum = parseFloat(cleanPrice);
+      const hasValidPrice = priceValue !== '' && !isNaN(priceNum) && priceNum > 0;
+
+      if (!hasValidPrice) {
+        if (allowClearReceive && !isReceiveUSDUserInput && receiveUSD !== '') {
+          setReceiveUSD('');
+        }
+        return;
+      }
+
+      if (sellAmount) {
+        setIsReceiveUSDUserInput(false);
+        const recalculatedReceive = calculateReceiveUSD(sellAmount, priceValue);
+        if (recalculatedReceive !== receiveUSD) {
+          setReceiveUSD(recalculatedReceive);
+        }
+        return;
+      }
+
+      if (receiveUSD) {
+        updateSellAmountFromReceive(receiveUSD, priceValue);
+      }
+    },
+    [
+      calculateReceiveUSD,
+      isReceiveUSDUserInput,
+      receiveUSD,
+      sellAmount,
+      updateSellAmountFromReceive,
+    ]
+  );
+
   const calculateSellSliderPercentage = useCallback(
     (coinAmount: string): number => {
       if (!coinAmount) return 0;
@@ -435,13 +516,16 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     setIsInputFocused(true);
     if (derivedMarketPrice && !isPriceLoading) {
       setPrice(derivedMarketPrice);
+      recalcLinkedFields(derivedMarketPrice, { allowClearReceive: false });
     }
   };
 
   const handleMarketClick = () => {
     setPriceLabel('Price');
-    setPrice(derivedMarketPrice || '');
+    const marketValue = derivedMarketPrice || '';
+    setPrice(marketValue);
     setIsInputFocused(false);
+    recalcLinkedFields(marketValue);
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -449,6 +533,10 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (inputValue === '' || isValidPriceFormat(inputValue)) {
       const formattedValue = inputValue === '' ? '' : formatPriceWithComma(inputValue);
       setPrice(formattedValue);
+      const cleanPrice = formattedValue.replace(/,/g, '');
+      const numericPrice = parseFloat(cleanPrice);
+      const hasValidPrice = formattedValue !== '' && !isNaN(numericPrice) && numericPrice > 0;
+      recalcLinkedFields(formattedValue, { allowClearReceive: !hasValidPrice });
     }
   };
 
@@ -456,6 +544,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     if (price) {
       const formattedPrice = formatPriceForDisplay(price);
       setPrice(formattedPrice);
+      recalcLinkedFields(formattedPrice, { allowClearReceive: false });
+    } else {
+      recalcLinkedFields('', { allowClearReceive: true });
     }
     setIsInputFocused(false);
   };
@@ -567,73 +658,17 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
       }
     }
   };
-
   const handleReceiveUSDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    // ตรวจสอบ format ก่อน
     if (inputValue === '' || isValidUSDFormat(inputValue)) {
       setIsReceiveUSDEditing(true);
-      setIsReceiveUSDUserInput(true); // mark ว่าเป็นค่าที่ user พิมพ์
+      setIsReceiveUSDUserInput(true);
       setLastPercentage(null);
 
       const formattedInput = formatUsdAmount(inputValue);
       setReceiveUSD(formattedInput);
-
-      // ถ้าไม่มี input หรือเป็น 0 ให้ clear sell amount
-      if (!inputValue || inputValue === '0' || inputValue === '0.') {
-        setSellAmount('');
-        setIsSellAmountValid(true);
-        setSellAmountErrorMessage('');
-        setSellSliderValue(0);
-        return;
-      }
-
-      // เฉพาะเมื่อ user พิมพ์จริงๆ ถึงจะคำนวณ coin amount
-      // แต่ไม่ต้องอัปเดต receiveUSD กลับ
-      const priceNum = parseFloat(price.replace(/,/g, ''));
-      const usdNum = parseFloat(formattedInput.replace(/,/g, '') || '0');
-
-      // ตรวจสอบให้แน่ใจว่า price และ usd amount ถูกต้อง
-      if (isNaN(priceNum) || priceNum <= 0 || isNaN(usdNum) || usdNum <= 0) {
-        setSellAmount('');
-        setIsSellAmountValid(true);
-        setSellAmountErrorMessage('');
-        setSellSliderValue(0);
-        return;
-      }
-
-      // คำนวณ coin amount สำหรับแสดงใน sell amount field
-      const coinAmount = usdNum / priceNum;
-
-      // Truncate เฉพาะผลลัพธ์
-      const decimals = symbolPrecision?.quantityPrecision ?? quantityPrecision ?? 6;
-      const truncatedCoinAmount = truncateToDecimals(coinAmount, decimals);
-
-      // Format สำหรับแสดงผล
-      const parts = truncatedCoinAmount.split('.');
-      const integerPart = parts[0];
-      const decimalPart = parts[1];
-      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const newAmount =
-        decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-
-      setSellAmount(newAmount);
-
-      // ตรวจสอบ balance
-      const availableCoin = getAvailableCoinBalance();
-      const numericCoinAmount = parseFloat(truncatedCoinAmount);
-
-      if (numericCoinAmount > availableCoin) {
-        setIsSellAmountValid(false);
-        setSellAmountErrorMessage('Insufficient balance');
-        setSellSliderValue(0);
-      } else {
-        setIsSellAmountValid(true);
-        setSellAmountErrorMessage('');
-        const sliderPercentage = Math.min((numericCoinAmount / availableCoin) * 100, 100);
-        setSellSliderValue(sliderPercentage);
-      }
+      updateSellAmountFromReceive(formattedInput, price);
     }
   };
 
@@ -716,6 +751,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
         console.log(
           `SellOrderContainer: Set derived price to ${derivedMarketPrice} (chart: ${chartPrice}) for ${selectedCoin.label}`
         );
+        recalcLinkedFields(derivedMarketPrice, { allowClearReceive: false });
       } else if (isPriceLoading) {
         setPrice('0.' + '0'.repeat(priceDecimalPlaces));
         console.log(
@@ -734,6 +770,7 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     isPriceLoading,
     selectedCoin.label,
     priceDecimalPlaces,
+    recalcLinkedFields,
   ]);
 
   useEffect(() => {
@@ -767,8 +804,9 @@ export default function SellOrderContainer({ onExchangeClick }: SellOrderContain
     const isMarketMode = orderFormSelection.mode === 'market';
     setPriceLabel(isMarketMode ? 'Price' : 'Limit price');
     setPrice(orderFormSelection.price);
+    recalcLinkedFields(orderFormSelection.price);
     setIsInputFocused(false);
-  }, [orderFormSelection]);
+  }, [orderFormSelection, recalcLinkedFields]);
 
   const coinSymbolMap: { [key: string]: string } = {
     BTC: 'bitcoin-icon.svg',
