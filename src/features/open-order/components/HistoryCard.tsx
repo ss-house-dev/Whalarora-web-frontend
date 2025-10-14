@@ -221,7 +221,7 @@ export default function HistoryCard({
   );
   const liveRegionMessage = copyFeedback;
   const copyButtonClasses =
-    'inline-flex items-center gap-1 px-0 py-0 text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none bg-transparent transition-colors hover:text-[#4ED7B0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4ED7B0]';
+    'inline-flex items-center gap-1 px-0 py-0 text-[#E9E9E9] text-xs font-normal font-[Alexandria] leading-none bg-transparent transition-colors hover:text-[#225FED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4ED7B0]';
   const copyButtonAriaLabel = orderId ? `Copy full order ID ${orderId}` : 'Copy full order ID';
 
   if (isMobile) {
